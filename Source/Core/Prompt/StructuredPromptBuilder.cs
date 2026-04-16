@@ -69,7 +69,7 @@ namespace RimMind.Core.Prompt
             string header = string.IsNullOrEmpty(headerKey)
                 ? "RimMind.Core.Prompt.CustomHeader".Translate()
                 : headerKey.Translate();
-            _custom = (header ?? string.Empty) + "\n" + custom.Trim();
+            _custom = (header ?? string.Empty) + "\n" + custom!.Trim();
             return this;
         }
 
