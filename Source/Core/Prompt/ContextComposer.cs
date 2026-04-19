@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Verse;
 
 namespace RimMind.Core.Prompt
 {
@@ -47,7 +48,7 @@ namespace RimMind.Core.Prompt
                 if (!string.IsNullOrEmpty(section.Content))
                     sb.AppendLine(section.Content);
             }
-            return sb.ToString().TrimEnd();
+            return PromptSanitizer.Sanitize(sb.ToString().TrimEnd());
         }
 
         public static string CompressHistory(string historyText, int maxLines = 6, string summaryLine = "")
@@ -59,7 +60,7 @@ namespace RimMind.Core.Prompt
 
             var recent = lines.Skip(lines.Length - maxLines).ToArray();
             string header = string.IsNullOrEmpty(summaryLine)
-                ? $"({lines.Length - maxLines}条更早的记录已省略)"
+                ? "RimMind.Core.Prompt.HistoryOmitted".Translate(lines.Length - maxLines)
                 : summaryLine;
 
             var sb = new StringBuilder();

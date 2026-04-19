@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Settings;
@@ -16,11 +18,33 @@ namespace RimMind.Core.Internal
         private readonly ConcurrentQueue<(string msg, bool isWarning)> _pendingLogs
             = new ConcurrentQueue<(string, bool)>();
 
+        private enum FireResultKind { Complete, Retry }
+
+        private struct PendingFireResult
+        {
+            public FireResultKind Kind;
+            public TrackedRequest Tracked;
+            public AIResponse Response;
+        }
+
+        private readonly ConcurrentQueue<PendingFireResult> _pendingFireResults
+            = new ConcurrentQueue<PendingFireResult>();
+
         private readonly Dictionary<string, int> _modCooldowns = new Dictionary<string, int>();
 
-        private readonly Dictionary<string, Queue<PendingRequest>> _modQueues = new Dictionary<string, Queue<PendingRequest>>();
+        private readonly Dictionary<string, List<TrackedRequest>> _modQueues
+            = new Dictionary<string, List<TrackedRequest>>();
+
+        private readonly Dictionary<int, TrackedRequest> _activeRequests
+            = new Dictionary<int, TrackedRequest>();
+
+        private readonly Dictionary<string, TrackedRequest> _requestIdToActive
+            = new Dictionary<string, TrackedRequest>();
 
         private int _lastQueueProcessTick;
+        private int _nextTrackingId;
+        private bool _isPaused;
+        private bool _isProcessingLocalRequest;
 
         private const int QueueProcessInterval = 60;
 
@@ -35,8 +59,25 @@ namespace RimMind.Core.Internal
             _instance = this;
         }
 
-        public override void StartedNewGame() { _modCooldowns.Clear(); ClearAllQueues(); }
-        public override void LoadedGame() { _modCooldowns.Clear(); ClearAllQueues(); }
+        public override void StartedNewGame()
+        {
+            _modCooldowns.Clear();
+            ClearAllQueues();
+            _activeRequests.Clear();
+            _requestIdToActive.Clear();
+            _isProcessingLocalRequest = false;
+            _isPaused = false;
+        }
+
+        public override void LoadedGame()
+        {
+            _modCooldowns.Clear();
+            ClearAllQueues();
+            _activeRequests.Clear();
+            _requestIdToActive.Clear();
+            _isProcessingLocalRequest = false;
+            _isPaused = false;
+        }
 
         public override void GameComponentTick()
         {
@@ -44,6 +85,11 @@ namespace RimMind.Core.Internal
             {
                 if (log.isWarning) Log.Warning(log.msg);
                 else               Log.Message(log.msg);
+            }
+
+            while (_pendingFireResults.TryDequeue(out var fireResult))
+            {
+                ProcessFireResult(fireResult);
             }
 
             while (_results.TryDequeue(out var item))
@@ -54,6 +100,8 @@ namespace RimMind.Core.Internal
                     Log.Error($"[RimMind] Callback exception for {item.response.RequestId}: {ex}");
                 }
             }
+
+            CheckActiveRequestTimeouts();
 
             int now = Find.TickManager.TicksGame;
             if (now - _lastQueueProcessTick >= QueueProcessInterval)
@@ -70,80 +118,342 @@ namespace RimMind.Core.Internal
 
             if (!_modQueues.TryGetValue(modId, out var queue))
             {
-                queue = new Queue<PendingRequest>();
+                queue = new List<TrackedRequest>();
                 _modQueues[modId] = queue;
             }
 
-            queue.Enqueue(new PendingRequest(request, callback, client));
+            int trackingId = _nextTrackingId++;
+            var tracked = new TrackedRequest
+            {
+                TrackingId = trackingId,
+                Request = request,
+                Callback = callback,
+                Client = client,
+                IsLocalEndpointSnapshot = client.IsLocalEndpoint,
+                State = AIRequestState.Queued,
+                EnqueuedAtTick = Find.TickManager.TicksGame,
+                EnqueuedAtMs = Stopwatch.GetTimestamp(),
+                AttemptCount = 1,
+                MaxAttempts = request.MaxRetryCount >= 0 ? request.MaxRetryCount + 1 : RimMindCoreMod.Settings.maxRetryCount + 1,
+            };
+
+            int insertIdx = queue.FindIndex(t => t.Request.Priority > request.Priority);
+            if (insertIdx >= 0)
+                queue.Insert(insertIdx, tracked);
+            else
+                queue.Add(tracked);
 
             if (settings.debugLogging)
-                Log.Message($"[RimMind][Core] Enqueued request {request.RequestId} for mod {modId}, queue depth={queue.Count}");
+                Log.Message($"[RimMind][Core] Enqueued request {request.RequestId} (track={trackingId}) for mod {modId}, " +
+                            $"priority={request.Priority}, queue depth={queue.Count}");
 
             int now = Find.TickManager.TicksGame;
             TryProcessModQueue(modId, now);
         }
 
+        public void EnqueueImmediate(AIRequest request, Action<AIResponse> callback, IAIClient client)
+        {
+            var settings = RimMindCoreMod.Settings;
+
+            if (client.IsLocalEndpoint && _isProcessingLocalRequest)
+            {
+                if (settings.debugLogging)
+                    Log.Message($"[RimMind][Core] Immediate request {request.RequestId} deferred: local model busy");
+
+                Enqueue(request, callback, client);
+                return;
+            }
+
+            int trackingId = _nextTrackingId++;
+            var tracked = new TrackedRequest
+            {
+                TrackingId = trackingId,
+                Request = request,
+                Callback = callback,
+                Client = client,
+                IsLocalEndpointSnapshot = client.IsLocalEndpoint,
+                State = AIRequestState.Processing,
+                EnqueuedAtTick = Find.TickManager.TicksGame,
+                EnqueuedAtMs = Stopwatch.GetTimestamp(),
+                StartedProcessingAtTick = Find.TickManager.TicksGame,
+                AttemptCount = 1,
+                MaxAttempts = 1,
+            };
+
+            _activeRequests[trackingId] = tracked;
+            _requestIdToActive[request.RequestId] = tracked;
+
+            if (client.IsLocalEndpoint)
+                _isProcessingLocalRequest = true;
+
+            if (settings.debugLogging)
+                Log.Message($"[RimMind][Core] Immediate request {request.RequestId} (track={trackingId}) for mod {request.ModId}, bypassing queue");
+
+            FireRequest(tracked);
+        }
+
         private void ProcessAllQueues(int now)
         {
+            if (_isPaused) return;
+
+            var readyRequests = new List<(string modId, TrackedRequest tracked)>();
+
             foreach (var kvp in _modQueues)
             {
-                if (kvp.Value.Count > 0)
-                    TryProcessModQueue(kvp.Key, now);
+                string modId = kvp.Key;
+                var queue = kvp.Value;
+
+                if (queue.Count == 0) continue;
+                if (_modCooldowns.TryGetValue(modId, out int nextAllowed) && now < nextAllowed)
+                    continue;
+
+                while (queue.Count > 0)
+                {
+                    var tracked = queue[0];
+                    if (tracked.Request.ExpireAtTicks > 0 && now > tracked.Request.ExpireAtTicks)
+                    {
+                        queue.RemoveAt(0);
+                        if (RimMindCoreMod.Settings.debugLogging)
+                            Log.Message($"[RimMind][Core] Expired request {tracked.Request.RequestId} skipped (expired at {tracked.Request.ExpireAtTicks}, now={now})");
+                        continue;
+                    }
+                    break;
+                }
+
+                if (queue.Count > 0)
+                    readyRequests.Add((modId, queue[0]));
+            }
+
+            readyRequests.Sort((a, b) =>
+            {
+                int p = (int)a.tracked.Request.Priority - (int)b.tracked.Request.Priority;
+                if (p != 0) return p;
+                return a.tracked.EnqueuedAtTick - b.tracked.EnqueuedAtTick;
+            });
+
+            int maxConcurrent = RimMindCoreMod.Settings.maxConcurrentRequests;
+
+            foreach (var (modId, tracked) in readyRequests)
+            {
+                if (_activeRequests.Count >= maxConcurrent)
+                    break;
+
+                if (tracked.IsLocalEndpointSnapshot && _isProcessingLocalRequest)
+                    continue;
+
+                if (!_modQueues.TryGetValue(modId, out var queue) || queue.Count == 0 || queue[0] != tracked)
+                    continue;
+
+                queue.RemoveAt(0);
+
+                int cooldownTicks = GetModCooldownTicks(modId);
+                _modCooldowns[modId] = now + cooldownTicks;
+
+                tracked.State = AIRequestState.Processing;
+                tracked.StartedProcessingAtTick = now;
+                _activeRequests[tracked.TrackingId] = tracked;
+                _requestIdToActive[tracked.Request.RequestId] = tracked;
+
+                if (tracked.IsLocalEndpointSnapshot)
+                    _isProcessingLocalRequest = true;
+
+                if (RimMindCoreMod.Settings.debugLogging)
+                    Log.Message($"[RimMind][Core] Processing request {tracked.Request.RequestId} (track={tracked.TrackingId}) " +
+                                $"for mod {modId}, priority={tracked.Request.Priority}, cooldown={cooldownTicks}t, " +
+                                $"active={_activeRequests.Count}/{maxConcurrent}");
+
+                FireRequest(tracked);
             }
         }
 
         private void TryProcessModQueue(string modId, int now)
         {
+            if (_isPaused) return;
+            if (_modCooldowns.TryGetValue(modId, out int nextAllowed) && now < nextAllowed)
+                return;
             if (!_modQueues.TryGetValue(modId, out var queue) || queue.Count == 0)
                 return;
 
-            if (_modCooldowns.TryGetValue(modId, out int nextAllowed) && now < nextAllowed)
-                return;
+            ProcessAllQueues(now);
+        }
 
-            var settings = RimMindCoreMod.Settings;
-
-            while (queue.Count > 0)
+        private void FireRequest(TrackedRequest tracked)
+        {
+            Task.Run(async () =>
             {
-                var pending = queue.Peek();
-
-                if (pending.Request.ExpireAtTicks > 0 && now > pending.Request.ExpireAtTicks)
+                AIResponse response;
+                try
                 {
-                    queue.Dequeue();
-                    if (settings.debugLogging)
-                        Log.Message($"[RimMind][Core] Expired request {pending.Request.RequestId} skipped (enqueued at tick, expired at {pending.Request.ExpireAtTicks}, now={now})");
-                    continue;
+                    response = await tracked.Client.SendAsync(tracked.Request);
+                }
+                catch (Exception ex)
+                {
+                    AIRequestQueue.LogFromBackground(
+                        $"[RimMind] SendAsync threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true);
+                    response = AIResponse.Failure(tracked.Request.RequestId, ex.Message);
                 }
 
-                int cooldownTicks = GetModCooldownTicks(modId);
-                _modCooldowns[modId] = now + cooldownTicks;
-
-                var req = queue.Dequeue();
-
-                if (settings.debugLogging)
-                    Log.Message($"[RimMind][Core] Processing request {req.Request.RequestId} for mod {modId}, cooldown={cooldownTicks} ticks");
-
-                Task.Run(async () =>
+                long queueWaitMs = 0;
+                if (tracked.StartedProcessingAtTick > 0 && tracked.EnqueuedAtTick > 0)
                 {
-                    var response = await req.Client.SendAsync(req.Request);
-                    _results.Enqueue((response, req.Callback));
-                });
+                    queueWaitMs = (tracked.StartedProcessingAtTick - tracked.EnqueuedAtTick) * 16L;
+                }
 
-                break;
+                response.AttemptCount = tracked.AttemptCount;
+                response.QueueWaitMs = queueWaitMs;
+                response.Priority = tracked.Request.Priority;
+
+                bool shouldRetry = !response.Success
+                    && tracked.AttemptCount < tracked.MaxAttempts
+                    && IsTransientError(response.Error);
+
+                _instance!._pendingFireResults.Enqueue(new PendingFireResult
+                {
+                    Kind = shouldRetry ? FireResultKind.Retry : FireResultKind.Complete,
+                    Tracked = tracked,
+                    Response = response,
+                });
+            });
+        }
+
+        private void ProcessFireResult(PendingFireResult result)
+        {
+            var tracked = result.Tracked;
+
+            _activeRequests.Remove(tracked.TrackingId);
+            _requestIdToActive.Remove(tracked.Request.RequestId);
+
+            if (tracked.IsLocalEndpointSnapshot)
+                _isProcessingLocalRequest = false;
+
+            if (result.Kind == FireResultKind.Retry)
+            {
+                tracked.AttemptCount++;
+                tracked.State = AIRequestState.Queued;
+                tracked.StartedProcessingAtTick = 0;
+
+                string modId = tracked.Request.ModId;
+                if (!_modQueues.TryGetValue(modId, out var queue))
+                {
+                    queue = new List<TrackedRequest>();
+                    _modQueues[modId] = queue;
+                }
+
+                int insertIdx = queue.FindIndex(t => t.Request.Priority > tracked.Request.Priority);
+                if (insertIdx >= 0)
+                    queue.Insert(insertIdx, tracked);
+                else
+                    queue.Add(tracked);
+
+                if (RimMindCoreMod.Settings.debugLogging)
+                    Log.Message($"[RimMind] Retrying request {tracked.Request.RequestId} (attempt {tracked.AttemptCount}/{tracked.MaxAttempts})");
+            }
+            else
+            {
+                _results.Enqueue((result.Response, tracked.Callback));
             }
         }
 
-        public void EnqueueImmediate(AIRequest request, Action<AIResponse> callback, IAIClient client)
+        private void CheckActiveRequestTimeouts()
         {
-            var settings = RimMindCoreMod.Settings;
-            if (settings.debugLogging)
-                Log.Message($"[RimMind][Core] Immediate request {request.RequestId} for mod {request.ModId}, bypassing queue");
+            if (_activeRequests.Count == 0) return;
 
-            Task.Run(async () =>
+            int now = Find.TickManager.TicksGame;
+            int timeoutMs = RimMindCoreMod.Settings.requestTimeoutMs;
+            int timeoutTicks = timeoutMs / 16;
+
+            var timedOut = new List<TrackedRequest>();
+
+            foreach (var kvp in _activeRequests)
             {
-                var response = await client.SendAsync(request);
-                _results.Enqueue((response, callback));
-            });
+                var tracked = kvp.Value;
+                if (tracked.StartedProcessingAtTick > 0 && now - tracked.StartedProcessingAtTick > timeoutTicks)
+                {
+                    timedOut.Add(tracked);
+                }
+            }
+
+            foreach (var tracked in timedOut)
+            {
+                _activeRequests.Remove(tracked.TrackingId);
+                _requestIdToActive.Remove(tracked.Request.RequestId);
+
+                if (tracked.IsLocalEndpointSnapshot)
+                    _isProcessingLocalRequest = false;
+
+                var response = AIResponse.Failure(tracked.Request.RequestId,
+                    $"Request timed out after {timeoutMs}ms");
+                response.AttemptCount = tracked.AttemptCount;
+                response.Priority = tracked.Request.Priority;
+                response.State = AIRequestState.Error;
+
+                _results.Enqueue((response, tracked.Callback));
+
+                if (RimMindCoreMod.Settings.debugLogging)
+                    Log.Message($"[RimMind][Core] Request {tracked.Request.RequestId} timed out after {timeoutTicks} ticks");
+            }
         }
+
+        private static bool IsTransientError(string error)
+        {
+            if (string.IsNullOrEmpty(error)) return false;
+            string lower = error.ToLowerInvariant();
+            return lower.Contains("timeout")
+                || lower.Contains("connection")
+                || lower.Contains("network")
+                || lower.Contains("503")
+                || lower.Contains("502")
+                || lower.Contains("429")
+                || lower.Contains("rate limit");
+        }
+
+        public bool CancelRequest(string requestId)
+        {
+            if (_requestIdToActive.TryGetValue(requestId, out var active))
+            {
+                active.State = AIRequestState.Cancelled;
+                _activeRequests.Remove(active.TrackingId);
+                _requestIdToActive.Remove(requestId);
+
+                if (active.IsLocalEndpointSnapshot)
+                    _isProcessingLocalRequest = false;
+
+                var response = AIResponse.Cancelled(requestId, "Cancelled by user");
+                response.Priority = active.Request.Priority;
+                _results.Enqueue((response, active.Callback));
+                return true;
+            }
+
+            foreach (var kvp in _modQueues)
+            {
+                var queue = kvp.Value;
+                int idx = queue.FindIndex(t => t.Request.RequestId == requestId);
+                if (idx >= 0)
+                {
+                    var tracked = queue[idx];
+                    queue.RemoveAt(idx);
+                    var response = AIResponse.Cancelled(requestId, "Cancelled by user");
+                    response.Priority = tracked.Request.Priority;
+                    _results.Enqueue((response, tracked.Callback));
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void PauseQueue() => _isPaused = true;
+
+        public void ResumeQueue() => _isPaused = false;
+
+        public bool IsPaused => _isPaused;
+
+        public int ActiveRequestCount => _activeRequests.Count;
+
+        public bool IsLocalModelBusy => _isProcessingLocalRequest;
+
+        public IReadOnlyList<TrackedRequest> GetActiveRequests()
+            => _activeRequests.Values.ToList();
 
         private int GetModCooldownTicks(string modId)
         {
@@ -190,18 +500,35 @@ namespace RimMind.Core.Internal
             return result;
         }
 
-        private struct PendingRequest
+        public IReadOnlyList<TrackedRequest> GetQueuedRequests(string modId)
         {
-            public AIRequest Request;
-            public Action<AIResponse> Callback;
-            public IAIClient Client;
+            if (!_modQueues.TryGetValue(modId, out var queue)) return new List<TrackedRequest>();
+            return queue.ToList();
+        }
 
-            public PendingRequest(AIRequest request, Action<AIResponse> callback, IAIClient client)
-            {
-                Request = request;
-                Callback = callback;
-                Client = client;
-            }
+        public IReadOnlyList<TrackedRequest> GetAllQueuedRequests()
+        {
+            var result = new List<TrackedRequest>();
+            foreach (var kvp in _modQueues)
+                result.AddRange(kvp.Value);
+            return result;
+        }
+
+        public int TotalQueuedCount => _modQueues.Values.Sum(q => q.Count);
+
+        public class TrackedRequest
+        {
+            public int TrackingId;
+            public AIRequest Request = null!;
+            public Action<AIResponse> Callback = null!;
+            public IAIClient Client = null!;
+            public bool IsLocalEndpointSnapshot;
+            public AIRequestState State;
+            public int EnqueuedAtTick;
+            public long EnqueuedAtMs;
+            public int StartedProcessingAtTick;
+            public int AttemptCount;
+            public int MaxAttempts;
         }
     }
 }
