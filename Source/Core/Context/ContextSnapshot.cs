@@ -17,6 +17,12 @@ namespace RimMind.Core.Context
         public string[] IncludedKeys = new string[0];
         public string[] TrimmedKeys = new string[0];
         public float BudgetValue;
+        public Dictionary<string, bool> CacheHitEvents = new Dictionary<string, bool>();
+        public Dictionary<string, int> KeyChangeCounts = new Dictionary<string, int>();
+        public Dictionary<string, float> KeyScores = new Dictionary<string, float>();
+        public int DiffCount;
+        public long BuildStartTicks;
+        public Dictionary<string, long> LatencyByLayerMs = new Dictionary<string, long>();
     }
 
     public class ContextLayerMeta

@@ -22,23 +22,23 @@ namespace RimMind.Core.UI
     /// </summary>
     public static class RimMindCoreSettingsUI
     {
-        private const float TabBarHeight  = 32f;
-        private const float TabBarGap     = 6f;
-        private const float TabMinWidth   = 120f;
-        private const float TabGap        = 4f;
+        private const float TabBarHeight = 32f;
+        private const float TabBarGap = 6f;
+        private const float TabMinWidth = 120f;
+        private const float TabGap = 4f;
 
         private static string _curTab = "api";
         private static float _cachedTabBarHeight = TabBarHeight;
 
         // API tab state
-        private static bool   _showApiKey;
-        private static string _testStatus      = "";
-        private static Color  _testStatusColor = Color.white;
+        private static bool _showApiKey;
+        private static string _testStatus = "";
+        private static Color _testStatusColor = Color.white;
         private static Vector2 _apiScroll;
 
         // Context tab state
         private static ContextPreset _selectedPreset = ContextPreset.Custom;
-        private static Vector2       _contextScroll;
+        private static Vector2 _contextScroll;
 
         // Prompts tab state
         private static Vector2 _promptsScroll;
@@ -60,8 +60,8 @@ namespace RimMind.Core.UI
 
             switch (_curTab)
             {
-                case "api":     DrawApiTab(content);     break;
-                case "queue":   DrawQueueTab(content);   break;
+                case "api": DrawApiTab(content); break;
+                case "queue": DrawQueueTab(content); break;
                 case "context": DrawContextTab(content); break;
                 case "prompts": DrawPromptsTab(content); break;
                 default:
@@ -181,9 +181,9 @@ namespace RimMind.Core.UI
                 listing.Label("  " + "RimMind.Core.Settings.ApiKey.Desc".Translate());
                 GUI.color = Color.white;
                 {
-                    Rect row    = listing.GetRect(26f);
-                    float btnW  = 52f;
-                    Rect field  = new Rect(row.x, row.y, row.width - btnW - 4f, row.height);
+                    Rect row = listing.GetRect(26f);
+                    float btnW = 52f;
+                    Rect field = new Rect(row.x, row.y, row.width - btnW - 4f, row.height);
                     Rect toggle = new Rect(field.xMax + 4f, row.y, btnW, row.height);
 
                     if (_showApiKey)
@@ -226,9 +226,9 @@ namespace RimMind.Core.UI
                 listing.Label("  " + "RimMind.Core.Settings.Player2.ApiKeyDesc".Translate());
                 GUI.color = Color.white;
                 {
-                    Rect row    = listing.GetRect(26f);
-                    float btnW  = 52f;
-                    Rect field  = new Rect(row.x, row.y, row.width - btnW - 4f, row.height);
+                    Rect row = listing.GetRect(26f);
+                    float btnW = 52f;
+                    Rect field = new Rect(row.x, row.y, row.width - btnW - 4f, row.height);
                     Rect toggle = new Rect(field.xMax + 4f, row.y, btnW, row.height);
 
                     if (_showApiKey)
@@ -275,8 +275,8 @@ namespace RimMind.Core.UI
 
             // ── 测试连接 ──────────────────────────────────────────────────────
             {
-                Rect row    = listing.GetRect(28f);
-                Rect btn    = new Rect(row.x, row.y, 110f, row.height);
+                Rect row = listing.GetRect(28f);
+                Rect btn = new Rect(row.x, row.y, 110f, row.height);
                 Rect status = new Rect(btn.xMax + 8f, row.y + 4f, row.width - 120f, row.height);
                 if (Widgets.ButtonText(btn, "RimMind.Core.Settings.TestConnection".Translate()))
                     RunConnectionTest(s);
@@ -349,7 +349,7 @@ namespace RimMind.Core.UI
         {
             if (s.provider == AIProvider.Player2)
             {
-                _testStatus      = "RimMind.Core.Settings.Status.Testing".Translate();
+                _testStatus = "RimMind.Core.Settings.Status.Testing".Translate();
                 _testStatusColor = Color.yellow;
 
                 Task.Run(async () =>
@@ -361,7 +361,7 @@ namespace RimMind.Core.UI
                         {
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus      = "RimMind.Core.Settings.Player2.NotAvailable".Translate();
+                                _testStatus = "RimMind.Core.Settings.Player2.NotAvailable".Translate();
                                 _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                             });
                             return;
@@ -382,7 +382,7 @@ namespace RimMind.Core.UI
                             var tok = response.TokensUsed;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus      = $"✓ {content} ({tok} tok)";
+                                _testStatus = $"✓ {content} ({tok} tok)";
                                 _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
                             });
                         }
@@ -391,7 +391,7 @@ namespace RimMind.Core.UI
                             var error = response.Error;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus      = $"✗ {error}";
+                                _testStatus = $"✗ {error}";
                                 _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                             });
                         }
@@ -401,7 +401,7 @@ namespace RimMind.Core.UI
                         var msg = ex.Message;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus      = $"✗ {msg}";
+                            _testStatus = $"✗ {msg}";
                             _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                         });
                     }
@@ -411,17 +411,17 @@ namespace RimMind.Core.UI
 
             if (!s.IsOpenAIConfigured())
             {
-                _testStatus      = "RimMind.Core.Settings.Status.NotConfigured".Translate();
+                _testStatus = "RimMind.Core.Settings.Status.NotConfigured".Translate();
                 _testStatusColor = Color.yellow;
                 return;
             }
 
-            _testStatus      = "RimMind.Core.Settings.Status.Testing".Translate();
+            _testStatus = "RimMind.Core.Settings.Status.Testing".Translate();
             _testStatusColor = Color.yellow;
 
             string endpoint = FormatEndpoint(s.apiEndpoint);
-            string apiKey   = s.apiKey;
-            string model    = s.modelName;
+            string apiKey = s.apiKey;
+            string model = s.modelName;
             Log.Message($"[RimMind] Test connection → {endpoint}  model={model}");
 
             Task.Run(async () =>
@@ -430,26 +430,26 @@ namespace RimMind.Core.UI
                 {
                     var body = new
                     {
-                        model    = model,
+                        model = model,
                         messages = new[]
                         {
                             new { role = "user", content = (string)"RimMind.Core.Settings.TestMessage".Translate() }
                         },
-                        max_tokens  = 60,
+                        max_tokens = 60,
                         temperature = 0.7f,
-                        stream      = false,
+                        stream = false,
                     };
                     string json = JsonConvert.SerializeObject(body);
 
                     string text = await PostAsync(endpoint, json, apiKey);
 
-                    var    jobj   = JObject.Parse(text);
-                    string reply  = jobj["choices"]?[0]?["message"]?["content"]?.ToString() ?? "RimMind.Core.UI.Empty".Translate();
-                    int    tokens = jobj["usage"]?["total_tokens"]?.Value<int>() ?? 0;
+                    var jobj = JObject.Parse(text);
+                    string reply = jobj["choices"]?[0]?["message"]?["content"]?.ToString() ?? "RimMind.Core.UI.Empty".Translate();
+                    int tokens = jobj["usage"]?["total_tokens"]?.Value<int>() ?? 0;
 
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        _testStatus      = $"✓ {reply.Trim()} ({tokens} tok)";
+                        _testStatus = $"✓ {reply.Trim()} ({tokens} tok)";
                         _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
                     });
                 }
@@ -459,7 +459,7 @@ namespace RimMind.Core.UI
                     var msg = ex.Message;
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        _testStatus      = $"✗ {msg}";
+                        _testStatus = $"✗ {msg}";
                         _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                     });
                 }
@@ -495,7 +495,7 @@ namespace RimMind.Core.UI
                 webRequest.result == UnityEngine.Networking.UnityWebRequest.Result.ProtocolError)
             {
                 string body = webRequest.downloadHandler?.text ?? "";
-                string err  = body.Length > 0 ? body : webRequest.error;
+                string err = body.Length > 0 ? body : webRequest.error;
                 throw new Exception($"HTTP {webRequest.responseCode}: {err}");
             }
 
@@ -734,8 +734,8 @@ namespace RimMind.Core.UI
             listing.Gap(12f);
 
             // ── 两栏复选框 ───────────────────────────────────────────────────
-            float colW   = (listing.ColumnWidth - 20f) / 2f;
-            Rect anchor  = listing.GetRect(0f);
+            float colW = (listing.ColumnWidth - 20f) / 2f;
+            Rect anchor = listing.GetRect(0f);
 
             var left = new Listing_Standard();
             left.Begin(new Rect(anchor.x, anchor.y, colW, 9999f));
@@ -743,31 +743,31 @@ namespace RimMind.Core.UI
             left.Label("RimMind.Core.Context.PawnInfo".Translate());
             GUI.color = Color.white;
             left.Gap(4f);
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeRace".Translate(),           ref ctx.IncludeRace,           "RimMind.Core.Context.IncludeRace.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeAge".Translate(),            ref ctx.IncludeAge,            "RimMind.Core.Context.IncludeAge.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeGender".Translate(),         ref ctx.IncludeGender,         "RimMind.Core.Context.IncludeGender.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeBackstory".Translate(),      ref ctx.IncludeBackstory,      "RimMind.Core.Context.IncludeBackstory.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeIdeology".Translate(),       ref ctx.IncludeIdeology,       "RimMind.Core.Context.IncludeIdeology.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeTraits".Translate(),         ref ctx.IncludeTraits,         "RimMind.Core.Context.IncludeTraits.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeSkills".Translate(),         ref ctx.IncludeSkills,         "RimMind.Core.Context.IncludeSkills.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeRace".Translate(), ref ctx.IncludeRace, "RimMind.Core.Context.IncludeRace.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeAge".Translate(), ref ctx.IncludeAge, "RimMind.Core.Context.IncludeAge.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeGender".Translate(), ref ctx.IncludeGender, "RimMind.Core.Context.IncludeGender.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeBackstory".Translate(), ref ctx.IncludeBackstory, "RimMind.Core.Context.IncludeBackstory.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeIdeology".Translate(), ref ctx.IncludeIdeology, "RimMind.Core.Context.IncludeIdeology.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeTraits".Translate(), ref ctx.IncludeTraits, "RimMind.Core.Context.IncludeTraits.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeSkills".Translate(), ref ctx.IncludeSkills, "RimMind.Core.Context.IncludeSkills.Desc".Translate());
             if (ctx.IncludeSkills)
             {
                 left.Label($"  {"RimMind.Core.Context.MinSkillLevel".Translate()}: {ctx.MinSkillLevel}");
                 ctx.MinSkillLevel = (int)left.Slider(ctx.MinSkillLevel, 1f, 15f);
             }
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeHealth".Translate(),         ref ctx.IncludeHealth,         "RimMind.Core.Context.IncludeHealth.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeCapacities".Translate(),     ref ctx.IncludeCapacities,     "RimMind.Core.Context.IncludeCapacities.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeMood".Translate(),           ref ctx.IncludeMood,           "RimMind.Core.Context.IncludeMood.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeMoodThoughts".Translate(),   ref ctx.IncludeMoodThoughts,   "RimMind.Core.Context.IncludeMoodThoughts.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeCurrentJob".Translate(),     ref ctx.IncludeCurrentJob,     "RimMind.Core.Context.IncludeCurrentJob.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeHealth".Translate(), ref ctx.IncludeHealth, "RimMind.Core.Context.IncludeHealth.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeCapacities".Translate(), ref ctx.IncludeCapacities, "RimMind.Core.Context.IncludeCapacities.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeMood".Translate(), ref ctx.IncludeMood, "RimMind.Core.Context.IncludeMood.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeMoodThoughts".Translate(), ref ctx.IncludeMoodThoughts, "RimMind.Core.Context.IncludeMoodThoughts.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeCurrentJob".Translate(), ref ctx.IncludeCurrentJob, "RimMind.Core.Context.IncludeCurrentJob.Desc".Translate());
             left.CheckboxLabeled("RimMind.Core.Context.IncludeWorkPriorities".Translate(), ref ctx.IncludeWorkPriorities, "RimMind.Core.Context.IncludeWorkPriorities.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeEquipment".Translate(),      ref ctx.IncludeEquipment,      "RimMind.Core.Context.IncludeEquipment.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeInventory".Translate(),      ref ctx.IncludeInventory,      "RimMind.Core.Context.IncludeInventory.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeLocation".Translate(),       ref ctx.IncludeLocation,       "RimMind.Core.Context.IncludeLocation.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeRelations".Translate(),      ref ctx.IncludeRelations,      "RimMind.Core.Context.IncludeRelations.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeGenes".Translate(),          ref ctx.IncludeGenes,          "RimMind.Core.Context.IncludeGenes.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeCombatStatus".Translate(),   ref ctx.IncludeCombatStatus,   "RimMind.Core.Context.IncludeCombatStatus.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeSurroundings".Translate(),   ref ctx.IncludeSurroundings,   "RimMind.Core.Context.IncludeSurroundings.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeEquipment".Translate(), ref ctx.IncludeEquipment, "RimMind.Core.Context.IncludeEquipment.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeInventory".Translate(), ref ctx.IncludeInventory, "RimMind.Core.Context.IncludeInventory.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeLocation".Translate(), ref ctx.IncludeLocation, "RimMind.Core.Context.IncludeLocation.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeRelations".Translate(), ref ctx.IncludeRelations, "RimMind.Core.Context.IncludeRelations.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeGenes".Translate(), ref ctx.IncludeGenes, "RimMind.Core.Context.IncludeGenes.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeCombatStatus".Translate(), ref ctx.IncludeCombatStatus, "RimMind.Core.Context.IncludeCombatStatus.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Core.Context.IncludeSurroundings".Translate(), ref ctx.IncludeSurroundings, "RimMind.Core.Context.IncludeSurroundings.Desc".Translate());
             float leftH = left.CurHeight;
             left.End();
 
@@ -777,14 +777,14 @@ namespace RimMind.Core.UI
             right.Label("RimMind.Core.Context.Environment".Translate());
             GUI.color = Color.white;
             right.Gap(4f);
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeGameTime".Translate(),        ref ctx.IncludeGameTime,        "RimMind.Core.Context.IncludeGameTime.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Core.Context.IncludeGameTime".Translate(), ref ctx.IncludeGameTime, "RimMind.Core.Context.IncludeGameTime.Desc".Translate());
             right.CheckboxLabeled("RimMind.Core.Context.IncludeColonistCount".Translate(), ref ctx.IncludeColonistCount, "RimMind.Core.Context.IncludeColonistCount.Desc".Translate());
             right.CheckboxLabeled("RimMind.Core.Context.IncludeColonistNames".Translate(), ref ctx.IncludeColonistNames, "RimMind.Core.Context.IncludeColonistNames.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeWealth".Translate(),        ref ctx.IncludeWealth,        "RimMind.Core.Context.IncludeWealth.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeFood".Translate(),          ref ctx.IncludeFood,          "RimMind.Core.Context.IncludeFood.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeSeason".Translate(),        ref ctx.IncludeSeason,        "RimMind.Core.Context.IncludeSeason.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeWeather".Translate(),       ref ctx.IncludeWeather,       "RimMind.Core.Context.IncludeWeather.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeThreats".Translate(),       ref ctx.IncludeThreats,       "RimMind.Core.Context.IncludeThreats.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Core.Context.IncludeWealth".Translate(), ref ctx.IncludeWealth, "RimMind.Core.Context.IncludeWealth.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Core.Context.IncludeFood".Translate(), ref ctx.IncludeFood, "RimMind.Core.Context.IncludeFood.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Core.Context.IncludeSeason".Translate(), ref ctx.IncludeSeason, "RimMind.Core.Context.IncludeSeason.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Core.Context.IncludeWeather".Translate(), ref ctx.IncludeWeather, "RimMind.Core.Context.IncludeWeather.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Core.Context.IncludeThreats".Translate(), ref ctx.IncludeThreats, "RimMind.Core.Context.IncludeThreats.Desc".Translate());
             float rightH = right.CurHeight;
             right.End();
 
@@ -811,16 +811,16 @@ namespace RimMind.Core.UI
         {
             var presets = new[] { ContextPreset.Minimal, ContextPreset.Standard, ContextPreset.Full, ContextPreset.Custom };
             const float gap = 10f;
-            const float h   = 62f;
-            float totalW    = listing.ColumnWidth;
-            float w         = (totalW - gap * (presets.Length - 1)) / presets.Length;
-            Rect row        = listing.GetRect(h);
+            const float h = 62f;
+            float totalW = listing.ColumnWidth;
+            float w = (totalW - gap * (presets.Length - 1)) / presets.Length;
+            Rect row = listing.GetRect(h);
 
             for (int i = 0; i < presets.Length; i++)
             {
-                var  preset   = presets[i];
+                var preset = presets[i];
                 bool selected = _selectedPreset == preset;
-                Rect box      = new Rect(row.x + (w + gap) * i, row.y, w, h);
+                Rect box = new Rect(row.x + (w + gap) * i, row.y, w, h);
 
                 Widgets.DrawBoxSolid(box,
                     selected ? new Color(0.2f, 0.4f, 0.6f, 0.85f) : new Color(0.18f, 0.18f, 0.18f, 0.55f));
@@ -849,9 +849,9 @@ namespace RimMind.Core.UI
                                        inner.width, inner.height - Text.LineHeight - 2f),
                     $"RimMind.Core.Context.Preset.{preset}.Desc".Translate());
 
-                Text.Font   = GameFont.Small;
+                Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color   = Color.white;
+                GUI.color = Color.white;
             }
 
             listing.Gap(4f);
@@ -878,7 +878,7 @@ namespace RimMind.Core.UI
         {
             return p switch
             {
-                AIProvider.OpenAI  => "RimMind.Core.Settings.Provider.OpenAI".Translate(),
+                AIProvider.OpenAI => "RimMind.Core.Settings.Provider.OpenAI".Translate(),
                 AIProvider.Player2 => "RimMind.Core.Settings.Provider.Player2".Translate(),
                 _ => p.ToString()
             };

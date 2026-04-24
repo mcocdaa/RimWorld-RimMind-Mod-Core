@@ -47,27 +47,27 @@ namespace RimMind.Core.Settings
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Values.Look(ref provider,           "provider",            AIProvider.OpenAI);
-            Scribe_Values.Look(ref apiKey,               "apiKey",               string.Empty);
-            Scribe_Values.Look(ref apiEndpoint,          "apiEndpoint",          "https://api.deepseek.com/v1");
-            Scribe_Values.Look(ref modelName,            "modelName",            "deepseek-chat");
-            Scribe_Values.Look(ref player2RemoteUrl,     "player2RemoteUrl",     "https://api.player2.game");
-            Scribe_Values.Look(ref forceJsonMode,        "forceJsonMode",        true);
-            Scribe_Values.Look(ref maxTokens,            "maxTokens",            800);
-            Scribe_Values.Look(ref defaultTemperature,   "defaultTemperature",   0.7f);
-            Scribe_Values.Look(ref debugLogging,         "debugLogging",         false);
-            Scribe_Deep.Look(ref Context,                "Context");
+            Scribe_Values.Look(ref provider, "provider", AIProvider.OpenAI);
+            Scribe_Values.Look(ref apiKey, "apiKey", string.Empty);
+            Scribe_Values.Look(ref apiEndpoint, "apiEndpoint", "https://api.deepseek.com/v1");
+            Scribe_Values.Look(ref modelName, "modelName", "deepseek-chat");
+            Scribe_Values.Look(ref player2RemoteUrl, "player2RemoteUrl", "https://api.player2.game");
+            Scribe_Values.Look(ref forceJsonMode, "forceJsonMode", true);
+            Scribe_Values.Look(ref maxTokens, "maxTokens", 800);
+            Scribe_Values.Look(ref defaultTemperature, "defaultTemperature", 0.7f);
+            Scribe_Values.Look(ref debugLogging, "debugLogging", false);
+            Scribe_Deep.Look(ref Context, "Context");
             Context ??= new ContextSettings();
-            Scribe_Values.Look(ref customPawnPrompt,     "customPawnPrompt",     string.Empty);
-            Scribe_Values.Look(ref customMapPrompt,      "customMapPrompt",      string.Empty);
+            Scribe_Values.Look(ref customPawnPrompt, "customPawnPrompt", string.Empty);
+            Scribe_Values.Look(ref customMapPrompt, "customMapPrompt", string.Empty);
             Scribe_Values.Look(ref requestOverlayEnabled, "requestOverlayEnabled", true);
-            Scribe_Values.Look(ref requestOverlayX,      "requestOverlayX",      20f);
-            Scribe_Values.Look(ref requestOverlayY,      "requestOverlayY",      20f);
-            Scribe_Values.Look(ref requestOverlayW,      "requestOverlayW",      300f);
-            Scribe_Values.Look(ref requestOverlayH,      "requestOverlayH",      200f);
+            Scribe_Values.Look(ref requestOverlayX, "requestOverlayX", 20f);
+            Scribe_Values.Look(ref requestOverlayY, "requestOverlayY", 20f);
+            Scribe_Values.Look(ref requestOverlayW, "requestOverlayW", 300f);
+            Scribe_Values.Look(ref requestOverlayH, "requestOverlayH", 200f);
             Scribe_Values.Look(ref maxConcurrentRequests, "maxConcurrentRequests", 3);
-            Scribe_Values.Look(ref maxRetryCount,        "maxRetryCount",        2);
-            Scribe_Values.Look(ref requestTimeoutMs,     "requestTimeoutMs",     120000);
+            Scribe_Values.Look(ref maxRetryCount, "maxRetryCount", 2);
+            Scribe_Values.Look(ref requestTimeoutMs, "requestTimeoutMs", 120000);
         }
     }
 }

@@ -22,13 +22,13 @@ namespace RimMind.Core.Debug
             var request = new AIRequest
             {
                 SystemPrompt = "You are a test assistant. Always reply in JSON format.",
-                UserPrompt   = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}",
-                MaxTokens    = 60,
-                Temperature  = 0f,
-                RequestId    = "Debug_TestConnection",
-                ModId        = "Debug",
+                UserPrompt = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}",
+                MaxTokens = 60,
+                Temperature = 0f,
+                RequestId = "Debug_TestConnection",
+                ModId = "Debug",
                 ExpireAtTicks = Find.TickManager.TicksGame + 3600,
-                Priority     = AIRequestPriority.High,
+                Priority = AIRequestPriority.High,
             };
 
             RimMindAPI.RequestImmediate(request, response =>

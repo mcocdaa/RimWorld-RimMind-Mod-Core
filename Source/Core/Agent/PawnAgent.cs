@@ -29,10 +29,10 @@ namespace RimMind.Core.Agent
         private Action<ActionEvent>? _actionEventHandler;
         private int _lastThinkTick = -ThinkCooldownTicks;
 
-        private List<ChatMessage>?    _lastMessages;
+        private List<ChatMessage>? _lastMessages;
         private List<StructuredTool>? _lastTools;
-        private string?               _lastSchema;
-        private int                   _toolCallDepth;
+        private string? _lastSchema;
+        private int _toolCallDepth;
 
         public AgentGoalStack GoalStack => _goalStack;
         public IReadOnlyList<BehaviorRecord> BehaviorHistory => _behaviorHistory.ToList();

@@ -2,6 +2,7 @@ using RimMind.Core.Client.Player2;
 using RimMind.Core.Context;
 using RimMind.Core.Settings;
 using RimMind.Core;
+using Verse;
 
 namespace RimMind.Core.Npc
 {

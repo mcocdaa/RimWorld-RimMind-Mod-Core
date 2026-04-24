@@ -206,6 +206,7 @@ namespace RimMind.Core
             {
                 try
                 {
+                    bool parseSuccess = response.Success && !string.IsNullOrEmpty(response.Content);
                     Telemetry.Record(new TelemetryRecord
                     {
                         NpcId = request.NpcId,
@@ -225,6 +226,18 @@ namespace RimMind.Core
                             { "L3", snapshot.Meta.L3Tokens },
                             { "L4", snapshot.Meta.L4Tokens },
                         },
+                        KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0
+                            ? new Dictionary<string, int>(snapshot.KeyChangeCounts) : null,
+                        CacheHitRate = snapshot.CacheHitEvents.Count > 0
+                            ? ComputeCacheHitRatesFromSnapshot(snapshot) : null,
+                        ScoreDistribution = snapshot.KeyScores.Count > 0
+                            ? new Dictionary<string, float>(snapshot.KeyScores) : null,
+                        DiffCount = snapshot.DiffCount,
+                        LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0
+                            ? new Dictionary<string, long>(snapshot.LatencyByLayerMs) : null,
+                        RequestLatencyMs = snapshot.BuildStartTicks > 0
+                            ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond : 0,
+                        ResponseParseSuccess = parseSuccess,
                         TimestampTicks = DateTime.Now.Ticks,
                     });
                 }
@@ -637,6 +650,29 @@ namespace RimMind.Core
             if (priority <= 3) return ContextLayer.L1_Baseline;
             if (priority <= 5) return ContextLayer.L2_Environment;
             return ContextLayer.L3_State;
+        }
+
+        private static Dictionary<string, float> ComputeCacheHitRatesFromSnapshot(ContextSnapshot snapshot)
+        {
+            if (snapshot.CacheHitEvents.Count == 0) return null;
+            var byLayer = new Dictionary<string, List<bool>>();
+            foreach (var kvp in snapshot.CacheHitEvents)
+            {
+                string layer = kvp.Key.StartsWith("L0") ? "L0"
+                    : kvp.Key.StartsWith("L1") ? "L1"
+                    : kvp.Key.StartsWith("L2") ? "L2"
+                    : kvp.Key.StartsWith("L3") ? "L3" : "L4";
+                if (!byLayer.ContainsKey(layer))
+                    byLayer[layer] = new List<bool>();
+                byLayer[layer].Add(kvp.Value);
+            }
+            var rates = new Dictionary<string, float>();
+            foreach (var kvp in byLayer)
+            {
+                if (kvp.Value.Count > 0)
+                    rates[kvp.Key] = (float)kvp.Value.Count(v => v) / kvp.Value.Count;
+            }
+            return rates.Count > 0 ? rates : null;
         }
 
         internal static IAIClient? GetClient()

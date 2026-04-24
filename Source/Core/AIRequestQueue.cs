@@ -99,7 +99,7 @@ namespace RimMind.Core.Internal
             while (_pendingLogs.TryDequeue(out var log))
             {
                 if (log.isWarning) Log.Warning(log.msg);
-                else               Log.Message(log.msg);
+                else Log.Message(log.msg);
             }
 
             while (_pendingFireResults.TryDequeue(out var fireResult))

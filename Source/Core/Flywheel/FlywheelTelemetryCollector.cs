@@ -20,6 +20,14 @@ namespace RimMind.Core.Flywheel
         public string[] KeysTrimmed;
         public Dictionary<string, int> LayerTokenBreakdown;
         public long TimestampTicks;
+        public Dictionary<string, int> KeyChangeFreq;
+        public Dictionary<string, float> CacheHitRate;
+        public Dictionary<string, float> ScoreDistribution;
+        public int DiffCount;
+        public float DiffMergeLatency;
+        public bool ResponseParseSuccess;
+        public Dictionary<string, long> LatencyByLayerMs;
+        public long RequestLatencyMs;
     }
 
     public class FlywheelTelemetryCollector
@@ -93,9 +101,46 @@ namespace RimMind.Core.Flywheel
                     { "L3", snapshot.Meta.L3Tokens },
                     { "L4", snapshot.Meta.L4Tokens },
                 },
+                KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0
+                    ? new Dictionary<string, int>(snapshot.KeyChangeCounts)
+                    : null,
+                CacheHitRate = ComputeCacheHitRates(snapshot),
+                ScoreDistribution = snapshot.KeyScores.Count > 0
+                    ? new Dictionary<string, float>(snapshot.KeyScores)
+                    : null,
+                DiffCount = snapshot.DiffCount,
+                LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0
+                    ? new Dictionary<string, long>(snapshot.LatencyByLayerMs)
+                    : null,
+                RequestLatencyMs = snapshot.BuildStartTicks > 0
+                    ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond
+                    : 0,
                 TimestampTicks = DateTime.Now.Ticks,
             };
             Record(record);
+        }
+
+        private static Dictionary<string, float> ComputeCacheHitRates(ContextSnapshot snapshot)
+        {
+            if (snapshot.CacheHitEvents.Count == 0) return null;
+            var byLayer = new Dictionary<string, List<bool>>();
+            foreach (var kvp in snapshot.CacheHitEvents)
+            {
+                string layer = kvp.Key.StartsWith("L0") ? "L0"
+                    : kvp.Key.StartsWith("L1") ? "L1"
+                    : kvp.Key.StartsWith("L2") ? "L2"
+                    : kvp.Key.StartsWith("L3") ? "L3" : "L4";
+                if (!byLayer.ContainsKey(layer))
+                    byLayer[layer] = new List<bool>();
+                byLayer[layer].Add(kvp.Value);
+            }
+            var rates = new Dictionary<string, float>();
+            foreach (var kvp in byLayer)
+            {
+                if (kvp.Value.Count > 0)
+                    rates[kvp.Key] = (float)kvp.Value.Count(v => v) / kvp.Value.Count;
+            }
+            return rates.Count > 0 ? rates : null;
         }
     }
 }

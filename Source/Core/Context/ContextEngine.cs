@@ -26,11 +26,14 @@ namespace RimMind.Core.Context
         private readonly Dictionary<string, List<ContextDiff>> _diffStore = new Dictionary<string, List<ContextDiff>>();
         private readonly Dictionary<string, Dictionary<string, string>> _keyLastValues = new Dictionary<string, Dictionary<string, string>>();
         private readonly LinkedList<string> _cacheOrder = new LinkedList<string>();
+        private readonly Dictionary<string, bool> _pendingCacheEvents = new Dictionary<string, bool>();
 
         public ContextEngine(HistoryManager historyManager)
         {
             _historyManager = historyManager;
         }
+
+        public BudgetScheduler GetScheduler() => _scheduler;
 
         private void TouchCache(string npcId)
         {
@@ -65,6 +68,7 @@ namespace RimMind.Core.Context
                 MaxTokens = request.MaxTokens,
                 Temperature = request.Temperature,
                 CurrentQuery = request.CurrentQuery,
+                BuildStartTicks = DateTime.Now.Ticks,
             };
 
             var pawn = FindPawnByNpcId(request.NpcId);
@@ -99,8 +103,18 @@ namespace RimMind.Core.Context
             snapshot.TrimmedKeys = trimmedKeyNames;
             snapshot.BudgetValue = budget;
 
+            foreach (var key in schedule.L2Keys.Concat(schedule.L3Keys))
+            {
+                if (key.CurrentScore > 0)
+                    snapshot.KeyScores[key.Key] = key.CurrentScore;
+            }
+
+            if (_diffStore.TryGetValue(request.NpcId, out var diffs))
+                snapshot.DiffCount = diffs.Count;
+
             var messages = new List<ChatMessage>();
 
+            long l0Start = DateTime.Now.Ticks;
             var l0Msg = BuildL0(request.NpcId, schedule.L0Keys, pawn);
             if (l0Msg != null)
             {
@@ -108,7 +122,9 @@ namespace RimMind.Core.Context
                 messages.Add(l0Msg);
                 snapshot.Meta.L0Tokens = EstimateTokens(l0Msg.Content);
             }
+            snapshot.LatencyByLayerMs["L0"] = (DateTime.Now.Ticks - l0Start) / TimeSpan.TicksPerMillisecond;
 
+            long l1Start = DateTime.Now.Ticks;
             var l1Msg = BuildL1(request.NpcId, schedule.L1Keys, pawn);
             if (l1Msg != null)
             {
@@ -116,6 +132,7 @@ namespace RimMind.Core.Context
                 messages.Add(l1Msg);
                 snapshot.Meta.L1Tokens = EstimateTokens(l1Msg.Content);
             }
+            snapshot.LatencyByLayerMs["L1"] = (DateTime.Now.Ticks - l1Start) / TimeSpan.TicksPerMillisecond;
 
             var l1DiffMsg = BuildDiffMessage(request.NpcId, ContextLayer.L1_Baseline);
             if (l1DiffMsg != null)
@@ -124,6 +141,7 @@ namespace RimMind.Core.Context
                 messages.Add(l1DiffMsg);
             }
 
+            long l2Start = DateTime.Now.Ticks;
             var l2Msg = BuildL2L3(schedule.L2Keys, pawn);
             if (l2Msg != null)
             {
@@ -137,7 +155,9 @@ namespace RimMind.Core.Context
                 messages.Add(l2Msg);
                 snapshot.Meta.L2Tokens = EstimateTokens(l2Msg.Content);
             }
+            snapshot.LatencyByLayerMs["L2"] = (DateTime.Now.Ticks - l2Start) / TimeSpan.TicksPerMillisecond;
 
+            long l3Start = DateTime.Now.Ticks;
             var l3Msg = BuildL2L3(schedule.L3Keys, pawn);
             if (l3Msg != null)
             {
@@ -151,6 +171,7 @@ namespace RimMind.Core.Context
                 messages.Add(l3Msg);
                 snapshot.Meta.L3Tokens = EstimateTokens(l3Msg.Content);
             }
+            snapshot.LatencyByLayerMs["L3"] = (DateTime.Now.Ticks - l3Start) / TimeSpan.TicksPerMillisecond;
 
             int maxRounds = schedule.MaxHistoryRounds;
             var history = _historyManager.GetHistory(request.NpcId, maxRounds);
@@ -175,6 +196,19 @@ namespace RimMind.Core.Context
             UpdateKeyValues(request.NpcId, filteredKeys, pawn);
 
             MergeExpiredDiffs(request.NpcId);
+
+            if (_pendingCacheEvents.Count > 0)
+            {
+                foreach (var kvp in _pendingCacheEvents)
+                    snapshot.CacheHitEvents[kvp.Key] = kvp.Value;
+                _pendingCacheEvents.Clear();
+            }
+
+            foreach (var key in filteredKeys)
+            {
+                if (key.UpdateCount > 0)
+                    snapshot.KeyChangeCounts[key.Key] = key.UpdateCount;
+            }
 
             return snapshot;
         }
@@ -228,7 +262,14 @@ namespace RimMind.Core.Context
         private ChatMessage? BuildL0(string npcId, List<KeyMeta> keys, Pawn? pawn)
         {
             if (_l0Cache.TryGetValue(npcId, out var cached))
+            {
+                foreach (var key in keys)
+                    _pendingCacheEvents[$"L0_{key.Key}"] = true;
                 return cached;
+            }
+
+            foreach (var key in keys)
+                _pendingCacheEvents[$"L0_{key.Key}"] = false;
 
             var sb = new StringBuilder();
 
@@ -283,7 +324,14 @@ namespace RimMind.Core.Context
             }
 
             if (!changed && _l1BlockCache.TryGetValue(npcId, out var existingBlocks))
+            {
+                foreach (var key in keys)
+                    _pendingCacheEvents[$"L1_{key.Key}"] = true;
                 return AssembleL1Message(existingBlocks);
+            }
+
+            foreach (var key in keys)
+                _pendingCacheEvents[$"L1_{key.Key}"] = false;
 
             if (!_l1BlockCache.TryGetValue(npcId, out var blocks))
             {

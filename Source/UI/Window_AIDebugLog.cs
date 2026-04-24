@@ -13,10 +13,10 @@ namespace RimMind.Core.UI
     public class Window_AIDebugLog : Window
     {
         private const float LeftWidth = 280f;
-        private const float Divider   = 6f;
+        private const float Divider = 6f;
 
         private static readonly Color ColorSuccess = new Color(0.4f, 0.9f, 0.4f);
-        private static readonly Color ColorError   = new Color(0.9f, 0.4f, 0.4f);
+        private static readonly Color ColorError = new Color(0.9f, 0.4f, 0.4f);
 
         private AIDebugEntry? _selected;
         private Vector2 _leftScroll;
@@ -27,10 +27,10 @@ namespace RimMind.Core.UI
 
         public Window_AIDebugLog()
         {
-            doCloseButton    = true;
-            doCloseX         = true;
-            resizeable       = true;
-            draggable        = true;
+            doCloseButton = true;
+            doCloseX = true;
+            resizeable = true;
+            draggable = true;
             preventCameraMotion = false;
         }
 
@@ -46,9 +46,9 @@ namespace RimMind.Core.UI
             Rect topBar = new Rect(inRect.x, inRect.y + 34f, inRect.width, 28f);
             DrawTopBar(topBar);
 
-            Rect body     = new Rect(inRect.x, topBar.yMax + 4f, inRect.width,
+            Rect body = new Rect(inRect.x, topBar.yMax + 4f, inRect.width,
                                      inRect.height - topBar.yMax - 4f - CloseButSize.y - 4f);
-            Rect leftRect  = new Rect(body.x, body.y, LeftWidth, body.height);
+            Rect leftRect = new Rect(body.x, body.y, LeftWidth, body.height);
             Rect rightRect = new Rect(body.x + LeftWidth + Divider, body.y,
                                       body.width - LeftWidth - Divider, body.height);
 
@@ -112,7 +112,7 @@ namespace RimMind.Core.UI
                 Rect textRect = new Rect(row.x + 8f, row.y + 2f, row.width - 10f, row.height - 4f);
 
                 string status = entry.IsError ? "✗" : "✓";
-                Widgets.Label(new Rect(textRect.x, textRect.y,      textRect.width, 18f),
+                Widgets.Label(new Rect(textRect.x, textRect.y, textRect.width, 18f),
                     $"{status} {entry.FormattedTime}  {entry.ElapsedMs}ms  [{entry.Priority}]");
                 Widgets.Label(new Rect(textRect.x, textRect.y + 18f, textRect.width, 18f),
                     entry.Source);

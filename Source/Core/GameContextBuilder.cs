@@ -125,7 +125,7 @@ namespace RimMind.Core.Internal
             sb.Append("RimMind.Core.Prompt.PawnStatusHeader".Translate(pawn.Name.ToStringShort) + "  ");
 
             var basics = new List<string>();
-            if (ctx.IncludeAge)    basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(pawn.ageTracker.AgeBiologicalYears));
+            if (ctx.IncludeAge) basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(pawn.ageTracker.AgeBiologicalYears));
             if (ctx.IncludeGender) basics.Add(pawn.gender.GetLabel());
             if (ctx.IncludeRace)
             {
@@ -134,8 +134,8 @@ namespace RimMind.Core.Internal
                 else
                     basics.Add(pawn.def.label);
             }
-            if (basics.Count > 0)  sb.AppendLine(string.Join("  ", basics));
-            else                   sb.AppendLine();
+            if (basics.Count > 0) sb.AppendLine(string.Join("  ", basics));
+            else sb.AppendLine();
 
             // 基因（需要 Biotech DLC）
             if (ctx.IncludeGenes && ModsConfig.BiotechActive && pawn.genes?.GenesListForReading != null)
@@ -472,8 +472,8 @@ namespace RimMind.Core.Internal
         {
             return wealth > 200000 ? "RimMind.Core.Prompt.Threat.Extreme".Translate()
                  : wealth > 100000 ? "RimMind.Core.Prompt.Threat.High".Translate()
-                 : wealth > 50000  ? "RimMind.Core.Prompt.Threat.Medium".Translate()
-                 :                   "RimMind.Core.Prompt.Threat.Low".Translate();
+                 : wealth > 50000 ? "RimMind.Core.Prompt.Threat.Medium".Translate()
+                 : "RimMind.Core.Prompt.Threat.Low".Translate();
         }
 
         // ── 基础游戏状态收集（回退路径） ────────────────────────────────────

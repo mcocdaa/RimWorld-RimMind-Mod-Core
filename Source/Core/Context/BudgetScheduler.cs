@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core.Flywheel;
 using Verse;
 
 namespace RimMind.Core.Context
@@ -22,6 +23,51 @@ namespace RimMind.Core.Context
         {
             _config = config ?? new BudgetSchedulerConfig();
             _relevanceProvider = relevanceProvider;
+        }
+
+        public void SubscribeParameterStore()
+        {
+            var store = FlywheelParameterStore.Instance;
+            if (store == null) return;
+            store.OnParameterChanged += OnParameterChanged;
+            ApplyStoreParameters(store);
+        }
+
+        private void OnParameterChanged(string key, float value)
+        {
+            switch (key)
+            {
+                case "w1":
+                    _config.W1 = value;
+                    _config.W2 = 1f - value;
+                    break;
+                case "w2":
+                    _config.W2 = value;
+                    _config.W1 = 1f - value;
+                    break;
+                case "Alpha":
+                    _config.Alpha = value;
+                    break;
+                case "AlphaSmooth":
+                    _config.AlphaSmooth = value;
+                    break;
+                case "PromoteThreshold":
+                    _config.PromoteThreshold = value;
+                    break;
+                case "DemoteThreshold":
+                    _config.DemoteThreshold = value;
+                    break;
+            }
+        }
+
+        private void ApplyStoreParameters(FlywheelParameterStore store)
+        {
+            _config.W1 = store.Get("w1");
+            _config.W2 = store.Get("w2");
+            _config.Alpha = store.Get("Alpha");
+            _config.AlphaSmooth = store.Get("AlphaSmooth");
+            _config.PromoteThreshold = store.Get("PromoteThreshold");
+            _config.DemoteThreshold = store.Get("DemoteThreshold");
         }
 
         public void SetRelevanceProvider(IRelevanceProvider provider)

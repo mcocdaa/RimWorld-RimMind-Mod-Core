@@ -344,9 +344,9 @@ namespace RimMind.Core.Client.OpenAI
             if (webRequest.result == UnityWebRequest.Result.ConnectionError ||
                 webRequest.result == UnityWebRequest.Result.ProtocolError)
             {
-                string body    = webRequest.downloadHandler.text;
+                string body = webRequest.downloadHandler.text;
                 string unityErr = webRequest.error ?? "";
-                string detail  = body.Length > 0 ? body : unityErr;
+                string detail = body.Length > 0 ? body : unityErr;
                 throw new AIHttpException(webRequest.responseCode, $"HTTP {webRequest.responseCode}: {detail}");
             }
 
