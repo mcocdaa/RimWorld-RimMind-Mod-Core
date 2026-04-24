@@ -8,8 +8,6 @@ namespace RimMind.Core.Agent
     {
         private Dictionary<string, float> _actionWeights = new Dictionary<string, float>();
 
-        public IReadOnlyDictionary<string, float> ActionWeights => _actionWeights;
-
         public void AdjustWeight(string action, float delta)
         {
             if (string.IsNullOrEmpty(action)) return;

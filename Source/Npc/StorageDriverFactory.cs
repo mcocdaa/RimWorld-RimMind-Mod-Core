@@ -23,7 +23,7 @@ namespace RimMind.Core.Npc
 
             if (s.provider == AIProvider.Player2)
             {
-                var client = GetPlayer2Client(s);
+                var client = RimMindAPI.GetPlayer2Client();
                 if (client != null && client.IsConfigured())
                 {
                     _cachedDriver = new HybridStorageDriver(client, historyManager);
@@ -39,11 +39,6 @@ namespace RimMind.Core.Npc
         {
             _cachedDriver = null;
             _cachedProvider = default;
-        }
-
-        private static Player2Client? GetPlayer2Client(RimMindCoreSettings s)
-        {
-            return RimMindAPI.GetPlayer2Client();
         }
     }
 }

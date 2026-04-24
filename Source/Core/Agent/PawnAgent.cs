@@ -38,7 +38,6 @@ namespace RimMind.Core.Agent
         public IReadOnlyList<BehaviorRecord> BehaviorHistory => _behaviorHistory.ToList();
         public StrategyOptimizer StrategyOptimizer => _strategyOptimizer;
         public PerceptionBuffer PerceptionBuffer => _perceptionBuffer;
-        public IReadOnlyList<PerceptionBufferEntry> PendingPerceptions => _pendingPerceptions;
 
         public bool IsActive => State == AgentState.Active;
 

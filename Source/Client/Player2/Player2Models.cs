@@ -102,57 +102,6 @@ namespace RimMind.Core.Client.Player2
         public string P2Key { get; set; } = string.Empty;
     }
 
-    internal class Player2StreamChunk
-    {
-        [JsonProperty("id")]
-        public string Id { get; set; } = string.Empty;
-
-        [JsonProperty("object")]
-        public string Object { get; set; } = string.Empty;
-
-        [JsonProperty("choices")]
-        public List<Player2StreamChoiceDto>? Choices { get; set; }
-    }
-
-    internal class Player2StreamChoiceDto
-    {
-        [JsonProperty("index")]
-        public int Index { get; set; }
-
-        [JsonProperty("delta")]
-        public Player2StreamDelta? Delta { get; set; }
-
-        [JsonProperty("finish_reason")]
-        public string? FinishReason { get; set; }
-    }
-
-    internal class Player2StreamDelta
-    {
-        [JsonProperty("role")]
-        public string? Role { get; set; }
-
-        [JsonProperty("content")]
-        public string? Content { get; set; }
-    }
-
-    internal class Player2StreamError
-    {
-        [JsonProperty("error")]
-        public Player2ErrorDetail? Error { get; set; }
-    }
-
-    internal class Player2ErrorDetail
-    {
-        [JsonProperty("message")]
-        public string Message { get; set; } = string.Empty;
-
-        [JsonProperty("type")]
-        public string Type { get; set; } = string.Empty;
-
-        [JsonProperty("code")]
-        public string? Code { get; set; }
-    }
-
     internal class Player2JoulesBalance
     {
         [JsonProperty("balance")]
