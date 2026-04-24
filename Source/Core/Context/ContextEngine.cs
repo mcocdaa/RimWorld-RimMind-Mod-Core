@@ -379,7 +379,7 @@ namespace RimMind.Core.Context
             {
                 existing.NewValue = newValue;
                 existing.Layer = layer;
-                existing.RoundsRemaining = 4;
+                existing.ExpireTick = (Find.TickManager?.TicksGame ?? 0) + ContextDiff.DefaultLifetimeTicks;
             }
             else
             {
@@ -390,7 +390,7 @@ namespace RimMind.Core.Context
                     OldValue = oldValue,
                     NewValue = newValue,
                     InsertedTick = Find.TickManager?.TicksGame ?? 0,
-                    RoundsRemaining = 4,
+                    ExpireTick = (Find.TickManager?.TicksGame ?? 0) + ContextDiff.DefaultLifetimeTicks,
                 });
             }
         }
@@ -399,7 +399,7 @@ namespace RimMind.Core.Context
         {
             if (!_diffStore.TryGetValue(npcId, out var diffs)) return;
 
-            var expired = diffs.Where(d => d.RoundsRemaining <= 0).ToList();
+            var expired = diffs.Where(d => d.IsExpired(Find.TickManager?.TicksGame ?? 0)).ToList();
             if (expired.Count > 0)
             {
                 if (_l1BlockCache.TryGetValue(npcId, out var blocks))
@@ -430,8 +430,6 @@ namespace RimMind.Core.Context
                         versions[diff.Key] = newVersion;
             }
 
-            foreach (var diff in diffs)
-                diff.RoundsRemaining--;
         }
 
         private void UpdateKeyValues(string npcId, List<KeyMeta> keys, Pawn? pawn)

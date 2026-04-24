@@ -20,7 +20,7 @@ namespace RimMind.Core.Agent
         public AgentIdentity Identity { get; private set; } = new AgentIdentity();
 
         private readonly AgentGoalStack _goalStack = new AgentGoalStack();
-        private readonly List<BehaviorRecord> _behaviorHistory = new List<BehaviorRecord>();
+        private readonly Queue<BehaviorRecord> _behaviorHistory = new Queue<BehaviorRecord>();
         private StrategyOptimizer _strategyOptimizer = new StrategyOptimizer();
         private readonly PerceptionBuffer _perceptionBuffer = new PerceptionBuffer();
         private readonly PerceptionPipeline _perceptionPipeline;
@@ -35,20 +35,12 @@ namespace RimMind.Core.Agent
         private int                   _toolCallDepth;
 
         public AgentGoalStack GoalStack => _goalStack;
-        public IReadOnlyList<BehaviorRecord> BehaviorHistory => _behaviorHistory;
+        public IReadOnlyList<BehaviorRecord> BehaviorHistory => _behaviorHistory.ToList();
         public StrategyOptimizer StrategyOptimizer => _strategyOptimizer;
         public PerceptionBuffer PerceptionBuffer => _perceptionBuffer;
         public IReadOnlyList<PerceptionBufferEntry> PendingPerceptions => _pendingPerceptions;
 
         public bool IsActive => State == AgentState.Active;
-
-        public PawnAgent()
-        {
-            _perceptionPipeline = new PerceptionPipeline();
-            _perceptionPipeline.AddFilter(new DedupFilter());
-            _perceptionPipeline.AddFilter(new PriorityFilter());
-            _perceptionPipeline.AddFilter(new CooldownFilter());
-        }
 
         public PawnAgent(Pawn pawn)
         {
@@ -105,7 +97,7 @@ namespace RimMind.Core.Agent
                 Temperature = 0.7f,
             };
 
-            var schema = "{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\"},\"target\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\"}},\"required\":[\"action\",\"reason\"]}";
+            var schema = Context.SchemaRegistry.AgentDecision;
 
             var snapshot = RimMindAPI.BuildContextSnapshot(ctxRequest);
             var bridge = RimMindAPI.GetAgentActionBridge();
@@ -228,7 +220,10 @@ namespace RimMind.Core.Agent
                             if (args.TryGetValue("reason", out var r)) reason = r;
                         }
                     }
-                    catch { }
+                    catch (System.Exception ex)
+                    {
+                        Log.Warning($"[RimMind] PawnAgent tool call args parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
+                    }
                 }
 
                 PublishDecisionAndRecord(tc.Name, targetName, reason ?? tc.Name);
@@ -344,7 +339,7 @@ namespace RimMind.Core.Agent
                 Reason = reason,
                 Success = executed,
                 ResultReason = resultReason,
-                GoalProgressDelta = ComputeGoalProgressDelta(action),
+                GoalProgressDelta = ComputeGoalProgressDelta(action, executed),
                 Timestamp = Find.TickManager?.TicksGame ?? 0,
                 ActionEventId = eventId,
             });
@@ -352,7 +347,7 @@ namespace RimMind.Core.Agent
             var topGoal = _goalStack.ActiveCount > 0 ? _goalStack.ActiveGoals[0] : null;
             if (topGoal != null)
             {
-                topGoal.Progress += ComputeGoalProgressDelta(action);
+                topGoal.Progress += ComputeGoalProgressDelta(action, executed);
                 if (topGoal.Progress >= 1f)
                 {
                     topGoal.Status = GoalStatus.Achieved;
@@ -361,9 +356,9 @@ namespace RimMind.Core.Agent
             }
         }
 
-        private static float ComputeGoalProgressDelta(string action)
+        private static float ComputeGoalProgressDelta(string action, bool executed)
         {
-            return action switch
+            float baseDelta = action switch
             {
                 "force_rest" => 0.15f,
                 "assign_work" => 0.2f,
@@ -374,6 +369,7 @@ namespace RimMind.Core.Agent
                 "eat_food" => 0.15f,
                 _ => 0.1f
             };
+            return executed ? baseDelta : baseDelta * -0.5f;
         }
 
         public bool TransitionTo(AgentState newState)
@@ -412,9 +408,9 @@ namespace RimMind.Core.Agent
 
         public void RecordBehavior(BehaviorRecord record)
         {
-            _behaviorHistory.Add(record);
-            if (_behaviorHistory.Count > 100)
-                _behaviorHistory.RemoveAt(0);
+            _behaviorHistory.Enqueue(record);
+            while (_behaviorHistory.Count > 100)
+                _behaviorHistory.Dequeue();
         }
 
         public void ExposeData()
@@ -429,12 +425,14 @@ namespace RimMind.Core.Agent
 
             _goalStack.ExposeData();
 
-            var behaviorHistory = _behaviorHistory;
+            var behaviorHistory = _behaviorHistory.ToList();
             Scribe_Collections.Look(ref behaviorHistory, "behaviorHistory", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 _behaviorHistory.Clear();
-                if (behaviorHistory != null) _behaviorHistory.AddRange(behaviorHistory);
+                if (behaviorHistory != null)
+                    foreach (var entry in behaviorHistory)
+                        _behaviorHistory.Enqueue(entry);
             }
 
             var strategyOptimizer = _strategyOptimizer;
