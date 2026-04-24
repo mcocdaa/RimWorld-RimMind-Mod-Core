@@ -37,6 +37,8 @@
     <RimMind.Core.Settings.ForceJsonModeDesc>Append response_format=json_object to the API request, forcing the model to return JSON. Disable this for local models that don't support this parameter.</RimMind.Core.Settings.ForceJsonModeDesc>
     <RimMind.Core.Settings.MaxTokens>Max Tokens</RimMind.Core.Settings.MaxTokens>
     <RimMind.Core.Settings.MaxTokens.Desc>Maximum tokens per AI response. Higher values allow longer replies but increase cost.</RimMind.Core.Settings.MaxTokens.Desc>
+    <RimMind.Core.Settings.Temperature>Temperature</RimMind.Core.Settings.Temperature>
+    <RimMind.Core.Settings.Temperature.Desc>Controls randomness. Lower = more deterministic, higher = more creative. Range: 0.0-2.0</RimMind.Core.Settings.Temperature.Desc>
     <RimMind.Core.Settings.ResetToDefault>Reset to Default</RimMind.Core.Settings.ResetToDefault>
     <RimMind.Core.Settings.DebugLogging>Verbose Logging (Player.log)</RimMind.Core.Settings.DebugLogging>
     <RimMind.Core.Settings.DebugLogging.Desc>Output detailed AI request and response info to Player.log for troubleshooting.</RimMind.Core.Settings.DebugLogging.Desc>

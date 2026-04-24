@@ -300,6 +300,12 @@ namespace RimMind.Core.UI
             GUI.color = Color.white;
             s.maxTokens = (int)listing.Slider(s.maxTokens, 200f, 2000f);
 
+            listing.Label($"{"RimMind.Core.Settings.Temperature".Translate()}: {s.defaultTemperature:F2}");
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.Settings.Temperature.Desc".Translate());
+            GUI.color = Color.white;
+            s.defaultTemperature = listing.Slider(s.defaultTemperature, 0f, 2f);
+
             listing.Label($"{"RimMind.Core.Settings.MaxConcurrent".Translate()}: {s.maxConcurrentRequests}");
             GUI.color = Color.gray;
             listing.Label("  " + "RimMind.Core.Settings.MaxConcurrent.Desc".Translate());

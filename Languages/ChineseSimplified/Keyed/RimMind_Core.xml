@@ -37,6 +37,8 @@
     <RimMind.Core.Settings.ForceJsonModeDesc>向 API 追加 response_format=json_object，强制模型返回 JSON。不支持该参数的本地模型请关闭。</RimMind.Core.Settings.ForceJsonModeDesc>
     <RimMind.Core.Settings.MaxTokens>最大 Token 数</RimMind.Core.Settings.MaxTokens>
     <RimMind.Core.Settings.MaxTokens.Desc>AI 单次响应的最大 Token 数。增大可获得更长回复，但增加费用。</RimMind.Core.Settings.MaxTokens.Desc>
+    <RimMind.Core.Settings.Temperature>温度</RimMind.Core.Settings.Temperature>
+    <RimMind.Core.Settings.Temperature.Desc>控制随机性。低值更确定，高值更有创意。范围：0.0-2.0</RimMind.Core.Settings.Temperature.Desc>
     <RimMind.Core.Settings.ResetToDefault>重置为默认</RimMind.Core.Settings.ResetToDefault>
     <RimMind.Core.Settings.DebugLogging>详细日志（Player.log）</RimMind.Core.Settings.DebugLogging>
     <RimMind.Core.Settings.DebugLogging.Desc>在 Player.log 中输出详细的 AI 请求和响应信息，用于排查问题。</RimMind.Core.Settings.DebugLogging.Desc>

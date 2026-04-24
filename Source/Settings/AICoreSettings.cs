@@ -15,6 +15,8 @@ namespace RimMind.Core.Settings
 
         public int maxTokens = 800;
 
+        public float defaultTemperature = 0.7f;
+
         public bool debugLogging = false;
 
         public ContextSettings Context = new ContextSettings();
@@ -52,6 +54,7 @@ namespace RimMind.Core.Settings
             Scribe_Values.Look(ref player2RemoteUrl,     "player2RemoteUrl",     "https://api.player2.game");
             Scribe_Values.Look(ref forceJsonMode,        "forceJsonMode",        true);
             Scribe_Values.Look(ref maxTokens,            "maxTokens",            800);
+            Scribe_Values.Look(ref defaultTemperature,   "defaultTemperature",   0.7f);
             Scribe_Values.Look(ref debugLogging,         "debugLogging",         false);
             Scribe_Deep.Look(ref Context,                "Context");
             Context ??= new ContextSettings();
