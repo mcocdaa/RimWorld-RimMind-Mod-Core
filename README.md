@@ -108,6 +108,14 @@ cd RimWorld-RimMind-Mod-Core
 
 通过"上下文过滤"设置页精确控制哪些游戏信息注入 Prompt，节省 Token。提供最小/标准/完整三种预设，也可自定义勾选 28+ 个选项。
 
+### Agent 认知架构
+
+每个殖民者作为独立认知主体，遵循 Perceive→Think→Act→Record 循环。通过感知桥接（6 个 Harmony Patch）将游戏事件转为感知信号，经去重/优先级/冷却过滤后注入 Agent，驱动 AI 思考和决策。
+
+### 数据飞轮
+
+内置自动调优系统（Flywheel），持续分析 AI 请求效果并优化上下文参数，让 AI 输出质量随使用时间逐步提升。
+
 ### 调试工具
 
 - **AI Debug Log**：浮动窗口，查看每次 AI 调用的完整 Prompt + Response
@@ -124,6 +132,7 @@ cd RimWorld-RimMind-Mod-Core
 | 模型名称 | `deepseek-chat` | 任意模型 ID |
 | 强制 JSON 模式 | 开启 | 不支持的本地模型请关闭 |
 | 最大 Token | 800 | 响应长度上限（200-2000） |
+| 默认温度 | 0.7 | 控制输出随机性（0.0-2.0） |
 | 最大并发请求数 | 3 | 同时发送请求的上限（1-10） |
 | 最大重试次数 | 2 | 请求失败后重试次数（0-5） |
 | 请求超时 | 120秒 | 等待 AI 响应的最大时间（10-300秒） |
@@ -243,6 +252,8 @@ cd RimWorld-RimMind-Mod-Core
 - **Async Request Queue**: All AI requests run on background threads, never blocking the game. Supports automatic retry for transient errors (timeout / 429 / 502 / 503 etc.), serial processing for local models
 - **Context Builder**: Automatically collects game state (colonist stats, map info, etc.) for AI prompts
 - **Context Filter**: Fine-grained control over what game info gets sent to AI, with Minimal/Standard/Full presets and 28+ configurable options
+- **Agent Cognitive Architecture**: Each colonist as an independent cognitive agent following Perceive→Think→Act→Record cycle, with perception bridge (6 Harmony Patches) converting game events into perception signals
+- **Data Flywheel**: Built-in auto-tuning system that continuously analyzes AI request quality and optimizes context parameters
 - **Debug Tools**: AI Debug Log window, request overlay, Dev menu actions (test connection, view context, clear cooldowns, pause/resume queue)
 
 ## FAQ
