@@ -91,6 +91,14 @@ namespace RimMind.Core.Client.OpenAI
 
     internal class UsageDto
     {
+        public int prompt_tokens { get; set; }
+        public int completion_tokens { get; set; }
         public int total_tokens { get; set; }
+        public PromptTokensDetailsDto? prompt_tokens_details { get; set; }
+    }
+
+    internal class PromptTokensDetailsDto
+    {
+        public int cached_tokens { get; set; }
     }
 }

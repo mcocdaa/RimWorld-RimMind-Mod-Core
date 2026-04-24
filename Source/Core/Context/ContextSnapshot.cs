@@ -14,6 +14,9 @@ namespace RimMind.Core.Context
         public int MaxTokens = 400;
         public float Temperature = 0.7f;
         public string? CurrentQuery;
+        public string[] IncludedKeys = new string[0];
+        public string[] TrimmedKeys = new string[0];
+        public float BudgetValue;
     }
 
     public class ContextLayerMeta

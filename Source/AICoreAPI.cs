@@ -11,6 +11,7 @@ using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
 using RimMind.Core.Context;
 using RimMind.Core.Extensions;
+using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using RimMind.Core.Prompt;
@@ -61,6 +62,7 @@ namespace RimMind.Core
         private static readonly ContextEngine _contextEngine = new ContextEngine(_historyManager);
         internal static HistoryManager GetHistoryManager() => _historyManager;
         public static ContextEngine GetContextEngine() => _contextEngine;
+        public static FlywheelTelemetryCollector Telemetry { get; } = new FlywheelTelemetryCollector();
 
         // ── 核心请求 API ──────────────────────────────────────────────────────
 
@@ -128,10 +130,40 @@ namespace RimMind.Core
                     Task.Run(async () =>
                     {
                         var response = await p2Client.SendStructuredAsync(request, jsonSchema, tools);
-                        onComplete?.Invoke(response);
+                        LongEventHandler.ExecuteWhenFinished(() => onComplete?.Invoke(response));
                     });
                     return;
                 }
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var client = await Player2Client.CreateAsync(s);
+                        if (client?.IsConfigured() == true)
+                        {
+                            lock (_player2Lock)
+                            {
+                                _cachedPlayer2Client = client;
+                                _cachedProvider = AIProvider.Player2;
+                            }
+                            var response = await client.SendStructuredAsync(request, jsonSchema, tools);
+                            LongEventHandler.ExecuteWhenFinished(() => onComplete?.Invoke(response));
+                        }
+                        else
+                        {
+                            LongEventHandler.ExecuteWhenFinished(() =>
+                                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "Player2 client not configured.")));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AIRequestQueue.LogFromBackground($"[RimMind] Player2 structured request failed: {ex.Message}", isWarning: true);
+                        LongEventHandler.ExecuteWhenFinished(() =>
+                            onComplete?.Invoke(AIResponse.Failure(request.RequestId, ex.Message)));
+                    }
+                });
+                return;
             }
 
             var openAIClient = new OpenAIClient(s);
@@ -140,7 +172,7 @@ namespace RimMind.Core
                 Task.Run(async () =>
                 {
                     var response = await openAIClient.SendStructuredAsync(request, jsonSchema, tools);
-                    onComplete?.Invoke(response);
+                    LongEventHandler.ExecuteWhenFinished(() => onComplete?.Invoke(response));
                 });
                 return;
             }
@@ -564,6 +596,15 @@ namespace RimMind.Core
         public static IAgentActionBridge? GetAgentActionBridge()
             => _agentActionBridge;
 
+        // ── AudioPlayer API ──────────────────────────────────────────────
+
+        private static IAudioPlayer _audioPlayer = new NullAudioPlayer();
+
+        public static void RegisterAudioPlayer(IAudioPlayer player)
+            => _audioPlayer = player ?? new NullAudioPlayer();
+
+        public static IAudioPlayer AudioPlayer => _audioPlayer;
+
         // ── Perception API ──────────────────────────────────────────────────
 
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
@@ -609,7 +650,6 @@ namespace RimMind.Core
 
         private static Player2Client? _cachedPlayer2Client;
         private static AIProvider _cachedProvider;
-        private static bool _player2InitInProgress;
         private static readonly object _player2Lock = new object();
 
         private static Player2Client? EnsurePlayer2Client(RimMindCoreSettings s)
@@ -618,34 +658,8 @@ namespace RimMind.Core
             {
                 if (_cachedPlayer2Client != null && _cachedProvider == AIProvider.Player2)
                     return _cachedPlayer2Client.IsConfigured() ? _cachedPlayer2Client : null;
-
-                if (_player2InitInProgress) return null;
-                _player2InitInProgress = true;
+                return null;
             }
-
-            Task.Run(async () =>
-            {
-                try
-                {
-                    var client = await Player2Client.CreateAsync(s);
-                    lock (_player2Lock)
-                    {
-                        _cachedPlayer2Client = client;
-                        _cachedProvider = AIProvider.Player2;
-                        _player2InitInProgress = false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AIRequestQueue.LogFromBackground($"[RimMind] Player2 init failed: {ex.Message}", isWarning: true);
-                    lock (_player2Lock)
-                    {
-                        _player2InitInProgress = false;
-                    }
-                }
-            });
-
-            return null;
         }
 
         public static void InvalidateClientCache()

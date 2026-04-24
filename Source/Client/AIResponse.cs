@@ -6,6 +6,9 @@ namespace RimMind.Core.Client
         public string Content { get; set; } = string.Empty;
         public string Error { get; set; } = string.Empty;
         public int TokensUsed { get; set; }
+        public int PromptTokens;
+        public int CompletionTokens;
+        public int CachedTokens;
         public string RequestId { get; set; } = string.Empty;
 
         public AIRequestState State { get; set; } = AIRequestState.Queued;

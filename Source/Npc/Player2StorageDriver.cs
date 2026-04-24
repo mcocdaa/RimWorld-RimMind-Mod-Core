@@ -18,6 +18,8 @@ namespace RimMind.Core.Npc
         private readonly Player2Client _client;
         private readonly string _gameId;
 
+        public bool AutoDispatch { get; set; } = false;
+
         public bool IsRemote => true;
         public bool SupportsStreaming => true;
         public bool SupportsTts => true;
@@ -94,7 +96,9 @@ namespace RimMind.Core.Npc
                     return new NpcChatResult { Error = response.Error };
 
                 var result = JsonConvert.DeserializeObject<NpcChatResult>(response.Content);
-                return result ?? new NpcChatResult { Message = response.Content ?? "" };
+                result ??= new NpcChatResult { Message = response.Content ?? "" };
+                MaybeDispatch(result, snapshot.NpcId);
+                return result;
             }
             catch (System.Exception ex)
             {
@@ -150,7 +154,9 @@ namespace RimMind.Core.Npc
                     return new NpcChatResult { Error = response.Error };
 
                 var result = JsonConvert.DeserializeObject<NpcChatResult>(response.Content);
-                return result ?? new NpcChatResult { Message = response.Content ?? "" };
+                result ??= new NpcChatResult { Message = response.Content ?? "" };
+                MaybeDispatch(result, npcId);
+                return result;
             }
             catch (System.Exception ex)
             {
@@ -250,6 +256,19 @@ namespace RimMind.Core.Npc
                 });
             }
             return result;
+        }
+
+        private void MaybeDispatch(NpcChatResult result, string npcId)
+        {
+            if (!AutoDispatch) return;
+            try
+            {
+                ResponseDispatcher.Dispatch(result);
+            }
+            catch (System.Exception ex)
+            {
+                Log.Warning($"[RimMind] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}");
+            }
         }
     }
 }

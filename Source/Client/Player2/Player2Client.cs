@@ -94,12 +94,18 @@ namespace RimMind.Core.Client.Player2
                 var parsed = JsonConvert.DeserializeObject<Player2ResponseDto>(responseText);
                 string content = parsed?.Choices?[0]?.Message?.Content ?? string.Empty;
                 int tokens = parsed?.Usage?.TotalTokens ?? 0;
+                int promptTokens = parsed?.Usage?.PromptTokens ?? 0;
+                int completionTokens = parsed?.Usage?.CompletionTokens ?? 0;
+                int cachedTokens = parsed?.Usage?.PromptTokensDetails?.CachedTokens ?? 0;
                 sw.Stop();
 
                 if (_settings.debugLogging)
                     AIRequestQueue.LogFromBackground($"[RimMind] ← {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
+                response.PromptTokens = promptTokens;
+                response.CompletionTokens = completionTokens;
+                response.CachedTokens = cachedTokens;
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.HttpStatusCode = httpStatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -299,13 +305,26 @@ namespace RimMind.Core.Client.Player2
             });
         }
 
-        private async void StartHealthCheckLoop()
+        private async Task StartHealthCheckLoopAsync()
         {
-            while (_healthCheckActive && Current.Game != null)
+            try
             {
-                await Task.Delay(60000);
-                if (_healthCheckActive) await EnsureHealthCheck(force: true);
+                while (_healthCheckActive && Current.Game != null)
+                {
+                    await Task.Delay(60000);
+                    if (_healthCheckActive) await EnsureHealthCheck(force: true);
+                }
             }
+            catch (Exception ex)
+            {
+                AIRequestQueue.LogFromBackground($"[RimMind] Player2 health check loop crashed: {ex.Message}", isWarning: true);
+                _healthCheckActive = false;
+            }
+        }
+
+        private void StartHealthCheckLoop()
+        {
+            _ = StartHealthCheckLoopAsync();
         }
 
         private async Task EnsureHealthCheck(bool force = false)
@@ -607,6 +626,9 @@ namespace RimMind.Core.Client.Player2
                 var dto = JsonConvert.DeserializeObject<Player2ResponseDto>(webRequest.downloadHandler.text);
                 string? content = dto?.Choices?.FirstOrDefault()?.Message?.Content;
                 int tokens = dto?.Usage?.TotalTokens ?? 0;
+                int promptTokens = dto?.Usage?.PromptTokens ?? 0;
+                int completionTokens = dto?.Usage?.CompletionTokens ?? 0;
+                int cachedTokens = dto?.Usage?.PromptTokensDetails?.CachedTokens ?? 0;
                 var toolCalls = dto?.Choices?.FirstOrDefault()?.Message?.ToolCalls;
                 var response = new AIResponse
                 {
@@ -614,6 +636,9 @@ namespace RimMind.Core.Client.Player2
                     Content = content ?? "",
                     RequestId = request.RequestId,
                     TokensUsed = tokens,
+                    PromptTokens = promptTokens,
+                    CompletionTokens = completionTokens,
+                    CachedTokens = cachedTokens,
                 };
                 if (toolCalls != null && toolCalls.Count > 0)
                 {

@@ -77,8 +77,23 @@ namespace RimMind.Core.Client.Player2
 
     internal class Player2UsageDto
     {
+        [JsonProperty("prompt_tokens")]
+        public int PromptTokens { get; set; }
+
+        [JsonProperty("completion_tokens")]
+        public int CompletionTokens { get; set; }
+
         [JsonProperty("total_tokens")]
         public int TotalTokens { get; set; }
+
+        [JsonProperty("prompt_tokens_details")]
+        public Player2PromptTokensDetailsDto? PromptTokensDetails { get; set; }
+    }
+
+    internal class Player2PromptTokensDetailsDto
+    {
+        [JsonProperty("cached_tokens")]
+        public int CachedTokens { get; set; }
     }
 
     internal class Player2LocalLoginResponse

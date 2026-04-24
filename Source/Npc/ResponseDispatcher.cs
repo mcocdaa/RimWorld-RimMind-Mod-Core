@@ -63,9 +63,14 @@ namespace RimMind.Core.Npc
                         continue;
                     }
 
-                    bool ok = RimMindAPI.GetAgentActionBridge() != null
-                        ? RimMindActionsAPI.Execute(cmd.Name, actor, param: cmd.Arguments)
-                        : false;
+                    var bridge = RimMindAPI.GetAgentActionBridge();
+                    if (bridge == null)
+                    {
+                        Log.Warning($"[RimMind] ResponseDispatcher: cannot execute command '{cmd.Name}' - no AgentActionBridge registered");
+                        continue;
+                    }
+
+                    bool ok = bridge.Execute(cmd.Name, actor, null, cmd.Arguments);
 
                     if (!ok)
                         Log.Warning($"[RimMind] ResponseDispatcher: command '{cmd.Name}' execution failed");

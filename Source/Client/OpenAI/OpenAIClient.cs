@@ -63,12 +63,18 @@ namespace RimMind.Core.Client.OpenAI
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
                 int tokens = parsed?.usage?.total_tokens ?? 0;
+                int promptTokens = parsed?.usage?.prompt_tokens ?? 0;
+                int completionTokens = parsed?.usage?.completion_tokens ?? 0;
+                int cachedTokens = parsed?.usage?.prompt_tokens_details?.cached_tokens ?? 0;
                 sw.Stop();
 
                 if (_settings.debugLogging)
                     AIRequestQueue.LogFromBackground($"[RimMind] ← {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
+                response.PromptTokens = promptTokens;
+                response.CompletionTokens = completionTokens;
+                response.CachedTokens = cachedTokens;
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.HttpStatusCode = httpStatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -116,6 +122,9 @@ namespace RimMind.Core.Client.OpenAI
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
                 int tokens = parsed?.usage?.total_tokens ?? 0;
+                int promptTokens = parsed?.usage?.prompt_tokens ?? 0;
+                int completionTokens = parsed?.usage?.completion_tokens ?? 0;
+                int cachedTokens = parsed?.usage?.prompt_tokens_details?.cached_tokens ?? 0;
                 var toolCallsDto = parsed?.choices?[0]?.message?.tool_calls;
                 sw.Stop();
 
@@ -128,6 +137,9 @@ namespace RimMind.Core.Client.OpenAI
                     Content = content,
                     RequestId = request.RequestId,
                     TokensUsed = tokens,
+                    PromptTokens = promptTokens,
+                    CompletionTokens = completionTokens,
+                    CachedTokens = cachedTokens,
                     State = AIRequestState.Completed,
                 };
                 response.ProcessingMs = sw.ElapsedMilliseconds;

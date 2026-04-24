@@ -353,8 +353,11 @@ namespace RimMind.Core.UI
                         var client = await Player2Client.CreateAsync(s);
                         if (!client.IsConfigured())
                         {
-                            _testStatus      = "RimMind.Core.Settings.Player2.NotAvailable".Translate();
-                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                            LongEventHandler.ExecuteWhenFinished(() =>
+                            {
+                                _testStatus      = "RimMind.Core.Settings.Player2.NotAvailable".Translate();
+                                _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                            });
                             return;
                         }
 
@@ -369,19 +372,32 @@ namespace RimMind.Core.UI
                         var response = await client.SendAsync(request);
                         if (response.Success)
                         {
-                            _testStatus      = $"✓ {response.Content.Trim()} ({response.TokensUsed} tok)";
-                            _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
+                            var content = response.Content.Trim();
+                            var tok = response.TokensUsed;
+                            LongEventHandler.ExecuteWhenFinished(() =>
+                            {
+                                _testStatus      = $"✓ {content} ({tok} tok)";
+                                _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
+                            });
                         }
                         else
                         {
-                            _testStatus      = $"✗ {response.Error}";
-                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                            var error = response.Error;
+                            LongEventHandler.ExecuteWhenFinished(() =>
+                            {
+                                _testStatus      = $"✗ {error}";
+                                _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                            });
                         }
                     }
                     catch (Exception ex)
                     {
-                        _testStatus      = $"✗ {ex.Message}";
-                        _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                        var msg = ex.Message;
+                        LongEventHandler.ExecuteWhenFinished(() =>
+                        {
+                            _testStatus      = $"✗ {msg}";
+                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                        });
                     }
                 });
                 return;
@@ -425,14 +441,21 @@ namespace RimMind.Core.UI
                     string reply  = jobj["choices"]?[0]?["message"]?["content"]?.ToString() ?? "RimMind.Core.UI.Empty".Translate();
                     int    tokens = jobj["usage"]?["total_tokens"]?.Value<int>() ?? 0;
 
-                    _testStatus      = $"✓ {reply.Trim()} ({tokens} tok)";
-                    _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
+                    LongEventHandler.ExecuteWhenFinished(() =>
+                    {
+                        _testStatus      = $"✓ {reply.Trim()} ({tokens} tok)";
+                        _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
+                    });
                 }
                 catch (Exception ex)
                 {
                     AIRequestQueue.LogFromBackground($"[RimMind] Test exception: {ex.Message}", isWarning: true);
-                    _testStatus      = $"✗ {ex.Message}";
-                    _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                    var msg = ex.Message;
+                    LongEventHandler.ExecuteWhenFinished(() =>
+                    {
+                        _testStatus      = $"✗ {msg}";
+                        _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                    });
                 }
             });
         }

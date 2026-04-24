@@ -89,6 +89,16 @@ namespace RimMind.Core.Context
                         : 0.6f));
             var schedule = _scheduler.Schedule(filteredKeys, request.Scenario, budget, request.CurrentQuery);
 
+            var allScheduledKeys = schedule.L0Keys.Concat(schedule.L1Keys)
+                .Concat(schedule.L2Keys).Concat(schedule.L3Keys)
+                .Select(k => k.Key).ToArray();
+            var scheduledKeySet = new HashSet<string>(allScheduledKeys);
+            var trimmedKeyNames = filteredKeys.Where(k => !scheduledKeySet.Contains(k.Key))
+                .Select(k => k.Key).ToArray();
+            snapshot.IncludedKeys = allScheduledKeys;
+            snapshot.TrimmedKeys = trimmedKeyNames;
+            snapshot.BudgetValue = budget;
+
             var messages = new List<ChatMessage>();
 
             var l0Msg = BuildL0(request.NpcId, schedule.L0Keys, pawn);
