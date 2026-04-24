@@ -54,6 +54,17 @@
     <RimMind.Core.Settings.Player2.ApiKeyDesc>Player2 优先使用本地桌面应用自动认证。仅在未安装本地应用时需要手动输入 API Key。</RimMind.Core.Settings.Player2.ApiKeyDesc>
     <RimMind.Core.Settings.Player2.CheckLocal>检测本地 Player2 应用</RimMind.Core.Settings.Player2.CheckLocal>
     <RimMind.Core.Settings.Player2.NotAvailable>Player2 不可用：未检测到本地应用且未配置 API Key</RimMind.Core.Settings.Player2.NotAvailable>
+    <RimMind.Core.Settings.Player2.RemoteUrl>远程 API 地址</RimMind.Core.Settings.Player2.RemoteUrl>
+    <RimMind.Core.Settings.Player2.RemoteUrl.Desc>Player2 远程服务地址。默认为 https://api.player2.game，一般无需修改。</RimMind.Core.Settings.Player2.RemoteUrl.Desc>
+    <RimMind.Core.Settings.Player2.BalanceUnknown>余额：未知</RimMind.Core.Settings.Player2.BalanceUnknown>
+    <RimMind.Core.Settings.Player2.RefreshBalance>刷新余额</RimMind.Core.Settings.Player2.RefreshBalance>
+
+    <!-- Agent Gizmo -->
+    <RimMind.Core.Agent.Gizmo.Activate>激活 Agent</RimMind.Core.Agent.Gizmo.Activate>
+    <RimMind.Core.Agent.Gizmo.Deactivate>停用 Agent</RimMind.Core.Agent.Gizmo.Deactivate>
+    <RimMind.Core.Agent.Gizmo.ToggleDesc>切换 PawnAgent 的激活状态</RimMind.Core.Agent.Gizmo.ToggleDesc>
+    <RimMind.Core.Agent.Gizmo.DevView>Dev: 查看 Agent</RimMind.Core.Agent.Gizmo.DevView>
+    <RimMind.Core.Agent.Gizmo.DevViewDesc>在日志中输出 Agent 内部状态</RimMind.Core.Agent.Gizmo.DevViewDesc>
     <RimMind.Core.Player2.LocalDetected>RimMind: 已检测到 Player2 桌面应用！使用自动认证（无需 API Key）。</RimMind.Core.Player2.LocalDetected>
     <RimMind.Core.Player2.LocalNotFound>RimMind: 未检测到 Player2 桌面应用。请启动应用或手动输入 API Key。</RimMind.Core.Player2.LocalNotFound>
 
@@ -175,6 +186,8 @@
     <RimMind.Core.Context.IncludeWeather.Desc>将当前天气状况注入 AI 上下文。</RimMind.Core.Context.IncludeWeather.Desc>
     <RimMind.Core.Context.IncludeThreats>威胁等级</RimMind.Core.Context.IncludeThreats>
     <RimMind.Core.Context.IncludeThreats.Desc>将当前地图的威胁等级注入 AI 上下文。</RimMind.Core.Context.IncludeThreats.Desc>
+    <RimMind.Core.Context.ContextBudget>上下文预算</RimMind.Core.Context.ContextBudget>
+    <RimMind.Core.Context.ContextBudget.Desc>控制 AI 请求中包含的上下文信息量。更高的值提供更多细节，但会消耗更多 token。</RimMind.Core.Context.ContextBudget.Desc>
 
     <!-- GameContextBuilder.cs - Map context -->
     <RimMind.Core.Prompt.MapStatusHeader>[当前地图状态]</RimMind.Core.Prompt.MapStatusHeader>
@@ -236,6 +249,8 @@
     <RimMind.Core.Prompt.CompactJob>任务：{0}</RimMind.Core.Prompt.CompactJob>
     <RimMind.Core.Prompt.CompactLocation>位置：{0}  温度：{1}°C</RimMind.Core.Prompt.CompactLocation>
     <RimMind.Core.Prompt.CompactWeapon>武器：{0}</RimMind.Core.Prompt.CompactWeapon>
+    <RimMind.Core.Prompt.EnvironmentChange>[环境突变]</RimMind.Core.Prompt.EnvironmentChange>
+    <RimMind.Core.Prompt.StateChange>[状态变更] {0}: {1} → {2}</RimMind.Core.Prompt.StateChange>
 
     <!-- AIDebugLog.cs -->
     <RimMind.Core.Prompt.Time.Format>日{0} {1}:{2}</RimMind.Core.Prompt.Time.Format>
@@ -287,4 +302,14 @@
     <RimMind.Core.UI.RequestLog.Title>审批与请求</RimMind.Core.UI.RequestLog.Title>
     <RimMind.Core.UI.RequestLog.ClearAll>全部清除</RimMind.Core.UI.RequestLog.ClearAll>
     <RimMind.Core.UI.RequestLog.Count>{0} 条待审批</RimMind.Core.UI.RequestLog.Count>
+
+    <!-- Window_AgentDialogue.cs -->
+    <RimMind.Core.UI.AgentDialogue.Title>Agent 对话</RimMind.Core.UI.AgentDialogue.Title>
+    <RimMind.Core.UI.AgentDialogue.Send>发送</RimMind.Core.UI.AgentDialogue.Send>
+    <RimMind.Core.UI.AgentDialogue.PlayerLabel>玩家</RimMind.Core.UI.AgentDialogue.PlayerLabel>
+    <RimMind.Core.UI.AgentDialogue.AgentLabel>Agent</RimMind.Core.UI.AgentDialogue.AgentLabel>
+
+    <!-- Agent Gizmo - Dialogue -->
+    <RimMind.Core.Agent.Gizmo.Dialogue>对话</RimMind.Core.Agent.Gizmo.Dialogue>
+    <RimMind.Core.Agent.Gizmo.DialogueDesc>与 AI 接管的小人对话</RimMind.Core.Agent.Gizmo.DialogueDesc>
 </LanguageData>

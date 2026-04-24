@@ -3,13 +3,8 @@ using Verse;
 
 namespace RimMind.Core.Settings
 {
-    /// <summary>
-    /// 控制哪些游戏信息注入 AI Prompt 的上下文过滤器。
-    /// 通过 RimMindCoreSettings.Context 访问。
-    /// </summary>
     public class ContextSettings : IExposable
     {
-        // ── 小人信息 ──────────────────────────────────────────────
         public bool IncludeRace          = true;
         public bool IncludeAge           = true;
         public bool IncludeGender        = true;
@@ -32,7 +27,6 @@ namespace RimMind.Core.Settings
         public bool IncludeSurroundings  = true;
         public bool IncludeCombatStatus  = true;
 
-        // ── 地图/环境信息 ─────────────────────────────────────────
         public bool IncludeGameTime      = true;
         public bool IncludeColonistCount = true;
         public bool IncludeColonistNames = true;
@@ -42,9 +36,9 @@ namespace RimMind.Core.Settings
         public bool IncludeWeather       = true;
         public bool IncludeThreats       = true;
 
-        public HashSet<string> disabledProviders = new HashSet<string>();
-
-        public HashSet<string> exposedProviders = new HashSet<string>();
+        public float ContextBudget = 0.6f;
+        public float BudgetW1 = 0.4f;
+        public float BudgetW2 = 0.6f;
 
         public void ExposeData()
         {
@@ -77,15 +71,11 @@ namespace RimMind.Core.Settings
             Scribe_Values.Look(ref IncludeSeason,         "IncludeSeason",         true);
             Scribe_Values.Look(ref IncludeWeather,        "IncludeWeather",        true);
             Scribe_Values.Look(ref IncludeThreats,        "IncludeThreats",        true);
-            Scribe_Collections.Look(ref disabledProviders, "disabledProviders", LookMode.Value);
-            if (Scribe.mode == LoadSaveMode.LoadingVars && disabledProviders == null)
-                disabledProviders = new HashSet<string>();
-            Scribe_Collections.Look(ref exposedProviders, "exposedProviders", LookMode.Value);
-            if (Scribe.mode == LoadSaveMode.LoadingVars && exposedProviders == null)
-                exposedProviders = new HashSet<string>();
+            Scribe_Values.Look(ref ContextBudget, "ContextBudget", 0.6f);
+            Scribe_Values.Look(ref BudgetW1, "BudgetW1", 0.4f);
+            Scribe_Values.Look(ref BudgetW2, "BudgetW2", 0.6f);
         }
 
-        /// <summary>应用预设。</summary>
         public void ApplyPreset(ContextPreset preset)
         {
             switch (preset)
@@ -102,6 +92,7 @@ namespace RimMind.Core.Settings
                     IncludeGameTime = false; IncludeColonistCount = true; IncludeColonistNames = false; IncludeWealth = false;
                     IncludeFood = false; IncludeSeason = false;
                     IncludeWeather = true; IncludeThreats = true;
+                    ContextBudget = 0.3f;
                     break;
                 case ContextPreset.Standard:
                     IncludeRace = true;  IncludeAge = true; IncludeGender = true;
@@ -115,6 +106,7 @@ namespace RimMind.Core.Settings
                     IncludeGameTime = true; IncludeColonistCount = true; IncludeColonistNames = true; IncludeWealth = false;
                     IncludeFood = true; IncludeSeason = true;
                     IncludeWeather = true; IncludeThreats = true;
+                    ContextBudget = 0.6f;
                     break;
                 case ContextPreset.Full:
                     IncludeRace = true;  IncludeAge = true; IncludeGender = true;
@@ -128,6 +120,7 @@ namespace RimMind.Core.Settings
                     IncludeGameTime = true; IncludeColonistCount = true; IncludeColonistNames = true; IncludeWealth = true;
                     IncludeFood = true; IncludeSeason = true;
                     IncludeWeather = true; IncludeThreats = true;
+                    ContextBudget = 1.0f;
                     break;
             }
         }

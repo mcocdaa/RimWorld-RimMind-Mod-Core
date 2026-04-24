@@ -249,6 +249,26 @@ namespace RimMind.Core.UI
                     if (Widgets.ButtonText(checkBtnRow, "RimMind.Core.Settings.Player2.CheckLocal".Translate()))
                         Player2Client.CheckPlayer2StatusAndNotify();
                 }
+
+                listing.Gap(4f);
+                listing.Label("RimMind.Core.Settings.Player2.RemoteUrl".Translate());
+                GUI.color = Color.gray;
+                listing.Label("  " + "RimMind.Core.Settings.Player2.RemoteUrl.Desc".Translate());
+                GUI.color = Color.white;
+                s.player2RemoteUrl = listing.TextEntry(s.player2RemoteUrl);
+
+                listing.Gap(4f);
+                {
+                    float balance = Player2Client.CachedJoulesBalance;
+                    string balanceText = balance >= 0
+                        ? $"Joules: {balance:F2}"
+                        : "RimMind.Core.Settings.Player2.BalanceUnknown".Translate();
+                    listing.Label(balanceText);
+
+                    Rect refreshRow = listing.GetRect(28f);
+                    if (Widgets.ButtonText(refreshRow, "RimMind.Core.Settings.Player2.RefreshBalance".Translate()))
+                        Player2Client.RefreshJoulesBalance();
+                }
             }
 
             listing.Gap(10f);
@@ -668,7 +688,7 @@ namespace RimMind.Core.UI
             var ctx = RimMindCoreMod.Settings.Context;
 
             // 估算内容高度（用 ScrollView）
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 880f);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 980f);
             Widgets.BeginScrollView(inRect, ref _contextScroll, viewRect);
 
             var listing = new Listing_Standard();
@@ -740,6 +760,13 @@ namespace RimMind.Core.UI
             right.End();
 
             listing.Gap(Mathf.Max(leftH, rightH) + 8f);
+
+            SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.Context.Budget".Translate());
+            listing.Label($"{"RimMind.Core.Context.ContextBudget".Translate()}: {ctx.ContextBudget:F1}");
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.Context.ContextBudget.Desc".Translate());
+            GUI.color = Color.white;
+            ctx.ContextBudget = listing.Slider(ctx.ContextBudget, 0.1f, 2.0f);
 
             if (listing.ButtonText("RimMind.Core.Context.ResetDefault".Translate()))
             {

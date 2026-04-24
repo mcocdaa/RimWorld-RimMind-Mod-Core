@@ -101,23 +101,86 @@ namespace RimMind.Core.Client.OpenAI
             }
         }
 
+        public async Task<AIResponse> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
+        {
+            string endpoint = FormatEndpoint(_settings.apiEndpoint);
+            string json = BuildStructuredRequestJson(request, jsonSchema, tools);
+
+            if (_settings.debugLogging)
+                AIRequestQueue.LogFromBackground($"[RimMind] → Structured {request.RequestId}\n{json}");
+
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                (string responseText, long httpStatusCode) = await PostAsync(endpoint, json);
+                var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
+                string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
+                int tokens = parsed?.usage?.total_tokens ?? 0;
+                var toolCallsDto = parsed?.choices?[0]?.message?.tool_calls;
+                sw.Stop();
+
+                if (_settings.debugLogging)
+                    AIRequestQueue.LogFromBackground($"[RimMind] ← Structured {request.RequestId} ({tokens} tok)\n{content}");
+
+                var response = new AIResponse
+                {
+                    Success = true,
+                    Content = content,
+                    RequestId = request.RequestId,
+                    TokensUsed = tokens,
+                    State = AIRequestState.Completed,
+                };
+                response.ProcessingMs = sw.ElapsedMilliseconds;
+                response.HttpStatusCode = httpStatusCode;
+                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
+                response.Priority = request.Priority;
+
+                if (toolCallsDto != null && toolCallsDto.Count > 0)
+                {
+                    var converted = toolCallsDto.Select(tc => new
+                    {
+                        id = tc.Id,
+                        type = tc.Type,
+                        function = new
+                        {
+                            name = tc.Function?.Name,
+                            arguments = tc.Function?.Arguments,
+                        }
+                    }).ToList();
+                    response.ToolCallsJson = JsonConvert.SerializeObject(converted);
+                }
+
+                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                return response;
+            }
+            catch (AIHttpException ex)
+            {
+                sw.Stop();
+                AIRequestQueue.LogFromBackground($"[RimMind] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                var response = AIResponse.Failure(request.RequestId, ex.Message);
+                response.ProcessingMs = sw.ElapsedMilliseconds;
+                response.HttpStatusCode = ex.StatusCode;
+                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
+                response.Priority = request.Priority;
+                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                AIRequestQueue.LogFromBackground($"[RimMind] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                var response = AIResponse.Failure(request.RequestId, ex.Message);
+                response.ProcessingMs = sw.ElapsedMilliseconds;
+                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
+                response.Priority = request.Priority;
+                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                return response;
+            }
+        }
+
         private string BuildRequestJson(AIRequest request)
         {
-            List<MessageDto> messages;
-
-            if (request.Messages != null && request.Messages.Count > 0)
-            {
-                messages = request.Messages
-                    .Select(m => new MessageDto { role = m.Role, content = m.Content })
-                    .ToList();
-            }
-            else
-            {
-                messages = new List<MessageDto>();
-                if (!string.IsNullOrEmpty(request.SystemPrompt))
-                    messages.Add(new MessageDto { role = "system", content = request.SystemPrompt });
-                messages.Add(new MessageDto { role = "user", content = request.UserPrompt });
-            }
+            List<MessageDto> messages = BuildMessages(request);
 
             var body = new OpenAIRequestDto
             {
@@ -133,6 +196,96 @@ namespace RimMind.Core.Client.OpenAI
 
             return JsonConvert.SerializeObject(body, Formatting.None,
                 new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        }
+
+        private string BuildStructuredRequestJson(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
+        {
+            List<MessageDto> messages = BuildMessages(request);
+
+            var body = new OpenAIRequestDto
+            {
+                model = _settings.modelName,
+                messages = messages,
+                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.maxTokens,
+                temperature = request.Temperature,
+                stream = false,
+            };
+
+            if (!string.IsNullOrEmpty(jsonSchema))
+            {
+                body.response_format = new ResponseFormatDto
+                {
+                    type = "json_schema",
+                    json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(jsonSchema) },
+                };
+            }
+            else if (_settings.forceJsonMode && request.UseJsonMode)
+            {
+                body.response_format = new ResponseFormatDto { type = "json_object" };
+            }
+
+            if (tools != null && tools.Count > 0)
+            {
+                body.tools = new List<ToolDto>();
+                foreach (var t in tools)
+                {
+                    body.tools.Add(new ToolDto
+                    {
+                        Function = new ToolFunctionDto
+                        {
+                            Name = t.Name,
+                            Description = t.Description,
+                            Parameters = t.Parameters != null
+                                ? JsonConvert.DeserializeObject(t.Parameters)
+                                : new { type = "object", properties = new { } },
+                        },
+                    });
+                }
+                if (tools.Any(t => t.ToolChoice == "required"))
+                    body.tool_choice = "required";
+                else
+                    body.tool_choice = "auto";
+            }
+
+            return JsonConvert.SerializeObject(body, Formatting.None,
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        }
+
+        private List<MessageDto> BuildMessages(AIRequest request)
+        {
+            var messages = new List<MessageDto>();
+
+            if (request.Messages != null && request.Messages.Count > 0)
+            {
+                foreach (var m in request.Messages)
+                {
+                    var dto = new MessageDto { role = m.Role, content = m.Content };
+                    if (!string.IsNullOrEmpty(m.ToolCallId))
+                        dto.tool_call_id = m.ToolCallId;
+                    if (m.ToolCalls != null && m.ToolCalls.Count > 0)
+                    {
+                        dto.tool_calls = m.ToolCalls.Select(tc => new ToolCallDto
+                        {
+                            Id = tc.Id,
+                            Type = "function",
+                            Function = new ToolCallFunctionDto
+                            {
+                                Name = tc.Name,
+                                Arguments = tc.Arguments,
+                            },
+                        }).ToList();
+                    }
+                    messages.Add(dto);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(request.SystemPrompt))
+                    messages.Add(new MessageDto { role = "system", content = request.SystemPrompt });
+                messages.Add(new MessageDto { role = "user", content = request.UserPrompt });
+            }
+
+            return messages;
         }
 
         private async Task<(string text, long statusCode)> PostAsync(string url, string jsonBody)

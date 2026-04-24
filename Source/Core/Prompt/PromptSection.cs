@@ -9,6 +9,7 @@ namespace RimMind.Core.Prompt
         public int Priority { get; set; }
         public int EstimatedTokens { get; set; }
         public Func<string, string>? Compress { get; set; }
+        public string? LayerTag { get; set; }
 
         public const int PriorityCore = 0;
         public const int PriorityCurrentInput = 1;

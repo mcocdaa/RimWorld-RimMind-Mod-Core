@@ -1,4 +1,5 @@
 using RimMind.Core.Client;
+using RimMind.Core.Context;
 using RimMind.Core.Internal;
 using LudeonTK;
 using RimWorld;
@@ -84,7 +85,24 @@ namespace RimMind.Core.Debug
         {
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null) { Log.Warning("[RimMind] Select a pawn first."); return; }
-            Log.Message("[RimMind] Full Pawn Prompt:\n" + RimMindAPI.BuildFullPawnPrompt(pawn));
+            var npcId = $"NPC-{pawn.ThingID}";
+            var request = new ContextRequest
+            {
+                NpcId = npcId,
+                Scenario = ScenarioIds.Dialogue,
+                Budget = 0.6f,
+                CurrentQuery = "[Debug] Show context",
+            };
+            var engine = RimMindAPI.GetContextEngine();
+            var snapshot = engine.BuildSnapshot(request);
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"[RimMind] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
+            sb.AppendLine($"Estimated tokens: {snapshot.EstimatedTokens}");
+            sb.AppendLine($"L0={snapshot.Meta.L0Tokens} L1={snapshot.Meta.L1Tokens} L2={snapshot.Meta.L2Tokens} L3={snapshot.Meta.L3Tokens} L4={snapshot.Meta.L4Tokens}");
+            sb.AppendLine("=== Messages ===");
+            foreach (var msg in snapshot.Messages)
+                sb.AppendLine($"[{msg.Role}] {msg.Content}");
+            Log.Message(sb.ToString());
         }
 
         [DebugAction("RimMind", "Show Queue State", actionType = DebugActionType.Action)]

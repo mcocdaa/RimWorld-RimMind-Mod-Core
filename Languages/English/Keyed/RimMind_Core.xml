@@ -54,6 +54,17 @@
     <RimMind.Core.Settings.Player2.ApiKeyDesc>Player2 prioritizes local desktop app auto-authentication. Only enter an API Key manually if the local app is not installed.</RimMind.Core.Settings.Player2.ApiKeyDesc>
     <RimMind.Core.Settings.Player2.CheckLocal>Detect Local Player2 App</RimMind.Core.Settings.Player2.CheckLocal>
     <RimMind.Core.Settings.Player2.NotAvailable>Player2 not available: local app not detected and no API Key configured</RimMind.Core.Settings.Player2.NotAvailable>
+    <RimMind.Core.Settings.Player2.RemoteUrl>Remote API URL</RimMind.Core.Settings.Player2.RemoteUrl>
+    <RimMind.Core.Settings.Player2.RemoteUrl.Desc>Player2 remote service URL. Defaults to https://api.player2.game, usually no need to change.</RimMind.Core.Settings.Player2.RemoteUrl.Desc>
+    <RimMind.Core.Settings.Player2.BalanceUnknown>Balance: unknown</RimMind.Core.Settings.Player2.BalanceUnknown>
+    <RimMind.Core.Settings.Player2.RefreshBalance>Refresh Balance</RimMind.Core.Settings.Player2.RefreshBalance>
+
+    <!-- Agent Gizmo -->
+    <RimMind.Core.Agent.Gizmo.Activate>Activate Agent</RimMind.Core.Agent.Gizmo.Activate>
+    <RimMind.Core.Agent.Gizmo.Deactivate>Deactivate Agent</RimMind.Core.Agent.Gizmo.Deactivate>
+    <RimMind.Core.Agent.Gizmo.ToggleDesc>Toggle PawnAgent active state</RimMind.Core.Agent.Gizmo.ToggleDesc>
+    <RimMind.Core.Agent.Gizmo.DevView>Dev: View Agent</RimMind.Core.Agent.Gizmo.DevView>
+    <RimMind.Core.Agent.Gizmo.DevViewDesc>Dump Agent internal state to log</RimMind.Core.Agent.Gizmo.DevViewDesc>
     <RimMind.Core.Player2.LocalDetected>RimMind: Player2 desktop app detected! Using automatic authentication (no API key needed).</RimMind.Core.Player2.LocalDetected>
     <RimMind.Core.Player2.LocalNotFound>RimMind: Player2 desktop app not found. Please start the app or add an API key manually.</RimMind.Core.Player2.LocalNotFound>
 
@@ -175,6 +186,8 @@
     <RimMind.Core.Context.IncludeWeather.Desc>Inject the current weather conditions into AI context.</RimMind.Core.Context.IncludeWeather.Desc>
     <RimMind.Core.Context.IncludeThreats>Threat Level</RimMind.Core.Context.IncludeThreats>
     <RimMind.Core.Context.IncludeThreats.Desc>Inject the current map threat level into AI context.</RimMind.Core.Context.IncludeThreats.Desc>
+    <RimMind.Core.Context.ContextBudget>Context Budget</RimMind.Core.Context.ContextBudget>
+    <RimMind.Core.Context.ContextBudget.Desc>Controls how much context information is included in AI requests. Higher values provide more detail but use more tokens.</RimMind.Core.Context.ContextBudget.Desc>
 
     <!-- GameContextBuilder.cs - Map context -->
     <RimMind.Core.Prompt.MapStatusHeader>[Current Map Status]</RimMind.Core.Prompt.MapStatusHeader>
@@ -236,6 +249,8 @@
     <RimMind.Core.Prompt.CompactJob>Job: {0}</RimMind.Core.Prompt.CompactJob>
     <RimMind.Core.Prompt.CompactLocation>Location: {0}  Temp: {1}°C</RimMind.Core.Prompt.CompactLocation>
     <RimMind.Core.Prompt.CompactWeapon>Weapon: {0}</RimMind.Core.Prompt.CompactWeapon>
+    <RimMind.Core.Prompt.EnvironmentChange>[Environment Change]</RimMind.Core.Prompt.EnvironmentChange>
+    <RimMind.Core.Prompt.StateChange>{0}: {1} → {2}</RimMind.Core.Prompt.StateChange>
 
     <!-- AIDebugLog.cs -->
     <RimMind.Core.Prompt.Time.Format>D{0} {1}:{2}</RimMind.Core.Prompt.Time.Format>
@@ -287,4 +302,14 @@
     <RimMind.Core.UI.RequestLog.Title>Approval &amp; Requests</RimMind.Core.UI.RequestLog.Title>
     <RimMind.Core.UI.RequestLog.ClearAll>Clear All</RimMind.Core.UI.RequestLog.ClearAll>
     <RimMind.Core.UI.RequestLog.Count>{0} pending</RimMind.Core.UI.RequestLog.Count>
+
+    <!-- Window_AgentDialogue.cs -->
+    <RimMind.Core.UI.AgentDialogue.Title>Agent Dialogue</RimMind.Core.UI.AgentDialogue.Title>
+    <RimMind.Core.UI.AgentDialogue.Send>Send</RimMind.Core.UI.AgentDialogue.Send>
+    <RimMind.Core.UI.AgentDialogue.PlayerLabel>Player</RimMind.Core.UI.AgentDialogue.PlayerLabel>
+    <RimMind.Core.UI.AgentDialogue.AgentLabel>Agent</RimMind.Core.UI.AgentDialogue.AgentLabel>
+
+    <!-- Agent Gizmo - Dialogue -->
+    <RimMind.Core.Agent.Gizmo.Dialogue>Chat</RimMind.Core.Agent.Gizmo.Dialogue>
+    <RimMind.Core.Agent.Gizmo.DialogueDesc>Chat with the AI-controlled pawn</RimMind.Core.Agent.Gizmo.DialogueDesc>
 </LanguageData>

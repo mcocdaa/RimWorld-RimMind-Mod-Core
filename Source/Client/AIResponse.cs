@@ -10,13 +10,13 @@ namespace RimMind.Core.Client
 
         public AIRequestState State { get; set; } = AIRequestState.Queued;
         public AIRequestPriority Priority { get; set; } = AIRequestPriority.Normal;
-        public int QueuePosition { get; set; }
         public int AttemptCount { get; set; } = 1;
         public long QueueWaitMs { get; set; }
         public long ProcessingMs { get; set; }
         public long HttpStatusCode { get; set; }
         public int RequestPayloadBytes { get; set; }
         public string CancelReason { get; set; } = string.Empty;
+        public string? ToolCallsJson;
 
         public static AIResponse Failure(string requestId, string error) => new AIResponse
         {

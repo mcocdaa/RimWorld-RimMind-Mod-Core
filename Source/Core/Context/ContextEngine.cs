@@ -1,0 +1,574 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using RimMind.Core.Client;
+using RimMind.Core.Npc;
+using RimMind.Core.Prompt;
+using RimMind.Core.Settings;
+using RimWorld;
+using Verse;
+
+namespace RimMind.Core.Context
+{
+    public class ContextEngine
+    {
+        private const int MaxCacheEntries = 100;
+
+        private readonly BudgetScheduler _scheduler = new BudgetScheduler();
+        private readonly HistoryManager _historyManager;
+        private readonly EmbedCache _embedCache = new EmbedCache();
+
+        private readonly Dictionary<string, ChatMessage> _l0Cache = new Dictionary<string, ChatMessage>();
+        private readonly Dictionary<string, Dictionary<string, string>> _l1BlockCache = new Dictionary<string, Dictionary<string, string>>();
+        private readonly Dictionary<string, int> _l1Version = new Dictionary<string, int>();
+        private readonly Dictionary<string, Dictionary<string, int>> _l1KeyVersions = new Dictionary<string, Dictionary<string, int>>();
+        private readonly Dictionary<string, List<ContextDiff>> _diffStore = new Dictionary<string, List<ContextDiff>>();
+        private readonly Dictionary<string, Dictionary<string, string>> _keyLastValues = new Dictionary<string, Dictionary<string, string>>();
+        private readonly LinkedList<string> _cacheOrder = new LinkedList<string>();
+
+        public ContextEngine(HistoryManager historyManager)
+        {
+            _historyManager = historyManager;
+        }
+
+        private void TouchCache(string npcId)
+        {
+            _cacheOrder.Remove(npcId);
+            _cacheOrder.AddLast(npcId);
+            while (_cacheOrder.Count > MaxCacheEntries)
+            {
+                var oldest = _cacheOrder.First.Value;
+                _cacheOrder.RemoveFirst();
+                _l0Cache.Remove(oldest);
+                _l1BlockCache.Remove(oldest);
+                _l1Version.Remove(oldest);
+                _l1KeyVersions.Remove(oldest);
+                _diffStore.Remove(oldest);
+                _keyLastValues.Remove(oldest);
+                _embedCache.InvalidateNpc(oldest);
+                SemanticEmbedding.InvalidateNpc(oldest);
+            }
+        }
+
+        public ContextSnapshot BuildSnapshot(ContextRequest request)
+        {
+            ScenarioRegistry.RegisterCoreScenarios();
+            RelevanceTable.RegisterCoreRelevance();
+            ContextKeyRegistry.RegisterCoreKeys();
+            TouchCache(request.NpcId);
+
+            var snapshot = new ContextSnapshot
+            {
+                NpcId = request.NpcId,
+                Scenario = request.Scenario,
+                MaxTokens = request.MaxTokens,
+                Temperature = request.Temperature,
+                CurrentQuery = request.CurrentQuery,
+            };
+
+            var pawn = FindPawnByNpcId(request.NpcId);
+            var allKeys = ContextKeyRegistry.GetAll();
+
+            var scenarioMeta = ScenarioRegistry.Get(request.Scenario);
+
+            var excludeSet = new HashSet<string>();
+            if (scenarioMeta?.DefaultExcludeKeys != null)
+                excludeSet.UnionWith(scenarioMeta.DefaultExcludeKeys);
+            if (request.ExcludeKeys != null)
+                excludeSet.UnionWith(request.ExcludeKeys);
+
+            var filteredKeys = allKeys.Where(k => !excludeSet.Contains(k.Key)).ToList();
+
+            float budget = request.Budget > 0
+                ? request.Budget
+                : (scenarioMeta?.DefaultBudget > 0
+                    ? scenarioMeta.DefaultBudget
+                    : (RimMindCoreMod.Settings?.Context?.ContextBudget > 0
+                        ? RimMindCoreMod.Settings.Context.ContextBudget
+                        : 0.6f));
+            var schedule = _scheduler.Schedule(filteredKeys, request.Scenario, budget, request.CurrentQuery);
+
+            var messages = new List<ChatMessage>();
+
+            var l0Msg = BuildL0(request.NpcId, schedule.L0Keys, pawn);
+            if (l0Msg != null)
+            {
+                l0Msg.LayerTag = "L0";
+                messages.Add(l0Msg);
+                snapshot.Meta.L0Tokens = EstimateTokens(l0Msg.Content);
+            }
+
+            var l1Msg = BuildL1(request.NpcId, schedule.L1Keys, pawn);
+            if (l1Msg != null)
+            {
+                l1Msg.LayerTag = "L1";
+                messages.Add(l1Msg);
+                snapshot.Meta.L1Tokens = EstimateTokens(l1Msg.Content);
+            }
+
+            var l1DiffMsg = BuildDiffMessage(request.NpcId, ContextLayer.L1_Baseline);
+            if (l1DiffMsg != null)
+            {
+                l1DiffMsg.LayerTag = "L1";
+                messages.Add(l1DiffMsg);
+            }
+
+            var l2Msg = BuildL2L3(schedule.L2Keys, pawn);
+            if (l2Msg != null)
+            {
+                var l2DiffMsg = BuildDiffMessage(request.NpcId, ContextLayer.L2_Environment);
+                if (l2DiffMsg != null)
+                {
+                    l2DiffMsg.LayerTag = "L2";
+                    messages.Add(l2DiffMsg);
+                }
+                l2Msg.LayerTag = "L2";
+                messages.Add(l2Msg);
+                snapshot.Meta.L2Tokens = EstimateTokens(l2Msg.Content);
+            }
+
+            var l3Msg = BuildL2L3(schedule.L3Keys, pawn);
+            if (l3Msg != null)
+            {
+                var l3DiffMsg = BuildDiffMessage(request.NpcId, ContextLayer.L3_State);
+                if (l3DiffMsg != null)
+                {
+                    l3DiffMsg.LayerTag = "L3";
+                    messages.Add(l3DiffMsg);
+                }
+                l3Msg.LayerTag = "L3";
+                messages.Add(l3Msg);
+                snapshot.Meta.L3Tokens = EstimateTokens(l3Msg.Content);
+            }
+
+            int maxRounds = schedule.MaxHistoryRounds;
+            var history = _historyManager.GetHistory(request.NpcId, maxRounds);
+            foreach (var (role, content) in history)
+            {
+                messages.Add(new ChatMessage { Role = role, Content = content });
+                snapshot.Meta.L4Tokens += EstimateTokens(content);
+            }
+
+            if (!string.IsNullOrEmpty(request.CurrentQuery))
+            {
+                messages.Add(new ChatMessage { Role = "user", Content = request.CurrentQuery });
+            }
+
+            snapshot.Messages = messages;
+            snapshot.Meta.TotalTokens = snapshot.Meta.L0Tokens + snapshot.Meta.L1Tokens +
+                snapshot.Meta.L2Tokens + snapshot.Meta.L3Tokens + snapshot.Meta.L4Tokens;
+            snapshot.EstimatedTokens = snapshot.Meta.TotalTokens;
+
+            ApplyBudgetTrim(snapshot);
+
+            UpdateKeyValues(request.NpcId, filteredKeys, pawn);
+
+            MergeExpiredDiffs(request.NpcId);
+
+            return snapshot;
+        }
+
+        public void InvalidateLayer(string npcId, ContextLayer layer)
+        {
+            if (layer == ContextLayer.L0_Static)
+                _l0Cache.Remove(npcId);
+            if (layer == ContextLayer.L1_Baseline)
+            {
+                _l1BlockCache.Remove(npcId);
+                _l1Version.Remove(npcId);
+                _l1KeyVersions.Remove(npcId);
+            }
+        }
+
+        public void InvalidateKey(string npcId, string key)
+        {
+            if (_keyLastValues.TryGetValue(npcId, out var dict))
+                dict.Remove(key);
+            if (_l1BlockCache.TryGetValue(npcId, out var blocks))
+                blocks.Remove(key);
+            _embedCache.InvalidateBlock(npcId, key);
+            _embedCache.InvalidateEntries(npcId, key);
+            SemanticEmbedding.InvalidateBlockEmbedding(npcId, key);
+            SemanticEmbedding.InvalidateEntryEmbeddings(npcId, key);
+        }
+
+        public void UpdateBaseline(string npcId)
+        {
+            _l1BlockCache.Remove(npcId);
+            _l1Version.Remove(npcId);
+            _l1KeyVersions.Remove(npcId);
+            if (_diffStore.TryGetValue(npcId, out var diffs))
+                diffs.Clear();
+        }
+
+        public void InvalidateNpc(string npcId)
+        {
+            _l0Cache.Remove(npcId);
+            _l1BlockCache.Remove(npcId);
+            _l1Version.Remove(npcId);
+            _l1KeyVersions.Remove(npcId);
+            _diffStore.Remove(npcId);
+            _keyLastValues.Remove(npcId);
+            _historyManager.ClearHistory(npcId);
+            _embedCache.InvalidateNpc(npcId);
+            SemanticEmbedding.InvalidateNpc(npcId);
+        }
+
+        private ChatMessage? BuildL0(string npcId, List<KeyMeta> keys, Pawn? pawn)
+        {
+            if (_l0Cache.TryGetValue(npcId, out var cached))
+                return cached;
+
+            var sb = new StringBuilder();
+
+            foreach (var key in keys)
+            {
+                if (pawn == null) continue;
+                var entries = key.ValueProvider(pawn);
+                if (entries == null) continue;
+                foreach (var entry in entries)
+                {
+                    if (!string.IsNullOrEmpty(entry.Content))
+                        sb.AppendLine(entry.Content);
+                }
+            }
+
+            string content = sb.ToString().TrimEnd();
+            if (string.IsNullOrEmpty(content)) return null;
+
+            var msg = new ChatMessage { Role = "system", Content = content };
+            _l0Cache[npcId] = msg;
+            return msg;
+        }
+
+        private ChatMessage? BuildL1(string npcId, List<KeyMeta> keys, Pawn? pawn)
+        {
+            if (keys.Count == 0) return null;
+
+            bool changed = false;
+            if (_l1KeyVersions.TryGetValue(npcId, out var versions))
+            {
+                foreach (var key in keys)
+                {
+                    if (pawn == null) continue;
+                    string currentVal = EntriesToString(key.ValueProvider(pawn));
+                    if (!versions.TryGetValue(key.Key, out var ver))
+                    {
+                        changed = true;
+                        break;
+                    }
+                    if (_keyLastValues.TryGetValue(npcId, out var lastVals) &&
+                        lastVals.TryGetValue(key.Key, out var lastVal) &&
+                        lastVal != currentVal)
+                    {
+                        changed = true;
+                        AddDiff(npcId, key.Key, lastVal, currentVal, key.Layer);
+                    }
+                }
+            }
+            else
+            {
+                changed = true;
+            }
+
+            if (!changed && _l1BlockCache.TryGetValue(npcId, out var existingBlocks))
+                return AssembleL1Message(existingBlocks);
+
+            if (!_l1BlockCache.TryGetValue(npcId, out var blocks))
+            {
+                blocks = new Dictionary<string, string>();
+                _l1BlockCache[npcId] = blocks;
+            }
+
+            foreach (var key in keys)
+            {
+                if (pawn == null) continue;
+                var entries = key.ValueProvider(pawn);
+                string val = EntriesToString(entries);
+                if (!string.IsNullOrEmpty(val))
+                    blocks[key.Key] = val;
+                else
+                    blocks.Remove(key.Key);
+            }
+
+            int newVersion = (_l1Version.TryGetValue(npcId, out var oldVer) ? oldVer : 0) + 1;
+            _l1Version[npcId] = newVersion;
+
+            if (!_l1KeyVersions.ContainsKey(npcId))
+                _l1KeyVersions[npcId] = new Dictionary<string, int>();
+            foreach (var key in keys)
+                _l1KeyVersions[npcId][key.Key] = newVersion;
+
+            return AssembleL1Message(blocks);
+        }
+
+        private ChatMessage AssembleL1Message(Dictionary<string, string> blocks)
+        {
+            var sb = new StringBuilder();
+            foreach (var kvp in blocks)
+            {
+                sb.AppendLine($"[{kvp.Key}]");
+                sb.AppendLine(kvp.Value);
+            }
+            return new ChatMessage { Role = "system", Content = sb.ToString().TrimEnd() };
+        }
+
+        private ChatMessage? BuildL2L3(List<KeyMeta> keys, Pawn? pawn)
+        {
+            if (keys.Count == 0 || pawn == null) return null;
+
+            var sb = new StringBuilder();
+            foreach (var key in keys)
+            {
+                var entries = key.ValueProvider(pawn);
+                if (entries == null) continue;
+                var sbEntries = new StringBuilder();
+                foreach (var entry in entries)
+                {
+                    if (!string.IsNullOrEmpty(entry.Content))
+                        sbEntries.AppendLine(entry.Content);
+                }
+                string val = sbEntries.ToString().TrimEnd();
+                if (!string.IsNullOrEmpty(val))
+                {
+                    sb.AppendLine($"[{key.Key}]");
+                    sb.AppendLine(val);
+                }
+            }
+
+            string content = sb.ToString().TrimEnd();
+            if (string.IsNullOrEmpty(content)) return null;
+
+            return new ChatMessage { Role = "system", Content = content };
+        }
+
+        private ChatMessage? BuildDiffMessage(string npcId, ContextLayer layer)
+        {
+            if (!_diffStore.TryGetValue(npcId, out var diffs) || diffs.Count == 0)
+                return null;
+
+            var layerDiffs = diffs.Where(d => d.Layer == layer).ToList();
+            if (layerDiffs.Count == 0) return null;
+
+            var sb = new StringBuilder();
+            sb.AppendLine("RimMind.Core.Prompt.EnvironmentChange".Translate());
+            foreach (var diff in layerDiffs)
+                sb.AppendLine(diff.Format());
+
+            return new ChatMessage { Role = "system", Content = sb.ToString().TrimEnd() };
+        }
+
+        private void AddDiff(string npcId, string key, string oldValue, string newValue, ContextLayer layer)
+        {
+            if (!_diffStore.ContainsKey(npcId))
+                _diffStore[npcId] = new List<ContextDiff>();
+
+            var existing = _diffStore[npcId].FirstOrDefault(d => d.Key == key);
+            if (existing != null)
+            {
+                existing.NewValue = newValue;
+                existing.Layer = layer;
+                existing.RoundsRemaining = 4;
+            }
+            else
+            {
+                _diffStore[npcId].Add(new ContextDiff
+                {
+                    Key = key,
+                    Layer = layer,
+                    OldValue = oldValue,
+                    NewValue = newValue,
+                    InsertedTick = Find.TickManager?.TicksGame ?? 0,
+                    RoundsRemaining = 4,
+                });
+            }
+        }
+
+        private void MergeExpiredDiffs(string npcId)
+        {
+            if (!_diffStore.TryGetValue(npcId, out var diffs)) return;
+
+            var expired = diffs.Where(d => d.RoundsRemaining <= 0).ToList();
+            if (expired.Count > 0)
+            {
+                if (_l1BlockCache.TryGetValue(npcId, out var blocks))
+                {
+                    foreach (var diff in expired)
+                    {
+                        if (diff.Layer == ContextLayer.L1_Baseline && blocks.TryGetValue(diff.Key, out var blockContent))
+                        {
+                            if (!string.IsNullOrEmpty(diff.OldValue) && blockContent.Contains(diff.OldValue))
+                                blocks[diff.Key] = blockContent.Replace(diff.OldValue, diff.NewValue);
+                            else
+                                blocks[diff.Key] = diff.NewValue;
+                        }
+                        diffs.Remove(diff);
+                    }
+                }
+                else
+                {
+                    foreach (var diff in expired)
+                        diffs.Remove(diff);
+                }
+
+                int newVersion = (_l1Version.TryGetValue(npcId, out var v) ? v : 0) + 1;
+                _l1Version[npcId] = newVersion;
+
+                if (_l1KeyVersions.TryGetValue(npcId, out var versions))
+                    foreach (var diff in expired.Where(d => d.Layer == ContextLayer.L1_Baseline))
+                        versions[diff.Key] = newVersion;
+            }
+
+            foreach (var diff in diffs)
+                diff.RoundsRemaining--;
+        }
+
+        private void UpdateKeyValues(string npcId, List<KeyMeta> keys, Pawn? pawn)
+        {
+            if (pawn == null) return;
+            if (!_keyLastValues.ContainsKey(npcId))
+                _keyLastValues[npcId] = new Dictionary<string, string>();
+
+            foreach (var key in keys)
+            {
+                var entries = key.ValueProvider(pawn);
+                string val = EntriesToString(entries);
+                if (_keyLastValues[npcId].TryGetValue(key.Key, out var lastVal))
+                {
+                    if (lastVal != val)
+                    {
+                        _scheduler.OnKeyUpdated(key);
+                        if (key.Layer != ContextLayer.L1_Baseline)
+                        {
+                            AddDiff(npcId, key.Key, lastVal, val, key.Layer);
+                        }
+                        _embedCache.InvalidateBlock(npcId, key.Key);
+                        _embedCache.InvalidateEntries(npcId, key.Key);
+                        SemanticEmbedding.InvalidateBlockEmbedding(npcId, key.Key);
+                        SemanticEmbedding.InvalidateEntryEmbeddings(npcId, key.Key);
+                    }
+                }
+                _keyLastValues[npcId][key.Key] = val;
+            }
+        }
+
+        private static string EntriesToString(List<ContextEntry>? entries)
+        {
+            if (entries == null || entries.Count == 0) return "";
+            var sb = new StringBuilder();
+            foreach (var entry in entries)
+            {
+                if (!string.IsNullOrEmpty(entry.Content))
+                    sb.AppendLine(entry.Content);
+            }
+            return sb.ToString().TrimEnd();
+        }
+
+        private void ApplyBudgetTrim(ContextSnapshot snapshot)
+        {
+            if (snapshot.Messages == null || snapshot.Messages.Count == 0) return;
+
+            int totalBudget = 4000;
+            int reserveForOutput = RimMindCoreMod.Settings?.maxTokens > 0
+                ? RimMindCoreMod.Settings.maxTokens
+                : 800;
+            float budgetRatio = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f;
+            int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
+            if (available <= 0) available = totalBudget - reserveForOutput;
+
+            if (snapshot.EstimatedTokens <= available) return;
+
+            // Messages -> PromptSections with priority based on role + LayerTag
+            var sections = new List<PromptSection>();
+            foreach (var msg in snapshot.Messages)
+            {
+                int priority = msg.Role switch
+                {
+                    "system" when msg.LayerTag == "L0" => PromptSection.PriorityCore,
+                    "system" => PromptSection.PriorityKeyState,
+                    "user" => PromptSection.PriorityCurrentInput,
+                    "assistant" => PromptSection.PriorityAuxiliary,
+                    _ => PromptSection.PriorityAuxiliary
+                };
+
+                var section = new PromptSection(msg.Role ?? "unknown", msg.Content ?? "", priority)
+                {
+                    LayerTag = msg.LayerTag
+                };
+
+                // L2/L3 system messages: add compress callback for detail->brief
+                if (msg.Role == "system" && (msg.LayerTag == "L2" || msg.LayerTag == "L3"))
+                {
+                    section.Compress = CompressToBrief;
+                }
+
+                sections.Add(section);
+            }
+
+            // Compose via PromptBudget
+            var budget = new PromptBudget(totalBudget, reserveForOutput);
+            var trimmed = budget.Compose(sections);
+
+            // Write back to snapshot
+            snapshot.Messages.Clear();
+            foreach (var sec in trimmed)
+            {
+                snapshot.Messages.Add(new ChatMessage
+                {
+                    Role = sec.Tag,
+                    Content = sec.Content,
+                    LayerTag = sec.LayerTag
+                });
+            }
+            snapshot.EstimatedTokens = trimmed.Sum(s => s.EstimatedTokens);
+            snapshot.Meta.TotalTokens = snapshot.EstimatedTokens;
+
+            if (RimMindCoreMod.Settings?.debugLogging == true)
+            {
+                Log.Message($"[RimMind] Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
+            }
+        }
+
+        private static string CompressToBrief(string content)
+        {
+            if (string.IsNullOrEmpty(content)) return content;
+            // Simple compression: truncate to first 200 chars + ellipsis
+            const int briefLimit = 200;
+            if (content.Length <= briefLimit) return content;
+            return content.Substring(0, briefLimit) + "...";
+        }
+
+        private static Pawn? FindPawnByNpcId(string npcId)
+        {
+            if (string.IsNullOrEmpty(npcId)) return null;
+            string idPart = npcId.StartsWith("NPC-") ? npcId.Substring(4) : npcId;
+            if (!int.TryParse(idPart, out int thingId)) return null;
+
+            var worldPawn = Find.WorldPawns?.AllPawnsAlive?
+                .FirstOrDefault(p => p.thingIDNumber == thingId);
+            if (worldPawn != null) return worldPawn;
+
+            foreach (var map in Find.Maps)
+            {
+                var pawn = map.mapPawns?.AllPawns?
+                    .FirstOrDefault(p => p.thingIDNumber == thingId);
+                if (pawn != null) return pawn;
+            }
+
+            return null;
+        }
+
+        private static int EstimateTokens(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0;
+            int cjk = 0, other = 0;
+            foreach (char c in text)
+            {
+                if (c > 0x2E80) cjk++;
+                else other++;
+            }
+            return (int)(other / 4.0 + cjk / 1.5 + 0.5);
+        }
+    }
+}

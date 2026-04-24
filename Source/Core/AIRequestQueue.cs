@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Settings;
 using Verse;
@@ -61,6 +62,12 @@ namespace RimMind.Core.Internal
 
         public override void StartedNewGame()
         {
+            foreach (var kvp in _activeRequests)
+            {
+                var response = AIResponse.Cancelled(kvp.Value.Request.RequestId, "New game started, request cancelled");
+                response.Priority = kvp.Value.Request.Priority;
+                _results.Enqueue((response, kvp.Value.Callback));
+            }
             _modCooldowns.Clear();
             ClearAllQueues();
             _activeRequests.Clear();
@@ -71,6 +78,12 @@ namespace RimMind.Core.Internal
 
         public override void LoadedGame()
         {
+            foreach (var kvp in _activeRequests)
+            {
+                var response = AIResponse.Cancelled(kvp.Value.Request.RequestId, "Game loaded, request cancelled");
+                response.Priority = kvp.Value.Request.Priority;
+                _results.Enqueue((response, kvp.Value.Callback));
+            }
             _modCooldowns.Clear();
             ClearAllQueues();
             _activeRequests.Clear();
@@ -81,6 +94,8 @@ namespace RimMind.Core.Internal
 
         public override void GameComponentTick()
         {
+            global::RimMind.Core.AgentBus.AgentBus.FlushBackgroundQueue();
+
             while (_pendingLogs.TryDequeue(out var log))
             {
                 if (log.isWarning) Log.Warning(log.msg);
@@ -350,6 +365,11 @@ namespace RimMind.Core.Internal
             }
             else
             {
+                if (!result.Response.Success && QuotaExceededException.IsQuotaError(result.Response.Error))
+                {
+                    Log.Warning($"[RimMind] Player2 quota exceeded for request {tracked.Request.RequestId}. " +
+                                "Please top up your Joules balance or switch to another provider.");
+                }
                 _results.Enqueue((result.Response, tracked.Callback));
             }
         }
@@ -397,6 +417,7 @@ namespace RimMind.Core.Internal
         private static bool IsTransientError(string error)
         {
             if (string.IsNullOrEmpty(error)) return false;
+            if (QuotaExceededException.IsQuotaError(error)) return false;
             string lower = error.ToLowerInvariant();
             return lower.Contains("timeout")
                 || lower.Contains("connection")

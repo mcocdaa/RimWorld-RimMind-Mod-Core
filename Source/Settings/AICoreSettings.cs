@@ -9,9 +9,9 @@ namespace RimMind.Core.Settings
         public string apiKey = string.Empty;
         public string apiEndpoint = "https://api.deepseek.com/v1";
         public string modelName = "deepseek-chat";
+        public string player2RemoteUrl = "https://api.player2.game";
 
         public bool forceJsonMode = true;
-        public bool useStreaming = false;
 
         public int maxTokens = 800;
 
@@ -49,8 +49,8 @@ namespace RimMind.Core.Settings
             Scribe_Values.Look(ref apiKey,               "apiKey",               string.Empty);
             Scribe_Values.Look(ref apiEndpoint,          "apiEndpoint",          "https://api.deepseek.com/v1");
             Scribe_Values.Look(ref modelName,            "modelName",            "deepseek-chat");
+            Scribe_Values.Look(ref player2RemoteUrl,     "player2RemoteUrl",     "https://api.player2.game");
             Scribe_Values.Look(ref forceJsonMode,        "forceJsonMode",        true);
-            Scribe_Values.Look(ref useStreaming,         "useStreaming",          false);
             Scribe_Values.Look(ref maxTokens,            "maxTokens",            800);
             Scribe_Values.Look(ref debugLogging,         "debugLogging",         false);
             Scribe_Deep.Look(ref Context,                "Context");
