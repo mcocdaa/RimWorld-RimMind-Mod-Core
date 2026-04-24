@@ -397,14 +397,6 @@ namespace RimMind.Core.Internal
         /// 从 WorldComponent 获取最近 N 条 AIStoryteller 历史记录。
         /// AIStoryteller 未安装时返回空字符串。
         /// </summary>
-        public static string BuildHistoryContext(int maxEntries = 10)
-        {
-            // AIStoryteller 通过 RegisterStaticProvider 注入，此处为空实现。
-            return string.Empty;
-        }
-
-        // ── 辅助 ──────────────────────────────────────────────────────────────
-
         private static string BuildSurroundings(Pawn pawn, int radius = 5, int maxItems = 8)
         {
             var map = pawn.Map;

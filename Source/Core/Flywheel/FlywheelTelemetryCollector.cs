@@ -56,7 +56,7 @@ namespace RimMind.Core.Flywheel
 
             try
             {
-                string dataDir = Path.GetDirectoryName(GenFilePaths.SaveFolder) ?? GenFilePaths.SaveFolder;
+                string dataDir = GenFilePaths.SaveDataFolderPath;
                 string dir = Path.Combine(dataDir, "Telemetry");
                 if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);

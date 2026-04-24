@@ -7,12 +7,12 @@ namespace RimMind.Core.Flywheel
 {
     public class FlywheelGameComponent : GameComponent
     {
-        public FlywheelGameComponent(Game game) : base(game) { }
+        public FlywheelGameComponent() : base() { }
 
         public override void ExposeData()
         {
             base.ExposeData();
-            if (Scribe.mode == ScribeMode.Saving)
+            if (Scribe.mode == LoadSaveMode.Saving)
                 RimMindAPI.Telemetry.Flush();
         }
     }
@@ -23,7 +23,7 @@ namespace RimMind.Core.Flywheel
         static void Postfix(Game __instance)
         {
             if (!__instance.components.Any(c => c is FlywheelGameComponent))
-                __instance.components.Add(new FlywheelGameComponent(__instance));
+                __instance.components.Add(new FlywheelGameComponent());
         }
     }
 }

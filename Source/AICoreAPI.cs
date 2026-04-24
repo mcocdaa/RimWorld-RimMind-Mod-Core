@@ -267,9 +267,6 @@ namespace RimMind.Core
         public static string BuildPawnContext(Pawn pawn)
             => GameContextBuilder.BuildPawnContext(pawn);
 
-        public static string BuildHistoryContext(int maxEntries = 10)
-            => GameContextBuilder.BuildHistoryContext(maxEntries);
-
         public static string BuildStaticContext()
         {
             var sb = new StringBuilder();

@@ -18,8 +18,6 @@ namespace RimMind.Core.Prompt
 
         private bool _useSectionLabels;
 
-        private static readonly string[] SectionSuffixes = { "Role", "Goal", "Process", "Constraint", "Example", "Output", "Fallback" };
-
         public static StructuredPromptBuilder FromKeyPrefix(string prefix)
         {
             var builder = new StructuredPromptBuilder();
