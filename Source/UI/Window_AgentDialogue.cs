@@ -134,7 +134,7 @@ namespace RimMind.Core.UI
             _inputText = "";
 
             string thinkingText = "RimMind.Core.UI.AgentDialogue.Thinking".Translate();
-            HistoryManager.Instance.AddTurn(_npcId, message, thinkingText);
+            HistoryManager.Instance.AddTurn(_npcId, message, thinkingText, "Dialogue");
 
             var npcId = _npcId;
             _agent.ForceThink();

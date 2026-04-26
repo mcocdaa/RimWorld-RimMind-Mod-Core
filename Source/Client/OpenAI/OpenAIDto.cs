@@ -40,6 +40,7 @@ namespace RimMind.Core.Client.OpenAI
     {
         public string role { get; set; } = string.Empty;
         public string? content { get; set; }
+        public string? reasoning_content { get; set; }
         public string? tool_call_id { get; set; }
         public List<ToolCallDto>? tool_calls { get; set; }
     }
@@ -86,6 +87,7 @@ namespace RimMind.Core.Client.OpenAI
     internal class AssistantMessageDto
     {
         public string content { get; set; } = string.Empty;
+        public string? reasoning_content { get; set; }
         public List<ToolCallDto>? tool_calls { get; set; }
     }
 

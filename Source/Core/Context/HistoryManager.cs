@@ -46,7 +46,7 @@ namespace RimMind.Core.Context
 
             IEnumerable<HistoryEntry> filtered = entries;
             if (!string.IsNullOrEmpty(scenarioFilter))
-                filtered = filtered.Where(e => e.Scenario == null || e.Scenario == scenarioFilter);
+                filtered = filtered.Where(e => e.Scenario == scenarioFilter);
 
             var list = filtered.ToList();
             int maxEntries = maxRounds * 2;

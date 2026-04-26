@@ -71,12 +71,18 @@ namespace RimMind.Core.Context
                         return WrapEntry("You are the RimWorld storyteller AI. Based on the colony's current situation, select the most appropriate incident event. " +
                             "Consider colony wealth, threat level, food supply, colonist count, and recent events. " +
                             "Output must be valid JSON matching the IncidentOutput schema.");
+                    if (CurrentScenario == ScenarioIds.Decision)
+                        return WrapEntry("RimMind.Core.Prompt.SystemInstruction.Advisor".Translate());
+                    if (pawn == null) return WrapEntry("");
                     var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     return WrapEntry(profile?.SystemPrompt ?? "");
                 }, "Core");
             Register("npc_identity", ContextLayer.L0_Static, 1.0f,
                 pawn =>
                 {
+                    if (CurrentScenario == ScenarioIds.Decision)
+                        return WrapEntry("");
+                    if (pawn == null) return WrapEntry("");
                     var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
@@ -91,6 +97,7 @@ namespace RimMind.Core.Context
                 pawn =>
                 {
                     if (CurrentScenario == ScenarioIds.Decision) return WrapEntry("");
+                    if (pawn == null) return WrapEntry("");
                     var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null || profile.Commands.Count == 0) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
@@ -133,42 +140,43 @@ namespace RimMind.Core.Context
                 }, "Core");
 
             Register("map_structure", ContextLayer.L1_Baseline, 0.95f,
-                pawn => pawn.Map != null ? WrapEntry(GameContextBuilder.BuildMapContext(pawn.Map)) : WrapEntry(""), "Core");
+                pawn => pawn?.Map != null ? WrapEntry(GameContextBuilder.BuildMapContext(pawn.Map)) : WrapEntry(""), "Core");
             Register("pawn_base_info", ContextLayer.L1_Baseline, 0.95f,
-                pawn => WrapEntry(GameContextBuilder.ExtractPawnBaseInfo(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractPawnBaseInfo(pawn)) : WrapEntry(""), "Core");
             Register("fixed_relations", ContextLayer.L1_Baseline, 0.9f,
-                pawn => WrapEntry(GameContextBuilder.ExtractFixedRelations(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractFixedRelations(pawn)) : WrapEntry(""), "Core");
             Register("ideology", ContextLayer.L1_Baseline, 0.9f,
-                pawn => WrapEntry(GameContextBuilder.ExtractIdeology(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractIdeology(pawn)) : WrapEntry(""), "Core");
             Register("skills_summary", ContextLayer.L1_Baseline, 0.85f,
-                pawn => WrapEntry(GameContextBuilder.ExtractSkillsSummary(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractSkillsSummary(pawn)) : WrapEntry(""), "Core");
 
             Register("current_area", ContextLayer.L2_Environment, 0.7f,
-                pawn => WrapEntry(GameContextBuilder.ExtractCurrentArea(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractCurrentArea(pawn)) : WrapEntry(""), "Core");
             Register("weather", ContextLayer.L2_Environment, 0.6f,
-                pawn => WrapEntry(GameContextBuilder.ExtractWeather(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractWeather(pawn)) : WrapEntry(""), "Core");
             Register("time_of_day", ContextLayer.L2_Environment, 0.65f,
-                pawn => WrapEntry(GameContextBuilder.ExtractTimeOfDay(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractTimeOfDay(pawn)) : WrapEntry(""), "Core");
             Register("nearby_pawns", ContextLayer.L2_Environment, 0.7f,
-                pawn => WrapEntry(GameContextBuilder.ExtractNearbyPawns(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractNearbyPawns(pawn)) : WrapEntry(""), "Core");
             Register("season", ContextLayer.L2_Environment, 0.5f,
-                pawn => WrapEntry(GameContextBuilder.ExtractSeason(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractSeason(pawn)) : WrapEntry(""), "Core");
             Register("colony_status", ContextLayer.L2_Environment, 0.6f,
-                pawn => WrapEntry(GameContextBuilder.ExtractColonyStatus(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractColonyStatus(pawn)) : WrapEntry(""), "Core");
 
             Register("health", ContextLayer.L3_State, 0.3f,
-                pawn => WrapEntry(GameContextBuilder.ExtractHealth(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractHealth(pawn)) : WrapEntry(""), "Core");
             Register("mood", ContextLayer.L3_State, 0.3f,
-                pawn => WrapEntry(GameContextBuilder.ExtractMood(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractMood(pawn)) : WrapEntry(""), "Core");
             Register("current_job", ContextLayer.L3_State, 0.25f,
-                pawn => WrapEntry(GameContextBuilder.ExtractCurrentJob(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractCurrentJob(pawn)) : WrapEntry(""), "Core");
             Register("combat_status", ContextLayer.L3_State, 0.2f,
-                pawn => WrapEntry(GameContextBuilder.ExtractCombatStatus(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractCombatStatus(pawn)) : WrapEntry(""), "Core");
             Register("target_info", ContextLayer.L3_State, 0.15f,
-                pawn => WrapEntry(GameContextBuilder.ExtractTargetInfo(pawn)), "Core");
+                pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractTargetInfo(pawn)) : WrapEntry(""), "Core");
             Register("task_progress", ContextLayer.L3_State, 0.2f,
                 pawn =>
                 {
+                    if (pawn == null) return WrapEntry("");
                     var comp = pawn.TryGetComp<RimMind.Core.Comps.CompPawnAgent>();
                     if (comp == null || comp.Agent == null) return WrapEntry("");
                     var goals = comp.Agent.GoalStack.ActiveGoals;

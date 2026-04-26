@@ -83,9 +83,11 @@ namespace RimMind.Core.Context
             TouchCache(l0CacheKey);
             ContextKeyRegistry.CurrentScenario = scenario;
 
-            var snapshot = new ContextSnapshot
+            try
             {
-                NpcId = request.NpcId,
+                var snapshot = new ContextSnapshot
+                {
+                    NpcId = request.NpcId,
                 Scenario = scenario,
                 MaxTokens = request.MaxTokens,
                 Temperature = request.Temperature,
@@ -95,7 +97,7 @@ namespace RimMind.Core.Context
 
             var pawn = NpcManager.FindPawnByNpcId(request.NpcId);
             if (pawn == null && request.Map != null)
-                pawn = NpcManager.FindProxyPawnForMap(request.Map);
+                pawn = NpcManager.FindProxyPawnForMap(request.Map!);
             var allKeys = ContextKeyRegistry.GetAll();
 
             var scenarioMeta = ScenarioRegistry.Get(request.Scenario ?? ScenarioIds.Dialogue);
@@ -207,7 +209,10 @@ namespace RimMind.Core.Context
 
             if (!string.IsNullOrEmpty(request.CurrentQuery))
             {
-                messages.Add(new ChatMessage { Role = "user", Content = request.CurrentQuery! });
+                string queryContent = !string.IsNullOrEmpty(request.SpeakerName)
+                    ? "RimMind.Core.Prompt.Dialogue.SpeakerSays".Translate(request.SpeakerName!, request.CurrentQuery!)
+                    : request.CurrentQuery!;
+                messages.Add(new ChatMessage { Role = "user", Content = queryContent, LayerTag = "L4" });
             }
 
             bool hasUserMessage = messages.Any(m => m.Role == "user");
@@ -215,7 +220,7 @@ namespace RimMind.Core.Context
             {
                 string scenarioLabel = !string.IsNullOrEmpty(request.Scenario)
                     ? request.Scenario! : "general";
-                messages.Add(new ChatMessage { Role = "user", Content = $"[Auto] Awaiting {scenarioLabel} decision based on the above context." });
+                messages.Add(new ChatMessage { Role = "user", Content = "RimMind.Core.Prompt.AutoAwait".Translate(scenarioLabel) });
             }
 
             snapshot.Messages = messages;
@@ -273,8 +278,12 @@ namespace RimMind.Core.Context
             }
             catch (Exception ex) { Log.Warning($"[RimMind] Embedding snapshot failed: {ex.Message}"); }
 
-            ContextKeyRegistry.CurrentScenario = string.Empty;
-            return snapshot;
+                return snapshot;
+            }
+            finally
+            {
+                ContextKeyRegistry.CurrentScenario = string.Empty;
+            }
         }
 
         public void InvalidateLayer(string npcId, ContextLayer layer)
@@ -340,8 +349,7 @@ namespace RimMind.Core.Context
 
             foreach (var key in keys)
             {
-                if (pawn == null) continue;
-                var entries = key.ValueProvider(pawn);
+                var entries = key.ValueProvider(pawn!);
                 if (entries == null) continue;
                 foreach (var entry in entries)
                 {

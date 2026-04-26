@@ -293,6 +293,9 @@
   <RimMind.Core.Prompt.TaskInstruction.WorldOnly>你处于 RimWorld 游戏世界中。</RimMind.Core.Prompt.TaskInstruction.WorldOnly>
   <!-- System Instruction (system_instruction) -->
   <RimMind.Core.Prompt.SystemInstruction.Pawn>{0}，你是 RimWorld 殖民地的一名殖民者。</RimMind.Core.Prompt.SystemInstruction.Pawn>
+  <RimMind.Core.Prompt.SystemInstruction.Advisor>你是一名殖民顾问，负责为殖民者推荐行动。根据当前状态和可用动作，给出最合理的建议。</RimMind.Core.Prompt.SystemInstruction.Advisor>
+  <RimMind.Core.Prompt.Dialogue.SpeakerSays>{0}对你说：{1}</RimMind.Core.Prompt.Dialogue.SpeakerSays>
+  <RimMind.Core.Prompt.AutoAwait>根据以上上下文，提供你的{0}回应。</RimMind.Core.Prompt.AutoAwait>
   <!-- Identity (npc_identity) -->
   <RimMind.Core.Prompt.Identity.Name>姓名：{0}</RimMind.Core.Prompt.Identity.Name>
   <RimMind.Core.Prompt.Identity.ShortName>简称：{0}</RimMind.Core.Prompt.Identity.ShortName>

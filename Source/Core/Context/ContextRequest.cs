@@ -12,5 +12,6 @@ namespace RimMind.Core.Context
         public int MaxTokens = 400;
         public float Temperature = 0.7f;
         public Map? Map;
+        public string? SpeakerName;
     }
 }

@@ -293,6 +293,9 @@
   <RimMind.Core.Prompt.TaskInstruction.WorldOnly>You are in the RimWorld game world.</RimMind.Core.Prompt.TaskInstruction.WorldOnly>
   <!-- System Instruction (system_instruction) -->
   <RimMind.Core.Prompt.SystemInstruction.Pawn>You are {0}, a colonist in a RimWorld colony.</RimMind.Core.Prompt.SystemInstruction.Pawn>
+  <RimMind.Core.Prompt.SystemInstruction.Advisor>You are a colonial advisor. Recommend the most appropriate actions for colonists based on their current state and available actions.</RimMind.Core.Prompt.SystemInstruction.Advisor>
+  <RimMind.Core.Prompt.Dialogue.SpeakerSays>{0} says to you: {1}</RimMind.Core.Prompt.Dialogue.SpeakerSays>
+  <RimMind.Core.Prompt.AutoAwait>Based on the above context, provide your {0} response.</RimMind.Core.Prompt.AutoAwait>
   <!-- Identity (npc_identity) -->
   <RimMind.Core.Prompt.Identity.Name>Name: {0}</RimMind.Core.Prompt.Identity.Name>
   <RimMind.Core.Prompt.Identity.ShortName>ShortName: {0}</RimMind.Core.Prompt.Identity.ShortName>

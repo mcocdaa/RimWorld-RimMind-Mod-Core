@@ -106,6 +106,7 @@ namespace RimMind.Core.Client.OpenAI
                 (string responseText, long httpStatusCode) = await PostAsync(endpoint, json);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
+                string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
                 int tokens = parsed?.usage?.total_tokens ?? 0;
                 int promptTokens = parsed?.usage?.prompt_tokens ?? 0;
                 int completionTokens = parsed?.usage?.completion_tokens ?? 0;
@@ -116,6 +117,7 @@ namespace RimMind.Core.Client.OpenAI
                     AIRequestQueue.LogFromBackground($"[RimMind] ← {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
+                response.ReasoningContent = reasoningContent;
                 response.PromptTokens = promptTokens;
                 response.CompletionTokens = completionTokens;
                 response.CachedTokens = cachedTokens;
@@ -222,6 +224,7 @@ namespace RimMind.Core.Client.OpenAI
                 (string responseText, long httpStatusCode) = await PostAsync(endpoint, json);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
+                string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
                 int tokens = parsed?.usage?.total_tokens ?? 0;
                 int promptTokens = parsed?.usage?.prompt_tokens ?? 0;
                 int completionTokens = parsed?.usage?.completion_tokens ?? 0;
@@ -236,6 +239,7 @@ namespace RimMind.Core.Client.OpenAI
                 {
                     Success = true,
                     Content = content,
+                    ReasoningContent = reasoningContent,
                     RequestId = request.RequestId,
                     TokensUsed = tokens,
                     PromptTokens = promptTokens,
@@ -385,6 +389,8 @@ namespace RimMind.Core.Client.OpenAI
                 foreach (var m in request.Messages)
                 {
                     var dto = new MessageDto { role = m.Role, content = m.Content };
+                    if (m.Role == "assistant" && !string.IsNullOrEmpty(m.ReasoningContent))
+                        dto.reasoning_content = m.ReasoningContent;
                     if (!string.IsNullOrEmpty(m.ToolCallId))
                         dto.tool_call_id = m.ToolCallId;
                     if (m.ToolCalls != null && m.ToolCalls.Count > 0)

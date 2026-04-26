@@ -155,7 +155,7 @@ namespace RimMind.Core.UI
                     (sysP.Length > 0 ? sysP : emptyLabel) +
                     "\n\n─── User Prompt ───\n" +
                     (usrP.Length > 0 ? usrP : emptyLabel);
-                if (astP.Length > 0)
+                if (!string.IsNullOrWhiteSpace(astP))
                     copyText += "\n\n─── History (assistant) ───\n" + astP;
                 copyText +=
                     "\n\n─── Response ───\n" +
@@ -187,7 +187,7 @@ namespace RimMind.Core.UI
                 "\n\n─── User Prompt ───\n" +
                 (userPrompt.Length > 0 ? userPrompt : emptyLbl);
 
-            if (assistantPrompt.Length > 0)
+            if (!string.IsNullOrWhiteSpace(assistantPrompt))
                 inputText += "\n\n─── History (assistant) ───\n" + assistantPrompt;
 
             string outputText =

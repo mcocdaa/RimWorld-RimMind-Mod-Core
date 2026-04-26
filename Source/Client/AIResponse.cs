@@ -20,6 +20,7 @@ namespace RimMind.Core.Client
         public int RequestPayloadBytes { get; set; }
         public string CancelReason { get; set; } = string.Empty;
         public string? ToolCallsJson;
+        public string? ReasoningContent;
 
         public static AIResponse Failure(string requestId, string error) => new AIResponse
         {
