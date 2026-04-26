@@ -67,6 +67,10 @@ namespace RimMind.Core.Context
             Register("system_instruction", ContextLayer.L0_Static, 1.0f,
                 pawn =>
                 {
+                    if (CurrentScenario == ScenarioIds.Storyteller)
+                        return WrapEntry("You are the RimWorld storyteller AI. Based on the colony's current situation, select the most appropriate incident event. " +
+                            "Consider colony wealth, threat level, food supply, colonist count, and recent events. " +
+                            "Output must be valid JSON matching the IncidentOutput schema.");
                     var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     return WrapEntry(profile?.SystemPrompt ?? "");
                 }, "Core");
@@ -86,6 +90,7 @@ namespace RimMind.Core.Context
             Register("npc_commands", ContextLayer.L0_Static, 1.0f,
                 pawn =>
                 {
+                    if (CurrentScenario == ScenarioIds.Decision) return WrapEntry("");
                     var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null || profile.Commands.Count == 0) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
@@ -97,18 +102,33 @@ namespace RimMind.Core.Context
             Register("world_rules", ContextLayer.L0_Static, 1.0f,
                 pawn =>
                 {
-                    var sb = new System.Text.StringBuilder();
-                    sb.AppendLine("RimMind.Core.Prompt.WorldRules.Header".Translate());
-                    sb.AppendLine("RimMind.Core.Prompt.WorldRules.Survival".Translate());
-                    sb.AppendLine("RimMind.Core.Prompt.WorldRules.Combat".Translate());
-                    sb.AppendLine("RimMind.Core.Prompt.WorldRules.Relationships".Translate());
-                    sb.AppendLine("RimMind.Core.Prompt.WorldRules.Weather".Translate());
-                    sb.AppendLine("RimMind.Core.Prompt.WorldRules.Medical".Translate());
-                    return WrapEntry(sb.ToString().TrimEnd());
+                    if (CurrentScenario == ScenarioIds.Storyteller)
+                    {
+                        var sb = new System.Text.StringBuilder();
+                        sb.AppendLine("Storyteller rules:");
+                        sb.AppendLine("- Only select from available RimWorld incident definitions");
+                        sb.AppendLine("- Consider threat level relative to colony wealth");
+                        sb.AppendLine("- Balance positive and negative events");
+                        sb.AppendLine("- Food shortages should trigger related events");
+                        sb.AppendLine("- Low mood colonists may need positive events");
+                        return WrapEntry(sb.ToString().TrimEnd());
+                    }
+                    var sb2 = new System.Text.StringBuilder();
+                    sb2.AppendLine("RimMind.Core.Prompt.WorldRules.Header".Translate());
+                    sb2.AppendLine("RimMind.Core.Prompt.WorldRules.Survival".Translate());
+                    sb2.AppendLine("RimMind.Core.Prompt.WorldRules.Combat".Translate());
+                    sb2.AppendLine("RimMind.Core.Prompt.WorldRules.Relationships".Translate());
+                    sb2.AppendLine("RimMind.Core.Prompt.WorldRules.Weather".Translate());
+                    sb2.AppendLine("RimMind.Core.Prompt.WorldRules.Medical".Translate());
+                    return WrapEntry(sb2.ToString().TrimEnd());
                 }, "Core");
             Register("npc_task_instruction", ContextLayer.L0_Static, 1.0f,
                 pawn =>
                 {
+                    if (CurrentScenario == ScenarioIds.Storyteller)
+                        return WrapEntry("Select the most fitting incident for the colony's current state. Return structured JSON with defName, reason, and optional params.");
+                    if (CurrentScenario == ScenarioIds.Decision)
+                        return WrapEntry("RimMind.Core.Prompt.TaskInstruction.WorldOnly".Translate());
                     return WrapEntry("RimMind.Core.Prompt.TaskInstruction.Base".Translate());
                 }, "Core");
 

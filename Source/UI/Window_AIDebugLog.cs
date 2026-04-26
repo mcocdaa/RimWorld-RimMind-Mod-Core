@@ -148,12 +148,16 @@ namespace RimMind.Core.UI
                 string emptyLabel = "RimMind.Core.UI.Empty".Translate();
                 string sysP = _selected.FullSystemPrompt ?? "";
                 string usrP = _selected.FullUserPrompt ?? "";
+                string astP = _selected.FullAssistantPrompt ?? "";
                 string rsp = _selected.FullResponse ?? "";
                 string copyText =
                     "─── System Prompt ───\n" +
                     (sysP.Length > 0 ? sysP : emptyLabel) +
                     "\n\n─── User Prompt ───\n" +
-                    (usrP.Length > 0 ? usrP : emptyLabel) +
+                    (usrP.Length > 0 ? usrP : emptyLabel);
+                if (astP.Length > 0)
+                    copyText += "\n\n─── History (assistant) ───\n" + astP;
+                copyText +=
                     "\n\n─── Response ───\n" +
                     (rsp.Length > 0 ? rsp : (
                         _selected.IsError ? $"[ERROR] {_selected.ErrorMsg ?? ""}" : emptyLabel));
@@ -174,6 +178,7 @@ namespace RimMind.Core.UI
             string emptyLbl = "RimMind.Core.UI.Empty".Translate();
             string sysPrompt = _selected.FullSystemPrompt ?? "";
             string userPrompt = _selected.FullUserPrompt ?? "";
+            string assistantPrompt = _selected.FullAssistantPrompt ?? "";
             string response = _selected.FullResponse ?? "";
 
             string inputText =
@@ -181,6 +186,9 @@ namespace RimMind.Core.UI
                 (sysPrompt.Length > 0 ? sysPrompt : emptyLbl) +
                 "\n\n─── User Prompt ───\n" +
                 (userPrompt.Length > 0 ? userPrompt : emptyLbl);
+
+            if (assistantPrompt.Length > 0)
+                inputText += "\n\n─── History (assistant) ───\n" + assistantPrompt;
 
             string outputText =
                 "─── Response ───\n" +

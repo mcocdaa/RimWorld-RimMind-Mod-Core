@@ -47,8 +47,7 @@ namespace RimMind.Core.Internal
                     if (sb.Length > 0)
                         sb.AppendLine().AppendLine();
                     string tag = !string.IsNullOrEmpty(m.LayerTag) ? $"[{m.LayerTag}] " : "";
-                    string role = m.Role == "assistant" ? "[assistant] " : "";
-                    sb.AppendLine($"{tag}{role}{m.Content}");
+                    sb.AppendLine($"{tag}{m.Content}");
                 }
             }
             return sb.ToString();
@@ -64,8 +63,11 @@ namespace RimMind.Core.Internal
                     ? BuildLayeredText(request.Messages, "system")
                     : (request.SystemPrompt ?? ""),
                 FullUserPrompt = request.Messages != null
-                    ? BuildLayeredText(request.Messages, "user", "assistant")
+                    ? BuildLayeredText(request.Messages, "user")
                     : (request.UserPrompt ?? ""),
+                FullAssistantPrompt = request.Messages != null
+                    ? BuildLayeredText(request.Messages, "assistant")
+                    : "",
                 FullResponse = response.Content ?? "",
                 ElapsedMs = elapsedMs,
                 TokensUsed = response.TokensUsed,
@@ -89,6 +91,7 @@ namespace RimMind.Core.Internal
         public string ModelName { get; set; } = string.Empty;
         public string FullSystemPrompt { get; set; } = string.Empty;
         public string FullUserPrompt { get; set; } = string.Empty;
+        public string FullAssistantPrompt { get; set; } = string.Empty;
         public string FullResponse { get; set; } = string.Empty;
         public int ElapsedMs { get; set; }
         public int TokensUsed { get; set; }

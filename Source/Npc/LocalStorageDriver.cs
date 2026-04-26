@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
-using RimMind.Core.Internal;
 using RimMind.Core.Prompt;
 using Verse;
 
@@ -57,20 +56,24 @@ namespace RimMind.Core.Npc
                 RequestId = $"NpcChat_{snapshot.NpcId}_{Find.TickManager.TicksGame}",
                 ModId = "NpcChat",
                 ExpireAtTicks = Find.TickManager.TicksGame + 30000,
+                UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
 
-            var tcs = new TaskCompletionSource<AIResponse>();
-            var queue = AIRequestQueue.Instance;
             var client = RimMindAPI.GetClient();
-            if (queue != null && client != null)
-                queue.Enqueue(request, resp => tcs.TrySetResult(resp), client);
-            else
+            if (client == null)
                 return new NpcChatResult { Error = "AI client not configured." };
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
-            cts.Token.Register(() => tcs.TrySetResult(AIResponse.Failure(request.RequestId, "ChatAsync timed out (120s)")));
-            var response = await tcs.Task;
+            AIResponse response;
+            try
+            {
+                response = await client.SendAsync(request);
+            }
+            catch (Exception ex)
+            {
+                return new NpcChatResult { Error = $"AI request failed: {ex.Message}" };
+            }
+
             if (!response.Success)
                 return new NpcChatResult { Error = response.Error };
 
@@ -80,7 +83,6 @@ namespace RimMind.Core.Npc
 
             var commands = ParseCommands(content);
 
-            // 提取 user 消息和 assistant 消息用于历史记录
             string? userMessage = snapshot.CurrentQuery;
             _historyManager.AddTurn(snapshot.NpcId, userMessage ?? "", content, snapshot.Scenario);
             _historyManager.CompressIfNeeded(snapshot.NpcId);

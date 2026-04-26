@@ -77,7 +77,9 @@ namespace RimMind.Core.Context
                 defaultExcludeKeys: new[] { "combat_status" });
             Register(ScenarioIds.Storyteller, 8, "叙事场景",
                 defaultBudget: 0.7f, l4Mode: L4Mode.NarrativeMemory,
-                defaultExcludeKeys: new string[0]);
+                defaultExcludeKeys: new[] { "npc_identity", "pawn_base_info", "fixed_relations",
+                    "ideology", "skills_summary", "health", "mood", "current_job",
+                    "combat_status", "target_info", "task_progress", "npc_commands" });
         }
 
         public static int GetBaseRounds(string scenarioId)

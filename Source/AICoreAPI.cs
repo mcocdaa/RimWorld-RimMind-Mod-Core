@@ -112,7 +112,7 @@ namespace RimMind.Core
             {
                 if (int.TryParse(request.NpcId.Substring(4), out int thingId))
                 {
-                    var pawn = FindPawnByThingId(thingId);
+                    var pawn = NpcManager.FindPawnByNpcId(request.NpcId);
                     if (pawn != null)
                     {
                         var profile = NpcProfileBuilder.BuildPawnNpc(pawn);
@@ -124,24 +124,6 @@ namespace RimMind.Core
 
             var snapshot = _contextEngine.BuildSnapshot(request);
             return await driver.ChatAsync(snapshot, ct);
-        }
-
-        private static Pawn? FindPawnByThingId(int thingId)
-        {
-            foreach (var map in Find.Maps)
-            {
-                if (map.mapPawns?.AllPawns != null)
-                {
-                    foreach (var p in map.mapPawns.AllPawns)
-                        if (p.thingIDNumber == thingId) return p;
-                }
-            }
-            if (Find.WorldPawns?.AllPawnsAlive != null)
-            {
-                foreach (var p in Find.WorldPawns.AllPawnsAlive)
-                    if (p.thingIDNumber == thingId) return p;
-            }
-            return null;
         }
 
         // ── Structured Request API ───────────────────────────────────────────
@@ -230,7 +212,7 @@ namespace RimMind.Core
                 Temperature = snapshot.Temperature,
                 RequestId = $"Structured_{request.NpcId}",
                 ModId = request.Scenario.ToString(),
-                ExpireAtTicks = Find.TickManager.TicksGame + 600,
+                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
@@ -745,6 +727,7 @@ namespace RimMind.Core
                 _cachedPlayer2Client = null;
                 _cachedProvider = default;
             }
+            OpenAIClient.InvalidateFormatCache();
         }
 
         public static Player2Client? GetPlayer2Client()

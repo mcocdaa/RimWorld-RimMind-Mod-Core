@@ -290,6 +290,7 @@
   <RimMind.Core.UI.AgentDialogue.Thinking>(thinking...)</RimMind.Core.UI.AgentDialogue.Thinking>
   <!-- Task Instructions (npc_task_instruction) -->
   <RimMind.Core.Prompt.TaskInstruction.Base>You are in the RimWorld game world.\n\nOutput constraints:\n- You must return valid JSON format\n- Do not wrap in markdown code blocks\n- If you cannot determine, return a default value or empty result\n\nBehavior constraints:\n- Do not break the fourth wall\n- Do not mention game mechanics, code, data structures, or the concept of "player"\n- Act naturally as your character</RimMind.Core.Prompt.TaskInstruction.Base>
+  <RimMind.Core.Prompt.TaskInstruction.WorldOnly>You are in the RimWorld game world.</RimMind.Core.Prompt.TaskInstruction.WorldOnly>
   <!-- System Instruction (system_instruction) -->
   <RimMind.Core.Prompt.SystemInstruction.Pawn>You are {0}, a colonist in a RimWorld colony.</RimMind.Core.Prompt.SystemInstruction.Pawn>
   <!-- Identity (npc_identity) -->

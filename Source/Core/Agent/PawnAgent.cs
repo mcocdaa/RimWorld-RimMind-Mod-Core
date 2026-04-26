@@ -116,7 +116,7 @@ namespace RimMind.Core.Agent
                 Temperature = snapshot.Temperature,
                 RequestId = $"Structured_{npcId}",
                 ModId = ctxRequest.Scenario,
-                ExpireAtTicks = Find.TickManager.TicksGame + 600,
+                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
@@ -283,7 +283,7 @@ namespace RimMind.Core.Agent
                 Temperature = 0.7f,
                 RequestId = $"Structured_{npcId}_fb{_toolCallDepth}",
                 ModId = "Decision",
-                ExpireAtTicks = Find.TickManager.TicksGame + 600,
+                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RimMind.Core.Npc;
 using RimMind.Core.Prompt;
 using RimWorld;
 using RimWorld.Planet;
@@ -485,7 +486,7 @@ namespace RimMind.Core.Internal
         public static string CollectBasicGameState(string npcId)
         {
             var sb = new StringBuilder();
-            var pawn = FindPawnByNpcId(npcId);
+            var pawn = NpcManager.FindPawnByNpcId(npcId);
 
             if (pawn != null)
             {
@@ -501,26 +502,6 @@ namespace RimMind.Core.Internal
             }
 
             return sb.ToString().TrimEnd();
-        }
-
-        private static Pawn? FindPawnByNpcId(string npcId)
-        {
-            if (string.IsNullOrEmpty(npcId)) return null;
-            string idPart = npcId.StartsWith("NPC-") ? npcId.Substring(4) : npcId;
-            if (!int.TryParse(idPart, out int thingId)) return null;
-
-            var worldPawn = Find.WorldPawns?.AllPawnsAlive?
-                .FirstOrDefault(p => p.thingIDNumber == thingId);
-            if (worldPawn != null) return worldPawn;
-
-            foreach (var map in Find.Maps)
-            {
-                var pawn = map.mapPawns?.AllPawns?
-                    .FirstOrDefault(p => p.thingIDNumber == thingId);
-                if (pawn != null) return pawn;
-            }
-
-            return null;
         }
 
         // ── PromptSection 版本 ──────────────────────────────────────────────

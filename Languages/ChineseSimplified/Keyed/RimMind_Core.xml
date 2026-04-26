@@ -290,6 +290,7 @@
   <RimMind.Core.UI.AgentDialogue.Thinking>(思考中...)</RimMind.Core.UI.AgentDialogue.Thinking>
   <!-- Task Instructions (npc_task_instruction) -->
   <RimMind.Core.Prompt.TaskInstruction.Base>你处于 RimWorld 游戏世界中。\n\n输出约束：\n- 必须返回有效的 JSON 格式\n- 不要用 markdown 代码块包裹\n- 如果无法判断，返回默认值或空结果\n\n行为约束：\n- 不要打破第四面墙\n- 不要提及游戏机制、代码、数据结构或"玩家"概念\n- 以角色身份自然行动</RimMind.Core.Prompt.TaskInstruction.Base>
+  <RimMind.Core.Prompt.TaskInstruction.WorldOnly>你处于 RimWorld 游戏世界中。</RimMind.Core.Prompt.TaskInstruction.WorldOnly>
   <!-- System Instruction (system_instruction) -->
   <RimMind.Core.Prompt.SystemInstruction.Pawn>{0}，你是 RimWorld 殖民地的一名殖民者。</RimMind.Core.Prompt.SystemInstruction.Pawn>
   <!-- Identity (npc_identity) -->

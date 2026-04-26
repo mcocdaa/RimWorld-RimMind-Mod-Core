@@ -38,22 +38,38 @@ namespace RimMind.Core.Context
         public BudgetScheduler GetScheduler() => _scheduler;
         public EmbeddingSnapshotStore GetEmbeddingSnapshotStore() => _embeddingSnapshotStore;
 
-        private void TouchCache(string npcId)
+        private void TouchCache(string cacheKey)
         {
-            _cacheOrder.Remove(npcId);
-            _cacheOrder.AddLast(npcId);
+            _cacheOrder.Remove(cacheKey);
+            _cacheOrder.AddLast(cacheKey);
             while (_cacheOrder.Count > MaxCacheEntries)
             {
                 var oldest = _cacheOrder.First.Value;
                 _cacheOrder.RemoveFirst();
                 _l0Cache.Remove(oldest);
-                _l1BlockCache.Remove(oldest);
-                _l1Version.Remove(oldest);
-                _l1KeyVersions.Remove(oldest);
-                _diffStore.Remove(oldest);
-                _keyLastValues.Remove(oldest);
-                _embedCache.InvalidateNpc(oldest);
-                SemanticEmbedding.InvalidateNpc(oldest);
+                string oldestNpc = oldest.Contains("_") ? oldest.Substring(0, oldest.LastIndexOf('_')) : oldest;
+                _l1BlockCache.Remove(oldestNpc);
+                _l1Version.Remove(oldestNpc);
+                _l1KeyVersions.Remove(oldestNpc);
+                _diffStore.Remove(oldestNpc);
+                _keyLastValues.Remove(oldestNpc);
+                _embedCache.InvalidateNpc(oldestNpc);
+                SemanticEmbedding.InvalidateNpc(oldestNpc);
+            }
+        }
+
+        private void RemoveL0CacheForNpc(string npcId)
+        {
+            var keysToRemove = new List<string>();
+            foreach (var key in _l0Cache.Keys)
+            {
+                if (key == npcId || key.StartsWith(npcId + "_"))
+                    keysToRemove.Add(key);
+            }
+            foreach (var key in keysToRemove)
+            {
+                _l0Cache.Remove(key);
+                _cacheOrder.Remove(key);
             }
         }
 
@@ -62,20 +78,24 @@ namespace RimMind.Core.Context
             ScenarioRegistry.RegisterCoreScenarios();
             RelevanceTable.RegisterCoreRelevance();
             ContextKeyRegistry.RegisterCoreKeys();
-            TouchCache(request.NpcId);
-            ContextKeyRegistry.CurrentScenario = request.Scenario ?? ScenarioIds.Dialogue;
+            string scenario = request.Scenario ?? ScenarioIds.Dialogue;
+            string l0CacheKey = $"{request.NpcId}_{scenario}";
+            TouchCache(l0CacheKey);
+            ContextKeyRegistry.CurrentScenario = scenario;
 
             var snapshot = new ContextSnapshot
             {
                 NpcId = request.NpcId,
-                Scenario = request.Scenario ?? ScenarioIds.Dialogue,
+                Scenario = scenario,
                 MaxTokens = request.MaxTokens,
                 Temperature = request.Temperature,
                 CurrentQuery = request.CurrentQuery,
                 BuildStartTicks = DateTime.Now.Ticks,
             };
 
-            var pawn = FindPawnByNpcId(request.NpcId);
+            var pawn = NpcManager.FindPawnByNpcId(request.NpcId);
+            if (pawn == null && request.Map != null)
+                pawn = NpcManager.FindProxyPawnForMap(request.Map);
             var allKeys = ContextKeyRegistry.GetAll();
 
             var scenarioMeta = ScenarioRegistry.Get(request.Scenario ?? ScenarioIds.Dialogue);
@@ -119,7 +139,7 @@ namespace RimMind.Core.Context
             var messages = new List<ChatMessage>();
 
             long l0Start = DateTime.Now.Ticks;
-            var l0Msg = BuildL0(request.NpcId, schedule.L0Keys, pawn);
+            var l0Msg = BuildL0(request.NpcId, request.Scenario ?? ScenarioIds.Dialogue, schedule.L0Keys, pawn);
             if (l0Msg != null)
             {
                 l0Msg.LayerTag = "L0";
@@ -178,7 +198,7 @@ namespace RimMind.Core.Context
             snapshot.LatencyByLayerMs["L3"] = (DateTime.Now.Ticks - l3Start) / TimeSpan.TicksPerMillisecond;
 
             int maxRounds = schedule.MaxHistoryRounds;
-            var history = _historyManager.GetHistory(request.NpcId, maxRounds);
+            var history = _historyManager.GetHistory(request.NpcId, maxRounds, scenario);
             foreach (var (role, content) in history)
             {
                 messages.Add(new ChatMessage { Role = role, Content = content });
@@ -188,6 +208,14 @@ namespace RimMind.Core.Context
             if (!string.IsNullOrEmpty(request.CurrentQuery))
             {
                 messages.Add(new ChatMessage { Role = "user", Content = request.CurrentQuery! });
+            }
+
+            bool hasUserMessage = messages.Any(m => m.Role == "user");
+            if (!hasUserMessage)
+            {
+                string scenarioLabel = !string.IsNullOrEmpty(request.Scenario)
+                    ? request.Scenario! : "general";
+                messages.Add(new ChatMessage { Role = "user", Content = $"[Auto] Awaiting {scenarioLabel} decision based on the above context." });
             }
 
             snapshot.Messages = messages;
@@ -252,7 +280,7 @@ namespace RimMind.Core.Context
         public void InvalidateLayer(string npcId, ContextLayer layer)
         {
             if (layer == ContextLayer.L0_Static)
-                _l0Cache.Remove(npcId);
+                RemoveL0CacheForNpc(npcId);
             if (layer == ContextLayer.L1_Baseline)
             {
                 _l1BlockCache.Remove(npcId);
@@ -284,7 +312,7 @@ namespace RimMind.Core.Context
 
         public void InvalidateNpc(string npcId)
         {
-            _l0Cache.Remove(npcId);
+            RemoveL0CacheForNpc(npcId);
             _l1BlockCache.Remove(npcId);
             _l1Version.Remove(npcId);
             _l1KeyVersions.Remove(npcId);
@@ -295,9 +323,10 @@ namespace RimMind.Core.Context
             SemanticEmbedding.InvalidateNpc(npcId);
         }
 
-        private ChatMessage? BuildL0(string npcId, List<KeyMeta> keys, Pawn? pawn)
+        private ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, Pawn? pawn)
         {
-            if (_l0Cache.TryGetValue(npcId, out var cached))
+            string cacheKey = $"{npcId}_{scenario}";
+            if (_l0Cache.TryGetValue(cacheKey, out var cached))
             {
                 foreach (var key in keys)
                     _pendingCacheEvents[$"L0_{key.Key}"] = true;
@@ -325,7 +354,7 @@ namespace RimMind.Core.Context
             if (string.IsNullOrEmpty(content)) return null;
 
             var msg = new ChatMessage { Role = "system", Content = content };
-            _l0Cache[npcId] = msg;
+            _l0Cache[cacheKey] = msg;
             return msg;
         }
 
@@ -397,15 +426,17 @@ namespace RimMind.Core.Context
             return AssembleL1Message(blocks);
         }
 
-        private ChatMessage AssembleL1Message(Dictionary<string, string> blocks)
+        private ChatMessage? AssembleL1Message(Dictionary<string, string> blocks)
         {
+            if (blocks.Count == 0) return null;
             var sb = new StringBuilder();
             foreach (var kvp in blocks)
             {
                 sb.AppendLine($"[{kvp.Key}]");
                 sb.AppendLine(kvp.Value);
             }
-            return new ChatMessage { Role = "system", Content = sb.ToString().TrimEnd() };
+            string content = sb.ToString().TrimEnd();
+            return string.IsNullOrEmpty(content) ? null : new ChatMessage { Role = "system", Content = content };
         }
 
         private ChatMessage? BuildL2L3(List<KeyMeta> keys, Pawn? pawn)
@@ -629,26 +660,6 @@ namespace RimMind.Core.Context
             const int briefLimit = 200;
             if (content.Length <= briefLimit) return content;
             return content.Substring(0, briefLimit) + "...";
-        }
-
-        private static Pawn? FindPawnByNpcId(string npcId)
-        {
-            if (string.IsNullOrEmpty(npcId)) return null;
-            string idPart = npcId.StartsWith("NPC-") ? npcId.Substring(4) : npcId;
-            if (!int.TryParse(idPart, out int thingId)) return null;
-
-            var worldPawn = Find.WorldPawns?.AllPawnsAlive?
-                .FirstOrDefault(p => p.thingIDNumber == thingId);
-            if (worldPawn != null) return worldPawn;
-
-            foreach (var map in Find.Maps)
-            {
-                var pawn = map.mapPawns?.AllPawns?
-                    .FirstOrDefault(p => p.thingIDNumber == thingId);
-                if (pawn != null) return pawn;
-            }
-
-            return null;
         }
 
         private static int EstimateTokens(string text)

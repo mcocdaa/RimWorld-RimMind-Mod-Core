@@ -26,6 +26,15 @@ namespace RimMind.Core.Client.OpenAI
             }
         }
 
+        private static readonly Dictionary<string, string> _formatCapabilityCache = new();
+
+        internal static void InvalidateFormatCache()
+        {
+            _formatCapabilityCache.Clear();
+        }
+
+        private string BuildCacheKey() => $"{_settings.apiEndpoint}|{_settings.modelName}";
+
         private readonly RimMindCoreSettings _settings;
 
         public OpenAIClient(RimMindCoreSettings settings)
@@ -50,10 +59,34 @@ namespace RimMind.Core.Client.OpenAI
 
         public async Task<AIResponse> SendAsync(AIRequest request)
         {
-            var response = await SendAsyncInner(request, useResponseFormat: _settings.forceJsonMode && request.UseJsonMode);
-            if (!response.Success && IsResponseFormatError(response))
+            bool wantFormat = _settings.forceJsonMode && request.UseJsonMode;
+            string cacheKey = BuildCacheKey();
+
+            if (wantFormat && _formatCapabilityCache.TryGetValue(cacheKey, out string? cached))
+            {
+                if (cached == "none")
+                    wantFormat = false;
+            }
+
+            if (!wantFormat)
+            {
+                var noFormatResp = await SendAsyncInner(request, useResponseFormat: false);
+                if (noFormatResp.Success && wantFormat != (_settings.forceJsonMode && request.UseJsonMode))
+                    AIRequestQueue.LogFromBackground($"[RimMind] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
+                return noFormatResp;
+            }
+
+            var response = await SendAsyncInner(request, useResponseFormat: true);
+            if (response.Success)
+            {
+                _formatCapabilityCache[cacheKey] = "json_object";
+                return response;
+            }
+
+            if (IsResponseFormatError(response))
             {
                 AIRequestQueue.LogFromBackground($"[RimMind] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
+                _formatCapabilityCache[cacheKey] = "none";
                 response = await SendAsyncInner(request, useResponseFormat: false);
             }
             return response;
@@ -121,18 +154,52 @@ namespace RimMind.Core.Client.OpenAI
         public async Task<AIResponse> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
         {
             string endpoint = FormatEndpoint(_settings.apiEndpoint);
+            string cacheKey = BuildCacheKey();
 
-            var response = await TrySendStructuredAsync(request, endpoint, jsonSchema, tools, "json_schema");
-            if (response.Success || !IsResponseFormatError(response))
+            string[] formatModes = { "json_schema", "json_object", "none" };
+            int startIndex = 0;
+
+            if (_formatCapabilityCache.TryGetValue(cacheKey, out string? cachedBest))
+            {
+                for (int i = 0; i < formatModes.Length; i++)
+                {
+                    if (formatModes[i] == cachedBest)
+                    {
+                        startIndex = i;
+                        break;
+                    }
+                }
+                if (startIndex > 0)
+                    AIRequestQueue.LogFromBackground($"[RimMind] Using cached format '{cachedBest}' for {request.RequestId} (skipping {startIndex} unsupported mode(s))");
+            }
+
+            for (int i = startIndex; i < formatModes.Length; i++)
+            {
+                string mode = formatModes[i];
+                string? schema = mode == "json_schema" ? jsonSchema : null;
+
+                var response = await TrySendStructuredAsync(request, endpoint, schema, tools, mode);
+
+                if (response.Success)
+                {
+                    if (i > 0 || mode != "json_schema")
+                        _formatCapabilityCache[cacheKey] = mode;
+                    else
+                        _formatCapabilityCache[cacheKey] = "json_schema";
+                    return response;
+                }
+
+                if (IsResponseFormatError(response))
+                {
+                    AIRequestQueue.LogFromBackground($"[RimMind] Format '{mode}' not supported for {request.RequestId}, downgrading", isWarning: true);
+                    continue;
+                }
+
                 return response;
+            }
 
-            AIRequestQueue.LogFromBackground($"[RimMind] json_schema not supported, retrying with json_object for {request.RequestId}", isWarning: true);
-            response = await TrySendStructuredAsync(request, endpoint, null, tools, "json_object");
-            if (response.Success || !IsResponseFormatError(response))
-                return response;
-
-            AIRequestQueue.LogFromBackground($"[RimMind] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
-            return await TrySendStructuredAsync(request, endpoint, null, tools, "none");
+            _formatCapabilityCache[cacheKey] = "none";
+            return AIResponse.Failure(request.RequestId, "All response_format modes failed");
         }
 
         public static bool IsResponseFormatError(AIResponse response)
@@ -194,6 +261,12 @@ namespace RimMind.Core.Client.OpenAI
                         }
                     }).ToList();
                     response.ToolCallsJson = JsonConvert.SerializeObject(converted);
+                }
+                else if (tools != null && tools.Count > 0 && !string.IsNullOrEmpty(content))
+                {
+                    AIRequestQueue.LogFromBackground($"[RimMind] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
+                    if (_settings.debugLogging && content.Length > 0)
+                        AIRequestQueue.LogFromBackground($"[RimMind] Response content (no tool_calls): {content}");
                 }
 
                 AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);

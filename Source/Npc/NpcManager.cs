@@ -60,6 +60,35 @@ namespace RimMind.Core.Npc
             return "NPC-storyteller";
         }
 
+        public static Pawn? FindPawnByNpcId(string npcId)
+        {
+            if (string.IsNullOrEmpty(npcId)) return null;
+            string idPart = npcId.StartsWith("NPC-") ? npcId.Substring(4) : npcId;
+            if (!int.TryParse(idPart, out int thingId)) return null;
+
+            var worldPawn = Find.WorldPawns?.AllPawnsAlive?
+                .FirstOrDefault(p => p.thingIDNumber == thingId);
+            if (worldPawn != null) return worldPawn;
+
+            foreach (var map in Find.Maps)
+            {
+                var pawn = map.mapPawns?.AllPawns?
+                    .FirstOrDefault(p => p.thingIDNumber == thingId);
+                if (pawn != null) return pawn;
+            }
+
+            return null;
+        }
+
+        public static Pawn? FindProxyPawnForMap(Map map)
+        {
+            var colonist = map.mapPawns?.FreeColonists?
+                .FirstOrDefault(p => p.IsFreeNonSlaveColonist && !p.Dead);
+            if (colonist != null) return colonist;
+            return map.mapPawns?.AllPawns?
+                .FirstOrDefault(p => p.IsFreeNonSlaveColonist && !p.Dead);
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();

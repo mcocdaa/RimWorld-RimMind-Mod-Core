@@ -1,4 +1,4 @@
-using RimWorld;
+using Verse;
 
 namespace RimMind.Core.Context
 {
@@ -11,5 +11,6 @@ namespace RimMind.Core.Context
         public string[]? ExcludeKeys;
         public int MaxTokens = 400;
         public float Temperature = 0.7f;
+        public Map? Map;
     }
 }

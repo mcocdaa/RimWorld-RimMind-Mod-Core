@@ -86,7 +86,6 @@ namespace RimMind.Core.Npc
         {
             if (pawn == null) return "RimMind.Core.Prompt.Unknown".Translate();
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("RimMind.Core.Prompt.PawnDesc.Name".Translate(pawn.Name?.ToStringFull ?? pawn.LabelShort));
             if (pawn.story?.Adulthood != null)
                 sb.AppendLine("RimMind.Core.Prompt.PawnDesc.Backstory".Translate(pawn.story.Adulthood.title));
             if (pawn.story?.traits?.allTraits != null)

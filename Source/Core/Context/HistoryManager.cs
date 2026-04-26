@@ -39,6 +39,21 @@ namespace RimMind.Core.Context
             return recent.Select(e => (e.Role, e.Content)).ToList();
         }
 
+        public List<(string role, string content)> GetHistory(string npcId, int maxRounds, string? scenarioFilter)
+        {
+            if (!_histories.TryGetValue(npcId, out var entries) || entries.Count == 0)
+                return new List<(string, string)>();
+
+            IEnumerable<HistoryEntry> filtered = entries;
+            if (!string.IsNullOrEmpty(scenarioFilter))
+                filtered = filtered.Where(e => e.Scenario == null || e.Scenario == scenarioFilter);
+
+            var list = filtered.ToList();
+            int maxEntries = maxRounds * 2;
+            var recent = list.Skip(Math.Max(0, list.Count - maxEntries)).ToList();
+            return recent.Select(e => (e.Role, e.Content)).ToList();
+        }
+
         /// <summary>
         /// 清除指定NPC的历史记录
         /// </summary>
