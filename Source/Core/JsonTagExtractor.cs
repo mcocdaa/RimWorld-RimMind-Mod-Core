@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using Verse;
 
 namespace RimMind.Core.Internal
 {
@@ -22,8 +24,9 @@ namespace RimMind.Core.Internal
             {
                 return JsonConvert.DeserializeObject<T>(raw);
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warning($"[RimMind] JsonTagExtractor.Extract deserialization failed: {ex.Message}");
                 return null;
             }
         }
@@ -41,7 +44,7 @@ namespace RimMind.Core.Internal
                     var item = JsonConvert.DeserializeObject<T>(raw);
                     if (item != null) result.Add(item);
                 }
-                catch { }
+                catch (Exception ex) { Log.Warning($"[RimMind] JsonTagExtractor.ExtractAll deserialization failed: {ex.Message}"); }
             }
             return result;
         }

@@ -2,14 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Core.Agent;
+using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
+using RimMind.Core.Context;
+using RimMind.Core.Extensions;
+using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
+using RimMind.Core.Npc;
 using RimMind.Core.Prompt;
 using RimMind.Core.Settings;
 using RimMind.Core.UI;
+using RimWorld;
 using Verse;
 
 namespace RimMind.Core
@@ -47,24 +55,16 @@ namespace RimMind.Core
         private static readonly Dictionary<string, Func<string, bool>> _actionSkipChecks
             = new Dictionary<string, Func<string, bool>>();
 
-        // ── 核心请求 API ──────────────────────────────────────────────────────
+        private static IAgentProvider? _agentProvider;
+        private static IEventBus? _eventBus;
 
-        public static void RequestAsync(AIRequest request, Action<AIResponse> onComplete)
-        {
-            var queue = AIRequestQueue.Instance;
-            if (queue == null)
-            {
-                Log.Error("[RimMind] AIRequestQueue not initialized.");
-                return;
-            }
-            var client = GetClient();
-            if (client == null)
-            {
-                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not configured."));
-                return;
-            }
-            queue.Enqueue(request, onComplete, client);
-        }
+        private static readonly HistoryManager _historyManager = HistoryManager.Instance;
+        private static readonly ContextEngine _contextEngine = new ContextEngine(_historyManager);
+        internal static HistoryManager GetHistoryManager() => _historyManager;
+        public static ContextEngine GetContextEngine() => _contextEngine;
+        public static FlywheelTelemetryCollector Telemetry { get; } = new FlywheelTelemetryCollector();
+
+        // ── 核心请求 API ──────────────────────────────────────────────────────
 
         public static void RequestImmediate(AIRequest request, Action<AIResponse> onComplete)
         {
@@ -102,6 +102,191 @@ namespace RimMind.Core
 
         public static int TotalQueuedCount => AIRequestQueue.Instance?.TotalQueuedCount ?? 0;
 
+        // ── NPC Chat API ─────────────────────────────────────────────────────
+
+        public static async Task<NpcChatResult> Chat(ContextRequest request, CancellationToken ct = default)
+        {
+            var driver = StorageDriverFactory.GetDriver();
+
+            if (!driver.IsNpcAlive(request.NpcId) && request.NpcId.StartsWith("NPC-"))
+            {
+                if (int.TryParse(request.NpcId.Substring(4), out int thingId))
+                {
+                    var pawn = NpcManager.FindPawnByNpcId(request.NpcId);
+                    if (pawn != null)
+                    {
+                        var profile = NpcProfileBuilder.BuildPawnNpc(pawn);
+                        await driver.SpawnNpcAsync(profile);
+                        NpcManager.Instance?.SpawnNpc(profile);
+                    }
+                }
+            }
+
+            var snapshot = _contextEngine.BuildSnapshot(request);
+            return await driver.ChatAsync(snapshot, ct);
+        }
+
+        // ── Structured Request API ───────────────────────────────────────────
+
+        public static void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<AIResponse> onComplete, List<StructuredTool>? tools = null)
+        {
+            var s = RimMindCoreMod.Settings;
+            if (s == null || !s.IsConfigured())
+            {
+                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not configured."));
+                return;
+            }
+
+            if (s.provider == AIProvider.Player2)
+            {
+                var p2Client = EnsurePlayer2Client(s);
+                if (p2Client != null && p2Client.IsConfigured())
+                {
+                    Task.Run(async () =>
+                    {
+                        var response = await p2Client.SendStructuredAsync(request, jsonSchema, tools);
+                        LongEventHandler.ExecuteWhenFinished(() => onComplete?.Invoke(response));
+                    });
+                    return;
+                }
+
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var client = await Player2Client.CreateAsync(s);
+                        if (client?.IsConfigured() == true)
+                        {
+                            lock (_player2Lock)
+                            {
+                                _cachedPlayer2Client = client;
+                                _cachedProvider = AIProvider.Player2;
+                            }
+                            var response = await client.SendStructuredAsync(request, jsonSchema, tools);
+                            LongEventHandler.ExecuteWhenFinished(() => onComplete?.Invoke(response));
+                        }
+                        else
+                        {
+                            LongEventHandler.ExecuteWhenFinished(() =>
+                                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "Player2 client not configured.")));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AIRequestQueue.LogFromBackground($"[RimMind] Player2 structured request failed: {ex.Message}", isWarning: true);
+                        LongEventHandler.ExecuteWhenFinished(() =>
+                            onComplete?.Invoke(AIResponse.Failure(request.RequestId, ex.Message)));
+                    }
+                });
+                return;
+            }
+
+            var openAIClient = new OpenAIClient(s);
+            if (openAIClient.IsConfigured())
+            {
+                Task.Run(async () =>
+                {
+                    var response = await openAIClient.SendStructuredAsync(request, jsonSchema, tools);
+                    LongEventHandler.ExecuteWhenFinished(() => onComplete?.Invoke(response));
+                });
+                return;
+            }
+
+            onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not configured."));
+        }
+
+        public static ContextSnapshot BuildContextSnapshot(ContextRequest request)
+        {
+            return _contextEngine.BuildSnapshot(request);
+        }
+
+        public static void RequestStructured(ContextRequest request, string schema,
+            Action<AIResponse> onComplete, List<StructuredTool>? tools = null)
+        {
+            var snapshot = _contextEngine.BuildSnapshot(request);
+            var aiRequest = new AIRequest
+            {
+                SystemPrompt = null!,
+                Messages = snapshot.Messages,
+                MaxTokens = snapshot.MaxTokens,
+                Temperature = snapshot.Temperature,
+                RequestId = $"Structured_{request.NpcId}",
+                ModId = request.Scenario.ToString(),
+                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
+                UseJsonMode = true,
+                Priority = AIRequestPriority.Normal,
+            };
+
+            Action<AIResponse> wrappedOnComplete = (response) =>
+            {
+                try
+                {
+                    bool parseSuccess = response.Success && !string.IsNullOrEmpty(response.Content);
+                    Telemetry.Record(new TelemetryRecord
+                    {
+                        NpcId = request.NpcId,
+                        Scenario = request.Scenario,
+                        PromptTokens = response.PromptTokens,
+                        CompletionTokens = response.CompletionTokens,
+                        TotalTokens = response.TokensUsed,
+                        CachedTokens = response.CachedTokens,
+                        BudgetValue = snapshot.BudgetValue,
+                        KeysIncluded = snapshot.IncludedKeys,
+                        KeysTrimmed = snapshot.TrimmedKeys,
+                        LayerTokenBreakdown = new Dictionary<string, int>
+                        {
+                            { "L0", snapshot.Meta.L0Tokens },
+                            { "L1", snapshot.Meta.L1Tokens },
+                            { "L2", snapshot.Meta.L2Tokens },
+                            { "L3", snapshot.Meta.L3Tokens },
+                            { "L4", snapshot.Meta.L4Tokens },
+                        },
+                        KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0
+                            ? new Dictionary<string, int>(snapshot.KeyChangeCounts) : null!,
+                        CacheHitRate = null,
+                        ScoreDistribution = snapshot.KeyScores.Count > 0
+                            ? new Dictionary<string, float>(snapshot.KeyScores) : null!,
+                        DiffCount = snapshot.DiffCount,
+                        LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0
+                            ? new Dictionary<string, long>(snapshot.LatencyByLayerMs) : null!,
+                        RequestLatencyMs = snapshot.BuildStartTicks > 0
+                            ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond : 0,
+                        ResponseParseSuccess = parseSuccess,
+                        TimestampTicks = DateTime.Now.Ticks,
+                    });
+                }
+                catch (Exception ex) { Log.Warning($"[RimMind] Telemetry record failed: {ex.Message}"); }
+                onComplete?.Invoke(response);
+            };
+
+            try
+            {
+                RequestStructuredAsync(aiRequest, schema, wrappedOnComplete, tools);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimMind] RequestStructuredAsync threw, falling back to queue: {ex.Message}");
+                var fallbackRequest = new AIRequest
+                {
+                    SystemPrompt = null!,
+                    Messages = snapshot.Messages,
+                    MaxTokens = snapshot.MaxTokens,
+                    Temperature = snapshot.Temperature,
+                    RequestId = aiRequest.RequestId,
+                    ModId = aiRequest.ModId,
+                    ExpireAtTicks = aiRequest.ExpireAtTicks,
+                    UseJsonMode = true,
+                    Priority = aiRequest.Priority,
+                };
+                var queue = AIRequestQueue.Instance;
+                var client = GetClient();
+                if (queue != null && client != null)
+                    queue.Enqueue(fallbackRequest, wrappedOnComplete, client);
+                else
+                    wrappedOnComplete?.Invoke(AIResponse.Failure(fallbackRequest.RequestId, "No AI client available"));
+            }
+        }
+
         // ── 上下文构建 ────────────────────────────────────────────────────────
 
         public static string BuildMapContext(Map map, bool brief = false)
@@ -109,9 +294,6 @@ namespace RimMind.Core
 
         public static string BuildPawnContext(Pawn pawn)
             => GameContextBuilder.BuildPawnContext(pawn);
-
-        public static string BuildHistoryContext(int maxEntries = 10)
-            => GameContextBuilder.BuildHistoryContext(maxEntries);
 
         public static string BuildStaticContext()
         {
@@ -128,185 +310,58 @@ namespace RimMind.Core
             return sb.ToString().TrimEnd();
         }
 
-        public static string BuildFullPawnPrompt(
-            Pawn pawn,
-            string? currentQuery = null,
-            string[]? excludeProviders = null)
-        {
-            var sb = new StringBuilder();
-
-            foreach (var kvp in _staticProviders)
-            {
-                try
-                {
-                    string? seg = kvp.Value.provider();
-                    if (!string.IsNullOrEmpty(seg)) sb.AppendLine(seg);
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] StaticProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-
-            var ctx = RimMindCoreMod.Settings?.Context;
-            foreach (var kvp in _pawnProviders)
-            {
-                if (ctx?.disabledProviders?.Contains(kvp.Key) == true) continue;
-                if (excludeProviders != null && Array.IndexOf(excludeProviders, kvp.Key) >= 0) continue;
-                try
-                {
-                    string? seg = kvp.Value.provider(pawn);
-                    if (!string.IsNullOrEmpty(seg)) sb.AppendLine(seg);
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] PawnProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-
-            sb.AppendLine(GameContextBuilder.BuildPawnContext(pawn));
-
-            if (pawn.Map != null)
-                sb.AppendLine(GameContextBuilder.BuildMapContext(pawn.Map, brief: false));
-
-            foreach (var kvp in _dynamicProviders)
-            {
-                try
-                {
-                    string? seg = kvp.Value.provider(currentQuery ?? string.Empty);
-                    if (!string.IsNullOrEmpty(seg)) sb.AppendLine(seg);
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] DynamicProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-
-            var settings = RimMindCoreMod.Settings;
-            if (settings == null) return sb.ToString().TrimEnd();
-            string? customPawn = settings.customPawnPrompt?.Trim();
-            if (!string.IsNullOrEmpty(customPawn))
-                sb.AppendLine("\n" + "RimMind.Core.Prompt.CustomPawnHeader".Translate() + "\n" + customPawn);
-            string? customMap = settings.customMapPrompt?.Trim();
-            if (!string.IsNullOrEmpty(customMap))
-                sb.AppendLine("\n" + "RimMind.Core.Prompt.CustomMapHeader".Translate() + "\n" + customMap);
-
-            return sb.ToString().TrimEnd();
-        }
-
-        public static string BuildFullPawnPrompt(
-            Pawn pawn,
-            PromptBudget budget,
-            string? currentQuery = null,
-            string[]? excludeProviders = null)
-        {
-            var sections = BuildFullPawnSections(pawn, currentQuery, excludeProviders);
-            return budget.ComposeToString(sections);
-        }
-
-        public static List<PromptSection> BuildFullPawnSections(
-            Pawn pawn,
-            string? currentQuery = null,
-            string[]? excludeProviders = null)
-        {
-            var sections = new List<PromptSection>();
-            var ctx = RimMindCoreMod.Settings?.Context;
-
-            foreach (var kvp in _staticProviders)
-            {
-                try
-                {
-                    string? seg = kvp.Value.provider();
-                    if (!string.IsNullOrEmpty(seg))
-                        sections.Add(new PromptSection(kvp.Key, seg!, kvp.Value.priority));
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] StaticProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-
-            foreach (var kvp in _pawnProviders)
-            {
-                if (ctx?.disabledProviders?.Contains(kvp.Key) == true) continue;
-                if (excludeProviders != null && Array.IndexOf(excludeProviders, kvp.Key) >= 0) continue;
-                try
-                {
-                    string? seg = kvp.Value.provider(pawn);
-                    if (!string.IsNullOrEmpty(seg))
-                        sections.Add(new PromptSection(kvp.Key, seg!, kvp.Value.priority));
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] PawnProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-
-            sections.Add(GameContextBuilder.BuildPawnContextSection(pawn));
-
-            if (pawn.Map != null)
-                sections.Add(GameContextBuilder.BuildMapContextSection(pawn.Map, brief: false));
-
-            foreach (var kvp in _dynamicProviders)
-            {
-                try
-                {
-                    string? seg = kvp.Value.provider(currentQuery ?? string.Empty);
-                    if (!string.IsNullOrEmpty(seg))
-                        sections.Add(new PromptSection(kvp.Key, seg!, kvp.Value.priority));
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] DynamicProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-
-            var settings = RimMindCoreMod.Settings;
-            if (settings != null)
-            {
-                string? customPawn = settings.customPawnPrompt?.Trim();
-                if (!string.IsNullOrEmpty(customPawn))
-                    sections.Add(new PromptSection("custom_pawn",
-                        "RimMind.Core.Prompt.CustomPawnHeader".Translate() + "\n" + customPawn,
-                        PromptSection.PriorityCustom));
-                string? customMap = settings.customMapPrompt?.Trim();
-                if (!string.IsNullOrEmpty(customMap))
-                    sections.Add(new PromptSection("custom_map",
-                        "RimMind.Core.Prompt.CustomMapHeader".Translate() + "\n" + customMap,
-                        PromptSection.PriorityCustom));
-            }
-
-            return sections;
-        }
-
         // ── 状态查询 ──────────────────────────────────────────────────────────
 
         public static bool IsConfigured() => RimMindCoreMod.Settings.IsConfigured();
 
         // ── Provider 注册（去重/覆盖） ──────────────────────────────────────────
 
+        [Obsolete("Use ContextKeyRegistry.Register instead")]
         public static void RegisterStaticProvider(string category, Func<string?> provider,
             int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
         {
-            if (_staticProviders.ContainsKey(category))
+            if (_staticProviders.ContainsKey(category) && !overrideExisting) return;
+            _staticProviders[category] = (modId, provider, priority);
+            float priorityFloat = 1.0f - (priority / 10.0f);
+            ContextLayer layer = InferLayer(priority);
+            var wrappedProvider = new Func<Pawn, List<ContextEntry>>(_ =>
             {
-                if (!overrideExisting) return;
-                _staticProviders[category] = (modId, provider, priority);
-            }
-            else
-            {
-                _staticProviders[category] = (modId, provider, priority);
-            }
+                string? val = provider();
+                return string.IsNullOrEmpty(val) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(val!) };
+            });
+            ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
 
+        [Obsolete("Use ContextKeyRegistry.Register instead")]
         public static void RegisterDynamicProvider(string category, Func<string, string> provider,
             int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
         {
-            if (_dynamicProviders.ContainsKey(category))
+            if (_dynamicProviders.ContainsKey(category) && !overrideExisting) return;
+            _dynamicProviders[category] = (modId, provider, priority);
+            float priorityFloat = 1.0f - (priority / 10.0f);
+            ContextLayer layer = InferLayer(priority);
+            var wrappedProvider = new Func<Pawn, List<ContextEntry>>(pawn =>
             {
-                if (!overrideExisting) return;
-                _dynamicProviders[category] = (modId, provider, priority);
-            }
-            else
-            {
-                _dynamicProviders[category] = (modId, provider, priority);
-            }
+                string val = provider(pawn.Name?.ToStringShort ?? pawn.LabelShort);
+                return string.IsNullOrEmpty(val) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(val) };
+            });
+            ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
 
+        [Obsolete("Use ContextKeyRegistry.RegisterPawnContext instead")]
         public static void RegisterPawnContextProvider(string category, Func<Pawn, string?> provider,
             int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
         {
-            if (_pawnProviders.ContainsKey(category))
+            if (_pawnProviders.ContainsKey(category) && !overrideExisting) return;
+            _pawnProviders[category] = (modId, provider, priority);
+            float priorityFloat = 1.0f - (priority / 10.0f);
+            ContextLayer layer = InferLayer(priority);
+            var wrappedProvider = new Func<Pawn, List<ContextEntry>>(pawn =>
             {
-                if (!overrideExisting) return;
-                _pawnProviders[category] = (modId, provider, priority);
-            }
-            else
-            {
-                _pawnProviders[category] = (modId, provider, priority);
-            }
+                string? val = provider(pawn);
+                return string.IsNullOrEmpty(val) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(val!) };
+            });
+            ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
 
         // ── Provider 查询（供外部 Mod 读取 RimMind 数据） ──────────────────────
@@ -314,8 +369,6 @@ namespace RimMind.Core
         public static string? GetProviderData(string category, Pawn pawn)
         {
             if (!_pawnProviders.TryGetValue(category, out var entry)) return null;
-            var ctx = RimMindCoreMod.Settings?.Context;
-            if (ctx?.exposedProviders.Count > 0 && !ctx.exposedProviders.Contains(category)) return null;
             try { return entry.provider(pawn); }
             catch (System.Exception ex) { Log.Warning($"[RimMind] GetProviderData '{category}' error: {ex.Message}"); return null; }
         }
@@ -323,8 +376,6 @@ namespace RimMind.Core
         public static string? GetStaticProviderData(string category)
         {
             if (!_staticProviders.TryGetValue(category, out var entry)) return null;
-            var ctx = RimMindCoreMod.Settings?.Context;
-            if (ctx?.exposedProviders.Count > 0 && !ctx.exposedProviders.Contains(category)) return null;
             try { return entry.provider(); }
             catch (System.Exception ex) { Log.Warning($"[RimMind] GetStaticProviderData '{category}' error: {ex.Message}"); return null; }
         }
@@ -332,8 +383,6 @@ namespace RimMind.Core
         public static string? GetDynamicProviderData(string category, string query)
         {
             if (!_dynamicProviders.TryGetValue(category, out var entry)) return null;
-            var ctx = RimMindCoreMod.Settings?.Context;
-            if (ctx?.exposedProviders.Count > 0 && !ctx.exposedProviders.Contains(category)) return null;
             try { return entry.provider(query); }
             catch (System.Exception ex) { Log.Warning($"[RimMind] GetDynamicProviderData '{category}' error: {ex.Message}"); return null; }
         }
@@ -345,35 +394,40 @@ namespace RimMind.Core
             all.UnionWith(_pawnProviders.Keys);
             all.UnionWith(_dynamicProviders.Keys);
 
-            var ctx = RimMindCoreMod.Settings?.Context;
-            if (ctx?.exposedProviders.Count > 0)
-                all.IntersectWith(ctx.exposedProviders);
-
             return all.ToList();
         }
 
         // ── Provider 卸载 ──────────────────────────────────────────────────────
 
         public static void UnregisterPawnContextProvider(string category)
-            => _pawnProviders.Remove(category);
+        {
+            _pawnProviders.Remove(category);
+            ContextKeyRegistry.Unregister(category);
+        }
 
         public static void UnregisterStaticProvider(string category)
-            => _staticProviders.Remove(category);
+        {
+            _staticProviders.Remove(category);
+            ContextKeyRegistry.Unregister(category);
+        }
 
         public static void UnregisterDynamicProvider(string category)
-            => _dynamicProviders.Remove(category);
+        {
+            _dynamicProviders.Remove(category);
+            ContextKeyRegistry.Unregister(category);
+        }
 
         public static void UnregisterModProviders(string modId)
         {
             if (string.IsNullOrEmpty(modId)) return;
             var staticKeys = _staticProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in staticKeys) _staticProviders.Remove(key);
+            foreach (var key in staticKeys) { _staticProviders.Remove(key); ContextKeyRegistry.Unregister(key); }
 
             var dynamicKeys = _dynamicProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in dynamicKeys) _dynamicProviders.Remove(key);
+            foreach (var key in dynamicKeys) { _dynamicProviders.Remove(key); ContextKeyRegistry.Unregister(key); }
 
             var pawnKeys = _pawnProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in pawnKeys) _pawnProviders.Remove(key);
+            foreach (var key in pawnKeys) { _pawnProviders.Remove(key); ContextKeyRegistry.Unregister(key); }
         }
 
         // ── Settings / Toggle / Cooldown ──────────────────────────────────────
@@ -544,6 +598,57 @@ namespace RimMind.Core
             return false;
         }
 
+        // ── AgentProvider / EventBus API ──────────────────────────────────────
+
+        public static IAgentProvider GetAgentProvider()
+            => _agentProvider ?? new DefaultAgentProvider();
+
+        public static void RegisterAgentProvider(IAgentProvider provider)
+            => _agentProvider = provider;
+
+        public static IEventBus GetEventBus()
+            => _eventBus ?? new EventBusAdapter();
+
+        public static void RegisterEventBus(IEventBus eventBus)
+            => _eventBus = eventBus;
+
+        // ── AgentIdentity Provider API ──────────────────────────────────────
+
+        private static Func<Pawn, AgentIdentity?>? _agentIdentityProvider;
+
+        public static void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
+            => _agentIdentityProvider = provider;
+
+        public static AgentIdentity? GetAgentIdentity(Pawn pawn)
+            => _agentIdentityProvider?.Invoke(pawn);
+
+        // ── AgentAction Bridge API ─────────────────────────────────────────
+
+        private static IAgentActionBridge? _agentActionBridge;
+
+        public static void RegisterAgentActionBridge(IAgentActionBridge bridge)
+            => _agentActionBridge = bridge;
+
+        public static IAgentActionBridge? GetAgentActionBridge()
+            => _agentActionBridge;
+
+        // ── AudioPlayer API ──────────────────────────────────────────────
+
+        private static IAudioPlayer _audioPlayer = new NullAudioPlayer();
+
+        public static void RegisterAudioPlayer(IAudioPlayer player)
+            => _audioPlayer = player ?? new NullAudioPlayer();
+
+        public static IAudioPlayer AudioPlayer => _audioPlayer;
+
+        // ── Perception API ──────────────────────────────────────────────────
+
+        public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
+            => Perception.PerceptionBridge.PublishPerception(pawnId, type, content, importance);
+
+        public static void PublishBroadcastPerception(string type, string content, float importance = 0.5f, Verse.Map? map = null)
+            => Perception.PerceptionBridge.PublishBroadcast(type, content, importance, map);
+
         // ── RequestOverlay API ────────────────────────────────────────────────
 
         public static void RegisterPendingRequest(RequestEntry entry)
@@ -557,7 +662,15 @@ namespace RimMind.Core
 
         // ── 内部 ──────────────────────────────────────────────────────────────
 
-        private static IAIClient? GetClient()
+        private static ContextLayer InferLayer(int priority)
+        {
+            if (priority <= 1) return ContextLayer.L0_Static;
+            if (priority <= 3) return ContextLayer.L1_Baseline;
+            if (priority <= 5) return ContextLayer.L2_Environment;
+            return ContextLayer.L3_State;
+        }
+
+        internal static IAIClient? GetClient()
         {
             var s = RimMindCoreMod.Settings;
             if (!s.IsConfigured()) return null;
@@ -573,7 +686,6 @@ namespace RimMind.Core
 
         private static Player2Client? _cachedPlayer2Client;
         private static AIProvider _cachedProvider;
-        private static bool _player2InitInProgress;
         private static readonly object _player2Lock = new object();
 
         private static Player2Client? EnsurePlayer2Client(RimMindCoreSettings s)
@@ -582,34 +694,8 @@ namespace RimMind.Core
             {
                 if (_cachedPlayer2Client != null && _cachedProvider == AIProvider.Player2)
                     return _cachedPlayer2Client.IsConfigured() ? _cachedPlayer2Client : null;
-
-                if (_player2InitInProgress) return null;
-                _player2InitInProgress = true;
+                return null;
             }
-
-            Task.Run(async () =>
-            {
-                try
-                {
-                    var client = await Player2Client.CreateAsync(s);
-                    lock (_player2Lock)
-                    {
-                        _cachedPlayer2Client = client;
-                        _cachedProvider = AIProvider.Player2;
-                        _player2InitInProgress = false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AIRequestQueue.LogFromBackground($"[RimMind] Player2 init failed: {ex.Message}", isWarning: true);
-                    lock (_player2Lock)
-                    {
-                        _player2InitInProgress = false;
-                    }
-                }
-            });
-
-            return null;
         }
 
         public static void InvalidateClientCache()
@@ -621,6 +707,42 @@ namespace RimMind.Core
                 _cachedPlayer2Client = null;
                 _cachedProvider = default;
             }
+            OpenAIClient.InvalidateFormatCache();
         }
+
+        public static Player2Client? GetPlayer2Client()
+        {
+            lock (_player2Lock)
+            {
+                return (_cachedPlayer2Client != null && _cachedPlayer2Client.IsConfigured())
+                    ? _cachedPlayer2Client : null;
+            }
+        }
+
+        private static readonly List<IParameterTuner> _parameterTuners = new List<IParameterTuner>();
+        private static readonly List<ISensorProvider> _sensorProviders = new List<ISensorProvider>();
+        private static readonly List<IAgentModeProvider> _agentModeProviders = new List<IAgentModeProvider>();
+        private static readonly List<IStreamingResponseHandler> _streamingHandlers = new List<IStreamingResponseHandler>();
+
+        public static void RegisterParameterTuner(IParameterTuner tuner) { _parameterTuners.Add(tuner); }
+        public static void UnregisterParameterTuner(string tunerId) { _parameterTuners.RemoveAll(t => t.TunerId == tunerId); }
+        public static IReadOnlyList<IParameterTuner> ParameterTuners => _parameterTuners;
+
+        public static void RegisterSensorProvider(ISensorProvider provider) { _sensorProviders.Add(provider); }
+        public static void UnregisterSensorProvider(string sensorId) { _sensorProviders.RemoveAll(s => s.SensorId == sensorId); }
+        public static IReadOnlyList<ISensorProvider> SensorProviders => _sensorProviders;
+
+        public static void RegisterAgentModeProvider(IAgentModeProvider provider) { _agentModeProviders.Add(provider); }
+        public static void UnregisterAgentModeProvider(string providerId) { _agentModeProviders.RemoveAll(p => p.ProviderId == providerId); }
+        public static IReadOnlyList<IAgentModeProvider> AgentModeProviders => _agentModeProviders;
+
+        public static bool IsPawnAgentControlled(Pawn pawn) => _agentModeProviders.Any(p => p.IsAgentControlled(pawn));
+
+        public static void RegisterStreamingHandler(IStreamingResponseHandler handler) { _streamingHandlers.Add(handler); }
+        public static void UnregisterStreamingHandler(string handlerId) { _streamingHandlers.RemoveAll(h => h.HandlerId == handlerId); }
+        public static IReadOnlyList<IStreamingResponseHandler> StreamingHandlers => _streamingHandlers;
+
+        public static float GetContextBudget() => RimMindCoreMod.Settings.Context.ContextBudget;
+        public static void ClearModCooldown(string modId) => AIRequestQueue.Instance?.ClearCooldown(modId);
     }
 }
