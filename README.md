@@ -110,7 +110,20 @@ cd RimWorld-RimMind-Mod-Core
 
 ### Agent 认知架构
 
-每个殖民者作为独立认知主体，遵循 Perceive→Think→Act→Record 循环。通过感知桥接（6 个 Harmony Patch）将游戏事件转为感知信号，经去重/优先级/冷却过滤后注入 Agent，驱动 AI 思考和决策。
+每个殖民者作为独立认知主体，遵循 Perceive→Think→Act→Record 循环：
+
+- **Perceive**：6 个 Harmony Patch 将游戏事件（袭击、受伤、心情变化等）转为感知信号，经去重/优先级/冷却过滤后注入 Agent
+- **Think**：Agent 根据感知信号和当前目标，通过 ContextEngine 构建上下文，向 LLM 发送结构化请求
+- **Act**：解析 LLM 响应，执行工具调用（动作、对话、目标调整等）
+- **Record**：记录行为到历史队列，用于后续决策参考
+
+### 统一上下文引擎
+
+ContextEngine 采用 L0-L4 分层构建上下文，支持 Diff 注入与 Tick 过期合并：
+
+- L0 静态层（系统指令、身份）→ L1 基线层（地图、Pawn 信息）→ L2 环境层（天气、时间）→ L3 状态层（健康、心情）→ L4 历史层（对话记录）
+- BudgetScheduler 按 Score = W1×优先级 + W2×相关性 调度上下文预算
+- 子模组通过 ContextKeyRegistry.Register 注入自定义上下文 Provider
 
 ### 数据飞轮
 
@@ -253,6 +266,7 @@ cd RimWorld-RimMind-Mod-Core
 - **Context Builder**: Automatically collects game state (colonist stats, map info, etc.) for AI prompts
 - **Context Filter**: Fine-grained control over what game info gets sent to AI, with Minimal/Standard/Full presets and 28+ configurable options
 - **Agent Cognitive Architecture**: Each colonist as an independent cognitive agent following Perceive→Think→Act→Record cycle, with perception bridge (6 Harmony Patches) converting game events into perception signals
+- **Unified Context Engine**: L0-L4 layered context building with Diff injection and tick-based expiry, BudgetScheduler scoring (W1×priority + W2×relevance), extensible via ContextKeyRegistry
 - **Data Flywheel**: Built-in auto-tuning system that continuously analyzes AI request quality and optimizes context parameters
 - **Debug Tools**: AI Debug Log window, request overlay, Dev menu actions (test connection, view context, clear cooldowns, pause/resume queue)
 
