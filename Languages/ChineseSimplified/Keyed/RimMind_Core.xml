@@ -321,4 +321,9 @@
   <!-- Agent Gizmo - Dialogue -->
   <RimMind.Core.Agent.Gizmo.Dialogue>对话</RimMind.Core.Agent.Gizmo.Dialogue>
   <RimMind.Core.Agent.Gizmo.DialogueDesc>与 AI 接管的小人对话</RimMind.Core.Agent.Gizmo.DialogueDesc>
+  <!-- Flywheel autoApplyMode UI -->
+  <RimMind.Core.UI.FlywheelAutoApply>自动应用参数建议</RimMind.Core.UI.FlywheelAutoApply>
+  <RimMind.Core.UI.FlywheelAutoApply.Desc>开启后 Flywheel 自动应用推荐的上下文参数调整</RimMind.Core.UI.FlywheelAutoApply.Desc>
+  <RimMind.Core.UI.FlywheelConfidence>置信度阈值：{0}</RimMind.Core.UI.FlywheelConfidence>
+  <RimMind.Core.UI.FlywheelConfidence.Desc>推荐信度达到此阈值时才自动应用</RimMind.Core.UI.FlywheelConfidence.Desc>
 </LanguageData>

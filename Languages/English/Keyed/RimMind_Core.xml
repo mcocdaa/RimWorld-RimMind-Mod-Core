@@ -321,4 +321,9 @@
   <!-- Agent Gizmo - Dialogue -->
   <RimMind.Core.Agent.Gizmo.Dialogue>Chat</RimMind.Core.Agent.Gizmo.Dialogue>
   <RimMind.Core.Agent.Gizmo.DialogueDesc>Chat with the AI-controlled pawn</RimMind.Core.Agent.Gizmo.DialogueDesc>
+  <!-- Flywheel autoApplyMode UI -->
+  <RimMind.Core.UI.FlywheelAutoApply>Flywheel: auto-apply parameter recommendations</RimMind.Core.UI.FlywheelAutoApply>
+  <RimMind.Core.UI.FlywheelAutoApply.Desc>When enabled, Flywheel automatically applies recommended context parameter adjustments</RimMind.Core.UI.FlywheelAutoApply.Desc>
+  <RimMind.Core.UI.FlywheelConfidence>Confidence threshold: {0}</RimMind.Core.UI.FlywheelConfidence>
+  <RimMind.Core.UI.FlywheelConfidence.Desc>Auto-apply only when recommendation confidence reaches this threshold</RimMind.Core.UI.FlywheelConfidence.Desc>
 </LanguageData>

@@ -182,7 +182,7 @@ namespace RimMind.Core.Npc
                     if (!string.IsNullOrEmpty(extracted)) return extracted;
                 }
             }
-            catch { }
+            catch (Exception ex) { Log.Warning($"[RimMind] Failed to extract message from JSON: {ex.Message}"); }
             return content;
         }
 

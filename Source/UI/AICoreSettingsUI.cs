@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
+using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
 using UnityEngine;
@@ -335,6 +336,18 @@ namespace RimMind.Core.UI
             SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.Settings.Section.Debug".Translate());
             listing.CheckboxLabeled("RimMind.Core.Settings.DebugLogging".Translate(), ref s.debugLogging,
                 "RimMind.Core.Settings.DebugLogging.Desc".Translate());
+
+            SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.UI.FlywheelAutoApply".Translate());
+            bool autoApplyEnabled = s.autoApplyMode != FlywheelAutoApplyMode.Off;
+            listing.CheckboxLabeled("RimMind.Core.UI.FlywheelAutoApply.Desc".Translate(), ref autoApplyEnabled,
+                "RimMind.Core.UI.FlywheelAutoApply.Desc".Translate());
+            s.autoApplyMode = autoApplyEnabled ? FlywheelAutoApplyMode.ApplyWithLog : FlywheelAutoApplyMode.Off;
+
+            listing.Label("RimMind.Core.UI.FlywheelConfidence".Translate(s.autoApplyConfidenceThreshold));
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.UI.FlywheelConfidence.Desc".Translate());
+            GUI.color = Color.white;
+            s.autoApplyConfidenceThreshold = listing.Slider(s.autoApplyConfidenceThreshold, 0.5f, 1.0f);
 
             listing.End();
             Widgets.EndScrollView();
@@ -828,6 +841,7 @@ namespace RimMind.Core.UI
             h += 24f;
             h += 24f;
             h += 24f + 24f;
+            h += 24f + 24f + 32f;
             return h + 40f;
         }
 

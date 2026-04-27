@@ -18,7 +18,6 @@ namespace RimMind.Core.Client
         public long ProcessingMs { get; set; }
         public long HttpStatusCode { get; set; }
         public int RequestPayloadBytes { get; set; }
-        public string CancelReason { get; set; } = string.Empty;
         public string? ToolCallsJson;
         public string? ReasoningContent;
 
@@ -44,8 +43,7 @@ namespace RimMind.Core.Client
             Success = false,
             Error = reason,
             RequestId = requestId,
-            State = AIRequestState.Cancelled,
-            CancelReason = reason
+            State = AIRequestState.Cancelled
         };
     }
 }

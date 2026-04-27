@@ -80,6 +80,10 @@ namespace RimMind.Core.Context
                 defaultExcludeKeys: new[] { "npc_identity", "pawn_base_info", "fixed_relations",
                     "ideology", "skills_summary", "health", "mood", "current_job",
                     "combat_status", "target_info", "task_progress", "npc_commands" });
+            Register(ScenarioIds.Memory, 0, "暗记忆生成场景",
+                defaultBudget: 0.4f, l4Mode: L4Mode.None,
+                defaultExcludeKeys: new[] { "combat_status", "current_job", "mood",
+                    "task_progress", "npc_commands", "target_info" });
         }
 
         public static int GetBaseRounds(string scenarioId)
@@ -95,5 +99,6 @@ namespace RimMind.Core.Context
         public const string Decision = "Decision";
         public const string Personality = "Personality";
         public const string Storyteller = "Storyteller";
+        public const string Memory = "Memory";
     }
 }

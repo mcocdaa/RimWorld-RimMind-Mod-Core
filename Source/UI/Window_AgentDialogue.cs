@@ -16,7 +16,6 @@ namespace RimMind.Core.UI
         private Vector2 _scrollPosition;
         private float _lastContentHeight;
         private const int MaxHistoryRounds = 20;
-        private int _lastHistoryCount;
 
         public override Vector2 InitialSize => new Vector2(500f, 500f);
 
@@ -40,7 +39,6 @@ namespace RimMind.Core.UI
             float historyHeight = inRect.height - 70f;
             var historyRect = new Rect(0f, 35f, inRect.width, historyHeight);
 
-            CheckAndUpdateThinking();
             DrawHistory(historyRect);
 
             float inputY = inRect.height - 30f;
@@ -60,19 +58,6 @@ namespace RimMind.Core.UI
             {
                 SendMessage();
                 Event.current.Use();
-            }
-        }
-
-        private void CheckAndUpdateThinking()
-        {
-            if (_agent == null || !_agent.IsActive) return;
-
-            var history = HistoryManager.Instance.GetHistory(_npcId, MaxHistoryRounds);
-            int currentCount = history?.Count ?? 0;
-
-            if (currentCount != _lastHistoryCount)
-            {
-                _lastHistoryCount = currentCount;
             }
         }
 

@@ -5,6 +5,7 @@ using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Internal;
+using RimMind.Core.Settings;
 using Verse;
 
 namespace RimMind.Core.Agent
@@ -90,10 +91,10 @@ namespace RimMind.Core.Agent
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Decision,
-                Budget = 0.5f,
+                Budget = RimMindCoreMod.Settings.Context.ContextBudget,
                 CurrentQuery = topGoal.Description,
-                MaxTokens = 400,
-                Temperature = 0.7f,
+                MaxTokens = RimMindCoreMod.Settings.maxTokens,
+                Temperature = RimMindCoreMod.Settings.defaultTemperature,
             };
 
             var schema = Context.SchemaRegistry.AgentDecision;

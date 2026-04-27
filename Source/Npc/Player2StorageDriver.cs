@@ -57,7 +57,7 @@ namespace RimMind.Core.Npc
                 var response = await _client.SendRawAsync("/npcs/spawn", json);
                 return response.Success;
             }
-            catch { return false; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.SpawnNpcAsync failed: {ex.Message}"); return false; }
         }
 
         public async Task<bool> KillNpcAsync(string npcId)
@@ -67,7 +67,7 @@ namespace RimMind.Core.Npc
                 var response = await _client.SendRawAsync($"/npcs/{npcId}/kill", "{}");
                 return response.Success;
             }
-            catch { return false; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.KillNpcAsync failed: {ex.Message}"); return false; }
         }
 
         public bool IsNpcAlive(string npcId)
@@ -191,7 +191,7 @@ namespace RimMind.Core.Npc
                 var response = await _client.GetRawAsync($"/npcs/{npcId}/history?limit={limit}");
                 return response.Success ? response.Content ?? "" : "";
             }
-            catch { return ""; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.GetHistoryAsync failed: {ex.Message}"); return ""; }
         }
 
         public async Task<bool> PutAsync(string key, string value)
@@ -203,7 +203,7 @@ namespace RimMind.Core.Npc
                 var response = await _client.SendRawAsync($"/games/{_gameId}/data/user/{key}", json);
                 return response.Success;
             }
-            catch { return false; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.PutAsync failed: {ex.Message}"); return false; }
         }
 
         public async Task<string?> GetAsync(string key)
@@ -213,7 +213,7 @@ namespace RimMind.Core.Npc
                 var response = await _client.GetRawAsync($"/games/{_gameId}/data/user/{key}");
                 return response.Success ? response.Content : null;
             }
-            catch { return null; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.GetAsync failed: {ex.Message}"); return null; }
         }
 
         public async Task<bool> DeleteAsync(string key)
@@ -223,7 +223,7 @@ namespace RimMind.Core.Npc
                 var response = await _client.DeleteRawAsync($"/games/{_gameId}/data/user/{key}");
                 return response.Success;
             }
-            catch { return false; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.DeleteAsync failed: {ex.Message}"); return false; }
         }
 
         public async Task<Dictionary<string, string>> GetBatchAsync(IEnumerable<string> keys)
@@ -237,7 +237,7 @@ namespace RimMind.Core.Npc
                 return JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content!)
                     ?? new Dictionary<string, string>();
             }
-            catch { return new Dictionary<string, string>(); }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2StorageDriver.GetBatchAsync failed: {ex.Message}"); return new Dictionary<string, string>(); }
         }
 
         public Task<List<string>> QueryMemoriesAsync(string npcId, string query, int limit = 10)

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using RimMind.Core.Context;
+using RimMind.Core.Internal;
+using RimMind.Core.Npc;
 using RimWorld;
 using Verse;
 
@@ -73,6 +75,25 @@ namespace RimMind.Core.Flywheel
                 var scheduler = engine.GetScheduler();
                 scheduler?.SubscribeParameterStore();
             }
+        }
+    }
+
+    [HarmonyPatch(typeof(Game), "FinalizeInit")]
+    public static class CoreGameComponent_Register
+    {
+        static void Postfix(Game __instance)
+        {
+            if (!__instance.components.Any(c => c is Internal.AIRequestQueue))
+                __instance.components.Add(new Internal.AIRequestQueue(__instance));
+
+            if (!__instance.components.Any(c => c is AIDebugLog))
+                __instance.components.Add(new AIDebugLog(__instance));
+
+            if (!__instance.components.Any(c => c is Npc.NpcManager))
+                __instance.components.Add(new Npc.NpcManager(__instance));
+
+            if (!__instance.components.Any(c => c is Context.HistoryGameComponent))
+                __instance.components.Add(new Context.HistoryGameComponent(__instance));
         }
     }
 }

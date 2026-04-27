@@ -482,7 +482,7 @@ namespace RimMind.Core.Internal
             if (getter != null)
             {
                 try { return getter(); }
-                catch { }
+                catch (Exception ex) { Log.Warning($"[RimMind] GetModCooldown failed: {ex.Message}"); }
             }
             return 3600;
         }

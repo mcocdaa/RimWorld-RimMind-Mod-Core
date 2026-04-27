@@ -243,8 +243,7 @@ namespace RimMind.Core
                         },
                         KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0
                             ? new Dictionary<string, int>(snapshot.KeyChangeCounts) : null!,
-                        CacheHitRate = snapshot.CacheHitEvents.Count > 0
-                            ? ComputeCacheHitRatesFromSnapshot(snapshot)! : null!,
+                        CacheHitRate = null,
                         ScoreDistribution = snapshot.KeyScores.Count > 0
                             ? new Dictionary<string, float>(snapshot.KeyScores) : null!,
                         DiffCount = snapshot.DiffCount,
@@ -256,7 +255,7 @@ namespace RimMind.Core
                         TimestampTicks = DateTime.Now.Ticks,
                     });
                 }
-                catch { }
+                catch (Exception ex) { Log.Warning($"[RimMind] Telemetry record failed: {ex.Message}"); }
                 onComplete?.Invoke(response);
             };
 
@@ -264,8 +263,9 @@ namespace RimMind.Core
             {
                 RequestStructuredAsync(aiRequest, schema, wrappedOnComplete, tools);
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warning($"[RimMind] RequestStructuredAsync threw, falling back to queue: {ex.Message}");
                 var fallbackRequest = new AIRequest
                 {
                     SystemPrompt = null!,
@@ -316,6 +316,7 @@ namespace RimMind.Core
 
         // ── Provider 注册（去重/覆盖） ──────────────────────────────────────────
 
+        [Obsolete("Use ContextKeyRegistry.Register instead")]
         public static void RegisterStaticProvider(string category, Func<string?> provider,
             int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
         {
@@ -331,6 +332,7 @@ namespace RimMind.Core
             ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
 
+        [Obsolete("Use ContextKeyRegistry.Register instead")]
         public static void RegisterDynamicProvider(string category, Func<string, string> provider,
             int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
         {
@@ -346,6 +348,7 @@ namespace RimMind.Core
             ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
 
+        [Obsolete("Use ContextKeyRegistry.RegisterPawnContext instead")]
         public static void RegisterPawnContextProvider(string category, Func<Pawn, string?> provider,
             int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
         {
@@ -667,29 +670,6 @@ namespace RimMind.Core
             return ContextLayer.L3_State;
         }
 
-        private static Dictionary<string, float>? ComputeCacheHitRatesFromSnapshot(ContextSnapshot snapshot)
-        {
-            if (snapshot.CacheHitEvents.Count == 0) return null;
-            var byLayer = new Dictionary<string, List<bool>>();
-            foreach (var kvp in snapshot.CacheHitEvents)
-            {
-                string layer = kvp.Key.StartsWith("L0") ? "L0"
-                    : kvp.Key.StartsWith("L1") ? "L1"
-                    : kvp.Key.StartsWith("L2") ? "L2"
-                    : kvp.Key.StartsWith("L3") ? "L3" : "L4";
-                if (!byLayer.ContainsKey(layer))
-                    byLayer[layer] = new List<bool>();
-                byLayer[layer].Add(kvp.Value);
-            }
-            var rates = new Dictionary<string, float>();
-            foreach (var kvp in byLayer)
-            {
-                if (kvp.Value.Count > 0)
-                    rates[kvp.Key] = (float)kvp.Value.Count(v => v) / kvp.Value.Count;
-            }
-            return rates.Count > 0 ? rates : null;
-        }
-
         internal static IAIClient? GetClient()
         {
             var s = RimMindCoreMod.Settings;
@@ -761,5 +741,8 @@ namespace RimMind.Core
         public static void RegisterStreamingHandler(IStreamingResponseHandler handler) { _streamingHandlers.Add(handler); }
         public static void UnregisterStreamingHandler(string handlerId) { _streamingHandlers.RemoveAll(h => h.HandlerId == handlerId); }
         public static IReadOnlyList<IStreamingResponseHandler> StreamingHandlers => _streamingHandlers;
+
+        public static float GetContextBudget() => RimMindCoreMod.Settings.Context.ContextBudget;
+        public static void ClearModCooldown(string modId) => AIRequestQueue.Instance?.ClearCooldown(modId);
     }
 }

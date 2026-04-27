@@ -301,7 +301,7 @@ namespace RimMind.Core.Client.Player2
                             ? MessageTypeDefOf.PositiveEvent
                             : MessageTypeDefOf.CautionInput);
                 }
-                catch { }
+                catch (Exception ex) { Log.Warning($"[RimMind] Failed to show notification: {ex.Message}"); }
             });
         }
 
@@ -390,7 +390,7 @@ namespace RimMind.Core.Client.Player2
                 }
                 return webRequest.responseCode == 200;
             }
-            catch { return false; }
+            catch (Exception ex) { Log.Warning($"[RimMind] Player2 local availability check failed: {ex.Message}"); return false; }
         }
 
         public async Task<float> GetJoulesBalanceAsync()
@@ -421,8 +421,9 @@ namespace RimMind.Core.Client.Player2
                     webRequest.downloadHandler.text);
                 return balance?.Balance ?? -1f;
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warning($"[RimMind] GetJoulesBalanceAsync failed: {ex.Message}");
                 return -1f;
             }
         }
@@ -447,11 +448,6 @@ namespace RimMind.Core.Client.Player2
                     _lastBalanceCheck = DateTime.Now;
                 }
             });
-        }
-
-        public static bool ShouldRefreshBalance()
-        {
-            return (DateTime.Now - _lastBalanceCheck).TotalMinutes > 5;
         }
 
         public async Task<RawResponse> SendRawAsync(string path, string jsonBody)
