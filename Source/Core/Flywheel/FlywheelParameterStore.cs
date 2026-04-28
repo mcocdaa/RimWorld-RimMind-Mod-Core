@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Verse;
 
@@ -8,8 +9,8 @@ namespace RimMind.Core.Flywheel
     {
         public static FlywheelParameterStore? Instance { get; private set; }
 
-        private readonly Dictionary<string, float> _parameters = new Dictionary<string, float>();
-        private readonly Dictionary<string, float> _defaults = new Dictionary<string, float>();
+        private readonly ConcurrentDictionary<string, float> _parameters = new ConcurrentDictionary<string, float>();
+        private readonly ConcurrentDictionary<string, float> _defaults = new ConcurrentDictionary<string, float>();
 
         public event Action<string, float>? OnParameterChanged;
 

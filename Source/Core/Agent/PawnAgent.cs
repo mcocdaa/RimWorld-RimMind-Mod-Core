@@ -32,6 +32,7 @@ namespace RimMind.Core.Agent
 
         private List<ChatMessage>? _lastMessages;
         private List<StructuredTool>? _lastTools;
+        private List<StructuredTool>? _lastSensorTools;
         private string? _lastSchema;
         private int _toolCallDepth;
 
@@ -73,6 +74,14 @@ namespace RimMind.Core.Agent
             if (raw.Count == 0) return;
             var filtered = _perceptionPipeline.Process(raw);
             _pendingPerceptions.AddRange(filtered);
+
+            // ── Sensor 感知数据 ─────────────────────────
+            var sensorMgr = Sensor.SensorManager.Instance;
+            if (sensorMgr != null)
+            {
+                var sensorTools = sensorMgr.BuildAgentTools(Pawn);
+                _lastSensorTools = sensorTools;
+            }
         }
 
         private void Think()

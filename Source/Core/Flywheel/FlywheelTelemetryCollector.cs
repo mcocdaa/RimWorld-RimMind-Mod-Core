@@ -102,42 +102,6 @@ namespace RimMind.Core.Flywheel
             }
         }
 
-        public void RecordSnapshotBuild(ContextSnapshot snapshot, float budgetValue, string[] includedKeys, string[] trimmedKeys)
-        {
-            var record = new TelemetryRecord
-            {
-                NpcId = snapshot.NpcId,
-                Scenario = snapshot.Scenario,
-                BudgetValue = budgetValue,
-                KeysIncluded = includedKeys ?? new string[0],
-                KeysTrimmed = trimmedKeys ?? new string[0],
-                LayerTokenBreakdown = new Dictionary<string, int>
-                {
-                    { "L0", snapshot.Meta.L0Tokens },
-                    { "L1", snapshot.Meta.L1Tokens },
-                    { "L2", snapshot.Meta.L2Tokens },
-                    { "L3", snapshot.Meta.L3Tokens },
-                    { "L4", snapshot.Meta.L4Tokens },
-                },
-                KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0
-                    ? new Dictionary<string, int>(snapshot.KeyChangeCounts)
-                    : null!,
-                CacheHitRate = ComputeCacheHitRates(snapshot)!,
-                ScoreDistribution = snapshot.KeyScores.Count > 0
-                    ? new Dictionary<string, float>(snapshot.KeyScores)
-                    : null!,
-                DiffCount = snapshot.DiffCount,
-                LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0
-                    ? new Dictionary<string, long>(snapshot.LatencyByLayerMs)
-                    : null!,
-                RequestLatencyMs = snapshot.BuildStartTicks > 0
-                    ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond
-                    : 0,
-                TimestampTicks = DateTime.Now.Ticks,
-            };
-            Record(record);
-        }
-
         private static Dictionary<string, float>? ComputeCacheHitRates(ContextSnapshot snapshot)
         {
             if (snapshot.CacheHitEvents.Count == 0) return null;

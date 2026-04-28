@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,14 +27,14 @@ namespace RimMind.Core
     {
         // ── Provider 注册表 ───────────────────────────────────────────────────
 
-        private static readonly Dictionary<string, (string modId, Func<string?> provider, int priority)>
-            _staticProviders = new Dictionary<string, (string, Func<string?>, int)>();
+        private static readonly ConcurrentDictionary<string, (string modId, Func<string?> provider, int priority)>
+            _staticProviders = new ConcurrentDictionary<string, (string, Func<string?>, int)>();
 
-        private static readonly Dictionary<string, (string modId, Func<string, string> provider, int priority)>
-            _dynamicProviders = new Dictionary<string, (string, Func<string, string>, int)>();
+        private static readonly ConcurrentDictionary<string, (string modId, Func<string, string> provider, int priority)>
+            _dynamicProviders = new ConcurrentDictionary<string, (string, Func<string, string>, int)>();
 
-        private static readonly Dictionary<string, (string modId, Func<Pawn, string?> provider, int priority)>
-            _pawnProviders = new Dictionary<string, (string, Func<Pawn, string?>, int)>();
+        private static readonly ConcurrentDictionary<string, (string modId, Func<Pawn, string?> provider, int priority)>
+            _pawnProviders = new ConcurrentDictionary<string, (string, Func<Pawn, string?>, int)>();
 
         private static readonly List<(string tabId, Func<string> labelFn, Action<UnityEngine.Rect> drawFn)>
             _settingsTabs = new List<(string, Func<string>, Action<UnityEngine.Rect>)>();
@@ -41,19 +42,19 @@ namespace RimMind.Core
         private static readonly List<(string id, Func<bool> isActive, Action toggle)>
             _toggleBehaviors = new List<(string, Func<bool>, Action)>();
 
-        private static readonly Dictionary<string, Func<int>> _modCooldownGetters
-            = new Dictionary<string, Func<int>>();
+        private static readonly ConcurrentDictionary<string, Func<int>> _modCooldownGetters
+            = new ConcurrentDictionary<string, Func<int>>();
 
         private static Action<Pawn, string, Pawn?>? _dialogueTriggerFn;
 
-        private static readonly Dictionary<string, Func<Pawn, string, bool>> _dialogueSkipChecks
-            = new Dictionary<string, Func<Pawn, string, bool>>();
+        private static readonly ConcurrentDictionary<string, Func<Pawn, string, bool>> _dialogueSkipChecks
+            = new ConcurrentDictionary<string, Func<Pawn, string, bool>>();
 
-        private static readonly Dictionary<string, Func<bool>> _floatMenuSkipChecks
-            = new Dictionary<string, Func<bool>>();
+        private static readonly ConcurrentDictionary<string, Func<bool>> _floatMenuSkipChecks
+            = new ConcurrentDictionary<string, Func<bool>>();
 
-        private static readonly Dictionary<string, Func<string, bool>> _actionSkipChecks
-            = new Dictionary<string, Func<string, bool>>();
+        private static readonly ConcurrentDictionary<string, Func<string, bool>> _actionSkipChecks
+            = new ConcurrentDictionary<string, Func<string, bool>>();
 
         private static IAgentProvider? _agentProvider;
         private static IEventBus? _eventBus;
@@ -380,6 +381,7 @@ namespace RimMind.Core
             catch (System.Exception ex) { Log.Warning($"[RimMind] GetStaticProviderData '{category}' error: {ex.Message}"); return null; }
         }
 
+        [Obsolete("Use ContextKeyRegistry.Register instead")]
         public static string? GetDynamicProviderData(string category, string query)
         {
             if (!_dynamicProviders.TryGetValue(category, out var entry)) return null;
@@ -401,19 +403,19 @@ namespace RimMind.Core
 
         public static void UnregisterPawnContextProvider(string category)
         {
-            _pawnProviders.Remove(category);
+            _pawnProviders.TryRemove(category, out _);
             ContextKeyRegistry.Unregister(category);
         }
 
         public static void UnregisterStaticProvider(string category)
         {
-            _staticProviders.Remove(category);
+            _staticProviders.TryRemove(category, out _);
             ContextKeyRegistry.Unregister(category);
         }
 
         public static void UnregisterDynamicProvider(string category)
         {
-            _dynamicProviders.Remove(category);
+            _dynamicProviders.TryRemove(category, out _);
             ContextKeyRegistry.Unregister(category);
         }
 
@@ -421,13 +423,13 @@ namespace RimMind.Core
         {
             if (string.IsNullOrEmpty(modId)) return;
             var staticKeys = _staticProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in staticKeys) { _staticProviders.Remove(key); ContextKeyRegistry.Unregister(key); }
+            foreach (var key in staticKeys) { _staticProviders.TryRemove(key, out _); ContextKeyRegistry.Unregister(key); }
 
             var dynamicKeys = _dynamicProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in dynamicKeys) { _dynamicProviders.Remove(key); ContextKeyRegistry.Unregister(key); }
+            foreach (var key in dynamicKeys) { _dynamicProviders.TryRemove(key, out _); ContextKeyRegistry.Unregister(key); }
 
             var pawnKeys = _pawnProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in pawnKeys) { _pawnProviders.Remove(key); ContextKeyRegistry.Unregister(key); }
+            foreach (var key in pawnKeys) { _pawnProviders.TryRemove(key, out _); ContextKeyRegistry.Unregister(key); }
         }
 
         // ── Settings / Toggle / Cooldown ──────────────────────────────────────
@@ -458,7 +460,7 @@ namespace RimMind.Core
         public static Func<int>? GetModCooldownGetter(string modId)
             => _modCooldownGetters.TryGetValue(modId, out var getter) ? getter : null;
 
-        public static IReadOnlyDictionary<string, Func<int>> ModCooldownGetters => _modCooldownGetters;
+        public static ConcurrentDictionary<string, Func<int>> ModCooldownGetters => _modCooldownGetters;
 
         public static void RegisterDialogueTrigger(Action<Pawn, string, Pawn?> triggerFn)
         {
@@ -485,7 +487,7 @@ namespace RimMind.Core
         }
 
         public static void UnregisterDialogueSkipCheck(string sourceId)
-            => _dialogueSkipChecks.Remove(sourceId);
+            => _dialogueSkipChecks.TryRemove(sourceId, out _);
 
         public static bool ShouldSkipDialogue(Pawn pawn, string triggerType)
         {
@@ -509,7 +511,7 @@ namespace RimMind.Core
         }
 
         public static void UnregisterFloatMenuSkipCheck(string sourceId)
-            => _floatMenuSkipChecks.Remove(sourceId);
+            => _floatMenuSkipChecks.TryRemove(sourceId, out _);
 
         public static bool ShouldSkipFloatMenu()
         {
@@ -535,7 +537,7 @@ namespace RimMind.Core
         }
 
         public static void UnregisterActionSkipCheck(string sourceId)
-            => _actionSkipChecks.Remove(sourceId);
+            => _actionSkipChecks.TryRemove(sourceId, out _);
 
         public static bool ShouldSkipAction(string intentId)
         {
@@ -731,6 +733,16 @@ namespace RimMind.Core
         public static void RegisterSensorProvider(ISensorProvider provider) { _sensorProviders.Add(provider); }
         public static void UnregisterSensorProvider(string sensorId) { _sensorProviders.RemoveAll(s => s.SensorId == sensorId); }
         public static IReadOnlyList<ISensorProvider> SensorProviders => _sensorProviders;
+
+        /// <summary>
+        /// Get all Agent Tools from registered sensors for the given pawn.
+        /// These can be injected into AI tool-calling requests.
+        /// </summary>
+        public static List<StructuredTool> GetAgentTools(Pawn pawn)
+        {
+            var mgr = Sensor.SensorManager.Instance;
+            return mgr?.BuildAgentTools(pawn) ?? new List<StructuredTool>();
+        }
 
         public static void RegisterAgentModeProvider(IAgentModeProvider provider) { _agentModeProviders.Add(provider); }
         public static void UnregisterAgentModeProvider(string providerId) { _agentModeProviders.RemoveAll(p => p.ProviderId == providerId); }

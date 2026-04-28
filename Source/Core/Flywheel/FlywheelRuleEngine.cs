@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core.Context;
+using RimMind.Core.Extensions;
 using RimMind.Core.Settings;
 using Verse;
 
@@ -154,6 +156,26 @@ namespace RimMind.Core.Flywheel
                         Log.Message($"[RimMind] Flywheel auto-applied: {rec.Target} = {rec.RecommendedValue}");
                 }
             }
+
+            var config = BuildConfigFromStore(store);
+            foreach (var tuner in RimMindAPI.ParameterTuners)
+            {
+                try { tuner.Tune(config); }
+                catch (Exception ex) { Log.Warning($"[RimMind] ParameterTuner '{tuner.TunerId}' error: {ex.Message}"); }
+            }
+        }
+
+        private static BudgetSchedulerConfig BuildConfigFromStore(FlywheelParameterStore store)
+        {
+            return new BudgetSchedulerConfig
+            {
+                W1 = store.Get("w1"),
+                W2 = store.Get("w2"),
+                Alpha = store.Get("Alpha"),
+                AlphaSmooth = store.Get("AlphaSmooth"),
+                PromoteThreshold = store.Get("PromoteThreshold"),
+                DemoteThreshold = store.Get("DemoteThreshold"),
+            };
         }
 
         private static float ComputeAvgBudgetUtilization(List<TelemetryRecord> records)

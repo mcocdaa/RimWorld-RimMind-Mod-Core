@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core.Extensions;
 using RimMind.Core.Flywheel;
 using Verse;
 
@@ -25,12 +26,14 @@ namespace RimMind.Core.Context
             _relevanceProvider = relevanceProvider;
         }
 
+        public BudgetSchedulerConfig GetConfig() => _config;
+
         public void SubscribeParameterStore()
         {
             var store = FlywheelParameterStore.Instance;
             if (store == null) return;
-            store.OnParameterChanged += OnParameterChanged;
             ApplyStoreParameters(store);
+            RimMindAPI.RegisterParameterTuner(new BudgetSchedulerTuner(this));
         }
 
         private void OnParameterChanged(string key, float value)
@@ -188,6 +191,23 @@ namespace RimMind.Core.Context
                 return 0.6f * tableValue + 0.4f * embeddingValue;
             }
             return tableValue;
+        }
+    }
+
+    public class BudgetSchedulerTuner : IParameterTuner
+    {
+        private readonly BudgetScheduler _scheduler;
+
+        public string TunerId => "BudgetScheduler";
+
+        public BudgetSchedulerTuner(BudgetScheduler scheduler)
+        {
+            _scheduler = scheduler;
+        }
+
+        public void Tune(BudgetSchedulerConfig config)
+        {
+            _scheduler.SetConfig(config);
         }
     }
 }

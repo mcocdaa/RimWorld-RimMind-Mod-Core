@@ -1,4 +1,5 @@
 using HarmonyLib;
+using RimMind.Core.Flywheel;
 using RimMind.Core.Settings;
 using RimMind.Core.UI;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace RimMind.Core
                     Settings.requestOverlayEnabled = !Settings.requestOverlayEnabled;
                     Settings.Write();
                 });
+
+            RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
         }
 
         public override string SettingsCategory() => "RimMind";
