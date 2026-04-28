@@ -88,28 +88,6 @@ namespace RimMind.Core.Sensor
             return tools;
         }
 
-        /// <summary>
-        /// Execute an Agent Tool by name for the given pawn. Used when AI calls a sensor function.
-        /// </summary>
-        public string? ExecuteAgentTool(Pawn pawn, string toolName)
-        {
-            foreach (var sensor in RimMindAPI.SensorProviders)
-            {
-                try
-                {
-                    var defs = sensor.GetAgentTools(pawn);
-                    var match = defs.FirstOrDefault(d => d.Name == toolName);
-                    if (match != null)
-                        return match.Execute(pawn);
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning($"[RimMind] Sensor '{sensor.SensorId}' ExecuteAgentTool error: {ex.Message}");
-                }
-            }
-            return null;
-        }
-
         public override void ExposeData()
         {
             base.ExposeData();

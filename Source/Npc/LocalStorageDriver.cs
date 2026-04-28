@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Prompt;
+using RimMind.Core.Settings;
 using Verse;
 
 namespace RimMind.Core.Npc
@@ -96,10 +97,10 @@ namespace RimMind.Core.Npc
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = 0.6f,
+                Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = 400,
-                Temperature = 0.8f,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
             var engine = RimMindAPI.GetContextEngine();
             var snapshot = engine.BuildSnapshot(request);
@@ -112,10 +113,10 @@ namespace RimMind.Core.Npc
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = 0.6f,
+                Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = 400,
-                Temperature = 0.8f,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
             var engine = RimMindAPI.GetContextEngine();
             var snapshot = engine.BuildSnapshot(request);

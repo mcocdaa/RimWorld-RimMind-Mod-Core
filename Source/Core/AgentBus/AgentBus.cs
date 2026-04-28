@@ -74,13 +74,6 @@ namespace RimMind.Core.AgentBus
             _pendingDispatch.Clear();
         }
 
-        public static void ClearAll()
-        {
-            _handlers.Clear();
-            while (_backgroundQueue.TryDequeue(out _)) { }
-            _pendingDispatch.Clear();
-        }
-
         private static void DispatchToHandlers<T>(T evt) where T : AgentBusEvent
         {
             var type = typeof(T);

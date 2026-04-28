@@ -182,10 +182,6 @@ namespace RimMind.Core.Debug
                 if (staticData != null)
                     sb.AppendLine($"    Static: {staticData.Length} chars");
 
-                var dynamicData = RimMindAPI.GetDynamicProviderData(cat, "");
-                if (dynamicData != null)
-                    sb.AppendLine($"    Dynamic: {dynamicData.Length} chars");
-
                 if (firstColonist != null)
                 {
                     var pawnData = RimMindAPI.GetProviderData(cat, firstColonist);

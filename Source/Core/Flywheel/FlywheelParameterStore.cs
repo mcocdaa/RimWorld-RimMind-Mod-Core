@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Verse;
 
 namespace RimMind.Core.Flywheel
@@ -93,8 +94,9 @@ namespace RimMind.Core.Flywheel
             base.ExposeData();
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                var keys = new List<string>(_parameters.Keys);
-                var values = new List<float>(_parameters.Values);
+                var snapshot = _parameters.ToArray();
+                var keys = new List<string>(snapshot.Select(kvp => kvp.Key));
+                var values = new List<float>(snapshot.Select(kvp => kvp.Value));
                 Scribe_Collections.Look(ref keys, "paramKeys");
                 Scribe_Collections.Look(ref values, "paramValues");
             }

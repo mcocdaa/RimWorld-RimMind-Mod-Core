@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimWorld;
 using Verse;
@@ -9,10 +10,13 @@ namespace RimMind.Core.Context
 {
     public static class ContextKeyRegistry
     {
-        private static readonly Dictionary<string, KeyMeta> _keys = new Dictionary<string, KeyMeta>();
+        private static readonly ConcurrentDictionary<string, KeyMeta> _keys = new ConcurrentDictionary<string, KeyMeta>();
         private static bool _coreRegistered = false;
         private static string _currentScenario = string.Empty;
         public static string CurrentScenario { get => _currentScenario; set => _currentScenario = value; }
+
+        private static string? _currentSpeakerName;
+        public static string? CurrentSpeakerName { get => _currentSpeakerName; set => _currentSpeakerName = value; }
 
         public static void Register(string key, ContextLayer layer, float priority,
             Func<Pawn, List<ContextEntry>> provider, string ownerMod,
@@ -30,7 +34,7 @@ namespace RimMind.Core.Context
 
         public static bool Unregister(string key)
         {
-            return _keys.Remove(key);
+            return _keys.TryRemove(key, out _);
         }
 
         public static List<KeyMeta> GetAll()

@@ -289,8 +289,8 @@ namespace RimMind.Core.Agent
             var followUpRequest = new AIRequest
             {
                 Messages = messages,
-                MaxTokens = 400,
-                Temperature = 0.7f,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
                 RequestId = $"Structured_{npcId}_fb{_toolCallDepth}",
                 ModId = "Decision",
                 ExpireAtTicks = Find.TickManager.TicksGame + 30000,

@@ -15,6 +15,7 @@ namespace RimMind.Core.Context
     public class ContextEngine
     {
         private const int MaxCacheEntries = 100;
+        private readonly object _sync = new object();
 
         private readonly BudgetScheduler _scheduler = new BudgetScheduler();
         private readonly HistoryManager _historyManager;
@@ -74,6 +75,14 @@ namespace RimMind.Core.Context
         }
 
         public ContextSnapshot BuildSnapshot(ContextRequest request)
+        {
+            lock (_sync)
+            {
+                return BuildSnapshotCore(request);
+            }
+        }
+
+        private ContextSnapshot BuildSnapshotCore(ContextRequest request)
         {
             ScenarioRegistry.RegisterCoreScenarios();
             RelevanceTable.RegisterCoreRelevance();
@@ -288,48 +297,60 @@ namespace RimMind.Core.Context
 
         public void InvalidateLayer(string npcId, ContextLayer layer)
         {
-            if (layer == ContextLayer.L0_Static)
-                RemoveL0CacheForNpc(npcId);
-            if (layer == ContextLayer.L1_Baseline)
+            lock (_sync)
             {
-                _l1BlockCache.Remove(npcId);
-                _l1Version.Remove(npcId);
-                _l1KeyVersions.Remove(npcId);
+                if (layer == ContextLayer.L0_Static)
+                    RemoveL0CacheForNpc(npcId);
+                if (layer == ContextLayer.L1_Baseline)
+                {
+                    _l1BlockCache.Remove(npcId);
+                    _l1Version.Remove(npcId);
+                    _l1KeyVersions.Remove(npcId);
+                }
             }
         }
 
         public void InvalidateKey(string npcId, string key)
         {
-            if (_keyLastValues.TryGetValue(npcId, out var dict))
-                dict.Remove(key);
-            if (_l1BlockCache.TryGetValue(npcId, out var blocks))
-                blocks.Remove(key);
-            _embedCache.InvalidateBlock(npcId, key);
-            _embedCache.InvalidateEntries(npcId, key);
-            SemanticEmbedding.InvalidateBlockEmbedding(npcId, key);
-            SemanticEmbedding.InvalidateEntryEmbeddings(npcId, key);
+            lock (_sync)
+            {
+                if (_keyLastValues.TryGetValue(npcId, out var dict))
+                    dict.Remove(key);
+                if (_l1BlockCache.TryGetValue(npcId, out var blocks))
+                    blocks.Remove(key);
+                _embedCache.InvalidateBlock(npcId, key);
+                _embedCache.InvalidateEntries(npcId, key);
+                SemanticEmbedding.InvalidateBlockEmbedding(npcId, key);
+                SemanticEmbedding.InvalidateEntryEmbeddings(npcId, key);
+            }
         }
 
         public void UpdateBaseline(string npcId)
         {
-            _l1BlockCache.Remove(npcId);
-            _l1Version.Remove(npcId);
-            _l1KeyVersions.Remove(npcId);
-            if (_diffStore.TryGetValue(npcId, out var diffs))
-                diffs.Clear();
+            lock (_sync)
+            {
+                _l1BlockCache.Remove(npcId);
+                _l1Version.Remove(npcId);
+                _l1KeyVersions.Remove(npcId);
+                if (_diffStore.TryGetValue(npcId, out var diffs))
+                    diffs.Clear();
+            }
         }
 
         public void InvalidateNpc(string npcId)
         {
-            RemoveL0CacheForNpc(npcId);
-            _l1BlockCache.Remove(npcId);
-            _l1Version.Remove(npcId);
-            _l1KeyVersions.Remove(npcId);
-            _diffStore.Remove(npcId);
-            _keyLastValues.Remove(npcId);
-            _historyManager.ClearHistory(npcId);
-            _embedCache.InvalidateNpc(npcId);
-            SemanticEmbedding.InvalidateNpc(npcId);
+            lock (_sync)
+            {
+                RemoveL0CacheForNpc(npcId);
+                _l1BlockCache.Remove(npcId);
+                _l1Version.Remove(npcId);
+                _l1KeyVersions.Remove(npcId);
+                _diffStore.Remove(npcId);
+                _keyLastValues.Remove(npcId);
+                _historyManager.ClearHistory(npcId);
+                _embedCache.InvalidateNpc(npcId);
+                SemanticEmbedding.InvalidateNpc(npcId);
+            }
         }
 
         private ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, Pawn? pawn)
@@ -664,10 +685,11 @@ namespace RimMind.Core.Context
         private static string CompressToBrief(string content)
         {
             if (string.IsNullOrEmpty(content)) return content;
-            // Simple compression: truncate to first 200 chars + ellipsis
             const int briefLimit = 200;
             if (content.Length <= briefLimit) return content;
-            return content.Substring(0, briefLimit) + "...";
+            int cut = briefLimit;
+            if (char.IsHighSurrogate(content[cut - 1])) cut--;
+            return content.Substring(0, cut) + "...";
         }
 
         private static int EstimateTokens(string text)

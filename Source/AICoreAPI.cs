@@ -30,17 +30,14 @@ namespace RimMind.Core
         private static readonly ConcurrentDictionary<string, (string modId, Func<string?> provider, int priority)>
             _staticProviders = new ConcurrentDictionary<string, (string, Func<string?>, int)>();
 
-        private static readonly ConcurrentDictionary<string, (string modId, Func<string, string> provider, int priority)>
-            _dynamicProviders = new ConcurrentDictionary<string, (string, Func<string, string>, int)>();
-
         private static readonly ConcurrentDictionary<string, (string modId, Func<Pawn, string?> provider, int priority)>
             _pawnProviders = new ConcurrentDictionary<string, (string, Func<Pawn, string?>, int)>();
 
-        private static readonly List<(string tabId, Func<string> labelFn, Action<UnityEngine.Rect> drawFn)>
-            _settingsTabs = new List<(string, Func<string>, Action<UnityEngine.Rect>)>();
+        private static readonly ConcurrentDictionary<string, (string tabId, Func<string> labelFn, Action<UnityEngine.Rect> drawFn)>
+            _settingsTabs = new ConcurrentDictionary<string, (string, Func<string>, Action<UnityEngine.Rect>)>();
 
-        private static readonly List<(string id, Func<bool> isActive, Action toggle)>
-            _toggleBehaviors = new List<(string, Func<bool>, Action)>();
+        private static readonly ConcurrentDictionary<string, (string id, Func<bool> isActive, Action toggle)>
+            _toggleBehaviors = new ConcurrentDictionary<string, (string, Func<bool>, Action)>();
 
         private static readonly ConcurrentDictionary<string, Func<int>> _modCooldownGetters
             = new ConcurrentDictionary<string, Func<int>>();
@@ -207,7 +204,7 @@ namespace RimMind.Core
             var snapshot = _contextEngine.BuildSnapshot(request);
             var aiRequest = new AIRequest
             {
-                SystemPrompt = null!,
+                SystemPrompt = string.Empty,
                 Messages = snapshot.Messages,
                 MaxTokens = snapshot.MaxTokens,
                 Temperature = snapshot.Temperature,
@@ -269,7 +266,7 @@ namespace RimMind.Core
                 Log.Warning($"[RimMind] RequestStructuredAsync threw, falling back to queue: {ex.Message}");
                 var fallbackRequest = new AIRequest
                 {
-                    SystemPrompt = null!,
+                    SystemPrompt = string.Empty,
                     Messages = snapshot.Messages,
                     MaxTokens = snapshot.MaxTokens,
                     Temperature = snapshot.Temperature,
@@ -296,21 +293,6 @@ namespace RimMind.Core
         public static string BuildPawnContext(Pawn pawn)
             => GameContextBuilder.BuildPawnContext(pawn);
 
-        public static string BuildStaticContext()
-        {
-            var sb = new StringBuilder();
-            foreach (var kvp in _staticProviders)
-            {
-                try
-                {
-                    string? seg = kvp.Value.provider();
-                    if (!string.IsNullOrEmpty(seg)) sb.AppendLine(seg);
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind] StaticProvider '{kvp.Key}' error: {ex.Message}"); }
-            }
-            return sb.ToString().TrimEnd();
-        }
-
         // ── 状态查询 ──────────────────────────────────────────────────────────
 
         public static bool IsConfigured() => RimMindCoreMod.Settings.IsConfigured();
@@ -329,22 +311,6 @@ namespace RimMind.Core
             {
                 string? val = provider();
                 return string.IsNullOrEmpty(val) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(val!) };
-            });
-            ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
-        }
-
-        [Obsolete("Use ContextKeyRegistry.Register instead")]
-        public static void RegisterDynamicProvider(string category, Func<string, string> provider,
-            int priority = PromptSection.PriorityAuxiliary, string modId = "", bool overrideExisting = true)
-        {
-            if (_dynamicProviders.ContainsKey(category) && !overrideExisting) return;
-            _dynamicProviders[category] = (modId, provider, priority);
-            float priorityFloat = 1.0f - (priority / 10.0f);
-            ContextLayer layer = InferLayer(priority);
-            var wrappedProvider = new Func<Pawn, List<ContextEntry>>(pawn =>
-            {
-                string val = provider(pawn.Name?.ToStringShort ?? pawn.LabelShort);
-                return string.IsNullOrEmpty(val) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(val) };
             });
             ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
@@ -381,21 +347,11 @@ namespace RimMind.Core
             catch (System.Exception ex) { Log.Warning($"[RimMind] GetStaticProviderData '{category}' error: {ex.Message}"); return null; }
         }
 
-        [Obsolete("Use ContextKeyRegistry.Register instead")]
-        public static string? GetDynamicProviderData(string category, string query)
-        {
-            if (!_dynamicProviders.TryGetValue(category, out var entry)) return null;
-            try { return entry.provider(query); }
-            catch (System.Exception ex) { Log.Warning($"[RimMind] GetDynamicProviderData '{category}' error: {ex.Message}"); return null; }
-        }
-
         public static List<string> GetRegisteredCategories()
         {
             var all = new HashSet<string>();
             all.UnionWith(_staticProviders.Keys);
             all.UnionWith(_pawnProviders.Keys);
-            all.UnionWith(_dynamicProviders.Keys);
-
             return all.ToList();
         }
 
@@ -413,20 +369,11 @@ namespace RimMind.Core
             ContextKeyRegistry.Unregister(category);
         }
 
-        public static void UnregisterDynamicProvider(string category)
-        {
-            _dynamicProviders.TryRemove(category, out _);
-            ContextKeyRegistry.Unregister(category);
-        }
-
         public static void UnregisterModProviders(string modId)
         {
             if (string.IsNullOrEmpty(modId)) return;
             var staticKeys = _staticProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
             foreach (var key in staticKeys) { _staticProviders.TryRemove(key, out _); ContextKeyRegistry.Unregister(key); }
-
-            var dynamicKeys = _dynamicProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
-            foreach (var key in dynamicKeys) { _dynamicProviders.TryRemove(key, out _); ContextKeyRegistry.Unregister(key); }
 
             var pawnKeys = _pawnProviders.Where(kvp => kvp.Value.modId == modId).Select(kvp => kvp.Key).ToList();
             foreach (var key in pawnKeys) { _pawnProviders.TryRemove(key, out _); ContextKeyRegistry.Unregister(key); }
@@ -435,20 +382,20 @@ namespace RimMind.Core
         // ── Settings / Toggle / Cooldown ──────────────────────────────────────
 
         public static void RegisterSettingsTab(string tabId, Func<string> labelFn, Action<UnityEngine.Rect> drawFn)
-            => _settingsTabs.Add((tabId, labelFn, drawFn));
+            => _settingsTabs[tabId] = (tabId, labelFn, drawFn);
 
         public static IReadOnlyList<(string tabId, Func<string> labelFn, Action<UnityEngine.Rect> drawFn)>
-            SettingsTabs => _settingsTabs;
+            SettingsTabs => _settingsTabs.Values.ToList();
 
         public static void RegisterToggleBehavior(string id, Func<bool> isActive, Action toggle)
-            => _toggleBehaviors.Add((id, isActive, toggle));
+            => _toggleBehaviors[id] = (id, isActive, toggle);
 
         public static bool IsAnyToggleActive()
-            => _toggleBehaviors.Count > 0 && _toggleBehaviors.Any(b => b.isActive());
+            => _toggleBehaviors.Values.Any(b => b.isActive());
 
         public static void ToggleAll()
         {
-            foreach (var (_, _, toggle) in _toggleBehaviors)
+            foreach (var (_, _, toggle) in _toggleBehaviors.Values.ToList())
                 toggle();
         }
 
@@ -557,16 +504,18 @@ namespace RimMind.Core
 
         // ── Incident Cooldown API ────────────────────────────────────────────
 
-        private static readonly List<Action> _incidentExecutedCallbacks = new List<Action>();
+        private static readonly ConcurrentDictionary<string, Action> _incidentExecutedCallbacks
+            = new ConcurrentDictionary<string, Action>();
 
         public static void RegisterIncidentExecutedCallback(Action callback)
         {
-            _incidentExecutedCallbacks.Add(callback);
+            string key = $"cb_{callback.Method.DeclaringType?.Name}_{callback.Method.Name}_{System.Threading.Interlocked.Increment(ref _callbackCounter)}";
+            _incidentExecutedCallbacks[key] = callback;
         }
 
         public static void NotifyIncidentExecuted()
         {
-            foreach (var cb in _incidentExecutedCallbacks.ToList())
+            foreach (var cb in _incidentExecutedCallbacks.Values.ToList())
             {
                 try { cb(); }
                 catch (System.Exception ex) { Log.Warning($"[RimMind] IncidentExecuted callback error: {ex.Message}"); }
@@ -575,24 +524,28 @@ namespace RimMind.Core
 
         public static void UnregisterIncidentExecutedCallback(Action callback)
         {
-            _incidentExecutedCallbacks.Remove(callback);
+            var key = _incidentExecutedCallbacks.FirstOrDefault(kvp => kvp.Value == callback).Key;
+            if (key != null) _incidentExecutedCallbacks.TryRemove(key, out _);
         }
 
-        private static readonly List<Func<bool>> _storytellerIncidentSkipChecks = new List<Func<bool>>();
+        private static readonly ConcurrentDictionary<string, Func<bool>> _storytellerIncidentSkipChecks
+            = new ConcurrentDictionary<string, Func<bool>>();
 
         public static void RegisterStorytellerIncidentSkipCheck(Func<bool> check)
         {
-            _storytellerIncidentSkipChecks.Add(check);
+            string key = $"sc_{System.Threading.Interlocked.Increment(ref _callbackCounter)}";
+            _storytellerIncidentSkipChecks[key] = check;
         }
 
         public static void UnregisterStorytellerIncidentSkipCheck(Func<bool> check)
         {
-            _storytellerIncidentSkipChecks.Remove(check);
+            var key = _storytellerIncidentSkipChecks.FirstOrDefault(kvp => kvp.Value == check).Key;
+            if (key != null) _storytellerIncidentSkipChecks.TryRemove(key, out _);
         }
 
         public static bool ShouldSkipStorytellerIncident()
         {
-            foreach (var check in _storytellerIncidentSkipChecks.ToList())
+            foreach (var check in _storytellerIncidentSkipChecks.Values.ToList())
             {
                 try { if (check()) return true; }
                 catch (System.Exception ex) { Log.Warning($"[RimMind] StorytellerIncidentSkipCheck error: {ex.Message}"); }
@@ -648,9 +601,6 @@ namespace RimMind.Core
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
             => Perception.PerceptionBridge.PublishPerception(pawnId, type, content, importance);
 
-        public static void PublishBroadcastPerception(string type, string content, float importance = 0.5f, Verse.Map? map = null)
-            => Perception.PerceptionBridge.PublishBroadcast(type, content, importance, map);
-
         // ── RequestOverlay API ────────────────────────────────────────────────
 
         public static void RegisterPendingRequest(RequestEntry entry)
@@ -658,9 +608,6 @@ namespace RimMind.Core
 
         public static IReadOnlyList<RequestEntry> GetPendingRequests()
             => RequestOverlay.Pending;
-
-        public static void RemovePendingRequest(RequestEntry entry)
-            => RequestOverlay.Remove(entry);
 
         // ── 内部 ──────────────────────────────────────────────────────────────
 
@@ -721,18 +668,23 @@ namespace RimMind.Core
             }
         }
 
-        private static readonly List<IParameterTuner> _parameterTuners = new List<IParameterTuner>();
-        private static readonly List<ISensorProvider> _sensorProviders = new List<ISensorProvider>();
-        private static readonly List<IAgentModeProvider> _agentModeProviders = new List<IAgentModeProvider>();
-        private static readonly List<IStreamingResponseHandler> _streamingHandlers = new List<IStreamingResponseHandler>();
+        private static readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners
+            = new ConcurrentDictionary<string, IParameterTuner>();
+        private static readonly ConcurrentDictionary<string, ISensorProvider> _sensorProviders
+            = new ConcurrentDictionary<string, ISensorProvider>();
+        private static readonly ConcurrentDictionary<string, IAgentModeProvider> _agentModeProviders
+            = new ConcurrentDictionary<string, IAgentModeProvider>();
+        private static readonly ConcurrentDictionary<string, IStreamingResponseHandler> _streamingHandlers
+            = new ConcurrentDictionary<string, IStreamingResponseHandler>();
+        private static int _callbackCounter;
 
-        public static void RegisterParameterTuner(IParameterTuner tuner) { _parameterTuners.Add(tuner); }
-        public static void UnregisterParameterTuner(string tunerId) { _parameterTuners.RemoveAll(t => t.TunerId == tunerId); }
-        public static IReadOnlyList<IParameterTuner> ParameterTuners => _parameterTuners;
+        public static void RegisterParameterTuner(IParameterTuner tuner) { _parameterTuners[tuner.TunerId] = tuner; }
+        public static void UnregisterParameterTuner(string tunerId) { _parameterTuners.TryRemove(tunerId, out _); }
+        public static IReadOnlyList<IParameterTuner> ParameterTuners => _parameterTuners.Values.ToList();
 
-        public static void RegisterSensorProvider(ISensorProvider provider) { _sensorProviders.Add(provider); }
-        public static void UnregisterSensorProvider(string sensorId) { _sensorProviders.RemoveAll(s => s.SensorId == sensorId); }
-        public static IReadOnlyList<ISensorProvider> SensorProviders => _sensorProviders;
+        public static void RegisterSensorProvider(ISensorProvider provider) { _sensorProviders[provider.SensorId] = provider; }
+        public static void UnregisterSensorProvider(string sensorId) { _sensorProviders.TryRemove(sensorId, out _); }
+        public static IReadOnlyList<ISensorProvider> SensorProviders => _sensorProviders.Values.ToList();
 
         /// <summary>
         /// Get all Agent Tools from registered sensors for the given pawn.
@@ -744,17 +696,16 @@ namespace RimMind.Core
             return mgr?.BuildAgentTools(pawn) ?? new List<StructuredTool>();
         }
 
-        public static void RegisterAgentModeProvider(IAgentModeProvider provider) { _agentModeProviders.Add(provider); }
-        public static void UnregisterAgentModeProvider(string providerId) { _agentModeProviders.RemoveAll(p => p.ProviderId == providerId); }
-        public static IReadOnlyList<IAgentModeProvider> AgentModeProviders => _agentModeProviders;
+        public static void RegisterAgentModeProvider(IAgentModeProvider provider) { _agentModeProviders[provider.ProviderId] = provider; }
+        public static void UnregisterAgentModeProvider(string providerId) { _agentModeProviders.TryRemove(providerId, out _); }
+        public static IReadOnlyList<IAgentModeProvider> AgentModeProviders => _agentModeProviders.Values.ToList();
 
-        public static bool IsPawnAgentControlled(Pawn pawn) => _agentModeProviders.Any(p => p.IsAgentControlled(pawn));
+        public static bool IsPawnAgentControlled(Pawn pawn) => _agentModeProviders.Values.Any(p => p.IsAgentControlled(pawn));
 
-        public static void RegisterStreamingHandler(IStreamingResponseHandler handler) { _streamingHandlers.Add(handler); }
-        public static void UnregisterStreamingHandler(string handlerId) { _streamingHandlers.RemoveAll(h => h.HandlerId == handlerId); }
-        public static IReadOnlyList<IStreamingResponseHandler> StreamingHandlers => _streamingHandlers;
+        public static void RegisterStreamingHandler(IStreamingResponseHandler handler) { _streamingHandlers[handler.HandlerId] = handler; }
+        public static void UnregisterStreamingHandler(string handlerId) { _streamingHandlers.TryRemove(handlerId, out _); }
+        public static IReadOnlyList<IStreamingResponseHandler> StreamingHandlers => _streamingHandlers.Values.ToList();
 
-        public static float GetContextBudget() => RimMindCoreMod.Settings.Context.ContextBudget;
         public static void ClearModCooldown(string modId) => AIRequestQueue.Instance?.ClearCooldown(modId);
     }
 }

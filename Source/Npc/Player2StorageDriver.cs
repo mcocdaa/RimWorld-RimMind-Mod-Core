@@ -123,10 +123,10 @@ namespace RimMind.Core.Npc
                         {
                             NpcId = npcId,
                             Scenario = ScenarioIds.Dialogue,
-                            Budget = 0.6f,
+                            Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
                             CurrentQuery = message,
-                            MaxTokens = 400,
-                            Temperature = 0.8f,
+                            MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                            Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
                             Map = Find.CurrentMap,
                         };
                         var snapshot = engine.BuildSnapshot(request);
@@ -176,8 +176,8 @@ namespace RimMind.Core.Npc
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
                 CurrentQuery = gameStateInfo != null ? $"{message}\n\n[Game State]\n{gameStateInfo}" : message,
-                MaxTokens = 400,
-                Temperature = 0.8f,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
             snapshot.Messages.Add(new Client.ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
 

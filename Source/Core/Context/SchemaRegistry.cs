@@ -4,7 +4,7 @@ namespace RimMind.Core.Context
     {
         public const string AgentDecision = "{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\"},\"target\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\"}},\"required\":[\"action\",\"reason\"]}";
 
-        public const string AdviceOutput = "{\"type\":\"object\",\"properties\":{\"advices\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\"},\"target\":{\"type\":\"string\"},\"param\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\"},\"request_type\":{\"type\":\"string\"}},\"required\":[\"action\",\"reason\"]}}},\"required\":[\"advices\"]}";
+        public const string AdviceOutput = "{\"type\":\"object\",\"properties\":{\"advices\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"action\":{\"type\":\"string\"},\"target\":{\"type\":\"string\"},\"param\":{\"type\":\"string\"},\"reason\":{\"type\":\"string\"}},\"required\":[\"action\",\"reason\"]}}},\"required\":[\"advices\"]}";
 
         public const string PersonalityOutput = "{\"type\":\"object\",\"properties\":{\"thoughts\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"intensity\":{\"type\":\"number\"},\"duration_hours\":{\"type\":\"number\"}}},\"required\":[\"type\",\"label\",\"description\",\"intensity\"]}},\"narrative\":{\"type\":\"string\"},\"identity\":{\"type\":\"object\",\"properties\":{\"motivations\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"traits\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"core_values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}},\"required\":[\"thoughts\"]}";
 
