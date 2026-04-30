@@ -78,28 +78,65 @@ RimMindAPI.RegisterPendingRequest(entry)
 - AgentBus：Publish主线程同步，PublishFromBackground后台入队主线程消费
 - **严禁**后台线程调用任何RimWorld/Unity API
 
-## 已知问题
-
-### P1 — 高优先级
-
-1. AICoreAPI 中 8 个 `List<T>` 非线程安全（`_settingsTabs`, `_toggleBehaviors`, `_incidentExecutedCallbacks`, `_storytellerIncidentSkipChecks`, `_parameterTuners`, `_sensorProviders`, `_agentModeProviders`, `_streamingHandlers`）
-2. ContextEngine / AIRequestQueue / ContextKeyRegistry / HistoryManager 内部 `Dictionary` 非线程安全
-3. PawnAgent.RequestToolFeedback + LocalStorageDriver + Player2StorageDriver 硬编码 `MaxTokens=400, Temperature=0.7f/0.8f`，未使用 `RimMindCoreMod.Settings`
+## 已知问题（r6 审查 2026-04-29）
 
 ### P2 — 中等优先级
 
-4. 双路径注册（`RimMindAPI` 旧字典 vs `ContextKeyRegistry`）数据不同步
-5. `ContextSettings.BudgetW1`/`BudgetW2` 无 UI 控件
-6. `ContextDiff.DefaultLifetimeTicks=600` 对低频 AI 请求过短
-7. `CompressToBrief` 的 200 字符截断可能破坏 Unicode 代理对
-8. `FlywheelParameterStore.ExposeData` 中 Keys/Values 快照不一致
+1. OpenAIClient._formatCapabilityCache 并发读写（static Dictionary）
+2. LocalStorageDriver.KvStore 非线程安全（Dictionary，可从后台线程访问）
+3. AICoreAPI.Chat 后台线程调用 RimWorld/Unity API（违反线程规则）
+4. OpenAI 路径 Task.Run 无 try-catch（请求可能静默丢失）
+5. RegisterIncidentExecutedCallback/Unregister key 生成不稳定（lambda 不可靠）
+6. 单实例替换型 API 无覆盖警告（_dialogueTriggerFn 等 6 个字段）
+7. ScenarioRegistry 硬编码中文（违反 UI 文本本地化规则）
+8. PawnAgent/AgentGoalStack/NpcManager/PerceptionBridge 直接调用静态 AgentBus 绕过 IEventBus
+9. HistoryManager 无持久化集成（存档/读档后对话历史丢失）
+10. LocalStorageDriver.SupportsStreaming 返回 true 但实际假流式
 
-### 本轮已修复
+### P3 — 低优先级
 
-- ✅ RimMindAPI 静态字典 → ConcurrentDictionary（_staticProviders, _dynamicProviders, _pawnProviders, _modCooldownGetters, _dialogueSkipChecks, _floatMenuSkipChecks, _actionSkipChecks）
-- ✅ FlywheelParameterStore._parameters → ConcurrentDictionary
-- ✅ PawnAgent.Think() 硬编码 MaxTokens/Temperature → 已改用 Settings
-- ✅ FlywheelTelemetryCollector.RecordSnapshotBuild 死代码 → 已删除
+11. GameContextBuilder 威胁阈值不考虑难度缩放
+12. ContextEngine.BuildL1 ContainsKey+索引器非原子
+13. EmbedCache/SemanticEmbedding 非线程安全（独立使用时）
+14. PawnAgent GUID 截断（32位熵，高频可能碰撞）
+15. HybridStorageDriver 降级策略不完善（不处理超时/部分失败）
+16. AgentBus 强引用存储 handler（可能内存泄漏）
+17. ScenarioRegistry._scenarios 非线程安全
+18. ContextKeyRegistry._coreRegistered 不可重置
+19. StorageDriverFactory 无线程安全保护
+
+### 设置项缺口（高优先级）
+
+- ContextSnapshot/ContextRequest/AIRequest 默认 MaxTokens=400 与 Settings.maxTokens=800 不一致
+- BudgetW1/BudgetW2 双源定义冲突（ContextSettings vs FlywheelParameterStore）
+- PawnAgent 核心参数硬编码（ThinkCooldownTicks、DefaultTickInterval、MaxToolCallDepth）
+- 感知管线参数硬编码（缓冲区容量、冷却时间、重要性阈值）
+
+### Mod 结合度
+
+- 3 个子 mod 直接访问 RimMindCoreMod.Settings
+- 2 个子 mod 直接访问 AIRequestQueue.Instance
+- 3 个子 mod 直接访问 RimMind.Core.Internal 命名空间
+- Memory mod 复用其他 mod 的 ScenarioId
+
+### 死代码（27 项）
+
+- IStreamingResponseHandler 整套机制（接口+3个API+后端字段）
+- IAgentModeProvider 整套机制（接口+3个API+后端字段）
+- 15 个 RimMindAPI 方法/属性无调用者
+- MemoryEvent 从未被实例化
+- RequestOverlay.GetWindowRect/SetWindowRect 无调用者
+- using System.Text 未使用
+
+### 历史修复（r5-r9）
+
+- ✅ RimMindAPI 静态字典 → ConcurrentDictionary
+- ✅ AICoreAPI 8 个 List → ConcurrentDictionary
+- ✅ ContextEngine/AIRequestQueue/ContextKeyRegistry/HistoryManager → 线程安全
+- ✅ PawnAgent 硬编码参数 → 改用 Settings
+- ✅ 双路径注册、Unicode 截断、ExposeData 快照 → 修复
+- ✅ BudgetW1/W2 UI、autoApplyMode LogOnly → 修复
+- ✅ ContextDiff lifetime、AIDebugLog O(1)、HistoryManager/SensorManager 线程安全 → 修复
 
 ## 操作边界
 
