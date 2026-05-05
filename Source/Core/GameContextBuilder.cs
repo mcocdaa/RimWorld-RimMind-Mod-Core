@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RimMind.Core.Context;
+using RimMind.Core.Npc;
 using RimMind.Core.Prompt;
 using RimWorld;
 using RimWorld.Planet;
@@ -24,39 +26,71 @@ namespace RimMind.Core.Internal
         /// </summary>
         public static string BuildMapContext(Map map, bool brief = false)
         {
-            if (map == null) return string.Empty;
+            var entries = BuildMapContextEntries(map, brief);
+            var sb = new StringBuilder();
+            foreach (var entry in entries)
+            {
+                if (!string.IsNullOrEmpty(entry.Content))
+                    sb.AppendLine(entry.Content);
+            }
+            return sb.ToString().TrimEnd();
+        }
+
+        public static List<ContextEntry> BuildMapContextEntries(Map map, bool brief = false)
+        {
+            var entries = new List<ContextEntry>();
+            if (map == null) return entries;
 
             var ctx = RimMindCoreMod.Settings.Context;
-            var sb = new StringBuilder();
-            sb.AppendLine("RimMind.Core.Prompt.MapStatusHeader".Translate());
 
-            // 游戏时间
+            entries.Add(new ContextEntry("RimMind.Core.Prompt.MapStatusHeader".Translate()));
+
             if (ctx.IncludeGameTime)
             {
                 long ticks = Find.TickManager.TicksAbs;
                 Vector2 longLat = Find.WorldGrid.LongLatOf(map.Tile);
                 int hour = GenDate.HourOfDay(ticks, longLat.x);
                 string dateStr = GenDate.DateFullStringAt(ticks, longLat);
-                sb.AppendLine("RimMind.Core.Prompt.TimeFormat".Translate(dateStr, $"{hour:D2}"));
+                int day = (int)(ticks / 60000L);
+                entries.Add(new ContextEntry(
+                    "RimMind.Core.Prompt.TimeFormat".Translate(dateStr, $"{hour:D2}"))
+                {
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["key"] = "time",
+                        ["hour"] = hour.ToString(),
+                        ["day"] = day.ToString()
+                    }
+                });
             }
 
-            // 殖民者数量 + 名单
             if (ctx.IncludeColonistCount)
             {
                 var colonists = map.mapPawns.FreeColonistsSpawned;
+                int count = colonists.Count;
+                string content;
                 if (ctx.IncludeColonistNames && colonists.Count > 0)
                 {
                     var names = colonists.Select(p => p.Name.ToStringShort);
                     string nameList = string.Join(", ", names);
-                    sb.AppendLine("RimMind.Core.Prompt.ColonistCount".Translate(colonists.Count, nameList));
+                    content = "RimMind.Core.Prompt.ColonistCount".Translate(count, nameList);
                 }
                 else
                 {
-                    sb.AppendLine("RimMind.Core.Prompt.ColonistCountBrief".Translate(colonists.Count));
+                    content = "RimMind.Core.Prompt.ColonistCountBrief".Translate(count);
                 }
+                entries.Add(new ContextEntry(content)
+                {
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["key"] = "colonistCount",
+                        ["count"] = count.ToString()
+                    }
+                });
             }
 
-            // 犯人名单
+            var otherSb = new StringBuilder();
+
             if (ctx.IncludeColonistNames)
             {
                 var prisoners = map.mapPawns.PrisonersOfColonySpawned;
@@ -64,26 +98,24 @@ namespace RimMind.Core.Internal
                 {
                     var names = prisoners.Select(p => p.Name.ToStringShort);
                     string nameList = string.Join(", ", names);
-                    sb.AppendLine("RimMind.Core.Prompt.PrisonerCount".Translate(prisoners.Count, nameList));
+                    otherSb.AppendLine("RimMind.Core.Prompt.PrisonerCount".Translate(prisoners.Count, nameList));
                 }
             }
 
-            // 威胁/财富
             if (ctx.IncludeWealth)
             {
                 float wealth = map.wealthWatcher.WealthTotal;
                 string threat = ThreatLabel(wealth);
-                sb.AppendLine("RimMind.Core.Prompt.WealthWithThreat".Translate($"{wealth:F0}", threat));
+                otherSb.AppendLine("RimMind.Core.Prompt.WealthWithThreat".Translate($"{wealth:F0}", threat));
             }
 
             if (ctx.IncludeThreats)
             {
                 float wealth = map.wealthWatcher.WealthTotal;
                 string threat = ThreatLabel(wealth);
-                sb.AppendLine("RimMind.Core.Prompt.ThreatLevel".Translate(threat));
+                otherSb.AppendLine("RimMind.Core.Prompt.ThreatLevel".Translate(threat));
             }
 
-            // 食物
             if (ctx.IncludeFood)
             {
                 float foodNutrition = 0f;
@@ -96,291 +128,171 @@ namespace RimMind.Core.Internal
                         foodNutrition += map.resourceCounter.GetCount(def) * def.ingestible.CachedNutrition;
                     }
                 }
-                sb.AppendLine("RimMind.Core.Prompt.FoodStorage".Translate($"{foodNutrition:F0}"));
+                otherSb.AppendLine("RimMind.Core.Prompt.FoodStorage".Translate($"{foodNutrition:F0}"));
             }
 
-            // 季节/天气
             if (ctx.IncludeSeason)
-                sb.Append("RimMind.Core.Prompt.Season".Translate(GenLocalDate.Season(map).Label()));
+                otherSb.Append("RimMind.Core.Prompt.Season".Translate(GenLocalDate.Season(map).Label()));
             if (ctx.IncludeWeather)
-                sb.AppendLine("RimMind.Core.Prompt.Weather".Translate(map.weatherManager.curWeather.label));
+                otherSb.AppendLine("RimMind.Core.Prompt.Weather".Translate(map.weatherManager.curWeather.label));
             else if (ctx.IncludeSeason)
-                sb.AppendLine();
+                otherSb.AppendLine();
 
-            return sb.ToString().TrimEnd();
+            string otherContent = otherSb.ToString().TrimEnd();
+            if (!string.IsNullOrEmpty(otherContent))
+                entries.Add(new ContextEntry(otherContent));
+
+            return entries;
         }
 
         // ── Pawn 级上下文 ─────────────────────────────────────────────────────
 
         /// <summary>
         /// 构建小人客观游戏状态（不含扩展 mod 注入内容）。
-        /// 完整上下文请用 RimMindAPI.BuildFullPawnPrompt。
+        /// 完整上下文请用 ContextEngine.BuildSnapshot。
         /// </summary>
         public static string BuildPawnContext(Pawn pawn)
         {
             if (pawn == null) return string.Empty;
 
+            var data = PawnDataExtractor.Extract(pawn);
             var ctx = RimMindCoreMod.Settings.Context;
             var sb = new StringBuilder();
-            sb.Append("RimMind.Core.Prompt.PawnStatusHeader".Translate(pawn.Name.ToStringShort) + "  ");
+            sb.Append("RimMind.Core.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
 
             var basics = new List<string>();
-            if (ctx.IncludeAge)    basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(pawn.ageTracker.AgeBiologicalYears));
-            if (ctx.IncludeGender) basics.Add(pawn.gender.GetLabel());
-            if (ctx.IncludeRace)
-            {
-                if (ModsConfig.BiotechActive && pawn.genes?.Xenotype != null)
-                    basics.Add(pawn.genes.XenotypeLabel);
-                else
-                    basics.Add(pawn.def.label);
-            }
-            if (basics.Count > 0)  sb.AppendLine(string.Join("  ", basics));
-            else                   sb.AppendLine();
+            if (ctx.IncludeAge) basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(data.Age));
+            if (ctx.IncludeGender) basics.Add(data.GenderLabel);
+            if (ctx.IncludeRace) basics.Add(data.RaceLabel);
+            if (basics.Count > 0) sb.AppendLine(string.Join("  ", basics));
+            else sb.AppendLine();
 
-            // 基因（需要 Biotech DLC）
-            if (ctx.IncludeGenes && ModsConfig.BiotechActive && pawn.genes?.GenesListForReading != null)
-            {
-                var notableGenes = pawn.genes.GenesListForReading
-                    .Where(g => g.def.biostatMet != 0 || g.def.biostatCpx != 0)
-                    .OrderByDescending(g => Mathf.Abs(g.def.biostatMet) + g.def.biostatCpx)
-                    .Take(5)
-                    .Select(g => g.def.LabelCap);
-                if (notableGenes.Any())
-                    sb.AppendLine("RimMind.Core.Prompt.Genes".Translate(string.Join(", ", notableGenes)));
-            }
+            if (ctx.IncludeGenes && data.NotableGenes.Count > 0)
+                sb.AppendLine("RimMind.Core.Prompt.Genes".Translate(string.Join(", ", data.NotableGenes)));
 
-            // 背景故事（童年/成年职称）
-            if (ctx.IncludeBackstory && pawn.story != null)
+            if (ctx.IncludeBackstory && (data.ChildhoodTitle != null || data.AdulthoodTitle != null))
             {
                 var parts = new List<string>();
-                if (pawn.story.Childhood != null)
-                    parts.Add("RimMind.Core.Prompt.Childhood".Translate(pawn.story.Childhood.TitleCapFor(pawn.gender)));
-                if (pawn.story.Adulthood != null)
-                    parts.Add("RimMind.Core.Prompt.Adulthood".Translate(pawn.story.Adulthood.TitleCapFor(pawn.gender)));
+                if (data.ChildhoodTitle != null)
+                    parts.Add("RimMind.Core.Prompt.Childhood".Translate(data.ChildhoodTitle));
+                if (data.AdulthoodTitle != null)
+                    parts.Add("RimMind.Core.Prompt.Adulthood".Translate(data.AdulthoodTitle));
                 if (parts.Count > 0)
                     sb.AppendLine("RimMind.Core.Prompt.Backstory".Translate(string.Join("  ", parts)));
             }
 
-            // 意识形态（需要 Ideology DLC）
-            if (ctx.IncludeIdeology && ModsConfig.IdeologyActive && pawn.ideo?.Ideo != null)
-            {
-                var ideo = pawn.ideo.Ideo;
-                var memes = ideo.memes?
-                    .Where(m => m != null)
-                    .Select(m => m.LabelCap.Resolve())
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .ToList();
-                string memeStr = memes?.Count > 0 ? $" [{string.Join(", ", memes)}]" : "";
-                sb.AppendLine("RimMind.Core.Prompt.IdeologyFormat".Translate(ideo.name, memeStr));
-            }
+            if (ctx.IncludeIdeology && data.IdeologyName != null)
+                sb.AppendLine("RimMind.Core.Prompt.IdeologyFormat".Translate(data.IdeologyName, data.IdeologyMemes));
 
-            // 心情（含精神崩溃状态）
-            if (ctx.IncludeMood && pawn.needs?.mood != null)
+            if (ctx.IncludeMood && data.MoodString != null)
             {
-                var mood = pawn.needs.mood;
-                if (pawn.InMentalState)
-                    sb.AppendLine("RimMind.Core.Prompt.MoodBreak".Translate(mood.MoodString, pawn.MentalState?.InspectLine));
-                else if (pawn.Downed)
-                    sb.AppendLine("RimMind.Core.Prompt.MoodDowned".Translate(mood.MoodString));
+                if (data.InMentalState)
+                    sb.AppendLine("RimMind.Core.Prompt.MoodBreak".Translate(data.MoodString, data.MentalStateInspectLine));
+                else if (data.Downed)
+                    sb.AppendLine("RimMind.Core.Prompt.MoodDowned".Translate(data.MoodString));
                 else
-                    sb.AppendLine("RimMind.Core.Prompt.MoodPercent".Translate(mood.MoodString, $"{mood.CurLevelPercentage * 100f:F0}"));
+                    sb.AppendLine("RimMind.Core.Prompt.MoodPercent".Translate(data.MoodString, $"{data.MoodPercent:F0}"));
             }
 
-            // 心情因子（显著 Thought）
-            if (ctx.IncludeMoodThoughts && pawn.needs?.mood?.thoughts != null)
+            if (ctx.IncludeMoodThoughts && data.MoodThoughts.Count > 0)
             {
-                var allThoughts = new List<Thought>();
-                pawn.needs.mood.thoughts.GetAllMoodThoughts(allThoughts);
-                var factors = new List<string>();
-                foreach (var t in allThoughts)
-                {
-                    float offset = t.MoodOffset();
-                    if (Mathf.Abs(offset) >= 1f)
-                        factors.Add($"{t.LabelCap}({offset:+0;-0})");
-                }
-                if (factors.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.MoodFactors".Translate(string.Join(", ", factors.Take(8))));
+                var factors = data.MoodThoughts.Select(t => $"{t.Label}({t.Offset:+0;-0})");
+                sb.AppendLine("RimMind.Core.Prompt.MoodFactors".Translate(string.Join(", ", factors)));
             }
 
-            // 主要健康问题（格式：身体部位：病症名称，与游戏健康面板一致）
-            if (ctx.IncludeHealth)
+            if (ctx.IncludeHealth && data.Hediffs.Count > 0)
             {
-                var hediffs = pawn.health?.hediffSet?.hediffs;
-                if (hediffs != null)
+                var notable = new List<string>();
+                foreach (var h in data.Hediffs)
                 {
-                    var notable = new List<string>();
-                    foreach (var h in hediffs)
-                    {
-                        if (!h.def.isBad || h.Severity < 0.05f || !h.Visible) continue;
-                        string partLabel = h.Part?.Label ?? "RimMind.Core.Prompt.FullBody".Translate();
-                        string hediffLabel = h.LabelCap;
-                        notable.Add($"{partLabel}: {hediffLabel}");
-                    }
-                    if (notable.Count > 0)
-                        sb.AppendLine("RimMind.Core.Prompt.HealthIssues".Translate(string.Join(", ", notable.Take(8))));
+                    if (!h.IsBad || h.Severity < 0.05f || !h.Visible) continue;
+                    string partLabel = h.PartLabel ?? "RimMind.Core.Prompt.FullBody".Translate();
+                    notable.Add($"{partLabel}: {h.HediffLabel}");
                 }
+                if (notable.Count > 0)
+                    sb.AppendLine("RimMind.Core.Prompt.HealthIssues".Translate(string.Join(", ", notable.Take(8))));
             }
 
-            // 行动能力（跳过精确 100% 的项，高于或低于均显示）
-            if (ctx.IncludeCapacities && pawn.health?.capacities != null)
+            if (ctx.IncludeCapacities && data.Capacities.Count > 0)
             {
-                var low = new List<string>();
-                foreach (var cap in DefDatabase<PawnCapacityDef>.AllDefsListForReading)
-                {
-                    if (!cap.showOnHumanlikes) continue;
-                    float level = pawn.health.capacities.GetLevel(cap);
-                    if (level >= 0.995f && level <= 1.005f) continue;
-                    string pct = $"{level * 100f:F0}%";
-                    low.Add($"{cap.LabelCap}{pct}");
-                }
-                if (low.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.Capacities".Translate(string.Join(", ", low)));
+                var low = data.Capacities.Select(c => $"{c.Label}{c.Level * 100f:F0}%");
+                sb.AppendLine("RimMind.Core.Prompt.Capacities".Translate(string.Join(", ", low)));
             }
 
-            // 技能
-            if (ctx.IncludeSkills && pawn.skills != null)
+            if (ctx.IncludeSkills && data.Skills.Count > 0)
             {
-                var skills = new List<string>();
-                foreach (var skill in pawn.skills.skills)
-                {
-                    if (skill.levelInt >= ctx.MinSkillLevel)
-                        skills.Add($"{skill.def.label}({skill.levelInt})");
-                }
+                var skills = data.Skills
+                    .Where(s => s.Level >= ctx.MinSkillLevel)
+                    .Select(s => $"{s.Label}({s.Level})")
+                    .ToList();
                 if (skills.Count > 0)
                     sb.AppendLine("RimMind.Core.Prompt.Skills".Translate(string.Join("  ", skills)));
             }
 
-            // 当前任务（用 GetReport() 获取含目标的描述）
             if (ctx.IncludeCurrentJob)
             {
-                string jobLabel = pawn.jobs?.curDriver?.GetReport()
-                    ?? pawn.CurJob?.def?.label
+                string jobLabel = data.CurrentJobReport
+                    ?? data.CurrentJobDefLabel
                     ?? "RimMind.Core.Prompt.None".Translate();
                 sb.AppendLine("RimMind.Core.Prompt.CurrentJob".Translate(jobLabel));
             }
 
-            // 工作分配（已启用工种，按优先级排序）
-            if (ctx.IncludeWorkPriorities && pawn.workSettings != null)
+            if (ctx.IncludeWorkPriorities && data.WorkPriorities.Count > 0)
             {
-                var enabled = new List<(int pri, string label)>();
-                foreach (var wt in DefDatabase<WorkTypeDef>.AllDefsListForReading)
-                {
-                    int pri = pawn.workSettings.GetPriority(wt);
-                    if (pri > 0)
-                        enabled.Add((pri, wt.labelShort));
-                }
-                enabled.Sort((a, b) => a.pri.CompareTo(b.pri));
-                if (enabled.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.WorkPriorities".Translate(string.Join("  ", enabled.Select(e => $"{e.label}({e.pri})"))));
+                sb.AppendLine("RimMind.Core.Prompt.WorkPriorities".Translate(
+                    string.Join("  ", data.WorkPriorities.Select(e => $"{e.Label}({e.Priority})"))));
             }
 
-            // 特性
-            if (ctx.IncludeTraits && pawn.story?.traits != null)
-            {
-                var traits = new List<string>();
-                foreach (var t in pawn.story.traits.allTraits)
-                {
-                    traits.Add(t.LabelCap);
-                    if (traits.Count >= 5) break;
-                }
-                if (traits.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.Traits".Translate(string.Join(", ", traits)));
-            }
+            if (ctx.IncludeTraits && data.TraitLabels.Count > 0)
+                sb.AppendLine("RimMind.Core.Prompt.Traits".Translate(string.Join(", ", data.TraitLabels)));
 
-            // 装备（武器 + 服装）
             if (ctx.IncludeEquipment)
             {
                 var parts = new List<string>();
-
-                var weapon = pawn.equipment?.Primary;
-                if (weapon != null)
-                    parts.Add("RimMind.Core.Prompt.Weapon".Translate(LabelWithQuality(weapon)));
-
-                if (pawn.apparel?.WornApparel != null)
-                {
-                    var apparel = new List<string>();
-                    foreach (var a in pawn.apparel.WornApparel)
-                        apparel.Add(LabelWithQuality(a));
-                    if (apparel.Count > 0)
-                        parts.Add("RimMind.Core.Prompt.Apparel".Translate(string.Join(", ", apparel)));
-                }
-
+                if (data.WeaponLabel != null)
+                    parts.Add("RimMind.Core.Prompt.Weapon".Translate(data.WeaponLabel));
+                if (data.ApparelLabels.Count > 0)
+                    parts.Add("RimMind.Core.Prompt.Apparel".Translate(string.Join(", ", data.ApparelLabels)));
                 if (parts.Count > 0)
                     sb.AppendLine(string.Join("  ", parts));
             }
 
-            if (ctx.IncludeInventory)
+            if (ctx.IncludeInventory && data.InventoryItems.Count > 0)
             {
-                var innerContainer = pawn.inventory?.innerContainer;
-                if (innerContainer != null && innerContainer.Count > 0)
-                {
-                    var items = new Dictionary<string, int>();
-                    foreach (var thing in innerContainer)
+                var itemStrs = data.InventoryItems.OrderByDescending(kv => kv.Value)
+                    .Take(8)
+                    .Select(kv =>
                     {
-                        string key = thing.def?.defName ?? thing.Label;
-                        if (!items.ContainsKey(key))
-                            items[key] = 0;
-                        items[key] += thing.stackCount;
-                    }
-                    var itemStrs = items.OrderByDescending(kv => kv.Value)
-                        .Take(8)
-                        .Select(kv =>
-                        {
-                            var def = DefDatabase<ThingDef>.GetNamedSilentFail(kv.Key);
-                            string label = def?.LabelCap ?? kv.Key;
-                            return kv.Value > 1 ? $"{label}×{kv.Value}" : label;
-                        });
-                    sb.AppendLine("RimMind.Core.Prompt.Inventory".Translate(string.Join(", ", itemStrs)));
-                }
+                        var def = DefDatabase<ThingDef>.GetNamedSilentFail(kv.Key);
+                        string label = def?.LabelCap ?? kv.Key;
+                        return kv.Value > 1 ? $"{label}×{kv.Value}" : label;
+                    });
+                sb.AppendLine("RimMind.Core.Prompt.Inventory".Translate(string.Join(", ", itemStrs)));
             }
 
-            // 位置（房间类型 + 温度）
-            if (ctx.IncludeLocation && pawn.Map != null)
+            if (ctx.IncludeLocation && data.HasMap)
             {
-                var room = pawn.GetRoom();
-                string roomLabel = (room != null && !room.PsychologicallyOutdoors)
-                    ? room.Role?.label ?? "RimMind.Core.Prompt.Room.Indoors".Translate()
-                    : "RimMind.Core.Prompt.Room.Outdoors".Translate();
-                int temp = Mathf.RoundToInt(pawn.Position.GetTemperature(pawn.Map));
-                sb.AppendLine("RimMind.Core.Prompt.Location".Translate(roomLabel, $"{temp}"));
+                int temp = Mathf.RoundToInt(data.Temperature);
+                sb.AppendLine("RimMind.Core.Prompt.Location".Translate(data.RoomLabel, $"{temp}"));
             }
 
-            // 社交关系
-            if (ctx.IncludeRelations && pawn.relations?.DirectRelations != null)
+            if (ctx.IncludeRelations && data.Relations.Count > 0)
             {
-                var relParts = new List<string>();
-                foreach (var rel in pawn.relations.DirectRelations)
-                {
-                    if (rel.otherPawn == null || rel.def == null) continue;
-                    string otherName = rel.otherPawn.Name?.ToStringShort ?? rel.otherPawn.LabelShort;
-                    relParts.Add($"{rel.def.label}({otherName})");
-                    if (relParts.Count >= 6) break;
-                }
-                if (relParts.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.Relations".Translate(string.Join(", ", relParts)));
+                var relParts = data.Relations.Select(r => $"{r.RelationLabel}({r.OtherName})");
+                sb.AppendLine("RimMind.Core.Prompt.Relations".Translate(string.Join(", ", relParts)));
             }
 
-            // 战斗状态
             if (ctx.IncludeCombatStatus)
             {
-                if (pawn.Map != null)
+                if (data.InCombat)
                 {
-                    bool inCombat = pawn.mindState?.enemyTarget != null
-                                 || (pawn.CurJob != null && pawn.CurJob.def == JobDefOf.AttackMelee)
-                                 || (pawn.CurJob != null && pawn.CurJob.def == JobDefOf.AttackStatic);
-                    if (inCombat)
-                    {
-                        string targetLabel = pawn.mindState?.enemyTarget is Pawn enemy
-                            ? enemy.Name?.ToStringShort ?? enemy.LabelShort
-                            : pawn.mindState?.enemyTarget?.Label ?? "RimMind.Core.Prompt.Unknown".Translate();
-                        sb.AppendLine("RimMind.Core.Prompt.InCombat".Translate(targetLabel));
-                    }
+                    string targetLabel = data.EnemyTargetLabel ?? "RimMind.Core.Prompt.Unknown".Translate();
+                    sb.AppendLine("RimMind.Core.Prompt.InCombat".Translate(targetLabel));
                 }
-                if (pawn.Drafted)
+                if (data.Drafted)
                     sb.AppendLine("RimMind.Core.Prompt.Drafted".Translate());
             }
 
-            // 周围环境
             if (ctx.IncludeSurroundings && pawn.Map != null)
             {
                 string surroundings = BuildSurroundings(pawn);
@@ -397,22 +309,16 @@ namespace RimMind.Core.Internal
         /// 从 WorldComponent 获取最近 N 条 AIStoryteller 历史记录。
         /// AIStoryteller 未安装时返回空字符串。
         /// </summary>
-        public static string BuildHistoryContext(int maxEntries = 10)
+        private static string BuildSurroundings(Pawn pawn, int? radius = null, int? maxItems = null)
         {
-            // AIStoryteller 通过 RegisterStaticProvider 注入，此处为空实现。
-            return string.Empty;
-        }
-
-        // ── 辅助 ──────────────────────────────────────────────────────────────
-
-        private static string BuildSurroundings(Pawn pawn, int radius = 5, int maxItems = 8)
-        {
+            int r = radius ?? (RimMindCoreMod.Settings?.Context?.environmentScanRadius ?? 5);
+            int m = maxItems ?? (RimMindCoreMod.Settings?.Context?.environmentMaxItems ?? 8);
             var map = pawn.Map;
             var buildings = new List<string>();
             var items = new Dictionary<string, int>();
             var animals = new List<string>();
 
-            foreach (var c in GenRadial.RadialCellsAround(pawn.Position, radius, true))
+            foreach (var c in GenRadial.RadialCellsAround(pawn.Position, r, true))
             {
                 if (!c.InBounds(map)) continue;
                 var room = pawn.GetRoom();
@@ -456,7 +362,7 @@ namespace RimMind.Core.Internal
             if (items.Count > 0)
             {
                 var itemStrs = items.OrderByDescending(kv => kv.Value)
-                    .Take(maxItems)
+                    .Take(m)
                     .Select(kv => $"{DefDatabase<ThingDef>.GetNamedSilentFail(kv.Key)?.LabelCap ?? kv.Key}×{kv.Value}");
                 parts.Add("RimMind.Core.Prompt.SurroundingsItems".Translate(string.Join(", ", itemStrs)));
             }
@@ -466,22 +372,51 @@ namespace RimMind.Core.Internal
             return parts.Count > 0 ? string.Join("  ", parts) : string.Empty;
         }
 
-        private static string LabelWithQuality(Thing thing)
-        {
-            string label = thing.LabelCap;
-            if (thing.TryGetQuality(out QualityCategory qc))
-                label += $"({qc.GetLabel()})";
-            if (thing.def.useHitPoints && thing.HitPoints < thing.MaxHitPoints * 0.5f)
-                label += " " + "RimMind.Core.Prompt.Damaged".Translate();
-            return label;
-        }
-
         private static string ThreatLabel(float wealth)
         {
-            return wealth > 200000 ? "RimMind.Core.Prompt.Threat.Extreme".Translate()
-                 : wealth > 100000 ? "RimMind.Core.Prompt.Threat.High".Translate()
-                 : wealth > 50000  ? "RimMind.Core.Prompt.Threat.Medium".Translate()
-                 :                   "RimMind.Core.Prompt.Threat.Low".Translate();
+            float high = RimMindCoreMod.Settings?.Context?.threatThresholdHigh ?? 200000f;
+            float medium = RimMindCoreMod.Settings?.Context?.threatThresholdMedium ?? 100000f;
+            float low = RimMindCoreMod.Settings?.Context?.threatThresholdLow ?? 50000f;
+
+            float threatScale = 1f;
+            try { threatScale = Find.Storyteller?.difficulty?.threatScale ?? 1f; } catch { }
+            if (threatScale <= 0f) threatScale = 1f;
+
+            string tier = ThreatClassifier.ClassifyThreatTier(wealth, high, medium, low, threatScale);
+            return tier switch
+            {
+                "Extreme" => "RimMind.Core.Prompt.Threat.Extreme".Translate(),
+                "High"    => "RimMind.Core.Prompt.Threat.High".Translate(),
+                "Medium"  => "RimMind.Core.Prompt.Threat.Medium".Translate(),
+                _         => "RimMind.Core.Prompt.Threat.Low".Translate()
+            };
+        }
+
+        // ── 基础游戏状态收集（回退路径） ────────────────────────────────────
+
+        /// <summary>
+        /// 收集基础游戏状态文本，用于 ContextEngine 不可用时回退填充 game_state_info。
+        /// 按 npcId 查找对应 Pawn，拼接地图上下文 + Pawn 上下文。
+        /// </summary>
+        public static string CollectBasicGameState(string npcId)
+        {
+            var sb = new StringBuilder();
+            var pawn = NpcManager.FindPawnByNpcId(npcId);
+
+            if (pawn != null)
+            {
+                if (pawn.Map != null)
+                    sb.AppendLine(BuildMapContext(pawn.Map));
+                sb.AppendLine(BuildPawnContext(pawn));
+            }
+            else
+            {
+                var map = Find.CurrentMap;
+                if (map != null)
+                    sb.AppendLine(BuildMapContext(map));
+            }
+
+            return sb.ToString().TrimEnd();
         }
 
         // ── PromptSection 版本 ──────────────────────────────────────────────
@@ -511,68 +446,202 @@ namespace RimMind.Core.Internal
         {
             if (pawn == null) return string.Empty;
 
+            var data = PawnDataExtractor.Extract(pawn);
             var sb = new StringBuilder();
-            sb.Append(pawn.Name.ToStringShort + "  ");
+            sb.Append(data.Name + "  ");
 
             var basics = new List<string>();
-            basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(pawn.ageTracker.AgeBiologicalYears));
-            basics.Add(pawn.gender.GetLabel());
-            basics.Add(pawn.def.label);
+            basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(data.Age));
+            basics.Add(data.GenderLabel);
+            basics.Add(data.RaceLabel);
             sb.AppendLine(string.Join("  ", basics));
 
-            if (pawn.needs?.mood != null)
+            if (data.MoodString != null)
             {
-                string moodLabel = pawn.InMentalState ? "RimMind.Core.Prompt.CompactMentalBreak".Translate()
-                    : pawn.Downed ? "RimMind.Core.Prompt.CompactDowned".Translate()
-                    : $"{pawn.needs.mood.CurLevelPercentage * 100f:F0}%";
+                string moodLabel = data.InMentalState ? "RimMind.Core.Prompt.CompactMentalBreak".Translate()
+                    : data.Downed ? "RimMind.Core.Prompt.CompactDowned".Translate()
+                    : $"{data.MoodPercent:F0}%";
                 sb.AppendLine("RimMind.Core.Prompt.CompactMood".Translate(moodLabel));
             }
 
-            var hediffs = pawn.health?.hediffSet?.hediffs;
-            if (hediffs != null)
+            if (data.Hediffs.Count > 0)
             {
                 var notable = new List<string>();
-                foreach (var h in hediffs)
+                foreach (var h in data.Hediffs)
                 {
-                    if (!h.def.isBad || h.Severity < 0.05f || !h.Visible) continue;
-                    string partLabel = h.Part?.Label ?? "RimMind.Core.Prompt.FullBody".Translate();
-                    notable.Add($"{partLabel}:{h.LabelCap}");
+                    if (!h.IsBad || h.Severity < 0.05f || !h.Visible) continue;
+                    string partLabel = h.PartLabel ?? "RimMind.Core.Prompt.FullBody".Translate();
+                    notable.Add($"{partLabel}:{h.HediffLabel}");
                     if (notable.Count >= 3) break;
                 }
                 if (notable.Count > 0)
                     sb.AppendLine("RimMind.Core.Prompt.CompactHealth".Translate(string.Join(", ", notable)));
             }
 
-            string jobLabel = pawn.jobs?.curDriver?.GetReport()
-                ?? pawn.CurJob?.def?.label
+            string jobLabel = data.CurrentJobReport
+                ?? data.CurrentJobDefLabel
                 ?? "RimMind.Core.Prompt.None".Translate();
             sb.AppendLine("RimMind.Core.Prompt.CompactJob".Translate(jobLabel));
 
-            if (pawn.Map != null)
+            if (data.HasMap)
             {
-                var room = pawn.GetRoom();
-                string roomLabel = (room != null && !room.PsychologicallyOutdoors)
-                    ? "RimMind.Core.Prompt.Room.Indoors".Translate()
-                    : "RimMind.Core.Prompt.Room.Outdoors".Translate();
-                int temp = Mathf.RoundToInt(pawn.Position.GetTemperature(pawn.Map));
-                sb.AppendLine("RimMind.Core.Prompt.CompactLocation".Translate(roomLabel, $"{temp}"));
+                int temp = Mathf.RoundToInt(data.Temperature);
+                sb.AppendLine("RimMind.Core.Prompt.CompactLocation".Translate(data.RoomLabel, $"{temp}"));
             }
 
-            var weapon = pawn.equipment?.Primary;
-            if (weapon != null)
-                sb.AppendLine("RimMind.Core.Prompt.CompactWeapon".Translate(LabelWithQuality(weapon)));
+            if (data.WeaponLabel != null)
+                sb.AppendLine("RimMind.Core.Prompt.CompactWeapon".Translate(data.WeaponLabel));
 
-            if (pawn.Drafted)
+            if (data.Drafted)
                 sb.AppendLine("RimMind.Core.Prompt.Drafted".Translate());
-            if (pawn.mindState?.enemyTarget != null)
-            {
-                string targetLabel = pawn.mindState.enemyTarget is Pawn enemy
-                    ? enemy.Name?.ToStringShort ?? enemy.LabelShort
-                    : pawn.mindState.enemyTarget.Label ?? "RimMind.Core.Prompt.Unknown".Translate();
-                sb.AppendLine("RimMind.Core.Prompt.InCombat".Translate(targetLabel));
-            }
+            if (data.EnemyTargetLabel != null)
+                sb.AppendLine("RimMind.Core.Prompt.InCombat".Translate(data.EnemyTargetLabel));
 
             return sb.ToString().TrimEnd();
+        }
+
+        // ── Per-Key 提取方法（供 ContextKeyRegistry 使用） ──────────────────
+
+        public static string ExtractPawnBaseInfo(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            var parts = new List<string>();
+            parts.Add(data.Name);
+            parts.Add($"{data.Age}yo");
+            parts.Add(data.GenderLabel);
+            parts.Add(data.RaceLabel);
+            if (data.ChildhoodTitle != null)
+                parts.Add(data.ChildhoodTitle);
+            if (data.AdulthoodTitle != null)
+                parts.Add(data.AdulthoodTitle);
+            if (data.TraitLabels.Count > 0)
+                parts.Add($"Traits: {string.Join(", ", data.TraitLabels)}");
+            return string.Join(" | ", parts);
+        }
+
+        public static string ExtractFixedRelations(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (data.Relations.Count == 0) return "";
+            return string.Join(", ", data.Relations.Select(r => $"{r.RelationLabel}({r.OtherName})"));
+        }
+
+        public static string ExtractIdeology(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (data.IdeologyName == null) return "";
+            return $"{data.IdeologyName}{data.IdeologyMemes}";
+        }
+
+        public static string ExtractSkillsSummary(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (data.Skills.Count == 0) return "";
+            var top = data.Skills
+                .OrderByDescending(s => s.Level)
+                .Take(5)
+                .Select(s => $"{s.Label}({s.Level})");
+            return string.Join("  ", top);
+        }
+
+        public static string ExtractCurrentArea(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (!data.HasMap) return "";
+            int temp = Mathf.RoundToInt(data.Temperature);
+            return $"{data.RoomLabel}, {temp}°C";
+        }
+
+        public static string ExtractWeather(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            return data.WeatherLabel ?? "";
+        }
+
+        public static string ExtractTimeOfDay(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            return data.TimeString ?? "";
+        }
+
+        public static string ExtractNearbyPawns(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            return data.NearbyPawnNames.Count > 0 ? string.Join(", ", data.NearbyPawnNames) : "";
+        }
+
+        public static string ExtractSeason(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            return data.SeasonLabel ?? "";
+        }
+
+        public static string ExtractColonyStatus(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (!data.HasMap) return "";
+            return "RimMind.Core.Prompt.Colony.Status".Translate(data.ColonistCount, $"{data.ColonyWealth:F0}", data.ThreatCount);
+        }
+
+        public static string ExtractHealth(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            var notable = data.Hediffs
+                .Where(h => h.Visible)
+                .Select(h => h.HediffLabel)
+                .Take(5)
+                .ToList();
+            return notable.Count > 0 ? string.Join(", ", notable) : "RimMind.Core.Prompt.Health.Healthy".Translate();
+        }
+
+        public static string ExtractMood(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (data.MoodString == null) return "";
+            if (data.InMentalState)
+                return "RimMind.Core.Prompt.Mood.MentalBreak".Translate(data.MentalStateInspectLine ?? "");
+            return $"{data.MoodPercent:F0}%";
+        }
+
+        public static string ExtractCurrentJob(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            return data.CurrentJobReport ?? data.CurrentJobDefLabel ?? "RimMind.Core.Prompt.Job.Idle".Translate();
+        }
+
+        public static string ExtractCombatStatus(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            var parts = new List<string>();
+            if (data.Drafted) parts.Add("RimMind.Core.Prompt.Combat.Drafted".Translate());
+            if (data.EnemyTargetLabel != null)
+                parts.Add("RimMind.Core.Prompt.Combat.Fighting".Translate(data.EnemyTargetLabel));
+            return parts.Count > 0 ? string.Join(" | ", parts) : "RimMind.Core.Prompt.Combat.NotInCombat".Translate();
+        }
+
+        public static string ExtractTargetInfo(Pawn pawn)
+        {
+            if (pawn == null) return "";
+            var data = PawnDataExtractor.Extract(pawn);
+            if (data.EnemyTargetLabel == null) return "";
+            string label = data.EnemyTargetHpPercent.HasValue
+                ? $"{data.EnemyTargetLabel} (HP:{data.EnemyTargetHpPercent.Value:F0}%)"
+                : data.EnemyTargetLabel;
+            return "RimMind.Core.Prompt.Target.Info".Translate(label);
         }
     }
 }
