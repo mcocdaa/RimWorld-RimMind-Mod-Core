@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
@@ -16,17 +16,7 @@ namespace RimMind.Core.Client.OpenAI
 {
     public class OpenAIClient : IAIClient
     {
-        private sealed class AIHttpException : Exception
-        {
-            public long StatusCode { get; }
-
-            public AIHttpException(long statusCode, string message) : base(message)
-            {
-                StatusCode = statusCode;
-            }
-        }
-
-        private static readonly Dictionary<string, string> _formatCapabilityCache = new();
+        private static readonly ConcurrentDictionary<string, string> _formatCapabilityCache = new();
 
         internal static void InvalidateFormatCache()
         {
@@ -59,6 +49,9 @@ namespace RimMind.Core.Client.OpenAI
 
         public async Task<AIResponse> SendAsync(AIRequest request)
         {
+            if (!string.IsNullOrEmpty(request.JsonSchema) || (request.Tools != null && request.Tools.Count > 0))
+                return await SendStructuredAsync(request, request.JsonSchema, request.Tools);
+
             bool wantFormat = _settings.forceJsonMode && request.UseJsonMode;
             string cacheKey = BuildCacheKey();
 
@@ -72,7 +65,7 @@ namespace RimMind.Core.Client.OpenAI
             {
                 var noFormatResp = await SendAsyncInner(request, useResponseFormat: false);
                 if (noFormatResp.Success && wantFormat != (_settings.forceJsonMode && request.UseJsonMode))
-                    AIRequestQueue.LogFromBackground($"[RimMind] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
                 return noFormatResp;
             }
 
@@ -85,7 +78,7 @@ namespace RimMind.Core.Client.OpenAI
 
             if (IsResponseFormatError(response))
             {
-                AIRequestQueue.LogFromBackground($"[RimMind] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
                 _formatCapabilityCache[cacheKey] = "none";
                 response = await SendAsyncInner(request, useResponseFormat: false);
             }
@@ -98,12 +91,15 @@ namespace RimMind.Core.Client.OpenAI
             string json = BuildRequestJson(request, useResponseFormat);
 
             if (_settings.debugLogging)
-                AIRequestQueue.LogFromBackground($"[RimMind] → {request.RequestId}\n{json}");
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? {request.RequestId}\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
             {
-                (string responseText, long httpStatusCode) = await PostAsync(endpoint, json);
+                bool isLocal = IsLoopbackEndpoint(_settings.apiEndpoint);
+                float connectTimeout = isLocal ? 300f : 60f;
+                (string responseText, long httpStatusCode) = await HttpHelper.PostAsync(
+                    endpoint, json, $"Bearer {_settings.apiKey}", connectTimeout: connectTimeout);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
                 string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
@@ -114,7 +110,7 @@ namespace RimMind.Core.Client.OpenAI
                 sw.Stop();
 
                 if (_settings.debugLogging)
-                    AIRequestQueue.LogFromBackground($"[RimMind] ← {request.RequestId} ({tokens} tok)\n{content}");
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
                 response.ReasoningContent = reasoningContent;
@@ -128,10 +124,10 @@ namespace RimMind.Core.Client.OpenAI
                 AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
-            catch (AIHttpException ex)
+            catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.HttpStatusCode = ex.StatusCode;
@@ -143,7 +139,7 @@ namespace RimMind.Core.Client.OpenAI
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -172,7 +168,7 @@ namespace RimMind.Core.Client.OpenAI
                     }
                 }
                 if (startIndex > 0)
-                    AIRequestQueue.LogFromBackground($"[RimMind] Using cached format '{cachedBest}' for {request.RequestId} (skipping {startIndex} unsupported mode(s))");
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] Using cached format '{cachedBest}' for {request.RequestId} (skipping {startIndex} unsupported mode(s))");
             }
 
             for (int i = startIndex; i < formatModes.Length; i++)
@@ -193,7 +189,7 @@ namespace RimMind.Core.Client.OpenAI
 
                 if (IsResponseFormatError(response))
                 {
-                    AIRequestQueue.LogFromBackground($"[RimMind] Format '{mode}' not supported for {request.RequestId}, downgrading", isWarning: true);
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] Format '{mode}' not supported for {request.RequestId}, downgrading", isWarning: true);
                     continue;
                 }
 
@@ -216,12 +212,15 @@ namespace RimMind.Core.Client.OpenAI
             string json = BuildStructuredRequestJson(request, jsonSchema, tools, formatMode);
 
             if (_settings.debugLogging)
-                AIRequestQueue.LogFromBackground($"[RimMind] → Structured {request.RequestId} (format={formatMode})\n{json}");
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} (format={formatMode})\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
             {
-                (string responseText, long httpStatusCode) = await PostAsync(endpoint, json);
+                bool isLocal = IsLoopbackEndpoint(_settings.apiEndpoint);
+                float connectTimeout = isLocal ? 300f : 60f;
+                (string responseText, long httpStatusCode) = await HttpHelper.PostAsync(
+                    endpoint, json, $"Bearer {_settings.apiKey}", connectTimeout: connectTimeout);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
                 string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
@@ -233,7 +232,7 @@ namespace RimMind.Core.Client.OpenAI
                 sw.Stop();
 
                 if (_settings.debugLogging)
-                    AIRequestQueue.LogFromBackground($"[RimMind] ← Structured {request.RequestId} ({tokens} tok)\n{content}");
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = new AIResponse
                 {
@@ -268,18 +267,18 @@ namespace RimMind.Core.Client.OpenAI
                 }
                 else if (tools != null && tools.Count > 0 && !string.IsNullOrEmpty(content))
                 {
-                    AIRequestQueue.LogFromBackground($"[RimMind] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
                     if (_settings.debugLogging && content.Length > 0)
-                        AIRequestQueue.LogFromBackground($"[RimMind] Response content (no tool_calls): {content}");
+                        AIRequestQueue.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
                 }
 
                 AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
-            catch (AIHttpException ex)
+            catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.HttpStatusCode = ex.StatusCode;
@@ -291,7 +290,7 @@ namespace RimMind.Core.Client.OpenAI
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -439,59 +438,6 @@ namespace RimMind.Core.Client.OpenAI
                 messages[lastSys].content = (messages[lastSys].content ?? "") + "\n\nPlease respond in JSON format.";
             else
                 messages.Insert(0, new MessageDto { role = "system", content = "Please respond in JSON format." });
-        }
-
-        private async Task<(string text, long statusCode)> PostAsync(string url, string jsonBody)
-        {
-            bool isLocal = IsLoopbackEndpoint(url);
-            float connectTimeout = isLocal ? 300f : 60f;
-            float readTimeout = 60f;
-
-            using var webRequest = new UnityWebRequest(url, "POST");
-            webRequest.uploadHandler = new UploadHandlerRaw(
-                Encoding.UTF8.GetBytes(jsonBody));
-            webRequest.downloadHandler = new DownloadHandlerBuffer();
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-            webRequest.SetRequestHeader("Authorization", $"Bearer {_settings.apiKey}");
-
-            var asyncOp = webRequest.SendWebRequest();
-
-            float inactivity = 0f;
-            ulong lastBytes = 0;
-
-            while (!asyncOp.isDone)
-            {
-                if (Current.Game == null)
-                    throw new OperationCanceledException("Game unloaded during AI request.");
-
-                await Task.Delay(100);
-                ulong currentBytes = webRequest.downloadedBytes;
-
-                if (currentBytes != lastBytes) { inactivity = 0f; lastBytes = currentBytes; }
-                else inactivity += 0.1f;
-
-                if (currentBytes == 0 && inactivity > connectTimeout)
-                {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Connection timeout after {connectTimeout}s");
-                }
-                if (currentBytes > 0 && inactivity > readTimeout)
-                {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Read timeout after {readTimeout}s");
-                }
-            }
-
-            if (webRequest.result == UnityWebRequest.Result.ConnectionError ||
-                webRequest.result == UnityWebRequest.Result.ProtocolError)
-            {
-                string body = webRequest.downloadHandler.text;
-                string unityErr = webRequest.error ?? "";
-                string detail = body.Length > 0 ? body : unityErr;
-                throw new AIHttpException(webRequest.responseCode, $"HTTP {webRequest.responseCode}: {detail}");
-            }
-
-            return (webRequest.downloadHandler.text, webRequest.responseCode);
         }
 
         private static string FormatEndpoint(string baseUrl)

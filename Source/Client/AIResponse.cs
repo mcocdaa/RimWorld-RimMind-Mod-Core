@@ -2,24 +2,24 @@ namespace RimMind.Core.Client
 {
     public class AIResponse
     {
-        public bool Success { get; set; }
+        public bool Success { get; init; }
         public string Content { get; set; } = string.Empty;
         public string Error { get; set; } = string.Empty;
         public int TokensUsed { get; set; }
-        public int PromptTokens;
-        public int CompletionTokens;
-        public int CachedTokens;
-        public string RequestId { get; set; } = string.Empty;
+        public int PromptTokens { get; set; }
+        public int CompletionTokens { get; set; }
+        public int CachedTokens { get; set; }
+        public string RequestId { get; init; } = string.Empty;
 
-        public AIRequestState State { get; set; } = AIRequestState.Queued;
+        public AIRequestState State { get; init; } = AIRequestState.Queued;
         public AIRequestPriority Priority { get; set; } = AIRequestPriority.Normal;
         public int AttemptCount { get; set; } = 1;
         public long QueueWaitMs { get; set; }
         public long ProcessingMs { get; set; }
         public long HttpStatusCode { get; set; }
         public int RequestPayloadBytes { get; set; }
-        public string? ToolCallsJson;
-        public string? ReasoningContent;
+        public string? ToolCallsJson { get; set; }
+        public string? ReasoningContent { get; set; }
 
         public static AIResponse Failure(string requestId, string error) => new AIResponse
         {

@@ -2,13 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <!-- net10.0 for Linux test runner; JsonTagExtractor 无 RimWorld 依赖，兼容现代 .NET -->
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>RimMind.Core.Tests</RootNamespace>
     <AssemblyName>RimMindCore.Tests</AssemblyName>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
-    <!-- Tests 项目不引用 RimWorld，只测纯逻辑 -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +16,58 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
-  <!-- 直接编译纯逻辑源文件（不引用 RimWorld 依赖的代码） -->
   <ItemGroup>
     <Compile Include="../Source/Core/JsonTagExtractor.cs" />
+    <Compile Include="../Source/Core/Prompt/PromptSection.cs" />
+    <Compile Include="../Source/Core/Prompt/PromptSanitizer.cs" />
+    <Compile Include="../Source/Core/Prompt/TaskInstructionBuilder.cs" />
+    <Compile Include="../Source/Client/StructuredTool.cs" />
+    <Compile Include="../Source/Core/Agent/StrategyOptimizer.cs" />
+    <Compile Include="../Source/Core/Agent/AgentGoalStack.cs" />
+    <Compile Include="../Source/Core/Agent/RiskLevel.cs" />
+    <Compile Include="../Source/Core/Agent/PawnAgent.cs" />
+    <Compile Include="../Source/Core/Context/BudgetAllocation.cs" />
+    <Compile Include="../Source/Core/Context/ContextEntry.cs" />
+    <Compile Include="../Source/Core/Context/ContextSnapshot.cs" />
+    <Compile Include="../Source/Core/Context/RelevanceTable.cs" />
+    <Compile Include="../Source/Core/Context/ScenarioRegistry.cs" />
+    <Compile Include="../Source/Core/Context/BudgetScheduler.cs" />
+    <Compile Include="../Source/Core/Context/ContextRequest.cs" />
+    <Compile Include="../Source/Core/Context/EmbedCache.cs" />
+    <Compile Include="../Source/Core/Context/ContextEngine.cs" />
+    <Compile Include="../Source/Core/Context/ContextCacheManager.cs" />
+    <Compile Include="../Source/Core/Context/ContextDiffTracker.cs" />
+    <Compile Include="../Source/Core/Context/ContextLayerBuilder.cs" />
+    <Compile Include="../Source/Core/Context/ContextKeyRegistry.cs" />
+    <Compile Include="../Source/Core/Context/HistoryManager.cs" />
+    <Compile Include="../Source/Core/AgentBus/AgentBus.cs" />
+    <Compile Include="../Source/Core/AgentBus/IEventBus.cs" />
+    <Compile Include="../Source/Core/AgentBus/EventBusAdapter.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/PerceptionEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/DecisionEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/GoalEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/ActionEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/AgentLifecycleEvent.cs" />
+    <Compile Include="../Source/Core/Agent/ThinkNode_RimMindAgent.cs" />
+    <Compile Include="../Source/Core/AgentBus/AgentBusGameComponent.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelParameterStore.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelGameComponent.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelRuleEngine.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelTelemetryCollector.cs" />
+    <Compile Include="../Source/Core/AIRequestQueue.cs" />
+    <Compile Include="../Source/Core/Internal/SkipCheckRegistry.cs" />
+    <Compile Include="../Source/Core/Internal/IncidentRegistry.cs" />
+    <Compile Include="../Source/Core/Internal/RimMindServiceLocator.cs" />
+    <Compile Include="../Source/Core/Internal/AIRequestPool.cs" />
+    <Compile Include="../Source/Client/AIRequest.cs" />
+    <Compile Include="../Source/Client/AIResponse.cs" />
+    <Compile Include="../Source/Core/Perception/PerceptionBridge.cs" />
+    <Compile Include="../Source/Npc/NpcManager.cs" />
+    <Compile Include="../Source/Core/AIDebugLog.cs" />
+    <Compile Include="../Source/Core/Context/IContextEngine.cs" />
+    <Compile Include="../Source/Core/RimMindLogger.cs" />
+    <Compile Include="../Source/Npc/TransientExceptionChecker.cs" />
+    <Compile Include="../Source/Compilers/IsExternalInit.cs" />
   </ItemGroup>
 
 </Project>

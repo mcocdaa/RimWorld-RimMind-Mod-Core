@@ -15,6 +15,7 @@ namespace RimMind.Core.Agent
         private List<AgentGoal>? _activeGoalsCache;
         private int _version;
         private int _activeGoalsCacheVersion;
+        private int _activeCount;
 
         public IReadOnlyList<AgentGoal> Goals => _goals;
         public IReadOnlyList<AgentGoal> ActiveGoals
@@ -30,7 +31,7 @@ namespace RimMind.Core.Agent
                 return _activeGoalsCache;
             }
         }
-        public int ActiveCount => _goals.Count(g => g.Status == GoalStatus.Active);
+        public int ActiveCount => _activeCount;
         public int TotalCount => _goals.Count;
 
         public bool TryAdd(AgentGoal goal, int pawnId)
@@ -40,10 +41,14 @@ namespace RimMind.Core.Agent
             {
                 var removable = _goals.FirstOrDefault(g => g.Status == GoalStatus.Proposed);
                 if (removable == null) return false;
+                if (removable.Status == GoalStatus.Active) _activeCount--;
                 _goals.Remove(removable);
             }
             if (ActiveCount < MaxActiveGoals && goal.Status == GoalStatus.Proposed)
+            {
                 goal.Status = GoalStatus.Active;
+                _activeCount++;
+            }
             _goals.Add(goal);
             BumpVersion();
             _goals.Sort((a, b) => b.Priority.CompareTo(a.Priority));
@@ -57,6 +62,7 @@ namespace RimMind.Core.Agent
             int idx = _goals.FindIndex(g => g.Description == description);
             if (idx < 0) return false;
             var goal = _goals[idx];
+            if (goal.Status == GoalStatus.Active) _activeCount--;
             _goals.RemoveAt(idx);
             BumpVersion();
             global::RimMind.Core.AgentBus.AgentBus.Publish(new GoalEvent(
@@ -72,6 +78,7 @@ namespace RimMind.Core.Agent
                 if (_goals[i].IsExpired)
                 {
                     var goal = _goals[i];
+                    if (goal.Status == GoalStatus.Active) _activeCount--;
                     goal.Status = GoalStatus.Expired;
                     _goals.RemoveAt(i);
                     BumpVersion();
@@ -89,11 +96,16 @@ namespace RimMind.Core.Agent
                 var proposed = _goals.FirstOrDefault(g => g.Status == GoalStatus.Proposed);
                 if (proposed == null) break;
                 proposed.Status = GoalStatus.Active;
+                _activeCount++;
                 BumpVersion();
             }
         }
 
-        public void Clear() => _goals.Clear();
+        public void Clear()
+        {
+            _goals.Clear();
+            _activeCount = 0;
+        }
 
         private void BumpVersion() => _version++;
 

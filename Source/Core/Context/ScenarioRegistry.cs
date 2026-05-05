@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Verse;
 
@@ -24,7 +25,7 @@ namespace RimMind.Core.Context
 
     public static class ScenarioRegistry
     {
-        private static readonly Dictionary<string, ScenarioMeta> _scenarios = new Dictionary<string, ScenarioMeta>();
+        private static readonly ConcurrentDictionary<string, ScenarioMeta> _scenarios = new ConcurrentDictionary<string, ScenarioMeta>();
         private static bool _coreRegistered = false;
 
         public static void Register(string scenarioId, int defaultBaseRounds, string description,
@@ -33,7 +34,7 @@ namespace RimMind.Core.Context
         {
             if (_scenarios.ContainsKey(scenarioId))
             {
-                Log.Warning($"[RimMind] Scenario '{scenarioId}' already registered, overwriting.");
+                Log.Warning($"[RimMind-Core] Scenario '{scenarioId}' already registered, overwriting.");
             }
             _scenarios[scenarioId] = new ScenarioMeta
             {
@@ -49,7 +50,7 @@ namespace RimMind.Core.Context
 
         public static bool Unregister(string scenarioId)
         {
-            return _scenarios.Remove(scenarioId);
+            return _scenarios.TryRemove(scenarioId, out _);
         }
 
         public static ScenarioMeta? Get(string scenarioId)
@@ -66,21 +67,21 @@ namespace RimMind.Core.Context
         {
             if (_coreRegistered) return;
             _coreRegistered = true;
-            Register(ScenarioIds.Dialogue, 10, "对话场景",
+            Register(ScenarioIds.Dialogue, 10, "RimMind.Core.Scenario.Dialogue".Translate(),
                 defaultBudget: 0.6f, l4Mode: L4Mode.BudgetControlled,
                 defaultExcludeKeys: new[] { "combat_status", "task_progress" });
-            Register(ScenarioIds.Decision, 0, "决策场景",
+            Register(ScenarioIds.Decision, 0, "RimMind.Core.Scenario.Decision".Translate(),
                 defaultBudget: 0.5f, l4Mode: L4Mode.None,
                 defaultExcludeKeys: new string[0]);
-            Register(ScenarioIds.Personality, 3, "人格评估场景",
+            Register(ScenarioIds.Personality, 3, "RimMind.Core.Scenario.Personality".Translate(),
                 defaultBudget: 0.4f, l4Mode: L4Mode.MemoryOnly,
                 defaultExcludeKeys: new[] { "combat_status" });
-            Register(ScenarioIds.Storyteller, 8, "叙事场景",
+            Register(ScenarioIds.Storyteller, 8, "RimMind.Core.Scenario.Storyteller".Translate(),
                 defaultBudget: 0.7f, l4Mode: L4Mode.NarrativeMemory,
                 defaultExcludeKeys: new[] { "npc_identity", "pawn_base_info", "fixed_relations",
                     "ideology", "skills_summary", "health", "mood", "current_job",
                     "combat_status", "target_info", "task_progress", "npc_commands" });
-            Register(ScenarioIds.Memory, 0, "暗记忆生成场景",
+            Register(ScenarioIds.Memory, 0, "RimMind.Core.Scenario.Memory".Translate(),
                 defaultBudget: 0.4f, l4Mode: L4Mode.None,
                 defaultExcludeKeys: new[] { "combat_status", "current_job", "mood",
                     "task_progress", "npc_commands", "target_info" });
@@ -90,6 +91,12 @@ namespace RimMind.Core.Context
         {
             var meta = Get(scenarioId);
             return meta?.DefaultBaseRounds ?? 6;
+        }
+
+        public static void Clear()
+        {
+            _scenarios.Clear();
+            _coreRegistered = false;
         }
     }
 

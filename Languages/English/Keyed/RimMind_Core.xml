@@ -62,6 +62,9 @@
   <RimMind.Core.Agent.Gizmo.ToggleDesc>Toggle PawnAgent active state</RimMind.Core.Agent.Gizmo.ToggleDesc>
   <RimMind.Core.Agent.Gizmo.DevView>Dev: View Agent</RimMind.Core.Agent.Gizmo.DevView>
   <RimMind.Core.Agent.Gizmo.DevViewDesc>Dump Agent internal state to log</RimMind.Core.Agent.Gizmo.DevViewDesc>
+  <RimMind.Core.Agent.State.Active>Active</RimMind.Core.Agent.State.Active>
+  <RimMind.Core.Agent.State.Dormant>Dormant</RimMind.Core.Agent.State.Dormant>
+  <RimMind.Core.Agent.State.Terminated>Terminated</RimMind.Core.Agent.State.Terminated>
   <RimMind.Core.Player2.LocalDetected>RimMind: Player2 desktop app detected! Using automatic authentication (no API key needed).</RimMind.Core.Player2.LocalDetected>
   <RimMind.Core.Player2.LocalNotFound>RimMind: Player2 desktop app not found. Please start the app or add an API key manually.</RimMind.Core.Player2.LocalNotFound>
   <!-- AICoreSettingsUI.cs - Section headers -->
@@ -74,6 +77,14 @@
   <RimMind.Core.Settings.MaxRetry.Desc>Maximum number of retries after a request failure. Set to 0 to disable retries.</RimMind.Core.Settings.MaxRetry.Desc>
   <RimMind.Core.Settings.RequestTimeout>Request Timeout (seconds)</RimMind.Core.Settings.RequestTimeout>
   <RimMind.Core.Settings.RequestTimeout.Desc>Maximum time to wait for an AI response before timing out. Increase for slow models or networks.</RimMind.Core.Settings.RequestTimeout.Desc>
+  <RimMind.Core.Settings.RequestExpireTicks>Request Expiry (ticks)</RimMind.Core.Settings.RequestExpireTicks>
+  <RimMind.Core.Settings.RequestExpireTicks.Desc>Requests older than this tick count are automatically removed from the queue. Prevents stale requests from accumulating. Range: 6000-120000.</RimMind.Core.Settings.RequestExpireTicks.Desc>
+  <RimMind.Core.Settings.BehaviorHistoryMax>Behavior History Limit</RimMind.Core.Settings.BehaviorHistoryMax>
+  <RimMind.Core.Settings.BehaviorHistoryMax.Desc>Maximum number of behavior history records retained per agent. Higher values provide more context but increase token usage. Range: 10-500.</RimMind.Core.Settings.BehaviorHistoryMax.Desc>
+  <RimMind.Core.Settings.QueueProcessInterval>Queue Process Interval (ticks)</RimMind.Core.Settings.QueueProcessInterval>
+  <RimMind.Core.Settings.QueueProcessInterval.Desc>Interval in ticks between queue processing cycles. Lower values process requests faster but consume more CPU. Range: 10-300.</RimMind.Core.Settings.QueueProcessInterval.Desc>
+  <RimMind.Core.Settings.DefaultModCooldown>Default Mod Cooldown (ticks)</RimMind.Core.Settings.DefaultModCooldown>
+  <RimMind.Core.Settings.DefaultModCooldown.Desc>Default cooldown in ticks between consecutive requests for the same mod. Prevents API rate limiting. Individual mods may override this. Range: 600-36000.</RimMind.Core.Settings.DefaultModCooldown.Desc>
   <RimMind.Core.Settings.QueuePaused>Queue: PAUSED</RimMind.Core.Settings.QueuePaused>
   <RimMind.Core.Settings.QueueRunning>Queue: Running</RimMind.Core.Settings.QueueRunning>
   <RimMind.Core.Settings.QueueSeeTab>Queue status has been moved to the "Queue" tab</RimMind.Core.Settings.QueueSeeTab>
@@ -248,6 +259,7 @@
   <RimMind.Core.Prompt.CompactWeapon>Weapon: {0}</RimMind.Core.Prompt.CompactWeapon>
   <RimMind.Core.Prompt.EnvironmentChange>[Environment Change]</RimMind.Core.Prompt.EnvironmentChange>
   <RimMind.Core.Prompt.StateChange>{0}: {1} → {2}</RimMind.Core.Prompt.StateChange>
+  <RimMind.Core.Prompt.MapSummary>[Map] Time:{0} Colonists:{1}</RimMind.Core.Prompt.MapSummary>
   <!-- AIDebugLog.cs -->
   <RimMind.Core.Prompt.Time.Format>D{0} {1}:{2}</RimMind.Core.Prompt.Time.Format>
   <!-- AICoreDebugActions.cs -->
@@ -337,4 +349,9 @@
   <RimMind.Core.UI.FlywheelAutoApply.Apply>Apply with Log</RimMind.Core.UI.FlywheelAutoApply.Apply>
   <RimMind.Core.UI.FlywheelConfidence>Confidence threshold: {0}</RimMind.Core.UI.FlywheelConfidence>
   <RimMind.Core.UI.FlywheelConfidence.Desc>Auto-apply only when recommendation confidence reaches this threshold</RimMind.Core.UI.FlywheelConfidence.Desc>
+  <RimMind.Core.Scenario.Dialogue>Dialogue scenario</RimMind.Core.Scenario.Dialogue>
+  <RimMind.Core.Scenario.Decision>Decision scenario</RimMind.Core.Scenario.Decision>
+  <RimMind.Core.Scenario.Personality>Personality evaluation scenario</RimMind.Core.Scenario.Personality>
+  <RimMind.Core.Scenario.Storyteller>Narrative scenario</RimMind.Core.Scenario.Storyteller>
+  <RimMind.Core.Scenario.Memory>Dark memory generation scenario</RimMind.Core.Scenario.Memory>
 </LanguageData>

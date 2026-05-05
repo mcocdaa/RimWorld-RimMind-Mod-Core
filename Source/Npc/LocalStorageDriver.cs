@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
-using RimMind.Core.Prompt;
 using RimMind.Core.Settings;
 using Verse;
 
@@ -14,19 +14,23 @@ namespace RimMind.Core.Npc
     public class LocalStorageDriver : IStorageDriver
     {
         private readonly Dictionary<string, NpcProfile> _npcRegistry = new Dictionary<string, NpcProfile>();
-        internal static readonly Dictionary<string, string> KvStore = new Dictionary<string, string>();
+        internal static readonly ConcurrentDictionary<string, string> KvStore = new ConcurrentDictionary<string, string>();
         private readonly HistoryManager _historyManager;
+        private readonly string _keyPrefix;
 
         public bool IsRemote => false;
-        public bool SupportsStreaming => true;
+        public bool SupportsStreaming => false;
         public bool SupportsTts => false;
         public bool SupportsCommands => true;
         public bool SupportsStructuredOutput => true;
 
-        public LocalStorageDriver(HistoryManager historyManager)
+        public LocalStorageDriver(HistoryManager historyManager, string keyPrefix = "core")
         {
             _historyManager = historyManager;
+            _keyPrefix = keyPrefix + ":";
         }
+
+        private string PrefixKey(string key) => _keyPrefix + key;
 
         public Task<bool> SpawnNpcAsync(NpcProfile profile)
         {
@@ -51,12 +55,12 @@ namespace RimMind.Core.Npc
 
             var request = new AIRequest
             {
-                Messages = snapshot.Messages,
+                Messages = new List<ChatMessage>(snapshot.Messages),
                 MaxTokens = snapshot.MaxTokens,
                 Temperature = snapshot.Temperature,
                 RequestId = $"NpcChat_{snapshot.NpcId}_{Find.TickManager.TicksGame}",
                 ModId = "NpcChat",
-                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
+                ExpireAtTicks = Find.TickManager.TicksGame + (RimMindCoreMod.Settings?.requestExpireTicks ?? 30000),
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
@@ -80,7 +84,7 @@ namespace RimMind.Core.Npc
 
             string content = response.Content ?? "";
 
-            content = ExtractMessageFromJson(content);
+            content = ExtractReplyField(content);
 
             var commands = ParseCommands(content);
 
@@ -99,7 +103,7 @@ namespace RimMind.Core.Npc
                 Scenario = ScenarioIds.Dialogue,
                 Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
                 Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
             var engine = RimMindAPI.GetContextEngine();
@@ -115,7 +119,7 @@ namespace RimMind.Core.Npc
                 Scenario = ScenarioIds.Dialogue,
                 Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
                 Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
             var engine = RimMindAPI.GetContextEngine();
@@ -138,14 +142,14 @@ namespace RimMind.Core.Npc
             return Task.FromResult(sb.ToString().TrimEnd());
         }
 
-        public Task<bool> PutAsync(string key, string value) { KvStore[key] = value; return Task.FromResult(true); }
-        public Task<string?> GetAsync(string key) { KvStore.TryGetValue(key, out var v); return Task.FromResult<string?>(v); }
-        public Task<bool> DeleteAsync(string key) { KvStore.Remove(key); return Task.FromResult(true); }
+        public Task<bool> PutAsync(string key, string value) { KvStore[PrefixKey(key)] = value; return Task.FromResult(true); }
+        public Task<string?> GetAsync(string key) { KvStore.TryGetValue(PrefixKey(key), out var v); return Task.FromResult<string?>(v); }
+        public Task<bool> DeleteAsync(string key) { KvStore.TryRemove(PrefixKey(key), out _); return Task.FromResult(true); }
         public Task<Dictionary<string, string>> GetBatchAsync(IEnumerable<string> keys)
         {
             var result = new Dictionary<string, string>();
             foreach (var k in keys)
-                if (KvStore.TryGetValue(k, out var v))
+                if (KvStore.TryGetValue(PrefixKey(k), out var v))
                     result[k] = v;
             return Task.FromResult(result);
         }
@@ -154,13 +158,13 @@ namespace RimMind.Core.Npc
 
         public Task<bool> SaveAllEntriesAsync(string json)
         {
-            KvStore[AllEntriesKey] = json ?? string.Empty;
+            KvStore[PrefixKey(AllEntriesKey)] = json ?? string.Empty;
             return Task.FromResult(true);
         }
 
         public Task<string?> LoadAllEntriesAsync()
         {
-            KvStore.TryGetValue(AllEntriesKey, out var json);
+            KvStore.TryGetValue(PrefixKey(AllEntriesKey), out var json);
             return Task.FromResult<string?>(json);
         }
 
@@ -183,9 +187,9 @@ namespace RimMind.Core.Npc
         }
 
         /// <summary>
-        /// 解析响应中的命令格式 [CMD:action_name:params] 或 [CMD:action_name]
-        /// </summary>
-        private static string ExtractMessageFromJson(string content)
+        /// �� JSON ��Ӧ����ȡ reply �ֶ��ı�
+         /// </summary>
+         private static string ExtractReplyField(string content)
         {
             if (string.IsNullOrEmpty(content) || !content.TrimStart().StartsWith("{")) return content;
             try
@@ -197,17 +201,18 @@ namespace RimMind.Core.Npc
                     if (!string.IsNullOrEmpty(extracted)) return extracted;
                 }
             }
-            catch (Exception ex) { Log.Warning($"[RimMind] Failed to extract message from JSON: {ex.Message}"); }
+            catch (Exception ex) { Log.Warning($"[RimMind-Core] Failed to extract message from JSON: {ex.Message}"); }
             return content;
         }
+
+        private static readonly Regex _commandRegex = new Regex(@"\[CMD:(\w+)(?::([^\]]+))?\]", RegexOptions.Compiled);
 
         private static List<NpcCommandResult> ParseCommands(string content)
         {
             var commands = new List<NpcCommandResult>();
             if (string.IsNullOrEmpty(content)) return commands;
 
-            var regex = new Regex(@"\[CMD:(\w+)(?::([^\]]+))?\]");
-            var matches = regex.Matches(content);
+            var matches = _commandRegex.Matches(content);
             foreach (Match match in matches)
             {
                 commands.Add(new NpcCommandResult

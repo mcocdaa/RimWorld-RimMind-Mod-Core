@@ -18,6 +18,9 @@ namespace RimMind.Core.Context
         private static string? _currentSpeakerName;
         public static string? CurrentSpeakerName { get => _currentSpeakerName; set => _currentSpeakerName = value; }
 
+        private static bool _currentIsMonologue;
+        public static bool CurrentIsMonologue { get => _currentIsMonologue; set => _currentIsMonologue = value; }
+
         public static void Register(string key, ContextLayer layer, float priority,
             Func<Pawn, List<ContextEntry>> provider, string ownerMod,
             bool isIndexable = false, float[]? keyEmbedding = null)
@@ -25,7 +28,7 @@ namespace RimMind.Core.Context
             if (_keys.ContainsKey(key))
             {
                 var old = _keys[key];
-                Log.Warning($"[RimMind] ContextKey '{key}' registered by '{old.OwnerMod}' " +
+                Log.Warning($"[RimMind-Core] ContextKey '{key}' registered by '{old.OwnerMod}' " +
                     $"overwritten by '{ownerMod}'.");
             }
             _keys[key] = new KeyMeta(key, layer, priority, provider, ownerMod,
@@ -151,7 +154,7 @@ namespace RimMind.Core.Context
                 }, "Core");
 
             Register("map_structure", ContextLayer.L1_Baseline, 0.95f,
-                pawn => pawn?.Map != null ? WrapEntry(GameContextBuilder.BuildMapContext(pawn.Map)) : WrapEntry(""), "Core");
+                pawn => pawn?.Map != null ? GameContextBuilder.BuildMapContextEntries(pawn.Map) : new List<ContextEntry>(), "Core");
             Register("pawn_base_info", ContextLayer.L1_Baseline, 0.95f,
                 pawn => pawn != null ? WrapEntry(GameContextBuilder.ExtractPawnBaseInfo(pawn)) : WrapEntry(""), "Core");
             Register("fixed_relations", ContextLayer.L1_Baseline, 0.9f,

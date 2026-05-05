@@ -2,18 +2,18 @@ namespace RimMind.Core.AgentBus
 {
     public class DecisionEvent : AgentBusEvent
     {
-        public string DecisionType { get; }
-        public string Reasoning { get; }
-        public string ChosenAction { get; }
-        public int PawnId { get; }
+        public string DecisionType = "";
+        public string Reason = "";
+        public string Action = "";
 
-        public DecisionEvent(string sourceNpcId, int pawnId, string decisionType, string reasoning, string chosenAction)
-            : base(AgentBusEventType.Decision, sourceNpcId)
+        public DecisionEvent(string npcId, int pawnId, string decisionType, string reason, string action)
         {
+            NpcId = npcId;
             PawnId = pawnId;
-            DecisionType = decisionType ?? "";
-            Reasoning = reasoning ?? "";
-            ChosenAction = chosenAction ?? "";
+            DecisionType = decisionType;
+            Reason = reason;
+            Action = action;
+            EventType = AgentBusEventType.Decision;
         }
     }
 }

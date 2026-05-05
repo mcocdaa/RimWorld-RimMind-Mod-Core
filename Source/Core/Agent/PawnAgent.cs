@@ -5,17 +5,14 @@ using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Internal;
+using RimMind.Core.Npc;
 using RimMind.Core.Settings;
 using Verse;
 
 namespace RimMind.Core.Agent
 {
-    public class PawnAgent
+    public class PawnAgent : IExposable
     {
-        private const int DefaultTickInterval = 150;
-        private const int ThinkCooldownTicks = 30000;
-        private const int MaxToolCallDepth = 3;
-
         public Pawn Pawn { get; private set; }
         public AgentState State { get; private set; } = AgentState.Dormant;
         public AgentIdentity Identity { get; private set; } = new AgentIdentity();
@@ -28,13 +25,16 @@ namespace RimMind.Core.Agent
         private readonly List<PerceptionBufferEntry> _pendingPerceptions = new List<PerceptionBufferEntry>();
         private Action<PerceptionEvent>? _perceptionHandler;
         private Action<ActionEvent>? _actionEventHandler;
-        private int _lastThinkTick = -ThinkCooldownTicks;
+        private string? _perceptionSubscriptionKey;
+        private string? _actionSubscriptionKey;
+        private int _lastThinkTick = -(RimMindCoreMod.Settings?.thinkCooldownTicks ?? 30000);
 
         private List<ChatMessage>? _lastMessages;
         private List<StructuredTool>? _lastTools;
         private List<StructuredTool>? _lastSensorTools;
         private string? _lastSchema;
         private int _toolCallDepth;
+        private Verse.AI.Job? _pendingJob;
 
         public AgentGoalStack GoalStack => _goalStack;
         public IReadOnlyList<BehaviorRecord> BehaviorHistory => _behaviorHistory.ToList();
@@ -52,15 +52,18 @@ namespace RimMind.Core.Agent
             _perceptionPipeline.AddFilter(new CooldownFilter());
             _perceptionHandler = OnPerceptionEvent;
             _actionEventHandler = OnActionEvent;
-            global::RimMind.Core.AgentBus.AgentBus.Subscribe(_perceptionHandler);
-            global::RimMind.Core.AgentBus.AgentBus.Subscribe<ActionEvent>(_actionEventHandler);
+            string pawnSubKey = $"PawnAgent_{pawn?.thingIDNumber ?? 0}";
+            _perceptionSubscriptionKey = $"{pawnSubKey}_Perception";
+            _actionSubscriptionKey = $"{pawnSubKey}_Action";
+            global::RimMind.Core.AgentBus.AgentBus.Subscribe(_perceptionSubscriptionKey, _perceptionHandler);
+            global::RimMind.Core.AgentBus.AgentBus.Subscribe<ActionEvent>(_actionSubscriptionKey, _actionEventHandler);
         }
 
         public void Tick()
         {
             if (State != AgentState.Active) return;
             if (Pawn == null || Pawn.Dead) { TransitionTo(AgentState.Terminated); return; }
-            if (!Pawn.IsHashIntervalTick(DefaultTickInterval)) return;
+            if (!Pawn.IsHashIntervalTick(RimMindCoreMod.Settings?.agentTickInterval ?? 150)) return;
 
             _goalStack.CheckExpired(Pawn?.thingIDNumber ?? -1);
             _strategyOptimizer.DecayAll();
@@ -75,7 +78,7 @@ namespace RimMind.Core.Agent
             var filtered = _perceptionPipeline.Process(raw);
             _pendingPerceptions.AddRange(filtered);
 
-            // ── Sensor 感知数据 ─────────────────────────
+            // ���� Sensor ��֪���� ��������������������������������������������������
             var sensorMgr = Sensor.SensorManager.Instance;
             if (sensorMgr != null)
             {
@@ -86,7 +89,7 @@ namespace RimMind.Core.Agent
 
         private void Think()
         {
-            if (Find.TickManager.TicksGame - _lastThinkTick < ThinkCooldownTicks) return;
+            if (Find.TickManager.TicksGame - _lastThinkTick < (RimMindCoreMod.Settings?.thinkCooldownTicks ?? 30000)) return;
 
             if (_goalStack.ActiveCount == 0)
             {
@@ -121,12 +124,12 @@ namespace RimMind.Core.Agent
             var aiRequest = new AIRequest
             {
                 SystemPrompt = null!,
-                Messages = snapshot.Messages,
+                Messages = new List<ChatMessage>(snapshot.Messages),
                 MaxTokens = snapshot.MaxTokens,
                 Temperature = snapshot.Temperature,
                 RequestId = $"Structured_{npcId}",
                 ModId = ctxRequest.Scenario,
-                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
+                ExpireAtTicks = Find.TickManager.TicksGame + (RimMindCoreMod.Settings?.requestExpireTicks ?? 30000),
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
@@ -188,7 +191,7 @@ namespace RimMind.Core.Agent
             }
             catch (System.Exception ex)
             {
-                Log.Warning($"[RimMind] HandleThinkResponse parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
+                Log.Warning($"[RimMind-Core] HandleThinkResponse parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
             }
         }
 
@@ -201,7 +204,7 @@ namespace RimMind.Core.Agent
             }
             catch (System.Exception ex)
             {
-                Log.Warning($"[RimMind] PawnAgent ToolCalls parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
+                Log.Warning($"[RimMind-Core] PawnAgent ToolCalls parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
                 return;
             }
 
@@ -231,7 +234,7 @@ namespace RimMind.Core.Agent
                     }
                     catch (System.Exception ex)
                     {
-                        Log.Warning($"[RimMind] PawnAgent tool call args parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
+                        Log.Warning($"[RimMind-Core] PawnAgent tool call args parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
                     }
                 }
 
@@ -239,7 +242,7 @@ namespace RimMind.Core.Agent
                 decisionResults.Add((tc, $"Decision recorded: {tc.Name}"));
             }
 
-            if (_toolCallDepth < MaxToolCallDepth && decisionResults.Count > 0)
+            if (_toolCallDepth < (RimMindCoreMod.Settings?.maxToolCallDepth ?? 3) && decisionResults.Count > 0)
             {
                 RequestToolFeedback(toolCallsJson, decisionResults);
             }
@@ -254,8 +257,9 @@ namespace RimMind.Core.Agent
             {
                 toolCalls = Newtonsoft.Json.JsonConvert.DeserializeObject<List<StructuredToolCall>>(toolCallsJson);
             }
-            catch
+            catch (System.Exception ex)
             {
+                Log.Warning($"[RimMind-Core] PawnAgent ToolCalls re-parse failed for NPC-{Pawn?.thingIDNumber}: {ex.Message}");
                 return;
             }
 
@@ -289,11 +293,11 @@ namespace RimMind.Core.Agent
             var followUpRequest = new AIRequest
             {
                 Messages = messages,
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 400,
+                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
                 Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
                 RequestId = $"Structured_{npcId}_fb{_toolCallDepth}",
                 ModId = "Decision",
-                ExpireAtTicks = Find.TickManager.TicksGame + 30000,
+                ExpireAtTicks = Find.TickManager.TicksGame + (RimMindCoreMod.Settings?.requestExpireTicks ?? 30000),
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
@@ -320,8 +324,21 @@ namespace RimMind.Core.Agent
                 Pawn? targetPawn = null;
                 if (!string.IsNullOrEmpty(targetName) && Pawn?.Map != null)
                 {
-                    targetPawn = Pawn.Map.mapPawns?.AllPawns?
-                        .FirstOrDefault(p => p.LabelShortCap == targetName);
+                    if (int.TryParse(targetName, out int targetThingId))
+                    {
+                        var indexed = NpcManager.FindPawnByNpcId($"NPC-{targetThingId}");
+                        if (indexed != null) targetPawn = indexed;
+                    }
+                    if (targetPawn == null)
+                    {
+                        targetPawn = Pawn.Map?.mapPawns?.AllPawns?
+                            .FirstOrDefault(p => p.thingIDNumber.ToString() == targetName);
+                    }
+                    if (targetPawn == null)
+                    {
+                        targetPawn = Pawn.Map?.mapPawns?.AllPawns?
+                            .FirstOrDefault(p => p.LabelShortCap == targetName);
+                    }
                 }
                 try
                 {
@@ -331,7 +348,7 @@ namespace RimMind.Core.Agent
                 catch (System.Exception ex)
                 {
                     resultReason = $"Bridge error: {ex.Message}";
-                    Log.Warning($"[RimMind] ActionBridge error for {action}: {ex.Message}");
+                    Log.Warning($"[RimMind-Core] ActionBridge error for {action}: {ex.Message}");
                 }
             }
 
@@ -341,6 +358,8 @@ namespace RimMind.Core.Agent
                 "goal_driven",
                 reason,
                 action));
+
+            var topGoal = _goalStack.ActiveCount > 0 ? _goalStack.ActiveGoals[0] : null;
 
             RecordBehavior(new BehaviorRecord
             {
@@ -353,7 +372,6 @@ namespace RimMind.Core.Agent
                 ActionEventId = eventId,
             });
 
-            var topGoal = _goalStack.ActiveCount > 0 ? _goalStack.ActiveGoals[0] : null;
             if (topGoal != null)
             {
                 topGoal.Progress += ComputeGoalProgressDelta(action, executed);
@@ -407,7 +425,19 @@ namespace RimMind.Core.Agent
 
         public void ForceThink()
         {
-            _lastThinkTick = -ThinkCooldownTicks;
+            _lastThinkTick = -(RimMindCoreMod.Settings?.thinkCooldownTicks ?? 30000);
+        }
+
+        public Verse.AI.Job? ConsumePendingJob()
+        {
+            var job = _pendingJob;
+            _pendingJob = null;
+            return job;
+        }
+
+        public void SetPendingJob(Verse.AI.Job job)
+        {
+            _pendingJob = job;
         }
 
         public bool RemoveGoal(string goalDescription)
@@ -418,7 +448,7 @@ namespace RimMind.Core.Agent
         public void RecordBehavior(BehaviorRecord record)
         {
             _behaviorHistory.Enqueue(record);
-            while (_behaviorHistory.Count > 100)
+            while (_behaviorHistory.Count > (RimMindCoreMod.Settings?.behaviorHistoryMax ?? 100))
                 _behaviorHistory.Dequeue();
         }
 
@@ -447,23 +477,47 @@ namespace RimMind.Core.Agent
             var strategyOptimizer = _strategyOptimizer;
             Scribe_Deep.Look(ref strategyOptimizer, "strategyOptimizer");
             if (strategyOptimizer != null) _strategyOptimizer = strategyOptimizer;
+
+            Scribe_Values.Look(ref _lastThinkTick, "lastThinkTick", -(RimMindCoreMod.Settings?.thinkCooldownTicks ?? 30000));
+            Scribe_Values.Look(ref _toolCallDepth, "toolCallDepth", 0);
+            Scribe_Values.Look(ref _lastSchema, "lastSchema", null);
         }
 
-        private void Cleanup()
+        internal void Cleanup()
         {
-            if (_perceptionHandler != null)
+            if (_perceptionSubscriptionKey != null)
             {
-                global::RimMind.Core.AgentBus.AgentBus.Unsubscribe(_perceptionHandler);
-                _perceptionHandler = null;
+                global::RimMind.Core.AgentBus.AgentBus.Unsubscribe<PerceptionEvent>(_perceptionSubscriptionKey);
+                _perceptionSubscriptionKey = null;
             }
-            if (_actionEventHandler != null)
+            if (_actionSubscriptionKey != null)
             {
-                global::RimMind.Core.AgentBus.AgentBus.Unsubscribe(_actionEventHandler);
-                _actionEventHandler = null;
+                global::RimMind.Core.AgentBus.AgentBus.Unsubscribe<ActionEvent>(_actionSubscriptionKey);
+                _actionSubscriptionKey = null;
             }
+            _perceptionHandler = null;
+            _actionEventHandler = null;
             _goalStack.Clear();
             _perceptionBuffer.Clear();
             _pendingPerceptions.Clear();
+        }
+
+        internal void ResubscribeEvents()
+        {
+            if (_perceptionHandler == null)
+            {
+                _perceptionHandler = OnPerceptionEvent;
+                string pawnSubKey = $"PawnAgent_{Pawn?.thingIDNumber ?? 0}";
+                _perceptionSubscriptionKey = $"{pawnSubKey}_Perception";
+                global::RimMind.Core.AgentBus.AgentBus.Subscribe(_perceptionSubscriptionKey, _perceptionHandler);
+            }
+            if (_actionEventHandler == null)
+            {
+                _actionEventHandler = OnActionEvent;
+                string pawnSubKey = $"PawnAgent_{Pawn?.thingIDNumber ?? 0}";
+                _actionSubscriptionKey = $"{pawnSubKey}_Action";
+                global::RimMind.Core.AgentBus.AgentBus.Subscribe<ActionEvent>(_actionSubscriptionKey, _actionEventHandler);
+            }
         }
 
         private void OnPerceptionEvent(PerceptionEvent evt)

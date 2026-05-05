@@ -130,8 +130,9 @@ namespace RimMind.Core.Flywheel
             return recommendations;
         }
 
-        private static void ApplyAutoApplyMode(AnalysisReportRecord report, FlywheelParameterStore store)
+        private static void ApplyAutoApplyMode(AnalysisReportRecord report, FlywheelParameterStore? store)
         {
+            if (store == null) return;
             var mode = RimMindCoreMod.Settings?.autoApplyMode ?? FlywheelAutoApplyMode.Off;
             float threshold = RimMindCoreMod.Settings?.autoApplyConfidenceThreshold ?? 0.8f;
 
@@ -143,7 +144,7 @@ namespace RimMind.Core.Flywheel
                 if (mode == FlywheelAutoApplyMode.LogOnly)
                 {
                     if (RimMindCoreMod.Settings?.debugLogging == true)
-                        Log.Message($"[RimMind] Flywheel recommendation: {rec.Target} {rec.CurrentValue} -> {rec.RecommendedValue} (confidence={rec.Confidence}, reason={rec.Reason})");
+                        Log.Message($"[RimMind-Core] Flywheel recommendation: {rec.Target} {rec.CurrentValue} -> {rec.RecommendedValue} (confidence={rec.Confidence}, reason={rec.Reason})");
                     continue;
                 }
 
@@ -153,7 +154,7 @@ namespace RimMind.Core.Flywheel
                     rec.Applied = true;
                     rec.ApplyTimestampTicks = DateTime.Now.Ticks;
                     if (RimMindCoreMod.Settings?.debugLogging == true)
-                        Log.Message($"[RimMind] Flywheel auto-applied: {rec.Target} = {rec.RecommendedValue}");
+                        Log.Message($"[RimMind-Core] Flywheel auto-applied: {rec.Target} = {rec.RecommendedValue}");
                 }
             }
 
@@ -161,7 +162,7 @@ namespace RimMind.Core.Flywheel
             foreach (var tuner in RimMindAPI.ParameterTuners)
             {
                 try { tuner.Tune(config); }
-                catch (Exception ex) { Log.Warning($"[RimMind] ParameterTuner '{tuner.TunerId}' error: {ex.Message}"); }
+                catch (Exception ex) { Log.Warning($"[RimMind-Core] ParameterTuner '{tuner.TunerId}' error: {ex.Message}"); }
             }
         }
 
@@ -186,7 +187,7 @@ namespace RimMind.Core.Flywheel
             {
                 if (r.BudgetValue > 0 && r.TotalTokens > 0)
                 {
-                    float budgetLimit = r.BudgetValue * 4000f;
+                    float budgetLimit = r.BudgetValue * (FlywheelParameterStore.Instance?.TotalBudget ?? 4000);
                     if (budgetLimit > 0)
                     {
                         sum += r.TotalTokens / budgetLimit;

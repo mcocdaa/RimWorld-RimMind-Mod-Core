@@ -83,14 +83,14 @@ namespace RimMind.Core.Context
             _config = config ?? new BudgetSchedulerConfig();
         }
 
-        public BudgetScheduleResult Schedule(
+        public BudgetAllocation Schedule(
             List<KeyMeta> keys,
             string scenarioId,
             float budget,
             string? currentQuery)
         {
             float B = Math.Clamp(budget, 0f, 1f);
-            var result = new BudgetScheduleResult();
+            var result = new BudgetAllocation();
 
             result.L0Keys = keys.Where(k => k.Layer == ContextLayer.L0_Static).ToList();
 
@@ -106,6 +106,8 @@ namespace RimMind.Core.Context
                 var coreSettings = RimMind.Core.RimMindCoreMod.Settings?.Context;
                 float w1 = coreSettings?.BudgetW1 ?? _config.W1;
                 float w2 = coreSettings?.BudgetW2 ?? _config.W2;
+                float sum = w1 + w2;
+                if (sum > 0) { w1 /= sum; w2 /= sum; }
                 float score = w1 * P + w2 * E;
                 key.CurrentScore = score;
                 key.CurrentE = E;
@@ -126,10 +128,12 @@ namespace RimMind.Core.Context
                 {
                     float P = key.GetEffectivePriority();
                     float E = ComputeRelevance(scenarioId, "", key);
-                    var coreSettings = RimMind.Core.RimMindCoreMod.Settings?.Context;
-                    float w1 = coreSettings?.BudgetW1 ?? _config.W1;
-                    float w2 = coreSettings?.BudgetW2 ?? _config.W2;
-                    float score = w1 * P + w2 * E;
+                    var coreSettings2 = RimMind.Core.RimMindCoreMod.Settings?.Context;
+                    float w1b = coreSettings2?.BudgetW1 ?? _config.W1;
+                    float w2b = coreSettings2?.BudgetW2 ?? _config.W2;
+                    float sum2 = w1b + w2b;
+                    if (sum2 > 0) { w1b /= sum2; w2b /= sum2; }
+                    float score = w1b * P + w2b * E;
                     key.CurrentScore = score;
                     key.CurrentE = E;
 
@@ -175,7 +179,7 @@ namespace RimMind.Core.Context
                 var newLayer = ComputeEffectiveLayer(key);
                 if (newLayer != key.Layer)
                 {
-                    Log.Message($"[RimMind] Key '{key.Key}' layer changed: {key.Layer} → {newLayer}");
+                    Log.Message($"[RimMind-Core] Key '{key.Key}' layer changed: {key.Layer} �� {newLayer}");
                     key.Layer = newLayer;
                 }
             }

@@ -40,6 +40,16 @@ namespace RimMind.Core.Settings
         public float BudgetW1 = 0.4f;
         public float BudgetW2 = 0.6f;
 
+        public int maxCacheEntries = 100;
+        public int contextBriefLimit = 200;
+        public float moodDiffThreshold = 5f;
+        public float temperatureDiffThreshold = 5f;
+        public int environmentScanRadius = 5;
+        public int environmentMaxItems = 8;
+        public float threatThresholdHigh = 200000f;
+        public float threatThresholdMedium = 100000f;
+        public float threatThresholdLow = 50000f;
+
         public void ExposeData()
         {
             Scribe_Values.Look(ref IncludeRace, "IncludeRace", true);
@@ -74,6 +84,15 @@ namespace RimMind.Core.Settings
             Scribe_Values.Look(ref ContextBudget, "ContextBudget", 0.6f);
             Scribe_Values.Look(ref BudgetW1, "BudgetW1", 0.4f);
             Scribe_Values.Look(ref BudgetW2, "BudgetW2", 0.6f);
+            Scribe_Values.Look(ref maxCacheEntries, "maxCacheEntries", 100);
+            Scribe_Values.Look(ref contextBriefLimit, "contextBriefLimit", 200);
+            Scribe_Values.Look(ref moodDiffThreshold, "moodDiffThreshold", 5f);
+            Scribe_Values.Look(ref temperatureDiffThreshold, "temperatureDiffThreshold", 5f);
+            Scribe_Values.Look(ref environmentScanRadius, "environmentScanRadius", 5);
+            Scribe_Values.Look(ref environmentMaxItems, "environmentMaxItems", 8);
+            Scribe_Values.Look(ref threatThresholdHigh, "threatThresholdHigh", 200000f);
+            Scribe_Values.Look(ref threatThresholdMedium, "threatThresholdMedium", 100000f);
+            Scribe_Values.Look(ref threatThresholdLow, "threatThresholdLow", 50000f);
         }
 
         public void ApplyPreset(ContextPreset preset)

@@ -62,6 +62,9 @@
   <RimMind.Core.Agent.Gizmo.ToggleDesc>切换 PawnAgent 的激活状态</RimMind.Core.Agent.Gizmo.ToggleDesc>
   <RimMind.Core.Agent.Gizmo.DevView>Dev: 查看 Agent</RimMind.Core.Agent.Gizmo.DevView>
   <RimMind.Core.Agent.Gizmo.DevViewDesc>在日志中输出 Agent 内部状态</RimMind.Core.Agent.Gizmo.DevViewDesc>
+  <RimMind.Core.Agent.State.Active>激活</RimMind.Core.Agent.State.Active>
+  <RimMind.Core.Agent.State.Dormant>休眠</RimMind.Core.Agent.State.Dormant>
+  <RimMind.Core.Agent.State.Terminated>终止</RimMind.Core.Agent.State.Terminated>
   <RimMind.Core.Player2.LocalDetected>RimMind: 已检测到 Player2 桌面应用！使用自动认证（无需 API Key）。</RimMind.Core.Player2.LocalDetected>
   <RimMind.Core.Player2.LocalNotFound>RimMind: 未检测到 Player2 桌面应用。请启动应用或手动输入 API Key。</RimMind.Core.Player2.LocalNotFound>
   <!-- AICoreSettingsUI.cs - Section headers -->
@@ -74,6 +77,14 @@
   <RimMind.Core.Settings.MaxRetry.Desc>请求失败后的最大重试次数。设为 0 则不重试。</RimMind.Core.Settings.MaxRetry.Desc>
   <RimMind.Core.Settings.RequestTimeout>请求超时（秒）</RimMind.Core.Settings.RequestTimeout>
   <RimMind.Core.Settings.RequestTimeout.Desc>等待 AI 响应的最大时间，超时后请求将被取消。网络较慢或模型较大时可适当增大。</RimMind.Core.Settings.RequestTimeout.Desc>
+  <RimMind.Core.Settings.RequestExpireTicks>请求过期时长（tick）</RimMind.Core.Settings.RequestExpireTicks>
+  <RimMind.Core.Settings.RequestExpireTicks.Desc>超过此 tick 数的请求将自动从队列中移除，防止过期请求堆积。范围：6000-120000。</RimMind.Core.Settings.RequestExpireTicks.Desc>
+  <RimMind.Core.Settings.BehaviorHistoryMax>行为历史记录上限</RimMind.Core.Settings.BehaviorHistoryMax>
+  <RimMind.Core.Settings.BehaviorHistoryMax.Desc>每个 Agent 保留的最大行为历史记录数。较高的值提供更多上下文但增加 Token 消耗。范围：10-500。</RimMind.Core.Settings.BehaviorHistoryMax.Desc>
+  <RimMind.Core.Settings.QueueProcessInterval>队列处理间隔（tick）</RimMind.Core.Settings.QueueProcessInterval>
+  <RimMind.Core.Settings.QueueProcessInterval.Desc>队列处理周期之间的 tick 间隔。较低的值处理请求更快但消耗更多 CPU。范围：10-300。</RimMind.Core.Settings.QueueProcessInterval.Desc>
+  <RimMind.Core.Settings.DefaultModCooldown>默认 Mod 冷却（tick）</RimMind.Core.Settings.DefaultModCooldown>
+  <RimMind.Core.Settings.DefaultModCooldown.Desc>同一 Mod 连续请求之间的默认冷却 tick 数，防止 API 频率限制。各 Mod 可覆盖此值。范围：600-36000。</RimMind.Core.Settings.DefaultModCooldown.Desc>
   <RimMind.Core.Settings.QueuePaused>队列：已暂停</RimMind.Core.Settings.QueuePaused>
   <RimMind.Core.Settings.QueueRunning>队列：运行中</RimMind.Core.Settings.QueueRunning>
   <RimMind.Core.Settings.QueueSeeTab>队列状态已移至「队列」标签页查看</RimMind.Core.Settings.QueueSeeTab>
@@ -248,6 +259,7 @@
   <RimMind.Core.Prompt.CompactWeapon>武器：{0}</RimMind.Core.Prompt.CompactWeapon>
   <RimMind.Core.Prompt.EnvironmentChange>[环境突变]</RimMind.Core.Prompt.EnvironmentChange>
   <RimMind.Core.Prompt.StateChange>[状态变更] {0}: {1} → {2}</RimMind.Core.Prompt.StateChange>
+  <RimMind.Core.Prompt.MapSummary>[地图状态] 时间:{0} 殖民者:{1}人</RimMind.Core.Prompt.MapSummary>
   <!-- AIDebugLog.cs -->
   <RimMind.Core.Prompt.Time.Format>日{0} {1}:{2}</RimMind.Core.Prompt.Time.Format>
   <!-- AICoreDebugActions.cs -->
@@ -337,4 +349,9 @@
   <RimMind.Core.UI.FlywheelAutoApply.Apply>记录并应用</RimMind.Core.UI.FlywheelAutoApply.Apply>
   <RimMind.Core.UI.FlywheelConfidence>置信度阈值：{0}</RimMind.Core.UI.FlywheelConfidence>
   <RimMind.Core.UI.FlywheelConfidence.Desc>推荐信度达到此阈值时才自动应用</RimMind.Core.UI.FlywheelConfidence.Desc>
+  <RimMind.Core.Scenario.Dialogue>对话场景</RimMind.Core.Scenario.Dialogue>
+  <RimMind.Core.Scenario.Decision>决策场景</RimMind.Core.Scenario.Decision>
+  <RimMind.Core.Scenario.Personality>人格评估场景</RimMind.Core.Scenario.Personality>
+  <RimMind.Core.Scenario.Storyteller>叙事场景</RimMind.Core.Scenario.Storyteller>
+  <RimMind.Core.Scenario.Memory>暗记忆生成场景</RimMind.Core.Scenario.Memory>
 </LanguageData>

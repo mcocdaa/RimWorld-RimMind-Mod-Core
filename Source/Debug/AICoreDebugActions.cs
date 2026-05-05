@@ -22,7 +22,7 @@ namespace RimMind.Core.Debug
         {
             if (!RimMindAPI.IsConfigured())
             {
-                Log.Warning("[RimMind] API not configured. Set API Key in mod settings.");
+                Log.Warning("[RimMind-Core] API not configured. Set API Key in mod settings.");
                 return;
             }
 
@@ -55,11 +55,11 @@ namespace RimMind.Core.Debug
             var entries = AIDebugLog.Instance?.Entries;
             if (entries == null || entries.Count == 0)
             {
-                Log.Message("[RimMind] No request records.");
+                Log.Message("[RimMind-Core] No request records.");
                 return;
             }
             var last = entries[entries.Count - 1];
-            Log.Message($"[RimMind] Last request ({last.Source}):\n" +
+            Log.Message($"[RimMind-Core] Last request ({last.Source}):\n" +
                         $"=== System Prompt ===\n{last.FullSystemPrompt}\n" +
                         $"=== User Prompt ===\n{last.FullUserPrompt}\n" +
                         $"=== Response ===\n{last.FullResponse}");
@@ -69,29 +69,29 @@ namespace RimMind.Core.Debug
         public static void ClearLog()
         {
             AIDebugLog.Instance?.Clear();
-            Log.Message("[RimMind] Debug log cleared.");
+            Log.Message("[RimMind-Core] Debug log cleared.");
         }
 
         [DebugAction("RimMind", "Clear All Cooldowns", actionType = DebugActionType.Action)]
         public static void ClearCooldowns()
         {
             AIRequestQueue.Instance?.ClearAllCooldowns();
-            Log.Message("[RimMind] All cooldowns cleared.");
+            Log.Message("[RimMind-Core] All cooldowns cleared.");
         }
 
         [DebugAction("RimMind", "Show Map Context", actionType = DebugActionType.Action)]
         public static void ShowMapContext()
         {
             var map = Find.CurrentMap;
-            if (map == null) { Log.Warning("[RimMind] No map loaded."); return; }
-            Log.Message("[RimMind] Map Context:\n" + RimMindAPI.BuildMapContext(map));
+            if (map == null) { Log.Warning("[RimMind-Core] No map loaded."); return; }
+            Log.Message("[RimMind-Core] Map Context:\n" + RimMindAPI.BuildMapContext(map));
         }
 
         [DebugAction("RimMind", "Show Pawn Context (selected)", actionType = DebugActionType.Action)]
         public static void ShowPawnContext()
         {
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
-            if (pawn == null) { Log.Warning("[RimMind] Select a pawn first."); return; }
+            if (pawn == null) { Log.Warning("[RimMind-Core] Select a pawn first."); return; }
             var npcId = $"NPC-{pawn.thingIDNumber}";
             var request = new ContextRequest
             {
@@ -103,7 +103,7 @@ namespace RimMind.Core.Debug
             var engine = RimMindAPI.GetContextEngine();
             var snapshot = engine.BuildSnapshot(request);
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
+            sb.AppendLine($"[RimMind-Core] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
             sb.AppendLine($"Estimated tokens: {snapshot.EstimatedTokens}");
             sb.AppendLine($"L0={snapshot.Meta.L0Tokens} L1={snapshot.Meta.L1Tokens} L2={snapshot.Meta.L2Tokens} L3={snapshot.Meta.L3Tokens} L4={snapshot.Meta.L4Tokens}");
             sb.AppendLine("=== Messages ===");
@@ -118,12 +118,12 @@ namespace RimMind.Core.Debug
             var queue = AIRequestQueue.Instance;
             if (queue == null)
             {
-                Log.Warning("[RimMind] AIRequestQueue not initialized.");
+                Log.Warning("[RimMind-Core] AIRequestQueue not initialized.");
                 return;
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[RimMind] === Queue State ===");
+            sb.AppendLine("[RimMind-Core] === Queue State ===");
             sb.AppendLine($"  Paused: {queue.IsPaused}");
             sb.AppendLine($"  Active requests: {queue.ActiveRequestCount}");
             sb.AppendLine($"  Local model busy: {queue.IsLocalModelBusy}");
@@ -148,14 +148,14 @@ namespace RimMind.Core.Debug
         public static void PauseQueue()
         {
             RimMindAPI.PauseQueue();
-            Log.Message("[RimMind] Queue paused.");
+            Log.Message("[RimMind-Core] Queue paused.");
         }
 
         [DebugAction("RimMind", "Resume Queue", actionType = DebugActionType.Action)]
         public static void ResumeQueue()
         {
             RimMindAPI.ResumeQueue();
-            Log.Message("[RimMind] Queue resumed.");
+            Log.Message("[RimMind-Core] Queue resumed.");
         }
 
         [DebugAction("RimMind", "Show Registered Providers", actionType = DebugActionType.Action)]
@@ -164,12 +164,12 @@ namespace RimMind.Core.Debug
             var categories = RimMindAPI.GetRegisteredCategories();
             if (categories.Count == 0)
             {
-                Log.Message("[RimMind] No registered providers.");
+                Log.Message("[RimMind-Core] No registered providers.");
                 return;
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind] Registered Providers ({categories.Count}):");
+            sb.AppendLine($"[RimMind-Core] Registered Providers ({categories.Count}):");
 
             Pawn? firstColonist = Enumerable.FirstOrDefault(
                 Find.CurrentMap?.mapPawns?.FreeColonists ?? new System.Collections.Generic.List<Pawn>());
@@ -199,12 +199,12 @@ namespace RimMind.Core.Debug
             var keys = ContextKeyRegistry.GetAll();
             if (keys.Count == 0)
             {
-                Log.Message("[RimMind] No registered context keys.");
+                Log.Message("[RimMind-Core] No registered context keys.");
                 return;
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind] Registered ContextKeys ({keys.Count}):");
+            sb.AppendLine($"[RimMind-Core] Registered ContextKeys ({keys.Count}):");
 
             foreach (var key in keys)
             {
@@ -220,12 +220,12 @@ namespace RimMind.Core.Debug
             var store = FlywheelParameterStore.Instance;
             if (store == null)
             {
-                Log.Warning("[RimMind] FlywheelParameterStore not initialized.");
+                Log.Warning("[RimMind-Core] FlywheelParameterStore not initialized.");
                 return;
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[RimMind] === Flywheel State ===");
+            sb.AppendLine("[RimMind-Core] === Flywheel State ===");
 
             var current = store.GetAll();
             var defaults = store.GetDefaults();
@@ -254,20 +254,20 @@ namespace RimMind.Core.Debug
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null)
             {
-                Log.Warning("[RimMind] Select a pawn first.");
+                Log.Warning("[RimMind-Core] Select a pawn first.");
                 return;
             }
 
             var comp = RimMind.Core.Comps.CompPawnAgent.GetComp(pawn);
             if (comp == null || comp.Agent == null)
             {
-                Log.Warning($"[RimMind] {pawn.Name?.ToStringShort} has no PawnAgent comp.");
+                Log.Warning($"[RimMind-Core] {pawn.Name?.ToStringShort} has no PawnAgent comp.");
                 return;
             }
 
             var agent = comp.Agent;
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind] Agent State for {pawn.Name?.ToStringShort}:");
+            sb.AppendLine($"[RimMind-Core] Agent State for {pawn.Name?.ToStringShort}:");
             sb.AppendLine($"  State: {agent.State}");
             sb.AppendLine($"  IsActive: {agent.IsActive}");
 
@@ -299,7 +299,7 @@ namespace RimMind.Core.Debug
         public static void ShowAgentBusSubscribers()
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[RimMind] === AgentBus Subscribers ===");
+            sb.AppendLine("[RimMind-Core] === AgentBus Subscribers ===");
 
             var eventBus = RimMindAPI.GetEventBus();
             sb.AppendLine($"  EventBus type: {eventBus?.GetType().Name ?? "null"}");
@@ -308,21 +308,17 @@ namespace RimMind.Core.Debug
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             if (handlersField != null)
             {
-                var handlers = handlersField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Generic.List<Delegate>>;
+                var handlers = handlersField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, Delegate>>;
                 if (handlers != null)
                 {
                     sb.AppendLine($"  Registered event types: {handlers.Count}");
                     foreach (var kvp in handlers)
                     {
-                        Delegate[] snapshot;
-                        lock (kvp.Value)
-                        {
-                            snapshot = kvp.Value.ToArray();
-                        }
+                        var snapshot = kvp.Value.ToArray();
                         sb.AppendLine($"    {kvp.Key.Name}: {snapshot.Length} subscriber(s)");
-                        foreach (var d in snapshot)
+                        foreach (var sub in snapshot)
                         {
-                            sb.AppendLine($"      {d.Method.DeclaringType?.Name}.{d.Method.Name}");
+                            sb.AppendLine($"      [{sub.Key}] {sub.Value.Method.DeclaringType?.Name}.{sub.Value.Method.Name}");
                         }
                     }
                 }
@@ -349,7 +345,7 @@ namespace RimMind.Core.Debug
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null)
             {
-                Log.Warning("[RimMind] Select a pawn first.");
+                Log.Warning("[RimMind-Core] Select a pawn first.");
                 return;
             }
 
@@ -358,7 +354,7 @@ namespace RimMind.Core.Debug
             var count = history.GetHistoryCount(npcId);
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind] History State for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
+            sb.AppendLine($"[RimMind-Core] History State for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
             sb.AppendLine($"  Total entries: {count}");
 
             if (count > 0)
@@ -384,13 +380,13 @@ namespace RimMind.Core.Debug
             var mgr = NpcManager.Instance;
             if (mgr == null)
             {
-                Log.Warning("[RimMind] NpcManager not initialized.");
+                Log.Warning("[RimMind-Core] NpcManager not initialized.");
                 return;
             }
 
             var npcs = mgr.GetAllNpcs();
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind] NPC Manager State:");
+            sb.AppendLine($"[RimMind-Core] NPC Manager State:");
             sb.AppendLine($"  Total NPCs: {npcs.Count}");
 
             foreach (var npc in npcs)
@@ -414,12 +410,12 @@ namespace RimMind.Core.Debug
             var s = RimMindCoreMod.Settings;
             if (s == null)
             {
-                Log.Warning("[RimMind] Settings not initialized.");
+                Log.Warning("[RimMind-Core] Settings not initialized.");
                 return;
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[RimMind] === Settings Summary ===");
+            sb.AppendLine("[RimMind-Core] === Settings Summary ===");
             sb.AppendLine($"  Provider: {s.provider}");
             sb.AppendLine($"  Model: {s.modelName}");
             sb.AppendLine($"  Endpoint: {s.apiEndpoint}");

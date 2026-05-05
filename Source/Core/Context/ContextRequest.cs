@@ -9,9 +9,11 @@ namespace RimMind.Core.Context
         public float Budget = 0;
         public string? CurrentQuery;
         public string[]? ExcludeKeys;
-        public int MaxTokens = 400;
+        public int MaxTokens = 800;
         public float Temperature = 0.7f;
         public Map? Map;
         public string? SpeakerName;
+        public int MaxRounds;
+        public bool IsMonologue;
     }
 }

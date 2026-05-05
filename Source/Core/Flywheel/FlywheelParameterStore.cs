@@ -2,13 +2,22 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core.Internal;
 using Verse;
 
 namespace RimMind.Core.Flywheel
 {
     public class FlywheelParameterStore : GameComponent
     {
-        public static FlywheelParameterStore? Instance { get; private set; }
+        public static FlywheelParameterStore? Instance
+        {
+            get => RimMindServiceLocator.Get<FlywheelParameterStore>();
+            private set
+            {
+                if (value != null)
+                    RimMindServiceLocator.Register(value);
+            }
+        }
 
         private readonly ConcurrentDictionary<string, float> _parameters = new ConcurrentDictionary<string, float>();
         private readonly ConcurrentDictionary<string, float> _defaults = new ConcurrentDictionary<string, float>();
@@ -58,11 +67,13 @@ namespace RimMind.Core.Flywheel
 
         public void UpdateParameter(string key, float value)
         {
+            value = ClampParameter(key, value);
             float old = Get(key);
             _parameters[key] = value;
             if (Math.Abs(old - value) > 0.0001f)
             {
-                OnParameterChanged?.Invoke(key, value);
+                var handler = OnParameterChanged;
+                handler?.Invoke(key, value);
                 if (RimMindCoreMod.Settings?.debugLogging == true)
                     Log.Message($"[RimMind] FlywheelParameterStore: {key} = {value} (was {old})");
             }
@@ -88,6 +99,18 @@ namespace RimMind.Core.Flywheel
         public Dictionary<string, float> GetDefaults()
         {
             return new Dictionary<string, float>(_defaults);
+        }
+
+        private static float ClampParameter(string key, float value)
+        {
+            switch (key)
+            {
+                case "Alpha": return Math.Clamp(value, 0.0f, 1.0f);
+                case "PromoteThreshold": return Math.Clamp(value, 0.0f, 1.0f);
+                case "TotalBudget": return Math.Clamp(value, 100f, 32000f);
+                case "DecayRate": return Math.Clamp(value, 0.0f, 1.0f);
+                default: return value;
+            }
         }
 
         public override void ExposeData()

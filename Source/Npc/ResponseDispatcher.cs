@@ -1,5 +1,4 @@
 using System;
-using RimMind.Core.Extensions;
 using Verse;
 using RimWorld;
 
@@ -13,7 +12,7 @@ namespace RimMind.Core.Npc
 
             if (!string.IsNullOrEmpty(result.Error))
             {
-                Log.Warning($"[RimMind] ResponseDispatcher: chat error - {result.Error}");
+                Log.Warning($"[RimMind-Core] ResponseDispatcher: chat error - {result.Error}");
                 return;
             }
 
@@ -39,11 +38,11 @@ namespace RimMind.Core.Npc
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind] ResponseDispatcher: failed to show mote for pawn {pawn.LabelShort} - {ex.Message}");
+                    Log.Warning($"[RimMind-Core] ResponseDispatcher: failed to show mote for pawn {pawn.LabelShort} - {ex.Message}");
                 }
             }
 
-            Log.Message($"[RimMind] NPC: {message}");
+            Log.Message($"[RimMind-Core] NPC: {message}");
         }
 
         public static void DispatchCommands(NpcCommandResult[] commands, Pawn? pawn)
@@ -59,25 +58,25 @@ namespace RimMind.Core.Npc
                     var actor = pawn;
                     if (actor == null || actor.Dead)
                     {
-                        Log.Warning($"[RimMind] ResponseDispatcher: cannot execute command '{cmd.Name}' - no valid actor pawn");
+                        Log.Warning($"[RimMind-Core] ResponseDispatcher: cannot execute command '{cmd.Name}' - no valid actor pawn");
                         continue;
                     }
 
                     var bridge = RimMindAPI.GetAgentActionBridge();
                     if (bridge == null)
                     {
-                        Log.Warning($"[RimMind] ResponseDispatcher: cannot execute command '{cmd.Name}' - no AgentActionBridge registered");
+                        Log.Warning($"[RimMind-Core] ResponseDispatcher: cannot execute command '{cmd.Name}' - no AgentActionBridge registered");
                         continue;
                     }
 
                     bool ok = bridge.Execute(cmd.Name, actor, null, cmd.Arguments);
 
                     if (!ok)
-                        Log.Warning($"[RimMind] ResponseDispatcher: command '{cmd.Name}' execution failed");
+                        Log.Warning($"[RimMind-Core] ResponseDispatcher: command '{cmd.Name}' execution failed");
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind] ResponseDispatcher: command '{cmd.Name}' threw exception - {ex.Message}");
+                    Log.Warning($"[RimMind-Core] ResponseDispatcher: command '{cmd.Name}' threw exception - {ex.Message}");
                 }
             }
         }
@@ -91,7 +90,7 @@ namespace RimMind.Core.Npc
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimMind] ResponseDispatcher: audio playback failed - {ex.Message}");
+                Log.Warning($"[RimMind-Core] ResponseDispatcher: audio playback failed - {ex.Message}");
             }
         }
     }

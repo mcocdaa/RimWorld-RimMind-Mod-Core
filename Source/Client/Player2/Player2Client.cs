@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
@@ -24,7 +24,8 @@ namespace RimMind.Core.Client.Player2
         private readonly RimMindCoreSettings _settings;
 
         private static DateTime _lastHealthCheck = DateTime.MinValue;
-        private static bool _healthCheckActive;
+        private static volatile bool _healthCheckActive;
+        private static CancellationTokenSource _healthCheckCts = new CancellationTokenSource();
 
         private string RemoteUrl => string.IsNullOrWhiteSpace(_settings.player2RemoteUrl)
             ? "https://api.player2.game"
@@ -40,6 +41,11 @@ namespace RimMind.Core.Client.Player2
 
             if (!_healthCheckActive && !string.IsNullOrEmpty(apiKey) && !isLocal)
             {
+                if (_healthCheckCts.IsCancellationRequested)
+                {
+                    _healthCheckCts.Dispose();
+                    _healthCheckCts = new CancellationTokenSource();
+                }
                 _healthCheckActive = true;
                 StartHealthCheckLoop();
             }
@@ -52,14 +58,14 @@ namespace RimMind.Core.Client.Player2
                 string? localKey = await TryGetLocalPlayer2Key();
                 if (!string.IsNullOrEmpty(localKey))
                 {
-                    AIRequestQueue.LogFromBackground("[RimMind] Player2 local app detected.");
+                    AIRequestQueue.LogFromBackground("[RimMind-Core] Player2 local app detected.");
                     ShowNotification("RimMind.Core.Player2.LocalDetected");
                     return new Player2Client(localKey!, isLocal: true, settings);
                 }
 
                 if (!string.IsNullOrEmpty(settings.apiKey))
                 {
-                    AIRequestQueue.LogFromBackground("[RimMind] Using manual Player2 API key.");
+                    AIRequestQueue.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
                     return new Player2Client(settings.apiKey, isLocal: false, settings);
                 }
 
@@ -68,7 +74,7 @@ namespace RimMind.Core.Client.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind] Failed to create Player2 client: {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
                 return new Player2Client(string.Empty, isLocal: false, settings);
             }
         }
@@ -79,11 +85,14 @@ namespace RimMind.Core.Client.Player2
 
         public async Task<AIResponse> SendAsync(AIRequest request)
         {
+            if (!string.IsNullOrEmpty(request.JsonSchema) || (request.Tools != null && request.Tools.Count > 0))
+                return await SendStructuredAsync(request, request.JsonSchema, request.Tools);
+
             string endpoint = $"{CurrentApiUrl}/v1/chat/completions";
             string json = BuildRequestJson(request);
 
             if (_settings.debugLogging)
-                AIRequestQueue.LogFromBackground($"[RimMind] → {request.RequestId} (Player2)\n{json}");
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] �� {request.RequestId} (Player2)\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
@@ -100,7 +109,7 @@ namespace RimMind.Core.Client.Player2
                 sw.Stop();
 
                 if (_settings.debugLogging)
-                    AIRequestQueue.LogFromBackground($"[RimMind] ← {request.RequestId} ({tokens} tok)\n{content}");
+                    AIRequestQueue.LogFromBackground($"[RimMind-Core] �� {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
                 response.PromptTokens = promptTokens;
@@ -116,7 +125,7 @@ namespace RimMind.Core.Client.Player2
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -190,53 +199,8 @@ namespace RimMind.Core.Client.Player2
         {
             bool isLocal = _isLocalConnection;
             float connectTimeout = isLocal ? 300f : 60f;
-            float readTimeout = 60f;
-
-            using var webRequest = new UnityWebRequest(url, "POST");
-            webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
-            webRequest.downloadHandler = new DownloadHandlerBuffer();
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-            webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-            webRequest.SetRequestHeader("player2-game-key", GameClientId);
-
-            var asyncOp = webRequest.SendWebRequest();
-
-            float inactivity = 0f;
-            ulong lastBytes = 0;
-
-            while (!asyncOp.isDone)
-            {
-                if (Current.Game == null)
-                    throw new OperationCanceledException("Game unloaded during AI request.");
-
-                await Task.Delay(100);
-                ulong currentBytes = webRequest.downloadedBytes;
-
-                if (currentBytes != lastBytes) { inactivity = 0f; lastBytes = currentBytes; }
-                else inactivity += 0.1f;
-
-                if (currentBytes == 0 && inactivity > connectTimeout)
-                {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Connection timeout after {connectTimeout}s");
-                }
-                if (currentBytes > 0 && inactivity > readTimeout)
-                {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Read timeout after {readTimeout}s");
-                }
-            }
-
-            if (webRequest.result == UnityWebRequest.Result.ConnectionError ||
-                webRequest.result == UnityWebRequest.Result.ProtocolError)
-            {
-                string body = webRequest.downloadHandler.text;
-                string unityErr = webRequest.error ?? "";
-                string detail = body.Length > 0 ? body : unityErr;
-                throw new Exception($"HTTP {webRequest.responseCode}: {detail}");
-            }
-
-            return (webRequest.downloadHandler.text, webRequest.responseCode);
+            return await HttpHelper.PostAsync(url, jsonBody, $"Bearer {_apiKey}",
+                "player2-game-key", GameClientId, connectTimeout: connectTimeout);
         }
 
         private static async Task<string?> TryGetLocalPlayer2Key()
@@ -276,7 +240,7 @@ namespace RimMind.Core.Client.Player2
                         loginRequest.downloadHandler.text);
                     if (response != null && !string.IsNullOrEmpty(response.P2Key))
                     {
-                        AIRequestQueue.LogFromBackground("[RimMind] Player2 local app authenticated successfully.");
+                        AIRequestQueue.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
                         return response.P2Key;
                     }
                     return null!;
@@ -284,7 +248,7 @@ namespace RimMind.Core.Client.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind] Local Player2 detection failed: {ex.Message}");
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
                 return null!;
             }
         }
@@ -301,7 +265,7 @@ namespace RimMind.Core.Client.Player2
                             ? MessageTypeDefOf.PositiveEvent
                             : MessageTypeDefOf.CautionInput);
                 }
-                catch (Exception ex) { Log.Warning($"[RimMind] Failed to show notification: {ex.Message}"); }
+                catch (Exception ex) { Log.Warning($"[RimMind-Core] Failed to show notification: {ex.Message}"); }
             });
         }
 
@@ -311,13 +275,16 @@ namespace RimMind.Core.Client.Player2
             {
                 while (_healthCheckActive && Current.Game != null)
                 {
-                    await Task.Delay(60000);
+                    await Task.Delay(60000, _healthCheckCts.Token);
                     if (_healthCheckActive) await EnsureHealthCheck(force: true);
                 }
             }
+            catch (OperationCanceledException)
+            {
+            }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind] Player2 health check loop crashed: {ex.Message}", isWarning: true);
+                AIRequestQueue.LogFromBackground($"[RimMind-Core] Player2 health check loop crashed: {ex.Message}", isWarning: true);
                 _healthCheckActive = false;
             }
         }
@@ -349,16 +316,20 @@ namespace RimMind.Core.Client.Player2
                 _lastHealthCheck = DateTime.Now;
                 if (webRequest.responseCode != 200)
                     AIRequestQueue.LogFromBackground(
-                        $"[RimMind] Player2 health check failed: {webRequest.responseCode}", isWarning: true);
+                        $"[RimMind-Core] Player2 health check failed: {webRequest.responseCode}", isWarning: true);
             }
             catch (Exception ex)
             {
                 AIRequestQueue.LogFromBackground(
-                    $"[RimMind] Player2 health check exception: {ex.Message}", isWarning: true);
+                    $"[RimMind-Core] Player2 health check exception: {ex.Message}", isWarning: true);
             }
         }
 
-        public static void StopHealthCheck() => _healthCheckActive = false;
+        public static void StopHealthCheck()
+        {
+            _healthCheckActive = false;
+            _healthCheckCts.Cancel();
+        }
 
         public static void CheckPlayer2StatusAndNotify()
         {
@@ -390,7 +361,7 @@ namespace RimMind.Core.Client.Player2
                 }
                 return webRequest.responseCode == 200;
             }
-            catch (Exception ex) { Log.Warning($"[RimMind] Player2 local availability check failed: {ex.Message}"); return false; }
+            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2 local availability check failed: {ex.Message}"); return false; }
         }
 
         public async Task<float> GetJoulesBalanceAsync()
@@ -423,13 +394,14 @@ namespace RimMind.Core.Client.Player2
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimMind] GetJoulesBalanceAsync failed: {ex.Message}");
+                Log.Warning($"[RimMind-Core] GetJoulesBalanceAsync failed: {ex.Message}");
                 return -1f;
             }
         }
 
-        private static float _cachedJoulesBalance = -1f;
+        private static volatile float _cachedJoulesBalance = -1f;
         private static DateTime _lastBalanceCheck = DateTime.MinValue;
+        private static readonly object _balanceLock = new object();
 
         public static float CachedJoulesBalance => _cachedJoulesBalance;
 
@@ -444,71 +416,43 @@ namespace RimMind.Core.Client.Player2
                 if (client?.IsConfigured() == true)
                 {
                     float balance = await client.GetJoulesBalanceAsync();
-                    _cachedJoulesBalance = balance;
-                    _lastBalanceCheck = DateTime.Now;
+                    lock (_balanceLock)
+                    {
+                        _cachedJoulesBalance = balance;
+                        _lastBalanceCheck = DateTime.Now;
+                    }
                 }
             });
         }
 
         public async Task<RawResponse> SendRawAsync(string path, string jsonBody)
         {
-            string endpoint = $"{CurrentApiUrl}{path}";
-            var result = new RawResponse();
-            try
-            {
-                using var webRequest = new UnityWebRequest(endpoint, "POST");
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody ?? "{}");
-                webRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Content-Type", "application/json");
-                webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-                webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = 30;
-
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone) { if (Current.Game == null) { result.Error = "Game exiting"; return result; } await Task.Delay(50); }
-
-                result.Content = webRequest.downloadHandler?.text;
-                result.Success = webRequest.result != UnityWebRequest.Result.ConnectionError
-                              && webRequest.result != UnityWebRequest.Result.ProtocolError;
-                if (!result.Success) result.Error = webRequest.error;
-            }
-            catch (System.Exception ex) { result.Error = ex.Message; }
-            return result;
+            return await SendRawRequestAsync(path, "POST", jsonBody);
         }
 
         public async Task<RawResponse> GetRawAsync(string path)
         {
-            string endpoint = $"{CurrentApiUrl}{path}";
-            var result = new RawResponse();
-            try
-            {
-                using var webRequest = UnityWebRequest.Get(endpoint);
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-                webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = 30;
-
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone) { if (Current.Game == null) { result.Error = "Game exiting"; return result; } await Task.Delay(50); }
-
-                result.Content = webRequest.downloadHandler?.text;
-                result.Success = webRequest.result != UnityWebRequest.Result.ConnectionError
-                              && webRequest.result != UnityWebRequest.Result.ProtocolError;
-                if (!result.Success) result.Error = webRequest.error;
-            }
-            catch (System.Exception ex) { result.Error = ex.Message; }
-            return result;
+            return await SendRawRequestAsync(path, "GET", null);
         }
 
         public async Task<RawResponse> DeleteRawAsync(string path)
+        {
+            return await SendRawRequestAsync(path, "DELETE", null);
+        }
+
+        private async Task<RawResponse> SendRawRequestAsync(string path, string method, string? jsonBody)
         {
             string endpoint = $"{CurrentApiUrl}{path}";
             var result = new RawResponse();
             try
             {
-                using var webRequest = UnityWebRequest.Delete(endpoint);
+                using var webRequest = new UnityWebRequest(endpoint, method);
+                if (jsonBody != null)
+                    webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
+                else if (method == "POST")
+                    webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes("{}"));
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
+                webRequest.SetRequestHeader("Content-Type", "application/json");
                 webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
                 webRequest.SetRequestHeader("player2-game-key", GameClientId);
                 webRequest.timeout = 30;

@@ -1,4 +1,5 @@
 using HarmonyLib;
+using RimMind.Core.Context;
 using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
@@ -8,9 +9,6 @@ using Verse;
 
 namespace RimMind.Core
 {
-    /// <summary>
-    /// Mod 入口。注册 Harmony，持有全局 Settings 单例。
-    /// </summary>
     public class RimMindCoreMod : Mod
     {
         public static RimMindCoreSettings Settings { get; private set; } = null!;
@@ -30,6 +28,10 @@ namespace RimMind.Core
                 });
 
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
+
+            ScenarioRegistry.RegisterCoreScenarios();
+            RelevanceTable.RegisterCoreRelevance();
+            ContextKeyRegistry.RegisterCoreKeys();
         }
 
         public override string SettingsCategory() => "RimMind";

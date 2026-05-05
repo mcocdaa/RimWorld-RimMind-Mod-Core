@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using RimMind.Core.Agent;
 using RimMind.Core.Comps;
 using RimMind.Core.Context;
@@ -161,7 +160,7 @@ namespace RimMind.Core.UI
                 }
                 catch (System.Exception ex)
                 {
-                    Log.Warning($"[RimMind] AgentDialogue chat failed: {ex.Message}");
+                    Log.Warning($"[RimMind-Core] AgentDialogue chat failed: {ex.Message}");
                 }
             });
         }

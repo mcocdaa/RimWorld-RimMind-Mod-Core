@@ -2,24 +2,20 @@ namespace RimMind.Core.AgentBus
 {
     public class ActionEvent : AgentBusEvent
     {
-        public string EventId { get; }
-        public string ActionName { get; }
-        public bool Success { get; }
-        public string Reason { get; }
-        public string ResultReason { get; }
-        public string TargetLabel { get; }
-        public int PawnId { get; }
+        public string ActionName = "";
+        public bool Success;
+        public string ResultReason = "";
+        public string EventId = "";
 
-        public ActionEvent(string sourceNpcId, int pawnId, string actionName, bool success, string reason = "", string targetLabel = "", string eventId = "", string resultReason = "")
-            : base(AgentBusEventType.Action, sourceNpcId)
+        public ActionEvent(string npcId, int pawnId, string actionName, bool success, string resultReason, string eventId)
         {
-            EventId = eventId ?? "";
+            NpcId = npcId;
             PawnId = pawnId;
-            ActionName = actionName ?? "";
+            ActionName = actionName;
             Success = success;
-            Reason = reason ?? "";
-            ResultReason = resultReason ?? "";
-            TargetLabel = targetLabel ?? "";
+            ResultReason = resultReason;
+            EventId = eventId;
+            EventType = AgentBusEventType.Action;
         }
     }
 }

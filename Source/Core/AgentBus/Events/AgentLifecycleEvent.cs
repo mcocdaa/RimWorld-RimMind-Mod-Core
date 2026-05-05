@@ -2,16 +2,16 @@ namespace RimMind.Core.AgentBus
 {
     public class AgentLifecycleEvent : AgentBusEvent
     {
-        public string PreviousState { get; }
-        public string NewState { get; }
-        public int PawnId { get; }
+        public string PreviousState = "";
+        public string NewState = "";
 
-        public AgentLifecycleEvent(string sourceNpcId, int pawnId, string previousState, string newState)
-            : base(AgentBusEventType.AgentLifecycle, sourceNpcId)
+        public AgentLifecycleEvent(string npcId, int pawnId, string previousState, string newState)
         {
+            NpcId = npcId;
             PawnId = pawnId;
-            PreviousState = previousState ?? "";
-            NewState = newState ?? "";
+            PreviousState = previousState;
+            NewState = newState;
+            EventType = AgentBusEventType.Lifecycle;
         }
     }
 }

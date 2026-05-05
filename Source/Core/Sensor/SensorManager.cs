@@ -13,7 +13,15 @@ namespace RimMind.Core.Sensor
     /// </summary>
     public class SensorManager : GameComponent
     {
-        public static SensorManager? Instance { get; private set; }
+        public static SensorManager? Instance
+        {
+            get => RimMindServiceLocator.Get<SensorManager>();
+            private set
+            {
+                if (value != null)
+                    RimMindServiceLocator.Register(value);
+            }
+        }
 
         private int _lastPollTick;
 
@@ -49,12 +57,12 @@ namespace RimMind.Core.Sensor
         public override void GameComponentTick()
         {
             base.GameComponentTick();
-            int now = Find.TickManager.TicksGame;
+            if (!Find.TickManager.Paused && Find.TickManager.TicksGame % 150 != 0) return;
 
             foreach (var sensor in RimMindAPI.SensorProviders.ToArray())
             {
                 if (sensor.TickInterval <= 0) continue;
-                if (now % sensor.TickInterval != 0) continue;
+                if (Find.TickManager.TicksGame % sensor.TickInterval != 0) continue;
 
                 try
                 {
@@ -72,7 +80,7 @@ namespace RimMind.Core.Sensor
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind] Sensor '{sensor.SensorId}' tick error: {ex.Message}");
+                    Log.Warning($"[RimMind-Core] Sensor '{sensor.SensorId}' tick error: {ex.Message}");
                 }
             }
         }
@@ -101,7 +109,7 @@ namespace RimMind.Core.Sensor
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind] Sensor '{sensor.SensorId}' GetAgentTools error: {ex.Message}");
+                    Log.Warning($"[RimMind-Core] Sensor '{sensor.SensorId}' GetAgentTools error: {ex.Message}");
                 }
             }
             return tools;

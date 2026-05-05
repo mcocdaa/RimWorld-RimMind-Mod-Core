@@ -21,9 +21,30 @@ namespace RimMind.Core.Client
 
         public bool UseJsonMode { get; set; } = true;
 
+        public string? JsonSchema { get; set; }
+
+        public List<StructuredTool>? Tools { get; set; }
+
         public AIRequestPriority Priority { get; set; } = AIRequestPriority.Normal;
 
-        public int MaxRetryCount { get; set; } = -1;
+        public int? MaxRetryCount { get; set; } = null;
+
+        public void Reset()
+        {
+            SystemPrompt = string.Empty;
+            UserPrompt = string.Empty;
+            Messages = null;
+            MaxTokens = 800;
+            Temperature = 0.7f;
+            RequestId = string.Empty;
+            ModId = string.Empty;
+            ExpireAtTicks = 0;
+            UseJsonMode = true;
+            JsonSchema = null;
+            Tools = null;
+            Priority = AIRequestPriority.Normal;
+            MaxRetryCount = null;
+        }
     }
 
     public class ChatMessage

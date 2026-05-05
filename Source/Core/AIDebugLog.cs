@@ -22,6 +22,13 @@ namespace RimMind.Core.Internal
             _instance = this;
         }
 
+        public override void ExposeData()
+        {
+            base.ExposeData();
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+                _instance = this;
+        }
+
         public IReadOnlyList<AIDebugEntry> Entries => _entries.ToList();
 
         public override void GameComponentTick()
@@ -58,7 +65,7 @@ namespace RimMind.Core.Internal
             _instance?._pendingEntries.Enqueue(new AIDebugEntry
             {
                 Source = request.RequestId ?? "",
-                ModelName = RimMindCoreMod.Settings.modelName ?? "",
+                ModelName = RimMindCoreMod.Settings?.modelName ?? "",
                 FullSystemPrompt = request.Messages != null
                     ? BuildLayeredText(request.Messages, "system")
                     : (request.SystemPrompt ?? ""),

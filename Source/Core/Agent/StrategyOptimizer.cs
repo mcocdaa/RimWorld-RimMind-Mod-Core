@@ -7,6 +7,7 @@ namespace RimMind.Core.Agent
     public class StrategyOptimizer : IExposable
     {
         private Dictionary<string, float> _actionWeights = new Dictionary<string, float>();
+        private List<string> _decayKeysBuffer = new List<string>();
 
         public void AdjustWeight(string action, float delta)
         {
@@ -18,8 +19,9 @@ namespace RimMind.Core.Agent
 
         public void DecayAll()
         {
-            var keys = new List<string>(_actionWeights.Keys);
-            foreach (var key in keys)
+            _decayKeysBuffer.Clear();
+            _decayKeysBuffer.AddRange(_actionWeights.Keys);
+            foreach (var key in _decayKeysBuffer)
             {
                 if (_actionWeights.TryGetValue(key, out float current))
                 {

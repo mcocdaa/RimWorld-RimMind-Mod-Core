@@ -2,18 +2,20 @@ namespace RimMind.Core.AgentBus
 {
     public class PerceptionEvent : AgentBusEvent
     {
-        public string PerceptionType { get; }
-        public string Content { get; }
-        public float Importance { get; }
-        public int PawnId { get; }
+        public string PerceptionType = "";
+        public string Content = "";
+        public float Importance;
+        public int Timestamp;
 
-        public PerceptionEvent(string sourceNpcId, int pawnId, string perceptionType, string content, float importance = 0.5f)
-            : base(AgentBusEventType.Perception, sourceNpcId)
+        public PerceptionEvent(string npcId, int pawnId, string perceptionType, string content, float importance = 0f)
         {
+            NpcId = npcId;
             PawnId = pawnId;
-            PerceptionType = perceptionType ?? "";
-            Content = content ?? "";
+            PerceptionType = perceptionType;
+            Content = content;
             Importance = importance;
+            Timestamp = Verse.Find.TickManager?.TicksGame ?? 0;
+            EventType = AgentBusEventType.Perception;
         }
     }
 }

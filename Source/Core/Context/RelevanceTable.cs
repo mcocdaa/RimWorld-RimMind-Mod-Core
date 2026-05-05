@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Verse;
 
@@ -5,8 +6,9 @@ namespace RimMind.Core.Context
 {
     public static class RelevanceTable
     {
-        private static readonly Dictionary<(string, string), float> _table = new Dictionary<(string, string), float>();
+        private static readonly ConcurrentDictionary<(string, string), float> _table = new ConcurrentDictionary<(string, string), float>();
         private static bool _coreRegistered = false;
+        private static readonly object _registerLock = new object();
         private const float DefaultRelevance = 0.5f;
 
         public static void Register(string scenarioId, string key, float relevance)
@@ -22,7 +24,7 @@ namespace RimMind.Core.Context
 
         public static bool Unregister(string scenarioId, string key)
         {
-            return _table.Remove((scenarioId, key));
+            return _table.TryRemove((scenarioId, key), out _);
         }
 
         public static bool UnregisterScenario(string scenarioId)
@@ -36,8 +38,8 @@ namespace RimMind.Core.Context
             }
             foreach (var k in keysToRemove)
             {
-                _table.Remove(k);
-                removed = true;
+                if (_table.TryRemove(k, out _))
+                    removed = true;
             }
             return removed;
         }
@@ -49,8 +51,10 @@ namespace RimMind.Core.Context
 
         public static void RegisterCoreRelevance()
         {
-            if (_coreRegistered) return;
-            _coreRegistered = true;
+            lock (_registerLock)
+            {
+                if (_coreRegistered) return;
+                _coreRegistered = true;
 
             RegisterBatch(ScenarioIds.Decision, new Dictionary<string, float>
             {
@@ -95,12 +99,16 @@ namespace RimMind.Core.Context
                 {"ideology", 0.4f}, {"skills_summary", 0.2f}, {"memory_pawn", 0.3f},
                 {"working_memory", 0.2f}, {"memory_narrator", 0.9f}
             });
+            }
         }
 
         public static void Clear()
         {
-            _table.Clear();
-            _coreRegistered = false;
+            lock (_registerLock)
+            {
+                _table.Clear();
+                _coreRegistered = false;
+            }
         }
     }
 }

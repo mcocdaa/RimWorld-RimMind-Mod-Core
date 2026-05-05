@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Client.OpenAI;
@@ -322,6 +321,30 @@ namespace RimMind.Core.UI
             listing.Label("  " + "RimMind.Core.Settings.RequestTimeout.Desc".Translate());
             GUI.color = Color.white;
             s.requestTimeoutMs = (int)listing.Slider(s.requestTimeoutMs / 1000f, 10f, 300f) * 1000;
+
+            listing.Label($"{"RimMind.Core.Settings.RequestExpireTicks".Translate()}: {s.requestExpireTicks / 60f:F0}s ({s.requestExpireTicks} ticks)");
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.Settings.RequestExpireTicks.Desc".Translate());
+            GUI.color = Color.white;
+            s.requestExpireTicks = (int)listing.Slider(s.requestExpireTicks, 6000f, 120000f);
+
+            listing.Label($"{"RimMind.Core.Settings.BehaviorHistoryMax".Translate()}: {s.behaviorHistoryMax}");
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.Settings.BehaviorHistoryMax.Desc".Translate());
+            GUI.color = Color.white;
+            s.behaviorHistoryMax = (int)listing.Slider(s.behaviorHistoryMax, 10f, 500f);
+
+            listing.Label($"{"RimMind.Core.Settings.QueueProcessInterval".Translate()}: {s.queueProcessInterval} ticks ({s.queueProcessInterval / 60f:F1}s)");
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.Settings.QueueProcessInterval.Desc".Translate());
+            GUI.color = Color.white;
+            s.queueProcessInterval = (int)listing.Slider(s.queueProcessInterval, 10f, 300f);
+
+            listing.Label($"{"RimMind.Core.Settings.DefaultModCooldown".Translate()}: {s.defaultModCooldownTicks / 60f:F0}s ({s.defaultModCooldownTicks} ticks)");
+            GUI.color = Color.gray;
+            listing.Label("  " + "RimMind.Core.Settings.DefaultModCooldown.Desc".Translate());
+            GUI.color = Color.white;
+            s.defaultModCooldownTicks = (int)listing.Slider(s.defaultModCooldownTicks, 600f, 36000f);
 
             var queue = AIRequestQueue.Instance;
             if (queue != null)

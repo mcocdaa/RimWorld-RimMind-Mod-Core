@@ -31,14 +31,13 @@ namespace RimMind.Core.Prompt
         public static int EstimateTokens(string text)
         {
             if (string.IsNullOrEmpty(text)) return 0;
-            int charCount = text.Length;
-            int cjk = 0;
+            int cjk = 0, other = 0;
             foreach (char c in text)
             {
-                if (c >= 0x4E00 && c <= 0x9FFF || c >= 0x3040 && c <= 0x30FF || c >= 0xAC00 && c <= 0xD7AF)
-                    cjk++;
+                if (c > 0x2E80) cjk++;
+                else other++;
             }
-            return (int)Math.Ceiling((charCount - cjk) / 4.0 + cjk / 1.5);
+            return (int)(other / 4.0 + cjk / 1.5 + 0.5);
         }
 
         public bool IsTrimable => Priority > PriorityCore;

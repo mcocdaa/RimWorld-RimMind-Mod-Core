@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using Newtonsoft.Json;
 using RimMind.Core.Context;
 using RimMind.Core.Settings;
@@ -33,24 +36,29 @@ namespace RimMind.Core.Flywheel
 
     public class FlywheelTelemetryCollector
     {
-        private const int FlushThreshold = 50;
         private const int RecentRecordsCapacity = 200;
+        private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(5);
 
-        private readonly List<TelemetryRecord> _buffer = new List<TelemetryRecord>();
+        private readonly ConcurrentQueue<string> _pendingWrites = new ConcurrentQueue<string>();
         private readonly List<TelemetryRecord> _recentRecords = new List<TelemetryRecord>();
         private readonly object _lock = new object();
+        private readonly object _fileLock = new object();
+        private readonly Timer _flushTimer;
+
+        public FlywheelTelemetryCollector()
+        {
+            _flushTimer = new Timer(_ => FlushInternal(), null, FlushInterval, FlushInterval);
+        }
 
         public void Record(TelemetryRecord record)
         {
             lock (_lock)
             {
-                _buffer.Add(record);
                 _recentRecords.Add(record);
                 if (_recentRecords.Count > RecentRecordsCapacity)
                     _recentRecords.RemoveRange(0, _recentRecords.Count - RecentRecordsCapacity);
-                if (_buffer.Count >= FlushThreshold)
-                    FlushInternal();
             }
+            _pendingWrites.Enqueue(JsonConvert.SerializeObject(record, Formatting.None));
         }
 
         public List<TelemetryRecord> GetRecentRecords(int count)
@@ -65,40 +73,37 @@ namespace RimMind.Core.Flywheel
 
         public void Flush()
         {
-            lock (_lock)
-            {
-                FlushInternal();
-            }
+            FlushInternal();
         }
 
         private void FlushInternal()
         {
-            if (_buffer.Count == 0) return;
+            var lines = new List<string>();
+            while (_pendingWrites.TryDequeue(out var line))
+                lines.Add(line);
 
-            var toWrite = new List<TelemetryRecord>(_buffer);
-            _buffer.Clear();
+            if (lines.Count == 0) return;
 
-            try
+            lock (_fileLock)
             {
-                string? settingsPath = RimMindCoreMod.Settings?.telemetryDataPath;
-                string dir = !string.IsNullOrWhiteSpace(settingsPath)
-                    ? settingsPath!
-                    : Path.Combine(GenFilePaths.SaveDataFolderPath, "Telemetry");
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
+                try
+                {
+                    string? settingsPath = RimMindCoreMod.Settings?.telemetryDataPath;
+                    string dir = !string.IsNullOrWhiteSpace(settingsPath)
+                        ? settingsPath!
+                        : Path.Combine(GenFilePaths.SaveDataFolderPath, "Telemetry");
+                    if (!Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
 
-                string fileName = $"{DateTime.Now:yyyy-MM-dd}.jsonl";
-                string filePath = Path.Combine(dir, fileName);
+                    string fileName = $"{DateTime.Now:yyyy-MM-dd}.jsonl";
+                    string filePath = Path.Combine(dir, fileName);
 
-                var lines = new List<string>(toWrite.Count);
-                foreach (var record in toWrite)
-                    lines.Add(JsonConvert.SerializeObject(record, Formatting.None));
-
-                File.AppendAllLines(filePath, lines);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimMind] Telemetry flush failed: {ex.Message}");
+                    File.AppendAllLines(filePath, lines);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimMind-Core] Telemetry flush failed: {ex.Message}");
+                }
             }
         }
 

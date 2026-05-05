@@ -44,24 +44,32 @@ namespace RimMind.Core.Comps
             if (agent != null) Agent = agent;
 
             if (Agent == null && parent is Pawn pawn)
+            {
                 Agent = new PawnAgent(pawn);
+            }
 
             if (Agent != null && Agent.Pawn == null)
+            {
+                Agent.Cleanup();
                 Agent = new PawnAgent(Pawn);
+            }
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit && Agent != null)
+                Agent.ResubscribeEvents();
         }
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
             if (Agent == null) yield break;
 
-            string stateLabel = Agent.State.ToString();
+            string stateLabel = $"RimMind.Core.Agent.State.{Agent.State}".Translate();
             string toggleLabel = Agent.IsActive
                 ? "RimMind.Core.Agent.Gizmo.Deactivate".Translate()
                 : "RimMind.Core.Agent.Gizmo.Activate".Translate();
 
             yield return new Command_Action
             {
-                defaultLabel = $"Agent: {stateLabel}",
+                defaultLabel = "RimMind.Core.Agent.Gizmo.AgentState".Translate(stateLabel),
                 defaultDesc = "RimMind.Core.Agent.Gizmo.ToggleDesc".Translate(),
                 icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
                 action = () =>
@@ -109,7 +117,7 @@ namespace RimMind.Core.Comps
                             foreach (var kv in topW)
                                 sb.AppendLine($"  {kv.Key}: {kv.Value:F2}");
                         }
-                        Log.Message($"[RimMind-Agent] {Pawn.Name?.ToStringShort}\n{sb}");
+                        Log.Message($"[RimMind-Core] {Pawn.Name?.ToStringShort}\n{sb}");
                     },
                 };
             }

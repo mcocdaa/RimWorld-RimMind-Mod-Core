@@ -35,13 +35,6 @@ namespace RimMind.Core.UI
 
         public static void Remove(RequestEntry entry) => _pending.Remove(entry);
 
-        public static Rect GetWindowRect() => _windowRect;
-
-        public static void SetWindowRect(Rect rect)
-        {
-            _windowRect = rect;
-        }
-
         public static void OnGUI()
         {
             if (Current.ProgramState != ProgramState.Playing) return;

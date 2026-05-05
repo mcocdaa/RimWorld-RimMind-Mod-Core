@@ -16,13 +16,14 @@ namespace RimMind.Core.Perception
         public static void PublishPerceptionForPawn(Pawn pawn, string perceptionType, string content, float importance = 0.5f)
         {
             if (pawn == null) return;
+            if (pawn.Map == null) return;
             if (!CompPawnAgent.IsAgentActive(pawn)) return;
             PublishPerception(pawn.thingIDNumber, perceptionType, content, importance);
         }
 
         public static void PublishBroadcast(string perceptionType, string content, float importance = 0.5f, Map? map = null)
         {
-            var maps = map != null ? new List<Map> { map } : Find.Maps;
+            var maps = map != null ? new List<Map> { map } : (Find.Maps ?? new List<Map>());
             foreach (var m in maps)
             {
                 if (m?.mapPawns == null) continue;
