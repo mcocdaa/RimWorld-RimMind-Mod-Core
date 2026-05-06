@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Context;
 using RimMind.Core.Extensions;
+using RimMind.Core.Runtime;
 using Verse;
 
 namespace RimMind.Core.Sensor
@@ -11,15 +12,15 @@ namespace RimMind.Core.Sensor
     /// SensorManager: Central coordinator for all Sensor providers.
     /// Handles timed polling, Agent Tool aggregation, and multi-source fusion.
     /// </summary>
-    public class SensorManager : GameComponent
+    public class SensorManager : GameComponent, ISensorManager
     {
-        public static SensorManager? Instance
+        public static ISensorManager? Instance
         {
-            get => RimMindServiceLocator.Get<SensorManager>();
+            get => RimMindServiceLocator.Get<ISensorManager>();
             private set
             {
                 if (value != null)
-                    RimMindServiceLocator.Register(value);
+                    RimMindServiceLocator.Register<ISensorManager>(value);
             }
         }
 
@@ -37,9 +38,9 @@ namespace RimMind.Core.Sensor
             RegisterSensorContextKeys();
         }
 
-        private void RegisterSensorContextKeys()
+        public void RegisterSensorContextKeys()
         {
-            foreach (var sensor in RimMindAPI.SensorProviders)
+            foreach (var sensor in RimMindRuntime.Instance.SensorProvidersList)
             {
                 string key = $"sensor_{sensor.SensorId}";
                 var captured = sensor;
@@ -59,7 +60,7 @@ namespace RimMind.Core.Sensor
             base.GameComponentTick();
             if (!Find.TickManager.Paused && Find.TickManager.TicksGame % 150 != 0) return;
 
-            foreach (var sensor in RimMindAPI.SensorProviders.ToArray())
+            foreach (var sensor in RimMindRuntime.Instance.SensorProvidersList.ToArray())
             {
                 if (sensor.TickInterval <= 0) continue;
                 if (Find.TickManager.TicksGame % sensor.TickInterval != 0) continue;
@@ -74,7 +75,7 @@ namespace RimMind.Core.Sensor
                             if (!string.IsNullOrEmpty(data))
                                 global::RimMind.Core.Perception.PerceptionBridge.PublishPerception(
                                     pawn.thingIDNumber, sensor.SensorId, data!,
-                                    sensor.Priority / 100f);
+                                    sensor.Priority / 100f, RimMindRuntime.Instance.EventBus);
                         }
                     }
                 }
@@ -92,7 +93,7 @@ namespace RimMind.Core.Sensor
         public List<Client.StructuredTool> BuildAgentTools(Pawn pawn)
         {
             var tools = new List<Client.StructuredTool>();
-            foreach (var sensor in RimMindAPI.SensorProviders)
+            foreach (var sensor in RimMindRuntime.Instance.SensorProvidersList)
             {
                 try
                 {

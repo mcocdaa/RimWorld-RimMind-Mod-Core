@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Context;
 using RimMind.Core.Extensions;
+using RimMind.Core.Internal;
+using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
 using Verse;
 
@@ -24,7 +26,7 @@ namespace RimMind.Core.Flywheel
             var recommendations = new List<ParameterRecommendation>();
             if (records == null || records.Count == 0) return recommendations;
 
-            var store = FlywheelParameterStore.Instance;
+            var store = RimMindServiceLocator.Get<IFlywheelParameterStore>();
 
             float avgBudgetUtil = ComputeAvgBudgetUtilization(records);
             float avgCacheHitRate = ComputeAvgCacheHitRate(records);
@@ -130,7 +132,7 @@ namespace RimMind.Core.Flywheel
             return recommendations;
         }
 
-        private static void ApplyAutoApplyMode(AnalysisReportRecord report, FlywheelParameterStore? store)
+        private static void ApplyAutoApplyMode(AnalysisReportRecord report, IFlywheelParameterStore? store)
         {
             if (store == null) return;
             var mode = RimMindCoreMod.Settings?.autoApplyMode ?? FlywheelAutoApplyMode.Off;
@@ -158,15 +160,15 @@ namespace RimMind.Core.Flywheel
                 }
             }
 
-            var config = BuildConfigFromStore(store);
-            foreach (var tuner in RimMindAPI.ParameterTuners)
+            var config = BuildConfigFromStore(store!);
+            foreach (var tuner in RimMindRuntime.Instance.ParameterTunersList)
             {
                 try { tuner.Tune(config); }
                 catch (Exception ex) { Log.Warning($"[RimMind-Core] ParameterTuner '{tuner.TunerId}' error: {ex.Message}"); }
             }
         }
 
-        private static BudgetSchedulerConfig BuildConfigFromStore(FlywheelParameterStore store)
+        private static BudgetSchedulerConfig BuildConfigFromStore(IFlywheelParameterStore store)
         {
             return new BudgetSchedulerConfig
             {
@@ -187,7 +189,7 @@ namespace RimMind.Core.Flywheel
             {
                 if (r.BudgetValue > 0 && r.TotalTokens > 0)
                 {
-                    float budgetLimit = r.BudgetValue * (FlywheelParameterStore.Instance?.TotalBudget ?? 4000);
+                    float budgetLimit = r.BudgetValue * (RimMindServiceLocator.Get<IFlywheelParameterStore>()?.TotalBudget ?? 4000);
                     if (budgetLimit > 0)
                     {
                         sum += r.TotalTokens / budgetLimit;

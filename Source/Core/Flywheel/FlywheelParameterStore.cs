@@ -7,15 +7,15 @@ using Verse;
 
 namespace RimMind.Core.Flywheel
 {
-    public class FlywheelParameterStore : GameComponent
+    public class FlywheelParameterStore : GameComponent, IFlywheelParameterStore
     {
-        public static FlywheelParameterStore? Instance
+        public static IFlywheelParameterStore? Instance
         {
-            get => RimMindServiceLocator.Get<FlywheelParameterStore>();
+            get => RimMindServiceLocator.Get<IFlywheelParameterStore>();
             private set
             {
                 if (value != null)
-                    RimMindServiceLocator.Register(value);
+                    RimMindServiceLocator.Register<IFlywheelParameterStore>(value);
             }
         }
 

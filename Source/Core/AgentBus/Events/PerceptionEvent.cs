@@ -5,7 +5,7 @@ namespace RimMind.Core.AgentBus
         public string PerceptionType = "";
         public string Content = "";
         public float Importance;
-        public int Timestamp;
+        public new int Timestamp;
 
         public PerceptionEvent(string npcId, int pawnId, string perceptionType, string content, float importance = 0f)
         {

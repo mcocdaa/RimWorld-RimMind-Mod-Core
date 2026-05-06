@@ -4,6 +4,45 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
+using RimMind.Contracts;
+
+namespace RimMind.Core.AgentBus
+{
+    public enum AgentBusEventType
+    {
+        Perception,
+        Decision,
+        Goal,
+        Action,
+        Lifecycle
+    }
+
+    public class AgentBusEvent
+    {
+        public string NpcId = "";
+        public int PawnId;
+        public AgentBusEventType EventType;
+        public int Timestamp;
+    }
+}
+
+namespace RimMind.Contracts
+{
+    using RimMind.Core.AgentBus;
+
+    [ThreadAffinity(ThreadAffinityKind.MainOnly)]
+    public interface IAgentBus
+    {
+        string Subscribe<T>(Action<T> handler) where T : AgentBusEvent;
+        void Subscribe<T>(string key, Action<T> handler) where T : AgentBusEvent;
+        void Unsubscribe<T>(string key) where T : AgentBusEvent;
+        void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent;
+        void Publish<T>(T evt) where T : AgentBusEvent;
+        void PublishFromBackground<T>(T evt) where T : AgentBusEvent;
+        void FlushBackgroundQueue();
+        void ClearAllSubscribers();
+    }
+}
 
 namespace UnityEngine
 {
@@ -57,9 +96,14 @@ namespace Verse
 
     public class Game { }
 
+    public class ModSettings : IExposable
+    {
+        public virtual void ExposeData() { }
+    }
+
     public static class Scribe_Values
     {
-        public static void Look<T>(ref T value, string label, T defaultValue = default) { }
+        public static void Look<T>(ref T value, string label, T? defaultValue = default) { }
     }
 
     public static class Scribe_Collections
@@ -88,6 +132,11 @@ namespace Verse
         public static Action<string> Warning = _ => { };
         public static Action<string> Message = _ => { };
         public static Action<string> Error = _ => { };
+    }
+
+    public static class UnityData
+    {
+        public static bool IsInMainThread = true;
     }
 
     public class Thing
@@ -138,7 +187,9 @@ namespace Verse
 
     public class Pawn_HealthTracker
     {
+        public HediffSet? hediffSet;
         public bool HasHediffsNeedingTend() => false;
+        public void AddHediff(Hediff hediff) { }
     }
 
     public class Name
@@ -154,13 +205,43 @@ namespace Verse
         public Map? Map;
         public Pawn_NeedsTracker? needs;
         public Pawn_HealthTracker? health;
+        public Pawn_MindState? mindState;
+        public Pawn_JobTracker? jobs;
         public string LabelShortCap = "";
         public Name? Name;
+        public bool InMentalState;
+        private Lord? _lord;
+
+        public Lord? GetLord() => _lord;
+        public void SetLord(Lord lord) => _lord = lord;
 
         public bool IsHashIntervalTick(int interval)
         {
             return thingIDNumber % interval == 0;
         }
+    }
+
+    public class Pawn_JobTracker
+    {
+        public Verse.AI.JobQueue? jobQueue;
+    }
+
+    public class Lord
+    {
+        public bool AllowsFloatMenu(Pawn pawn) => true;
+    }
+
+    public static class PawnUtility
+    {
+        public static bool InValidState(Pawn pawn) => pawn != null && !pawn.Dead;
+        public static bool WillSoonHaveBasicNeed(Pawn pawn) => false;
+        public static bool PlayerForcedJobNowOrSoon(Pawn pawn) => false;
+        public static bool CanCasuallyInteractNow(Pawn pawn) => true;
+    }
+
+    public class Pawn_MindState
+    {
+        public RimWorld.PawnDuty? duty;
     }
 
     public class MapPawns
@@ -186,6 +267,8 @@ namespace Verse
         public static TickManager TickManager = new TickManager();
         public static List<Map> Maps = new List<Map>();
         public static WorldPawns? WorldPawns;
+        public static Storyteller? Storyteller;
+        public static SignalManager? SignalManager = new SignalManager();
     }
 
     public class TickManager
@@ -207,7 +290,181 @@ namespace Verse
 
 namespace Verse.AI
 {
-    public class Job { }
+    public enum JobCondition
+    {
+        None,
+        Succeeded,
+        Interrupted,
+        InterruptedByPriority,
+        Incompletable,
+        PlayerForced,
+        Quiet,
+        Erased,
+        ErasedPather,
+        TargetLost,
+        TargetInvalid,
+        NoAvailablePath,
+        OffMesh,
+        ThingDespawned,
+        ThingBlocked,
+        PawnUnavailable,
+        MaxRosterSize
+    }
+
+    public enum ToilCompleteMode
+    {
+        Never,
+        Instant,
+        Delay,
+        PatherArrive,
+        WaitForPatherToEnd,
+        FinishLastToil
+    }
+
+    public enum TargetIndex
+    {
+        A = 0,
+        B = 1,
+        C = 2
+    }
+
+    public struct LocalTargetInfo
+    {
+        private Thing? _thing;
+        public Thing? Thing => _thing;
+        public bool IsValid => _thing != null;
+        public LocalTargetInfo(Thing thing) { _thing = thing; }
+        public static implicit operator LocalTargetInfo(Thing thing) => new LocalTargetInfo(thing);
+    }
+
+    public class JobDef : Verse.Def
+    {
+        public System.Type? driverClass;
+    }
+
+    public struct JobTag
+    {
+        public static JobTag Misc = default;
+        public static JobTag Fieldwork = default;
+        public static JobTag SatisfyingNeeds = default;
+        public static JobTag Idle = default;
+    }
+
+    public class Job
+    {
+        public JobDef? def;
+        public ThinkNode? jobGiver;
+        public int loadID;
+        public LocalTargetInfo targetA;
+        public LocalTargetInfo targetB;
+        public int count = 1;
+        public bool playerForced;
+        public bool voluntary;
+        public bool expireRequiresEnemyNear;
+        public float targetA_thingIDNumber;
+        public bool createdViaJobMaker;
+
+        public LocalTargetInfo GetTarget(TargetIndex ind)
+        {
+            return ind switch
+            {
+                TargetIndex.A => targetA,
+                TargetIndex.B => targetB,
+                _ => default
+            };
+        }
+    }
+
+    public static class JobMaker
+    {
+        private static int _nextId = 1;
+
+        public static Job MakeJob(JobDef def)
+        {
+            return new Job { def = def, loadID = _nextId++, createdViaJobMaker = true };
+        }
+
+        public static Job MakeJob(JobDef def, LocalTargetInfo targetA)
+        {
+            return new Job { def = def, loadID = _nextId++, targetA = targetA, createdViaJobMaker = true };
+        }
+
+        public static Job MakeJob(JobDef def, LocalTargetInfo targetA, LocalTargetInfo targetB)
+        {
+            return new Job { def = def, loadID = _nextId++, targetA = targetA, targetB = targetB, createdViaJobMaker = true };
+        }
+    }
+
+    public class QueuedJob
+    {
+        public Job job;
+        public JobTag tag;
+        public QueuedJob(Job job, JobTag tag) { this.job = job; this.tag = tag; }
+    }
+
+    public class JobQueue
+    {
+        private readonly List<QueuedJob> _queue = new List<QueuedJob>();
+
+        public void EnqueueFirst(Job job, JobTag tag)
+        {
+            _queue.Insert(0, new QueuedJob(job, tag));
+        }
+
+        public void EnqueueLast(Job job, JobTag tag)
+        {
+            _queue.Add(new QueuedJob(job, tag));
+        }
+
+        public bool AnyCanBeginNow(Verse.Pawn pawn, bool forced = false)
+        {
+            return _queue.Count > 0;
+        }
+
+        public QueuedJob? FirstOrDefault(Func<QueuedJob, bool> predicate)
+        {
+            foreach (var qj in _queue)
+                if (predicate(qj)) return qj;
+            return null;
+        }
+
+        public void Remove(QueuedJob queuedJob)
+        {
+            _queue.Remove(queuedJob);
+        }
+
+        public int Count => _queue.Count;
+
+        public QueuedJob? Peek()
+        {
+            return _queue.Count > 0 ? _queue[0] : null;
+        }
+    }
+
+    public class Toil
+    {
+        public Action? initAction;
+        public Action? tickAction;
+        public ToilCompleteMode defaultCompleteMode = ToilCompleteMode.Instant;
+        public bool atomicWithPrevious;
+        public int defaultDuration;
+        public bool failOnDowned;
+
+        public Toil WithEffect(Verse.Def effecterDef, TargetIndex index) => this;
+        public Toil WithEffect(Verse.Def effecterDef, Func<Verse.Pawn, TargetIndex> index) => this;
+    }
+
+    public static class ToilMaker
+    {
+        public static Toil MakeToil() => new Toil();
+    }
+
+    public class JobDriver
+    {
+        public Verse.Pawn pawn = null!;
+        public Job job = null!;
+        public virtual IEnumerable<Toil> MakeNewToil() { yield break; }
+    }
 
     public struct JobIssueParams { }
 
@@ -217,6 +474,7 @@ namespace Verse.AI
         public virtual ThinkResult TryIssueJobPackage(Verse.Pawn pawn, JobIssueParams jobParams) => default;
         public virtual float GetPriority(Verse.Pawn pawn) => 0f;
         public virtual ThinkNode DeepCopy(bool resolve = true) => (ThinkNode)MemberwiseClone();
+        public virtual ThinkNode DeepCopy(ThinkNode like) => (ThinkNode)MemberwiseClone();
     }
 
     public struct ThinkResult
@@ -236,8 +494,119 @@ namespace Verse.AI
     }
 }
 
+namespace Verse
+{
+    public class Signal
+    {
+        public string tag = "";
+        public SignalArgs args = new SignalArgs();
+        public Signal(string tag, SignalArgs args) { this.tag = tag; this.args = args; }
+    }
+
+    public class SignalArgs
+    {
+        public readonly Dictionary<string, object> args = new Dictionary<string, object>();
+        public void Add(string key, object value) { args[key] = value; }
+        public bool TryGetArg<T>(string key, out T? value)
+        {
+            value = default;
+            if (args.TryGetValue(key, out var obj) && obj is T t) { value = t; return true; }
+            return false;
+        }
+    }
+
+    public class SignalManager
+    {
+        public static SignalManager? Instance;
+        public void Send(Signal signal) { }
+        public void SendSignal(Signal signal) { }
+    }
+}
+
+namespace Verse.AI
+{
+}
+
 namespace RimWorld
 {
+    public class PawnDuty
+    {
+        public DutyDef? def;
+        public PawnDuty() { }
+        public PawnDuty(DutyDef def) { this.def = def; }
+    }
+
+    public class DutyDef : Verse.Def
+    {
+    }
+
+    public class HediffDef : Verse.Def
+    {
+        public static HediffDef Named(string name) => new HediffDef { defName = name };
+    }
+
+    public class TaleDef : Verse.Def
+    {
+        public static TaleDef Named(string name) => new TaleDef { defName = name };
+    }
+
+    public static class HediffMaker
+    {
+        public static Verse.Hediff MakeHediff(HediffDef def, Verse.Pawn pawn) => new Verse.Hediff();
+    }
+
+    public static class TaleRecorder
+    {
+        public static void RecordTale(TaleDef taleDef, Verse.Pawn pawn) { }
+    }
+
+    public static class EffecterDefOf
+    {
+        public static Verse.Def? Construction;
+    }
+}
+
+namespace Verse
+{
+    public class Def
+    {
+        public string defName = "";
+        public virtual IEnumerable<string> ConfigErrors() { yield break; }
+    }
+
+    public static class DefDatabase<T> where T : Def, new()
+    {
+        private static readonly List<T> _all = new List<T>();
+        public static T? GetNamedSilentFail(string name)
+        {
+            foreach (var def in _all)
+                if (def.defName == name) return def;
+            return null;
+        }
+        public static List<T> AllDefsListForReading => _all;
+        public static void AddDef(T def) { _all.Add(def); }
+        public static void Clear() { _all.Clear(); }
+    }
+
+    public class Hediff
+    {
+        public RimWorld.HediffDef? def;
+    }
+
+    public class HediffSet
+    {
+        public Hediff? GetFirstHediffOfDef(RimWorld.HediffDef def) => null;
+    }
+
+    public class Storyteller
+    {
+        public Difficulty? difficulty;
+    }
+
+    public class Difficulty
+    {
+        public float threatScale = 1f;
+    }
 }
 
 namespace RimMind.Core
@@ -316,15 +685,137 @@ namespace RimMind.Core
         public static List<Extensions.IParameterTuner> ParameterTuners = new List<Extensions.IParameterTuner>();
         public static void RegisterParameterTuner(Extensions.IParameterTuner tuner) { }
         internal static void ResetForNewGame() { }
-        public static Func<int>? GetModCooldownGetter(string modId) => null;
         public static Context.ContextSnapshot BuildContextSnapshot(Context.ContextRequest request) => new Context.ContextSnapshot();
-        public static Agent.IAgentActionBridge? GetAgentActionBridge() => null;
+        private static Agent.IAgentActionBridge? _agentActionBridge;
+        public static Agent.IAgentActionBridge? GetAgentActionBridge() => _agentActionBridge;
+        public static void RegisterAgentActionBridge(Agent.IAgentActionBridge bridge) => _agentActionBridge = bridge;
         public static void RequestStructuredAsync(Client.AIRequest request, string? jsonSchema, Action<Client.AIResponse> onComplete, List<Client.StructuredTool>? tools = null) { }
         public static Agent.AgentIdentity? GetAgentIdentity(Verse.Pawn pawn) => null;
         public static List<Extensions.ISensorProvider> SensorProviders = new List<Extensions.ISensorProvider>();
         public static Context.IContextEngine GetContextEngine() => _contextEngine;
         public static Context.EmbeddingSnapshotStore GetEmbeddingSnapshotStore() => new Context.EmbeddingSnapshotStore();
         public static Client.IAIClient? GetClient() => null;
+        public static AgentBus.IEventBus GetEventBus() => Runtime.RimMindRuntime.Instance.EventBus;
+        public static Contracts.Extension.IExtensionRegistry<T> Extensions<T>() where T : class, Contracts.Extension.IExtension
+            => Runtime.RimMindRuntime.Instance.GetExtensionRegistry<T>();
+        public static void RegisterSensorProvider(Extensions.ISensorProvider provider) { }
+        public static void UnregisterSensorProvider(string sensorId) { }
+    }
+}
+
+namespace RimMind.Core.Runtime
+{
+    internal sealed class RimMindRuntime
+    {
+        private static RimMindRuntime? _instance;
+
+        public static RimMindRuntime Instance => _instance
+            ?? throw new InvalidOperationException("RimMindRuntime not initialized. Call Initialize() first.");
+
+        public AgentBus.IEventBus EventBus { get; internal set; }
+        public Flywheel.FlywheelTelemetryCollector Telemetry { get; internal set; }
+        public Context.ContextEngine ContextEngine { get; internal set; }
+        public bool IsShutdown { get; internal set; }
+        public IReadOnlyList<Extensions.IParameterTuner> ParameterTunersList => new List<Extensions.IParameterTuner>();
+        public IReadOnlyList<Sensor.ISensorProvider> SensorProvidersList => new List<Sensor.ISensorProvider>();
+        public Context.EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => null;
+
+        private RimMindRuntime()
+        {
+            EventBus = new AgentBus.EventBusAdapter(new AgentBus.AgentBusImpl());
+            Telemetry = new Flywheel.FlywheelTelemetryCollector();
+            ContextEngine = new Context.ContextEngine(new Context.HistoryManager());
+        }
+
+        public void RegisterParameterTuner(Extensions.IParameterTuner tuner) { }
+        public Agent.IAgentActionBridge? GetAgentActionBridge() => null;
+        public void RequestStructuredAsync(Client.AIRequest request, string? jsonSchema, Action<Client.AIResponse> onComplete, List<Client.StructuredTool>? tools = null) { }
+
+        public static void Initialize()
+        {
+            if (_instance != null) return;
+            _instance = new RimMindRuntime();
+        }
+
+        public static void ResetInstance()
+        {
+            _instance = null;
+        }
+
+        public void Reset()
+        {
+            EventBus = new AgentBus.EventBusAdapter(new AgentBus.AgentBusImpl());
+            Telemetry = new Flywheel.FlywheelTelemetryCollector();
+            ContextEngine = new Context.ContextEngine(new Context.HistoryManager());
+            IsShutdown = false;
+        }
+
+        public Contracts.Extension.IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, Contracts.Extension.IExtension
+        {
+            return new StubExtensionRegistry<T>();
+        }
+
+        public IDisposable WithOverrides(Action<RuntimeOverrides> configure)
+        {
+            var eventBusSnapshot = EventBus;
+            var contextEngineSnapshot = ContextEngine;
+            var overrides = new RuntimeOverrides(this);
+            configure(overrides);
+            overrides.Apply();
+            return new RuntimeScope(this, eventBusSnapshot, contextEngineSnapshot);
+        }
+
+        private sealed class RuntimeScope : IDisposable
+        {
+            private readonly RimMindRuntime _runtime;
+            private readonly AgentBus.IEventBus _eventBusSnapshot;
+            private readonly Context.ContextEngine _contextEngineSnapshot;
+            private bool _disposed;
+
+            public RuntimeScope(RimMindRuntime runtime, AgentBus.IEventBus eventBusSnapshot, Context.ContextEngine contextEngineSnapshot)
+            {
+                _runtime = runtime;
+                _eventBusSnapshot = eventBusSnapshot;
+                _contextEngineSnapshot = contextEngineSnapshot;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed) return;
+                _disposed = true;
+                _runtime.EventBus = _eventBusSnapshot;
+                _runtime.ContextEngine = _contextEngineSnapshot;
+            }
+        }
+    }
+
+    internal sealed class RuntimeOverrides
+    {
+        private readonly RimMindRuntime _runtime;
+
+        public RuntimeOverrides(RimMindRuntime runtime)
+        {
+            _runtime = runtime;
+        }
+
+        public AgentBus.IEventBus? EventBus { get; set; }
+        public Context.ContextEngine? ContextEngine { get; set; }
+
+        public void Apply()
+        {
+            if (EventBus != null) _runtime.EventBus = EventBus;
+            if (ContextEngine != null) _runtime.ContextEngine = ContextEngine;
+        }
+    }
+
+    internal sealed class StubExtensionRegistry<T> : Contracts.Extension.IExtensionRegistry<T> where T : class, Contracts.Extension.IExtension
+    {
+        private readonly List<T> _items = new List<T>();
+
+        public void Register(T extension) => _items.Add(extension);
+        public bool Unregister(string id) { _items.RemoveAll(i => i.Id == id); return true; }
+        public IReadOnlyList<T> All => _items.AsReadOnly();
+        public T? FindById(string id) => _items.FirstOrDefault(i => i.Id == id);
     }
 }
 
@@ -738,52 +1229,6 @@ namespace RimMind.Core.Client
         Critical = 3
     }
 
-    public static class JsonRepairHelper
-    {
-        public static string Repair(string json) => json;
-
-        public static string? TryRepairTruncatedJson(string? input)
-        {
-            if (string.IsNullOrEmpty(input)) return null;
-            var trimmed = input.TrimEnd();
-            if (string.IsNullOrEmpty(trimmed)) return null;
-
-            try
-            {
-                Newtonsoft.Json.Linq.JToken.Parse(trimmed);
-                return null;
-            }
-            catch { }
-
-            string repaired = trimmed;
-
-            if (repaired.EndsWith(",")) repaired = repaired.Substring(0, repaired.Length - 1);
-
-            int openBraces = 0, openBrackets = 0;
-            bool inString = false;
-            char prev = '\0';
-            foreach (char c in repaired)
-            {
-                if (prev != '\\' && c == '"') inString = !inString;
-                if (!inString)
-                {
-                    if (c == '{') openBraces++;
-                    else if (c == '}') openBraces--;
-                    else if (c == '[') openBrackets++;
-                    else if (c == ']') openBrackets--;
-                }
-                prev = c;
-            }
-
-            if (inString) repaired += "\"";
-
-            for (int i = 0; i < openBrackets; i++) repaired += "]";
-            for (int i = 0; i < openBraces; i++) repaired += "}";
-
-            return repaired;
-        }
-    }
-
     public class QuotaExceededException : Exception
     {
         public QuotaExceededException() : base("quota exceeded") { }
@@ -797,12 +1242,6 @@ namespace RimMind.Core.Client
                 || lower.Contains("insufficient_balance") || lower.Contains("payment_required")
                 || lower.Contains("quotaexceeded");
         }
-    }
-
-    public interface IAIClient
-    {
-        Task<AIResponse> SendAsync(AIRequest request);
-        bool IsLocalEndpoint { get; }
     }
 }
 
@@ -1108,6 +1547,12 @@ namespace RimMind.Core.Sensor
 {
     using Verse;
 
+    public interface ISensorProvider
+    {
+        string SensorId { get; }
+        int Priority { get; }
+    }
+
     public class SensorManager : GameComponent
     {
         public static SensorManager? Instance;
@@ -1201,5 +1646,35 @@ namespace RimMind.Core.Settings
                 return obfuscated;
             }
         }
+    }
+
+    public class RimMindCoreSettings : Verse.ModSettings
+    {
+        public string? player2RemoteUrl;
+    }
+}
+
+namespace RimMind.Core.Client.Player2
+{
+    public class Player2Client : IAIClient
+    {
+        public bool IsLocalEndpoint => false;
+        public Task<AIResponse> SendAsync(AIRequest request) => Task.FromResult(new AIResponse());
+    }
+}
+
+namespace RimMind.Core.UI
+{
+    public class RequestEntry
+    {
+        public string? Title;
+        public string? Description;
+        public List<string> Options = new List<string>();
+        public List<string> OptionTooltips = new List<string>();
+        public Action<int>? Callback;
+        public int Tick;
+        public int ExpireTicks;
+        public Verse.Pawn? Pawn;
+        public bool SystemBlocked;
     }
 }

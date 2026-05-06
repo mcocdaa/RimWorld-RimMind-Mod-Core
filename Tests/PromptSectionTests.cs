@@ -148,5 +148,37 @@ namespace RimMind.Core.Tests
             Assert.True(PromptSection.PriorityMemory < PromptSection.PriorityAuxiliary);
             Assert.True(PromptSection.PriorityAuxiliary < PromptSection.PriorityCustom);
         }
+
+        [Fact]
+        public void ContentSetter_RecalculatesEstimatedTokens()
+        {
+            var section = new PromptSection("test", "");
+            Assert.Equal(0, section.EstimatedTokens);
+
+            section.Content = "Hello World 你好";
+            Assert.True(section.EstimatedTokens > 0);
+            Assert.Equal(PromptSection.EstimateTokens("Hello World 你好"), section.EstimatedTokens);
+        }
+
+        [Fact]
+        public void ContentSetter_NullContent_SetsZeroTokens()
+        {
+            var section = new PromptSection("test", "non-empty");
+            Assert.True(section.EstimatedTokens > 0);
+
+            section.Content = null!;
+            Assert.Equal(0, section.EstimatedTokens);
+            Assert.Equal(string.Empty, section.Content);
+        }
+
+        [Fact]
+        public void ParameterlessConstructor_ContentSetLater_HasCorrectEstimatedTokens()
+        {
+            var section = new PromptSection();
+            Assert.Equal(0, section.EstimatedTokens);
+
+            section.Content = "some content";
+            Assert.Equal(PromptSection.EstimateTokens("some content"), section.EstimatedTokens);
+        }
     }
 }

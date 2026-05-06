@@ -34,7 +34,7 @@ namespace RimMind.Core.Flywheel
         public long RequestLatencyMs;
     }
 
-    public class FlywheelTelemetryCollector
+    public class FlywheelTelemetryCollector : IDisposable
     {
         private const int RecentRecordsCapacity = 200;
         private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(5);
@@ -44,14 +44,23 @@ namespace RimMind.Core.Flywheel
         private readonly object _lock = new object();
         private readonly object _fileLock = new object();
         private readonly Timer _flushTimer;
+        private bool _disposed;
 
         public FlywheelTelemetryCollector()
         {
             _flushTimer = new Timer(_ => FlushInternal(), null, FlushInterval, FlushInterval);
         }
 
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _flushTimer.Dispose();
+        }
+
         public void Record(TelemetryRecord record)
         {
+            if (_disposed) return;
             lock (_lock)
             {
                 _recentRecords.Add(record);
@@ -78,6 +87,7 @@ namespace RimMind.Core.Flywheel
 
         private void FlushInternal()
         {
+            if (_disposed) return;
             var lines = new List<string>();
             while (_pendingWrites.TryDequeue(out var line))
                 lines.Add(line);

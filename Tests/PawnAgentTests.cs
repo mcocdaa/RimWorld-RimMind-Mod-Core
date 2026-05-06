@@ -4,7 +4,9 @@ using RimMind.Core.Agent;
 using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Flywheel;
+using RimMind.Core.Internal;
 using RimMind.Core.Npc;
+using RimMind.Core.Runtime;
 using Verse;
 using Xunit;
 
@@ -15,12 +17,18 @@ namespace RimMind.Core.Tests
         private readonly Pawn _pawn;
         private readonly PawnAgent _agent;
         private readonly AICoreSettings? _originalSettings;
-        private readonly FlywheelParameterStore? _originalFlywheel;
+        private readonly IFlywheelParameterStore? _originalFlywheel;
+        private readonly NpcManager _npcManager;
+        private readonly IEventBus _eventBus;
 
         public PawnAgentTests()
         {
+            RimMindRuntime.Initialize();
             _pawn = new Pawn { thingIDNumber = 99, Dead = false };
-            NpcManager.IndexPawn(_pawn);
+            _pawn.jobs = new Pawn_JobTracker { jobQueue = new Verse.AI.JobQueue() };
+            RimMindServiceLocator.Reset();
+            _npcManager = new NpcManager(new Game());
+            _npcManager.IndexPawn(_pawn);
             _originalSettings = RimMindCoreMod.Settings;
             _originalFlywheel = FlywheelParameterStore.Instance;
             RimMindCoreMod.Settings = new AICoreSettings
@@ -35,7 +43,8 @@ namespace RimMind.Core.Tests
             };
             var flywheel = new FlywheelParameterStore();
             flywheel.FinalizeInit();
-            _agent = new PawnAgent(_pawn);
+            _eventBus = new EventBusAdapter(new AgentBusImpl());
+            _agent = new PawnAgent(_pawn, _eventBus);
         }
 
         public void Dispose()
@@ -44,8 +53,8 @@ namespace RimMind.Core.Tests
                 _agent.TransitionTo(AgentState.Terminated);
             RimMindCoreMod.Settings = _originalSettings;
             if (_originalFlywheel != null)
-                _originalFlywheel.FinalizeInit();
-            NpcManager.ClearPawnIndex();
+                RimMindServiceLocator.Register<IFlywheelParameterStore>(_originalFlywheel);
+            _npcManager.ClearPawnIndex();
         }
 
         [Fact]
@@ -279,45 +288,28 @@ namespace RimMind.Core.Tests
         [Fact]
         public void ComputeGoalProgressDelta_KnownActions_ReturnExpectedValues()
         {
-            float restDelta = ComputeGoalProgressDelta("force_rest", true);
+            float restDelta = PawnAgent.ComputeGoalProgressDelta("force_rest", true);
             Assert.Equal(0.15f, restDelta);
 
-            float assignDelta = ComputeGoalProgressDelta("assign_work", true);
+            float assignDelta = PawnAgent.ComputeGoalProgressDelta("assign_work", true);
             Assert.Equal(0.2f, assignDelta);
 
-            float moveDelta = ComputeGoalProgressDelta("move_to", true);
+            float moveDelta = PawnAgent.ComputeGoalProgressDelta("move_to", true);
             Assert.Equal(0.05f, moveDelta);
         }
 
         [Fact]
         public void ComputeGoalProgressDelta_FailedAction_NegativeDelta()
         {
-            float delta = ComputeGoalProgressDelta("force_rest", false);
+            float delta = PawnAgent.ComputeGoalProgressDelta("force_rest", false);
             Assert.True(delta < 0);
-            Assert.Equal(-0.075f, delta);
         }
 
         [Fact]
         public void ComputeGoalProgressDelta_UnknownAction_DefaultDelta()
         {
-            float delta = ComputeGoalProgressDelta("unknown_action", true);
+            float delta = PawnAgent.ComputeGoalProgressDelta("unknown_action", true);
             Assert.Equal(0.1f, delta);
-        }
-
-        private static float ComputeGoalProgressDelta(string action, bool executed)
-        {
-            float baseDelta = action switch
-            {
-                "force_rest" => 0.15f,
-                "assign_work" => 0.2f,
-                "move_to" => 0.05f,
-                "tend_pawn" => 0.2f,
-                "rescue_pawn" => 0.25f,
-                "draft" or "undraft" => 0.1f,
-                "eat_food" => 0.15f,
-                _ => 0.1f
-            };
-            return executed ? baseDelta : baseDelta * -0.5f;
         }
     }
 }

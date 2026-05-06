@@ -37,8 +37,12 @@ namespace RimMind.Core.Settings
         public bool IncludeThreats = true;
 
         public float ContextBudget = 0.6f;
+#pragma warning disable CS0612
+        [Obsolete("Use FlywheelParameterStore w1/w2 instead. This field is only kept for savegame compatibility.")]
         public float BudgetW1 = 0.4f;
+        [Obsolete("Use FlywheelParameterStore w1/w2 instead. This field is only kept for savegame compatibility.")]
         public float BudgetW2 = 0.6f;
+#pragma warning restore CS0612
 
         public int maxCacheEntries = 100;
         public int contextBriefLimit = 200;
@@ -82,8 +86,10 @@ namespace RimMind.Core.Settings
             Scribe_Values.Look(ref IncludeWeather, "IncludeWeather", true);
             Scribe_Values.Look(ref IncludeThreats, "IncludeThreats", true);
             Scribe_Values.Look(ref ContextBudget, "ContextBudget", 0.6f);
+#pragma warning disable CS0612
             Scribe_Values.Look(ref BudgetW1, "BudgetW1", 0.4f);
             Scribe_Values.Look(ref BudgetW2, "BudgetW2", 0.6f);
+#pragma warning restore CS0612
             Scribe_Values.Look(ref maxCacheEntries, "maxCacheEntries", 100);
             Scribe_Values.Look(ref contextBriefLimit, "contextBriefLimit", 200);
             Scribe_Values.Look(ref moodDiffThreshold, "moodDiffThreshold", 5f);

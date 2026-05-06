@@ -4,8 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Agent;
 using RimMind.Core.AgentBus;
+using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Flywheel;
+using RimMind.Core.Runtime;
 using Verse;
 using Xunit;
 
@@ -134,8 +136,10 @@ namespace RimMind.Tests.Lifecycle
         [Fact]
         public void Cleanup_ClearsGoalStack()
         {
+            RimMindRuntime.Initialize();
             var pawn = new Pawn { thingIDNumber = 1 };
-            var agent = new PawnAgent(pawn);
+            var eventBus = new EventBusAdapter(new AgentBusImpl());
+            var agent = new PawnAgent(pawn, eventBus);
             agent.GoalStack.TryAdd(new AgentGoal("test", GoalCategory.Survival, 1f, GoalStatus.Active), pawn.thingIDNumber);
 
             agent.Cleanup();
@@ -147,7 +151,8 @@ namespace RimMind.Tests.Lifecycle
         public void Cleanup_ClearsPerceptionBuffer()
         {
             var pawn = new Pawn { thingIDNumber = 2 };
-            var agent = new PawnAgent(pawn);
+            var eventBus = new EventBusAdapter(new AgentBusImpl());
+            var agent = new PawnAgent(pawn, eventBus);
             agent.PerceptionBuffer.Add(new PerceptionBufferEntry
             {
                 PerceptionType = "test",
@@ -160,21 +165,23 @@ namespace RimMind.Tests.Lifecycle
         }
 
         [Fact]
-        public void Cleanup_UnsubscribesFromAgentBus()
+        public void Cleanup_UnsubscribesFromEventBus()
         {
             var pawn = new Pawn { thingIDNumber = 3 };
-            var agent = new PawnAgent(pawn);
+            var eventBus = new EventBusAdapter(new AgentBusImpl());
+            var agent = new PawnAgent(pawn, eventBus);
 
             agent.Cleanup();
 
-            AgentBus.Publish(new PerceptionEvent("npc_3", 3, "test", "test content"));
+            eventBus.Publish(new PerceptionEvent("npc_3", 3, "test", "test content"));
         }
 
         [Fact]
         public void Cleanup_CalledTwice_DoesNotThrow()
         {
             var pawn = new Pawn { thingIDNumber = 4 };
-            var agent = new PawnAgent(pawn);
+            var eventBus = new EventBusAdapter(new AgentBusImpl());
+            var agent = new PawnAgent(pawn, eventBus);
 
             agent.Cleanup();
             var ex = Record.Exception(() => agent.Cleanup());
@@ -185,73 +192,14 @@ namespace RimMind.Tests.Lifecycle
         public void Cleanup_ThenResubscribe_DoesNotThrow()
         {
             var pawn = new Pawn { thingIDNumber = 5 };
-            var agent = new PawnAgent(pawn);
+            var eventBus = new EventBusAdapter(new AgentBusImpl());
+            var agent = new PawnAgent(pawn, eventBus);
 
             agent.Cleanup();
             agent.ResubscribeEvents();
 
-            AgentBus.Publish(new PerceptionEvent("npc_5", 5, "test", "test content"));
-        }
-    }
-
-    public class CancellationTokenHealthCheckTests
-    {
-        [Fact]
-        public async Task CancellationTokenSource_Cancel_StopsDelayImmediately()
-        {
-            using var cts = new CancellationTokenSource();
-            var task = Task.Delay(60000, cts.Token);
-
-            cts.Cancel();
-
-            await Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
-        }
-
-        [Fact]
-        public async Task CancellationTokenSource_Cancel_BeforeDelay_CompletesImmediately()
-        {
-            using var cts = new CancellationTokenSource();
-            cts.Cancel();
-
-            await Assert.ThrowsAsync<TaskCanceledException>(async () =>
-                await Task.Delay(60000, cts.Token));
-        }
-
-        [Fact]
-        public void CancellationTokenSource_IsCancellationRequested_AfterCancel()
-        {
-            using var cts = new CancellationTokenSource();
-            Assert.False(cts.IsCancellationRequested);
-
-            cts.Cancel();
-
-            Assert.True(cts.IsCancellationRequested);
-        }
-
-        [Fact]
-        public async Task CancellationTokenSource_HealthCheckLoopPattern()
-        {
-            using var cts = new CancellationTokenSource();
-            var loopCount = 0;
-
-            var loopTask = Task.Run(async () =>
-            {
-                try
-                {
-                    while (!cts.IsCancellationRequested)
-                    {
-                        await Task.Delay(10, cts.Token);
-                        loopCount++;
-                    }
-                }
-                catch (OperationCanceledException) { }
-            });
-
-            await Task.Delay(200);
-            cts.Cancel();
-            await loopTask;
-
-            Assert.True(loopCount >= 1);
+            var bus = new EventBusAdapter(new AgentBusImpl());
+            bus.Publish(new PerceptionEvent("npc_5", 5, "test", "test content"));
         }
     }
 }

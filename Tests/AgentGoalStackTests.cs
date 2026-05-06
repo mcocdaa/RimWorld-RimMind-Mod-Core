@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Agent;
 using RimMind.Core.AgentBus;
+using RimMind.Core.Runtime;
 using Verse;
 using Xunit;
 
@@ -10,6 +11,11 @@ namespace RimMind.Core.Tests
     public class AgentGoalStackTests
     {
         private const int TestPawnId = 42;
+
+        public AgentGoalStackTests()
+        {
+            RimMindRuntime.Initialize();
+        }
 
         private AgentGoalStack CreateStack()
         {

@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Extensions;
 using RimMind.Core.Flywheel;
+using RimMind.Core.Internal;
+using RimMind.Core.Runtime;
 using Verse;
 
 namespace RimMind.Core.Context
 {
-    public class BudgetScheduler
+    public class BudgetScheduler : IBudgetScheduler
     {
         private BudgetSchedulerConfig _config;
         private IRelevanceProvider? _relevanceProvider;
@@ -30,10 +32,10 @@ namespace RimMind.Core.Context
 
         public void SubscribeParameterStore()
         {
-            var store = FlywheelParameterStore.Instance;
+            var store = RimMindServiceLocator.Get<IFlywheelParameterStore>();
             if (store == null) return;
             ApplyStoreParameters(store);
-            RimMindAPI.RegisterParameterTuner(new BudgetSchedulerTuner(this));
+            RimMindRuntime.Instance.RegisterParameterTuner(new BudgetSchedulerTuner(this));
         }
 
         private void OnParameterChanged(string key, float value)
@@ -63,7 +65,7 @@ namespace RimMind.Core.Context
             }
         }
 
-        private void ApplyStoreParameters(FlywheelParameterStore store)
+        private void ApplyStoreParameters(IFlywheelParameterStore store)
         {
             _config.W1 = store.Get("w1");
             _config.W2 = store.Get("w2");
@@ -78,7 +80,7 @@ namespace RimMind.Core.Context
             _relevanceProvider = provider;
         }
 
-        public void SetConfig(BudgetSchedulerConfig config)
+        public void SetConfig(BudgetSchedulerConfig? config)
         {
             _config = config ?? new BudgetSchedulerConfig();
         }
@@ -103,9 +105,8 @@ namespace RimMind.Core.Context
             {
                 float P = key.GetEffectivePriority();
                 float E = ComputeRelevance(scenarioId, "", key);
-                var coreSettings = RimMind.Core.RimMindCoreMod.Settings?.Context;
-                float w1 = coreSettings?.BudgetW1 ?? _config.W1;
-                float w2 = coreSettings?.BudgetW2 ?? _config.W2;
+                float w1 = _config.W1;
+                float w2 = _config.W2;
                 float sum = w1 + w2;
                 if (sum > 0) { w1 /= sum; w2 /= sum; }
                 float score = w1 * P + w2 * E;
@@ -128,9 +129,8 @@ namespace RimMind.Core.Context
                 {
                     float P = key.GetEffectivePriority();
                     float E = ComputeRelevance(scenarioId, "", key);
-                    var coreSettings2 = RimMind.Core.RimMindCoreMod.Settings?.Context;
-                    float w1b = coreSettings2?.BudgetW1 ?? _config.W1;
-                    float w2b = coreSettings2?.BudgetW2 ?? _config.W2;
+                    float w1b = _config.W1;
+                    float w2b = _config.W2;
                     float sum2 = w1b + w2b;
                     if (sum2 > 0) { w1b /= sum2; w2b /= sum2; }
                     float score = w1b * P + w2b * E;

@@ -8,16 +8,16 @@ using Verse;
 
 namespace RimMind.Core.Context
 {
-    internal class ContextDiffTracker
+    internal class ContextDiffTracker : IContextDiffTracker
     {
         private readonly Dictionary<string, List<ContextDiff>> _diffStore = new Dictionary<string, List<ContextDiff>>();
         private readonly Dictionary<string, Dictionary<string, string>> _keyLastValues = new Dictionary<string, Dictionary<string, string>>();
         private readonly Dictionary<string, Dictionary<string, float>> _keyLastNumericValues = new Dictionary<string, Dictionary<string, float>>();
         private readonly Dictionary<string, Dictionary<string, float>> _previousNumericValues = new Dictionary<string, Dictionary<string, float>>();
 
-        public Dictionary<string, List<ContextDiff>> DiffStore => _diffStore;
-        public Dictionary<string, Dictionary<string, string>> KeyLastValues => _keyLastValues;
-        public Dictionary<string, Dictionary<string, float>> KeyLastNumericValues => _keyLastNumericValues;
+        public IReadOnlyDictionary<string, List<ContextDiff>> DiffStore => _diffStore;
+        public IReadOnlyDictionary<string, Dictionary<string, string>> KeyLastValues => _keyLastValues;
+        public IReadOnlyDictionary<string, Dictionary<string, float>> KeyLastNumericValues => _keyLastNumericValues;
 
         public void AddDiff(string npcId, string key, string oldValue, string newValue, ContextLayer layer)
         {
@@ -51,14 +51,14 @@ namespace RimMind.Core.Context
             }
         }
 
-        public void MergeExpiredDiffs(string npcId, Dictionary<string, Dictionary<string, string>> l1BlockCache, Dictionary<string, int> l1Version, Dictionary<string, Dictionary<string, int>> l1KeyVersions)
+        public void MergeExpiredDiffs(string npcId, IContextCacheManager cacheManager)
         {
             if (!_diffStore.TryGetValue(npcId, out var diffs)) return;
 
             var expired = diffs.Where(d => d.IsExpired(Find.TickManager?.TicksGame ?? 0)).ToList();
             if (expired.Count > 0)
             {
-                if (l1BlockCache.TryGetValue(npcId, out var blocks))
+                if (cacheManager.TryGetL1BlockCache(npcId, out var blocks))
                 {
                     foreach (var diff in expired)
                     {
@@ -81,16 +81,16 @@ namespace RimMind.Core.Context
                         diffs.Remove(diff);
                 }
 
-                int newVersion = (l1Version.TryGetValue(npcId, out var v) ? v : 0) + 1;
-                l1Version[npcId] = newVersion;
+                int newVersion = (cacheManager.TryGetL1Version(npcId, out var oldVer) ? oldVer : 0) + 1;
+                cacheManager.SetL1Version(npcId, newVersion);
 
-                if (l1KeyVersions.TryGetValue(npcId, out var versions))
+                if (cacheManager.TryGetL1KeyVersions(npcId, out var versions))
                     foreach (var diff in expired.Where(d => d.Layer == ContextLayer.L1_Baseline))
                         versions[diff.Key] = newVersion;
             }
         }
 
-        public void UpdateKeyValues(string npcId, List<KeyMeta> keys, Pawn? pawn, ContextCacheManager cacheManager, BudgetScheduler scheduler)
+        public void UpdateKeyValues(string npcId, List<KeyMeta> keys, Pawn? pawn, IContextCacheManager cacheManager, IBudgetScheduler scheduler)
         {
             if (pawn == null) return;
             if (!_keyLastValues.ContainsKey(npcId))
@@ -131,8 +131,7 @@ namespace RimMind.Core.Context
 
         public void ClearNpcDiffs(string npcId)
         {
-            if (_diffStore.TryGetValue(npcId, out var diffs))
-                diffs.Clear();
+            _diffStore.Remove(npcId);
         }
 
         public void RemoveNpcKeyLastValues(string npcId)
@@ -151,6 +150,23 @@ namespace RimMind.Core.Context
         }
 
         public int GetDiffStoreCount() => _diffStore.Count;
+
+        public bool TryGetDiffStore(string npcId, out List<ContextDiff> diffs)
+        {
+            return _diffStore.TryGetValue(npcId, out diffs!);
+        }
+
+        public bool TryGetKeyLastValues(string npcId, out Dictionary<string, string> values)
+        {
+            return _keyLastValues.TryGetValue(npcId, out values!);
+        }
+
+        public void SetKeyLastValue(string npcId, string key, string value)
+        {
+            if (!_keyLastValues.ContainsKey(npcId))
+                _keyLastValues[npcId] = new Dictionary<string, string>();
+            _keyLastValues[npcId][key] = value;
+        }
 
         private bool ShouldSkipDiff(string key, string oldValue, string newValue, string npcId)
         {

@@ -398,10 +398,10 @@ namespace RimMind.Core.Internal
         /// 收集基础游戏状态文本，用于 ContextEngine 不可用时回退填充 game_state_info。
         /// 按 npcId 查找对应 Pawn，拼接地图上下文 + Pawn 上下文。
         /// </summary>
-        public static string CollectBasicGameState(string npcId)
+        public static string CollectBasicGameState(string npcId, INpcManager? npcManager = null)
         {
             var sb = new StringBuilder();
-            var pawn = NpcManager.FindPawnByNpcId(npcId);
+            var pawn = (npcManager ?? RimMindServiceLocator.Get<INpcManager>())?.FindPawnByNpcId(npcId);
 
             if (pawn != null)
             {

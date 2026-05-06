@@ -70,7 +70,7 @@ namespace RimMind.Core.Tests
         }
 
         [Fact]
-        public void Register_Concurrent_NoCorruption()
+        public async Task Register_Concurrent_NoCorruption()
         {
             const int count = 100;
             var exceptions = new List<Exception>();
@@ -92,7 +92,7 @@ namespace RimMind.Core.Tests
                 });
             }
 
-            Task.WaitAll(tasks);
+            await Task.WhenAll(tasks);
             Assert.Empty(exceptions);
 
             for (int i = 0; i < count; i++)
@@ -104,7 +104,7 @@ namespace RimMind.Core.Tests
         }
 
         [Fact]
-        public void RegisterAndUnregister_Concurrent_NoCorruption()
+        public async Task RegisterAndUnregister_Concurrent_NoCorruption()
         {
             const int count = 50;
             var exceptions = new List<Exception>();
@@ -125,7 +125,7 @@ namespace RimMind.Core.Tests
                 });
             }
 
-            Task.WaitAll(tasks);
+            await Task.WhenAll(tasks);
             Assert.Empty(exceptions);
         }
 

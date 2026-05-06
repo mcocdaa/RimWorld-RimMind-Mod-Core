@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
+using RimMind.Kernel.Queue;
 using Newtonsoft.Json;
 using RimWorld;
 using UnityEngine.Networking;
@@ -119,7 +120,7 @@ namespace RimMind.Core.Client.Player2
                 response.HttpStatusCode = httpStatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
             catch (Exception ex)
@@ -130,7 +131,7 @@ namespace RimMind.Core.Client.Player2
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
         }

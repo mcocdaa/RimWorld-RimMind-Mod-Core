@@ -3,7 +3,7 @@ using RimMind.Core.UI;
 
 namespace RimMind.Core.Internal
 {
-    public class OverlayService
+    public class OverlayService : IOverlayService
     {
         public void RegisterPendingRequest(RequestEntry entry)
             => RequestOverlay.Register(entry);

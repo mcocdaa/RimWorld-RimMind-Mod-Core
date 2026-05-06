@@ -15,7 +15,7 @@ namespace RimMind.Core.Npc
     {
         private readonly Dictionary<string, NpcProfile> _npcRegistry = new Dictionary<string, NpcProfile>();
         internal static readonly ConcurrentDictionary<string, string> KvStore = new ConcurrentDictionary<string, string>();
-        private readonly HistoryManager _historyManager;
+        private readonly IHistoryManager _historyManager;
         private readonly string _keyPrefix;
 
         public bool IsRemote => false;
@@ -24,7 +24,7 @@ namespace RimMind.Core.Npc
         public bool SupportsCommands => true;
         public bool SupportsStructuredOutput => true;
 
-        public LocalStorageDriver(HistoryManager historyManager, string keyPrefix = "core")
+        public LocalStorageDriver(IHistoryManager historyManager, string keyPrefix = "core")
         {
             _historyManager = historyManager;
             _keyPrefix = keyPrefix + ":";

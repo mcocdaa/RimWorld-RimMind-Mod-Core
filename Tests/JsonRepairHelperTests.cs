@@ -56,7 +56,7 @@ namespace RimMind.Core.Tests
             string input = "{\"key\":\"incomplete";
             string? result = JsonRepairHelper.TryRepairTruncatedJson(input);
             Assert.NotNull(result);
-            Assert.True(result!.EndsWith("}"));
+            Assert.EndsWith("}", result!);
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace RimMind.Core.Tests
             string input = "{\"defName\":\"RaidEnemy\",\"params\":{\"points\":1.5";
             string? result = JsonRepairHelper.TryRepairTruncatedJson(input);
             Assert.NotNull(result);
-            Assert.True(result!.EndsWith("}}"));
+            Assert.EndsWith("}}", result!);
         }
 
         [Fact]

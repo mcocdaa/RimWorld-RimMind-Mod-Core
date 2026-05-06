@@ -4,17 +4,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Internal;
+using RimMind.Core.Runtime;
 using Verse;
 using Xunit;
 
 namespace RimMind.Core.Tests
 {
-    [CollectionDefinition("AIRequestQueueCancellationToken", DisableParallelization = true)]
-    public class AIRequestQueueCancellationTokenCollection { }
-
-    [Collection("AIRequestQueueCancellationToken")]
     public class AIRequestQueueCancellationTokenTests
     {
+        public AIRequestQueueCancellationTokenTests()
+        {
+            RimMindRuntime.Initialize();
+        }
+
         private AIRequestQueue CreateQueue()
         {
             RimMindCoreMod.Settings = new AICoreSettings
@@ -79,41 +81,6 @@ namespace RimMind.Core.Tests
 
             Assert.True(tokenBefore.IsCancellationRequested);
             Assert.False(queue.GetCurrentCancellationToken().IsCancellationRequested);
-        }
-
-        [Fact]
-        public async Task FireRequest_WithCancelledToken_TaskRunRejectsCancelledToken()
-        {
-            var queue = CreateQueue();
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-
-            bool taskStarted = false;
-            var task = Task.Run(async () =>
-            {
-                taskStarted = true;
-                await Task.CompletedTask;
-            }, cts.Token);
-
-            await Assert.ThrowsAsync<TaskCanceledException>(() => task);
-            Assert.False(taskStarted);
-        }
-
-        [Fact]
-        public async Task FireRequest_WithCancelledToken_ThrowsBeforeLambdaStarts()
-        {
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-
-            bool lambdaExecuted = false;
-            var task = Task.Run(async () =>
-            {
-                lambdaExecuted = true;
-                await Task.CompletedTask;
-            }, cts.Token);
-
-            await Assert.ThrowsAsync<TaskCanceledException>(() => task);
-            Assert.False(lambdaExecuted);
         }
 
         [Fact]

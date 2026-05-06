@@ -1,3 +1,4 @@
+using RimMind.Core.Runtime;
 using Verse;
 
 namespace RimMind.Core.AgentBus
@@ -8,12 +9,12 @@ namespace RimMind.Core.AgentBus
 
         public override void StartedNewGame()
         {
-            AgentBus.ClearAllSubscribers();
+            RimMindRuntime.Instance.EventBus.ClearAllSubscribers();
         }
 
         public override void LoadedGame()
         {
-            AgentBus.ClearAllSubscribers();
+            RimMindRuntime.Instance.EventBus.ClearAllSubscribers();
         }
     }
 }

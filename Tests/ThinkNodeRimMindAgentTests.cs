@@ -1,4 +1,5 @@
 using RimMind.Core.Agent;
+using RimMind.Core.AgentBus;
 using RimMind.Core.Comps;
 using Verse;
 using Verse.AI;
@@ -8,15 +9,19 @@ namespace RimMind.Core.Tests
 {
     public class PawnAgentPendingJobTests
     {
+        private static IEventBus CreateEventBus() => new EventBusAdapter(new AgentBusImpl());
+
         private static Pawn CreatePawn(int id = 1)
         {
-            return new Pawn { thingIDNumber = id };
+            var pawn = new Pawn { thingIDNumber = id };
+            pawn.jobs = new Pawn_JobTracker { jobQueue = new Verse.AI.JobQueue() };
+            return pawn;
         }
 
         private static (Pawn pawn, CompPawnAgent comp, PawnAgent agent) CreateActiveAgent(int id = 1)
         {
             var pawn = CreatePawn(id);
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             agent.TransitionTo(AgentState.Active);
             var comp = new CompPawnAgent { Agent = agent };
             pawn.AddComp(comp);
@@ -66,9 +71,13 @@ namespace RimMind.Core.Tests
 
     public class ThinkNode_RimMindAgentTests
     {
+        private static IEventBus CreateEventBus() => new EventBusAdapter(new AgentBusImpl());
+
         private static Pawn CreatePawnWithComp(int id = 1)
         {
-            return new Pawn { thingIDNumber = id };
+            var pawn = new Pawn { thingIDNumber = id };
+            pawn.jobs = new Pawn_JobTracker { jobQueue = new Verse.AI.JobQueue() };
+            return pawn;
         }
 
         [Fact]
@@ -95,7 +104,7 @@ namespace RimMind.Core.Tests
         public void TryIssueJobPackage_AgentNotActive_ReturnsNoJob()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             var comp = new CompPawnAgent { Agent = agent };
             pawn.AddComp(comp);
             var node = new ThinkNode_RimMindAgent();
@@ -107,7 +116,7 @@ namespace RimMind.Core.Tests
         public void TryIssueJobPackage_ActiveAgentNoPendingJob_ReturnsNoJob()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             agent.TransitionTo(AgentState.Active);
             var comp = new CompPawnAgent { Agent = agent };
             pawn.AddComp(comp);
@@ -120,7 +129,7 @@ namespace RimMind.Core.Tests
         public void TryIssueJobPackage_ActiveAgentWithPendingJob_ReturnsJob()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             agent.TransitionTo(AgentState.Active);
             var job = new Job();
             agent.SetPendingJob(job);
@@ -136,7 +145,7 @@ namespace RimMind.Core.Tests
         public void TryIssueJobPackage_ConsumesPendingJob()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             agent.TransitionTo(AgentState.Active);
             agent.SetPendingJob(new Job());
             var comp = new CompPawnAgent { Agent = agent };
@@ -159,7 +168,7 @@ namespace RimMind.Core.Tests
         public void GetPriority_AgentNotActive_ReturnsZero()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             var comp = new CompPawnAgent { Agent = agent };
             pawn.AddComp(comp);
             var node = new ThinkNode_RimMindAgent();
@@ -170,7 +179,7 @@ namespace RimMind.Core.Tests
         public void GetPriority_ActiveAgent_ReturnsConfiguredPriority()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             agent.TransitionTo(AgentState.Active);
             var comp = new CompPawnAgent { Agent = agent };
             pawn.AddComp(comp);
@@ -182,7 +191,7 @@ namespace RimMind.Core.Tests
         public void GetPriority_DefaultPriority_IsFive()
         {
             var pawn = CreatePawnWithComp();
-            var agent = new PawnAgent(pawn);
+            var agent = new PawnAgent(pawn, CreateEventBus());
             agent.TransitionTo(AgentState.Active);
             var comp = new CompPawnAgent { Agent = agent };
             pawn.AddComp(comp);

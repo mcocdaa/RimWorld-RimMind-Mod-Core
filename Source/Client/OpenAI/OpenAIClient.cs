@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
+using RimMind.Kernel.Queue;
 using Newtonsoft.Json;
 using UnityEngine.Networking;
 using Verse;
@@ -121,7 +122,7 @@ namespace RimMind.Core.Client.OpenAI
                 response.HttpStatusCode = httpStatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
             catch (HttpHelper.HttpException ex)
@@ -133,7 +134,7 @@ namespace RimMind.Core.Client.OpenAI
                 response.HttpStatusCode = ex.StatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
             catch (Exception ex)
@@ -144,7 +145,7 @@ namespace RimMind.Core.Client.OpenAI
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
         }
@@ -272,7 +273,7 @@ namespace RimMind.Core.Client.OpenAI
                         AIRequestQueue.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
                 }
 
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
             catch (HttpHelper.HttpException ex)
@@ -284,7 +285,7 @@ namespace RimMind.Core.Client.OpenAI
                 response.HttpStatusCode = ex.StatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
             catch (Exception ex)
@@ -295,7 +296,7 @@ namespace RimMind.Core.Client.OpenAI
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                AIDebugLog.Record(request, response, (int)sw.ElapsedMilliseconds);
+                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return response;
             }
         }

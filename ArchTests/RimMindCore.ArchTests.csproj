@@ -1,0 +1,117 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>RimMind.Core.ArchTests</RootNamespace>
+    <AssemblyName>RimMindCore.ArchTests</AssemblyName>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" Version="1.3.2" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="ArchTestExtensions.cs" />
+    <Compile Include="ArchTestStubs.cs" />
+    <Compile Include="PhaseA/R_A1_NoReverseDependencyTests.cs" />
+    <Compile Include="PhaseA/R_A2_PawnAgentConstructorTests.cs" />
+    <Compile Include="PhaseA/R_A3_NoPrivateStaticFieldsTests.cs" />
+    <Compile Include="PhaseA/R_A4_NoSetBackdoorTests.cs" />
+    <Compile Include="General/R_G1_PublicTypesInContractsTests.cs" />
+    <Compile Include="General/R_G2_InternalNotLeakingTests.cs" />
+    <Compile Include="PhaseB/R_B1_NoLegacyRegistrationTests.cs" />
+    <Compile Include="PhaseB/R_B2_AgentBusOnlyInImplTests.cs" />
+    <Compile Include="PhaseB/R_B3_ExtensionsOnlyEntryTests.cs" />
+    <Compile Include="../Tests/VerseStubs.cs" Link="VerseStubs.cs" />
+    <Compile Include="../Source/Core/JsonTagExtractor.cs" />
+    <Compile Include="../Source/Core/Prompt/PromptSection.cs" />
+    <Compile Include="../Source/Core/Prompt/PromptSanitizer.cs" />
+    <Compile Include="../Source/Core/Prompt/TaskInstructionBuilder.cs" />
+    <Compile Include="../Source/Client/JsonRepairHelper.cs" />
+    <Compile Include="../Source/Client/StructuredTool.cs" />
+    <Compile Include="../Source/Core/Agent/StrategyOptimizer.cs" />
+    <Compile Include="../Source/Core/Agent/AgentGoalStack.cs" />
+    <Compile Include="../Source/Core/Agent/RiskLevel.cs" />
+    <Compile Include="../Source/Core/Agent/PawnAgent.cs" />
+    <Compile Include="../Source/Core/Agent/PawnPerceiver.cs" />
+    <Compile Include="../Source/Core/Agent/PawnThinker.cs" />
+    <Compile Include="../Source/Core/Agent/PawnActor.cs" />
+    <Compile Include="../Source/Core/Agent/PawnRecorder.cs" />
+    <Compile Include="../Source/Core/Agent/IPawnAgent.cs" />
+    <Compile Include="../Source/Core/Agent/RimMindActionDef.cs" />
+    <Compile Include="../Source/Core/Context/BudgetAllocation.cs" />
+    <Compile Include="../Source/Core/Context/ContextEntry.cs" />
+    <Compile Include="../Source/Core/Context/ContextSnapshot.cs" />
+    <Compile Include="../Source/Core/Context/RelevanceTable.cs" />
+    <Compile Include="../Source/Core/Context/ScenarioRegistry.cs" />
+    <Compile Include="../Source/Core/Context/BudgetScheduler.cs" />
+    <Compile Include="../Source/Core/Context/ContextRequest.cs" />
+    <Compile Include="../Source/Core/Context/EmbedCache.cs" />
+    <Compile Include="../Source/Core/Context/ContextEngine.cs" />
+    <Compile Include="../Source/Kernel/Context/ContextOrchestrator.cs" />
+    <Compile Include="../Source/Kernel/Context/ContextTelemetryEmitter.cs" />
+    <Compile Include="../Source/Core/Context/ContextCacheManager.cs" />
+    <Compile Include="../Source/Core/Context/ContextDiffTracker.cs" />
+    <Compile Include="../Source/Core/Context/ContextLayerBuilder.cs" />
+    <Compile Include="../Source/Core/Context/ContextKeyRegistry.cs" />
+    <Compile Include="../Source/Core/Context/HistoryManager.cs" />
+    <Compile Include="../Source/Core/AgentBus/AgentBusImpl.cs" />
+    <Compile Include="../Source/Core/AgentBus/IEventBus.cs" />
+    <Compile Include="../Source/Core/AgentBus/EventBusAdapter.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/PerceptionEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/DecisionEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/GoalEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/ActionEvent.cs" />
+    <Compile Include="../Source/Core/AgentBus/Events/AgentLifecycleEvent.cs" />
+    <Compile Include="../Source/Core/Agent/ThinkNode_RimMindAgent.cs" />
+    <Compile Include="../Source/Core/AgentBus/AgentBusGameComponent.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelParameterStore.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelGameComponent.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelRuleEngine.cs" />
+    <Compile Include="../Source/Core/Flywheel/FlywheelTelemetryCollector.cs" />
+    <Compile Include="../Source/Core/AIRequestQueue.cs" />
+    <Compile Include="../Source/Core/Internal/RimMindServiceLocator.cs" />
+    <Compile Include="../Source/Core/Internal/AIRequestPool.cs" />
+    <Compile Include="../Source/Client/AIRequest.cs" />
+    <Compile Include="../Source/Client/AIResponse.cs" />
+    <Compile Include="../Source/Client/IAIClient.cs" />
+    <Compile Include="../Source/Contracts/ThreadAffinityAttribute.cs" />
+    <Compile Include="../Source/Core/Perception/PerceptionBridge.cs" />
+    <Compile Include="../Source/Npc/NpcManager.cs" />
+    <Compile Include="../Source/Npc/INpcManager.cs" />
+    <Compile Include="../Source/Core/AIDebugLog.cs" />
+    <Compile Include="../Source/Core/Context/IContextEngine.cs" />
+    <Compile Include="../Source/Core/Context/IContextCacheManager.cs" />
+    <Compile Include="../Source/Core/Context/IContextDiffTracker.cs" />
+    <Compile Include="../Source/Core/Context/IContextLayerBuilder.cs" />
+    <Compile Include="../Source/Core/Context/IBudgetScheduler.cs" />
+    <Compile Include="../Source/Core/Context/IHistoryManager.cs" />
+    <Compile Include="../Source/Core/RimMindLogger.cs" />
+    <Compile Include="../Source/Npc/TransientExceptionChecker.cs" />
+    <Compile Include="../Source/Core/Internal/IProviderRegistry.cs" />
+    <Compile Include="../Source/Core/Internal/ProviderRegistry.cs" />
+    <Compile Include="../Source/Core/Internal/IClientManager.cs" />
+    <Compile Include="../Source/Core/Internal/IAIRequestQueue.cs" />
+    <Compile Include="../Source/Core/Internal/IAIDebugLog.cs" />
+    <Compile Include="../Source/Core/Flywheel/IFlywheelParameterStore.cs" />
+    <Compile Include="../Source/Core/Internal/TrackedRequest.cs" />
+    <Compile Include="../Source/Core/Sensor/ISensorManager.cs" />
+    <Compile Include="../Source/Compilers/IsExternalInit.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

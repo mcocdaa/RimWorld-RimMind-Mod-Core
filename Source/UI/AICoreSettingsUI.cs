@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using RimMind.Contracts.Extension;
 using RimMind.Core.Client;
 using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
@@ -16,7 +17,7 @@ namespace RimMind.Core.UI
     /// <summary>
     /// 多分页设置界面。
     /// 使用 ButtonText 式导航（不占用 mod 标题区域）。
-    /// 子 mod 通过 RimMindAPI.RegisterSettingsTab 注册额外分页。
+    /// 子 mod 通过 RimMindAPI.Extensions&lt;ISettingsTab&gt;().Register() 注册额外分页。
     /// </summary>
     public static class RimMindCoreSettingsUI
     {
@@ -63,8 +64,8 @@ namespace RimMind.Core.UI
                 case "context": DrawContextTab(content); break;
                 case "prompts": DrawPromptsTab(content); break;
                 default:
-                    foreach (var (id, _, fn) in RimMindAPI.SettingsTabs)
-                        if (id == _curTab) { fn(content); break; }
+                    foreach (var tab in RimMindAPI.Extensions<ISettingsTab>().All)
+                        if (tab.Id == _curTab) { tab.Draw(content); break; }
                     break;
             }
         }
@@ -78,8 +79,8 @@ namespace RimMind.Core.UI
                 ("prompts", "RimMind.Core.Settings.Tab.Prompts".Translate()),
                 ("context", "RimMind.Core.Settings.Tab.Context".Translate()),
             };
-            foreach (var (id, labelFn, _) in RimMindAPI.SettingsTabs)
-                tabs.Add((id, labelFn()));
+            foreach (var tab in RimMindAPI.Extensions<ISettingsTab>().All)
+                tabs.Add((tab.Id, tab.Label));
             return tabs;
         }
 
@@ -346,7 +347,7 @@ namespace RimMind.Core.UI
             GUI.color = Color.white;
             s.defaultModCooldownTicks = (int)listing.Slider(s.defaultModCooldownTicks, 600f, 36000f);
 
-            var queue = AIRequestQueue.Instance;
+            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
             if (queue != null)
             {
                 listing.Gap(4f);
@@ -524,7 +525,7 @@ namespace RimMind.Core.UI
 
         private static void DrawQueueTab(Rect inRect)
         {
-            var queue = AIRequestQueue.Instance;
+            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
             if (queue == null)
             {
                 var listing0 = new Listing_Standard();
@@ -540,7 +541,7 @@ namespace RimMind.Core.UI
             var allCooldowns = queue.GetAllCooldowns();
             var allModIds = new HashSet<string>(allDepths.Keys);
             allModIds.UnionWith(allCooldowns.Keys);
-            allModIds.UnionWith(RimMindAPI.ModCooldownGetters.Keys);
+            allModIds.UnionWith(RimMindAPI.Extensions<IModCooldown>().All.Select(c => c.Id));
 
             int modCount = allModIds.Count;
             int activeCount = queue.ActiveRequestCount;

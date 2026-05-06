@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using RimMind.Core.Client.Player2;
 using RimMind.Core.Context;
 using RimMind.Core.Internal;
+using RimMind.Kernel.Queue;
 
 namespace RimMind.Core.Npc
 {
@@ -19,10 +20,10 @@ namespace RimMind.Core.Npc
         public bool SupportsCommands => _remote.SupportsCommands;
         public bool SupportsStructuredOutput => _remote.SupportsStructuredOutput;
 
-        public HybridStorageDriver(Player2Client client, HistoryManager historyManager)
+        public HybridStorageDriver(Player2Client client, IHistoryManager historyManager)
         {
             _local = new LocalStorageDriver(historyManager);
-            _remote = new Player2StorageDriver(client);
+            _remote = new Player2StorageDriver(client, RimMindServiceLocator.Get<INpcManager>());
         }
 
         private static bool IsTransientException(Exception ex) => TransientExceptionChecker.IsTransient(ex);

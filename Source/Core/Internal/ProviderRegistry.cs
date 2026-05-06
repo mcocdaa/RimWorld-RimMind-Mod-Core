@@ -9,7 +9,7 @@ using Verse;
 
 namespace RimMind.Core.Internal
 {
-    public class ProviderRegistry
+    public class ProviderRegistry : IProviderRegistry
     {
         private readonly ConcurrentDictionary<string, (string modId, Func<string?> provider, int priority)>
             _staticProviders = new ConcurrentDictionary<string, (string, Func<string?>, int)>();

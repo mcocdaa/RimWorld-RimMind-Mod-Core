@@ -19,7 +19,14 @@ namespace RimMind.Core.Agent
             if (comp == null || comp.Agent == null || !comp.Agent.IsActive) return ThinkResult.NoJob;
             var job = comp.Agent.ConsumePendingJob();
             if (job == null) return ThinkResult.NoJob;
+            job.jobGiver = this;
             return new ThinkResult(job, this, default, false);
+        }
+
+        public override ThinkNode DeepCopy(ThinkNode like)
+        {
+            var node = (ThinkNode_RimMindAgent)base.DeepCopy(like);
+            return node;
         }
     }
 }

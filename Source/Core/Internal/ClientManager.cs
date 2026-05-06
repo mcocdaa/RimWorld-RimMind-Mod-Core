@@ -8,7 +8,7 @@ using Verse;
 
 namespace RimMind.Core.Internal
 {
-    public class ClientManager
+    public class ClientManager : IClientManager
     {
         private Player2Client? _cachedPlayer2Client;
         private AIProvider _cachedProvider;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using RimMind.Core.Agent;
 using RimMind.Core.Client;
 using Xunit;
@@ -180,6 +181,40 @@ namespace RimMind.Core.Tests
 
             var sorted = opt.GetWeightedTools(tools);
             Assert.Equal(2, sorted.Count);
+        }
+    }
+
+    public class StrategyOptimizerConcurrencyTests
+    {
+        [Fact]
+        public void ConcurrentAdjustWeight_DoesNotCorruptState()
+        {
+            var opt = new StrategyOptimizer();
+            var actions = new[] { "attack", "defend", "flee", "talk", "craft" };
+            Parallel.For(0, 100, i =>
+            {
+                opt.AdjustWeight(actions[i % actions.Length], 0.1f);
+            });
+            var top = opt.GetTopN(10);
+            Assert.Equal(5, top.Count);
+            foreach (var kvp in top)
+            {
+                Assert.InRange(kvp.Value, 0f, 5f);
+            }
+        }
+
+        [Fact]
+        public void ConcurrentDecayAndAdjust_DoesNotCorruptState()
+        {
+            var opt = new StrategyOptimizer();
+            for (int i = 0; i < 10; i++) opt.AdjustWeight($"act{i}", 1.0f);
+            Parallel.Invoke(
+                () => { for (int i = 0; i < 50; i++) opt.AdjustWeight("act0", 0.1f); },
+                () => { for (int i = 0; i < 50; i++) opt.AdjustWeight("act1", -0.1f); },
+                () => opt.DecayAll()
+            );
+            var top = opt.GetTopN(10);
+            Assert.True(top.Count <= 10);
         }
     }
 }

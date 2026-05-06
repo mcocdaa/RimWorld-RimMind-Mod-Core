@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core.Internal;
 using Verse;
 
 namespace RimMind.Core.Context
@@ -28,13 +29,21 @@ namespace RimMind.Core.Context
             Scribe_Values.Look(ref Role, "role");
             Scribe_Values.Look(ref Content, "content");
             Scribe_Values.Look(ref Tick, "tick");
-            Scribe_Values.Look(ref Scenario, "scenario", null);
+            Scribe_Values.Look(ref Scenario, "scenario", null!);
         }
     }
 
-    public class HistoryManager
+    public class HistoryManager : IHistoryManager
     {
-        public static HistoryManager Instance { get; private set; } = new HistoryManager();
+        public static IHistoryManager? Instance
+        {
+            get => RimMindServiceLocator.Get<IHistoryManager>();
+            private set
+            {
+                if (value != null)
+                    RimMindServiceLocator.Register<IHistoryManager>(value);
+            }
+        }
 
         private readonly ConcurrentDictionary<string, List<HistoryEntry>> _histories =
             new ConcurrentDictionary<string, List<HistoryEntry>>();
@@ -84,6 +93,22 @@ namespace RimMind.Core.Context
                     var kept = entries.Skip(entries.Count - CompressThreshold).ToList();
                     entries.Clear();
                     entries.AddRange(kept);
+                }
+            }
+        }
+
+        public void ReplaceLastAssistantTurn(string npcId, string content)
+        {
+            if (!_histories.TryGetValue(npcId, out var entries)) return;
+            lock (_listLock)
+            {
+                for (int i = entries.Count - 1; i >= 0; i--)
+                {
+                    if (entries[i].Role == "assistant")
+                    {
+                        entries[i] = new HistoryEntry("assistant", content, entries[i].Tick, entries[i].Scenario);
+                        break;
+                    }
                 }
             }
         }

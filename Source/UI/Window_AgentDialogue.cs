@@ -9,7 +9,7 @@ namespace RimMind.Core.UI
     public class Window_AgentDialogue : Window
     {
         private readonly Pawn _pawn;
-        private readonly PawnAgent? _agent;
+        private readonly IPawnAgent? _agent;
         private readonly string _npcId;
         private string _inputText = "";
         private Vector2 _scrollPosition;
@@ -62,7 +62,7 @@ namespace RimMind.Core.UI
 
         private void DrawHistory(Rect rect)
         {
-            var history = HistoryManager.Instance.GetHistory(_npcId, MaxHistoryRounds);
+            var history = RimMindAPI.GetHistoryManager().GetHistory(_npcId, MaxHistoryRounds);
 
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
 
@@ -118,7 +118,7 @@ namespace RimMind.Core.UI
             _inputText = "";
 
             string thinkingText = "RimMind.Core.UI.AgentDialogue.Thinking".Translate();
-            HistoryManager.Instance.AddTurn(_npcId, message, thinkingText, "Dialogue");
+            RimMindAPI.GetHistoryManager().AddTurn(_npcId, message, thinkingText, "Dialogue");
 
             var npcId = _npcId;
             _agent.ForceThink();
@@ -144,14 +144,15 @@ namespace RimMind.Core.UI
                     var result = await driver.ChatAsync(snapshot);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        var currentHistory = HistoryManager.Instance.GetHistory(npcId, MaxHistoryRounds);
+                        var hm = RimMindAPI.GetHistoryManager();
+                        var currentHistory = hm.GetHistory(npcId, MaxHistoryRounds);
                         if (currentHistory != null)
                         {
                             for (int i = currentHistory.Count - 1; i >= 0; i--)
                             {
                                 if (currentHistory[i].role == "assistant" && currentHistory[i].content == thinkingText)
                                 {
-                                    HistoryManager.Instance.ReplaceLastAssistantTurn(npcId, result.Message ?? "");
+                                    hm.ReplaceLastAssistantTurn(npcId, result.Message ?? "");
                                     break;
                                 }
                             }

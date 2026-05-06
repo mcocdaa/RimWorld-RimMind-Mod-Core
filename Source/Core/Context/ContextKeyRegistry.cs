@@ -83,7 +83,7 @@ namespace RimMind.Core.Context
                     if (CurrentScenario == ScenarioIds.Dialogue)
                         return WrapEntry("");
                     if (pawn == null) return WrapEntry("");
-                    var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
+                    var profile = RimMindServiceLocator.Get<INpcManager>()?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     return WrapEntry(profile?.SystemPrompt ?? "");
                 }, "Core");
             Register("npc_identity", ContextLayer.L0_Static, 1.0f,
@@ -94,7 +94,7 @@ namespace RimMind.Core.Context
                     if (CurrentScenario == ScenarioIds.Dialogue)
                         return WrapEntry("");
                     if (pawn == null) return WrapEntry("");
-                    var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
+                    var profile = RimMindServiceLocator.Get<INpcManager>()?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
                     sb.AppendLine("RimMind.Core.Prompt.Identity.Name".Translate(profile.Name));
@@ -110,7 +110,7 @@ namespace RimMind.Core.Context
                     if (CurrentScenario == ScenarioIds.Decision) return WrapEntry("");
                     if (CurrentScenario == ScenarioIds.Dialogue) return WrapEntry("");
                     if (pawn == null) return WrapEntry("");
-                    var profile = NpcManager.Instance?.GetNpc($"NPC-{pawn.thingIDNumber}");
+                    var profile = RimMindServiceLocator.Get<INpcManager>()?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null || profile.Commands.Count == 0) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
                     sb.AppendLine("RimMind.Core.Prompt.Commands.Available".Translate());

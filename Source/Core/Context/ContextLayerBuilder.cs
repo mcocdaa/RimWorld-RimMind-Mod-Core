@@ -11,20 +11,20 @@ using Verse;
 
 namespace RimMind.Core.Context
 {
-    internal class ContextLayerBuilder
+    internal class ContextLayerBuilder : IContextLayerBuilder
     {
-        public ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, Pawn? pawn, ContextCacheManager cacheManager)
+        public ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, Verse.Pawn? pawn, IContextCacheManager cacheManager)
         {
             string cacheKey = $"{npcId}_{scenario}";
-            if (cacheManager.L0Cache.TryGetValue(cacheKey, out var cached))
+            if (cacheManager.TryGetL0CacheItem(cacheKey, out var cached))
             {
                 foreach (var key in keys)
-                    cacheManager.PendingCacheEvents[$"L0_{key.Key}"] = true;
+                    cacheManager.SetPendingCacheEvent($"L0_{key.Key}", true);
                 return cached;
             }
 
             foreach (var key in keys)
-                cacheManager.PendingCacheEvents[$"L0_{key.Key}"] = false;
+                cacheManager.SetPendingCacheEvent($"L0_{key.Key}", false);
 
             var sb = new StringBuilder();
 
@@ -43,16 +43,16 @@ namespace RimMind.Core.Context
             if (string.IsNullOrEmpty(content)) return null;
 
             var msg = new ChatMessage { Role = "system", Content = content };
-            cacheManager.L0Cache[cacheKey] = msg;
+            cacheManager.SetL0CacheItem(cacheKey, msg);
             return msg;
         }
 
-        public ChatMessage? BuildL1(string npcId, List<KeyMeta> keys, Pawn? pawn, ContextCacheManager cacheManager, ContextDiffTracker diffTracker)
+        public ChatMessage? BuildL1(string npcId, List<KeyMeta> keys, Verse.Pawn? pawn, IContextCacheManager cacheManager, IContextDiffTracker diffTracker)
         {
             if (keys.Count == 0) return null;
 
             bool changed = false;
-            if (cacheManager.L1KeyVersions.TryGetValue(npcId, out var versions))
+            if (cacheManager.TryGetL1KeyVersions(npcId, out var versions))
             {
                 foreach (var key in keys)
                 {
@@ -63,7 +63,7 @@ namespace RimMind.Core.Context
                         changed = true;
                         break;
                     }
-                    if (diffTracker.KeyLastValues.TryGetValue(npcId, out var lastVals) &&
+                    if (diffTracker.TryGetKeyLastValues(npcId, out var lastVals) &&
                         lastVals.TryGetValue(key.Key, out var lastVal) &&
                         lastVal != currentVal)
                     {
@@ -77,20 +77,21 @@ namespace RimMind.Core.Context
                 changed = true;
             }
 
-            if (!changed && cacheManager.L1BlockCache.TryGetValue(npcId, out var existingBlocks))
+            if (!changed && cacheManager.TryGetL1BlockCache(npcId, out var existingBlocks))
             {
                 foreach (var key in keys)
-                    cacheManager.PendingCacheEvents[$"L1_{key.Key}"] = true;
+                    cacheManager.SetPendingCacheEvent($"L1_{key.Key}", true);
                 return AssembleL1Message(existingBlocks);
             }
 
             foreach (var key in keys)
-                cacheManager.PendingCacheEvents[$"L1_{key.Key}"] = false;
+                cacheManager.SetPendingCacheEvent($"L1_{key.Key}", false);
 
-            if (!cacheManager.L1BlockCache.TryGetValue(npcId, out var blocks))
+            Dictionary<string, string> blocks;
+            if (!cacheManager.TryGetL1BlockCache(npcId, out blocks!))
             {
                 blocks = new Dictionary<string, string>();
-                cacheManager.L1BlockCache[npcId] = blocks;
+                cacheManager.SetL1BlockCache(npcId, blocks);
             }
 
             foreach (var key in keys)
@@ -104,13 +105,14 @@ namespace RimMind.Core.Context
                     blocks.Remove(key.Key);
             }
 
-            int newVersion = (cacheManager.L1Version.TryGetValue(npcId, out var oldVer) ? oldVer : 0) + 1;
-            cacheManager.L1Version[npcId] = newVersion;
+            int newVersion = (cacheManager.TryGetL1Version(npcId, out var oldVer) ? oldVer : 0) + 1;
+            cacheManager.SetL1Version(npcId, newVersion);
 
-            if (!cacheManager.L1KeyVersions.TryGetValue(npcId, out var keyVersions))
+            Dictionary<string, int> keyVersions;
+            if (!cacheManager.TryGetL1KeyVersions(npcId, out keyVersions!))
             {
                 keyVersions = new Dictionary<string, int>();
-                cacheManager.L1KeyVersions[npcId] = keyVersions;
+                cacheManager.SetL1KeyVersions(npcId, keyVersions);
             }
             foreach (var key in keys)
                 keyVersions[key.Key] = newVersion;
@@ -118,7 +120,7 @@ namespace RimMind.Core.Context
             return AssembleL1Message(blocks);
         }
 
-        public ChatMessage? BuildContextLayer(List<KeyMeta> keys, Pawn? pawn)
+        public ChatMessage? BuildContextLayer(List<KeyMeta> keys, Verse.Pawn? pawn)
         {
             if (keys.Count == 0 || pawn == null) return null;
 
@@ -147,7 +149,7 @@ namespace RimMind.Core.Context
             return new ChatMessage { Role = "system", Content = content };
         }
 
-        public ChatMessage? BuildL5(List<KeyMeta> keys, Pawn? pawn)
+        public ChatMessage? BuildL5(List<KeyMeta> keys, Verse.Pawn? pawn)
         {
             if (keys.Count == 0 || pawn == null) return null;
             var sb = new StringBuilder();
@@ -167,9 +169,9 @@ namespace RimMind.Core.Context
             return new ChatMessage { Role = "system", Content = content };
         }
 
-        public ChatMessage? BuildDiffMessage(string npcId, ContextLayer layer, ContextSnapshot snapshot, ContextDiffTracker diffTracker)
+        public ChatMessage? BuildDiffMessage(string npcId, ContextLayer layer, ContextSnapshot snapshot, IContextDiffTracker diffTracker)
         {
-            if (!diffTracker.DiffStore.TryGetValue(npcId, out var diffs) || diffs.Count == 0)
+            if (!diffTracker.TryGetDiffStore(npcId, out var diffs) || diffs.Count == 0)
                 return null;
 
             var layerDiffs = diffs.Where(d => d.Layer == layer).ToList();

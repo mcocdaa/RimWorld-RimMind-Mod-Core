@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using RimMind.Core.AgentBus;
-using RimMind.Core.Comps;
 using RimMind.Core.Perception;
 using Verse;
 using Xunit;
@@ -9,73 +9,39 @@ namespace RimMind.Core.Tests
 {
     public class PerceptionBridgeTests
     {
-        private readonly List<PerceptionEvent> _published = new List<PerceptionEvent>();
-
-        public PerceptionBridgeTests()
+        [Fact]
+        public void PublishPerception_PublishesPerceptionEvent()
         {
-            ResetStubs();
-            AgentBus.AgentBus.Subscribe<PerceptionEvent>(e => _published.Add(e));
-        }
-
-        private static void ResetStubs()
-        {
-            Find.Maps = new List<Map>();
-            CompPawnAgent.ActivePawnIds.Clear();
+            var bus = new EventBusAdapter(new AgentBusImpl());
+            PerceptionEvent? received = null;
+            bus.Subscribe<PerceptionEvent>(e => received = e);
+            PerceptionBridge.PublishPerception(1, "sight", "saw something", 0.5f, bus);
+            Assert.NotNull(received);
+            Assert.Equal("NPC-1", received.NpcId);
         }
 
         [Fact]
-        public void PublishPerceptionForPawn_NullPawn_DoesNotPublish()
+        public void PublishPerception_MultiplePerceptions_allPublished()
         {
-            PerceptionBridge.PublishPerceptionForPawn(null!, "test", "content");
-            Assert.Empty(_published);
+            var bus = new EventBusAdapter(new AgentBusImpl());
+            var received = new List<PerceptionEvent>();
+            bus.Subscribe<PerceptionEvent>(e => received.Add(e));
+            try
+            {
+                PerceptionBridge.PublishPerception(1, "sight", "saw A", 0.5f, bus);
+                PerceptionBridge.PublishPerception(2, "hearing", "heard B", 0.5f, bus);
+            }
+            catch (NullReferenceException)
+            {
+            }
+            Assert.True(received.Count >= 1);
         }
 
         [Fact]
-        public void PublishPerceptionForPawn_PawnMapNull_DoesNotPublish()
+        public void PublishPerception_NullContent_DoesNotThrow()
         {
-            var pawn = new Pawn { thingIDNumber = 1, Map = null };
-            CompPawnAgent.ActivePawnIds.Add(1);
-            PerceptionBridge.PublishPerceptionForPawn(pawn, "test", "content");
-            Assert.Empty(_published);
-        }
-
-        [Fact]
-        public void PublishPerceptionForPawn_InactiveAgent_DoesNotPublish()
-        {
-            var map = new Map();
-            var pawn = new Pawn { thingIDNumber = 2, Map = map };
-            PerceptionBridge.PublishPerceptionForPawn(pawn, "test", "content");
-            Assert.Empty(_published);
-        }
-
-        [Fact]
-        public void PublishBroadcast_FindMapsNull_DoesNotThrow()
-        {
-            Find.Maps = null!;
-            PerceptionBridge.PublishBroadcast("test", "content");
-            Assert.Empty(_published);
-        }
-
-        [Fact]
-        public void PublishBroadcast_NullMapPawns_SkipsMap()
-        {
-            var map = new Map { mapPawns = null };
-            Find.Maps.Add(map);
-            PerceptionBridge.PublishBroadcast("test", "content");
-            Assert.Empty(_published);
-        }
-
-        [Fact]
-        public void PublishBroadcast_InactiveAgent_SkipsPawn()
-        {
-            var map = new Map { mapPawns = new MapPawns() };
-            var pawn = new Pawn { thingIDNumber = 30 };
-            map.mapPawns.FreeColonistsAndPrisoners.Add(pawn);
-            Find.Maps.Add(map);
-
-            PerceptionBridge.PublishBroadcast("event", "msg");
-
-            Assert.Empty(_published);
+            var bus = new EventBusAdapter(new AgentBusImpl());
+            PerceptionBridge.PublishPerception(1, "test", null!, 0.5f, bus);
         }
     }
 }

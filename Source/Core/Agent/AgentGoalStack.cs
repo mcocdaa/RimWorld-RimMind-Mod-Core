@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.AgentBus;
+using RimMind.Core.Runtime;
 using Verse;
 
 namespace RimMind.Core.Agent
@@ -52,7 +53,7 @@ namespace RimMind.Core.Agent
             _goals.Add(goal);
             BumpVersion();
             _goals.Sort((a, b) => b.Priority.CompareTo(a.Priority));
-            global::RimMind.Core.AgentBus.AgentBus.Publish(new GoalEvent(
+            RimMindRuntime.Instance.EventBus.Publish(new GoalEvent(
                 $"NPC-{pawnId}", pawnId, goal.Description, goal.Status.ToString(), goal.Category.ToString()));
             return true;
         }
@@ -65,7 +66,7 @@ namespace RimMind.Core.Agent
             if (goal.Status == GoalStatus.Active) _activeCount--;
             _goals.RemoveAt(idx);
             BumpVersion();
-            global::RimMind.Core.AgentBus.AgentBus.Publish(new GoalEvent(
+            RimMindRuntime.Instance.EventBus.Publish(new GoalEvent(
                 $"NPC-{pawnId}", pawnId, goal.Description, GoalStatus.Abandoned.ToString(), goal.Category.ToString()));
             PromoteProposed();
             return true;
@@ -82,7 +83,7 @@ namespace RimMind.Core.Agent
                     goal.Status = GoalStatus.Expired;
                     _goals.RemoveAt(i);
                     BumpVersion();
-                    global::RimMind.Core.AgentBus.AgentBus.Publish(new GoalEvent(
+                    RimMindRuntime.Instance.EventBus.Publish(new GoalEvent(
                         $"NPC-{pawnId}", pawnId, goal.Description, GoalStatus.Expired.ToString(), goal.Category.ToString()));
                 }
             }

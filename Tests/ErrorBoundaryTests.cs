@@ -110,7 +110,7 @@ namespace RimMind.Core.Tests
             };
             var response = AIResponse.Ok("test_null_settings", "ok", 10);
 
-            var exception = Record.Exception(() => AIDebugLog.Record(request, response, 100));
+            var exception = Record.Exception(() => RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, 100));
             Assert.Null(exception);
         }
 
@@ -125,7 +125,7 @@ namespace RimMind.Core.Tests
             };
             var response = AIResponse.Ok("test_with_model", "ok", 10);
 
-            var exception = Record.Exception(() => AIDebugLog.Record(request, response, 100));
+            var exception = Record.Exception(() => RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, 100));
             Assert.Null(exception);
 
             RimMindCoreMod.Settings = null;

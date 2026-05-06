@@ -1,4 +1,5 @@
 using System;
+using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
 using Verse;
 
@@ -31,8 +32,8 @@ namespace RimMind.Core.Flywheel
             base.ExposeData();
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                RimMindAPI.Telemetry.Flush();
-                RimMindAPI.GetEmbeddingSnapshotStore()?.Flush();
+                RimMindRuntime.Instance.Telemetry.Flush();
+                RimMindRuntime.Instance.GetEmbeddingSnapshotStore()?.Flush();
             }
         }
 
@@ -55,7 +56,7 @@ namespace RimMind.Core.Flywheel
 
         private void RunPeriodicAnalysis()
         {
-            var records = RimMindAPI.Telemetry.GetRecentRecords(100);
+            var records = RimMindRuntime.Instance.Telemetry.GetRecentRecords(100);
             if (records == null || records.Count == 0) return;
             FlywheelRuleEngine.Analyze(records);
         }

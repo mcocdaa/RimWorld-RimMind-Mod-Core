@@ -7,43 +7,59 @@ using Verse;
 
 namespace RimMind.Core.Npc
 {
-    public class NpcManager : GameComponent
+    public class NpcManager : GameComponent, INpcManager
     {
         private ConcurrentDictionary<string, NpcProfile> _registry = new ConcurrentDictionary<string, NpcProfile>();
-        private static NpcManager? _instance;
-        public static NpcManager? Instance
+        private readonly ConcurrentDictionary<int, Pawn> _pawnIndex = new ConcurrentDictionary<int, Pawn>();
+        private readonly HashSet<int> _activeAgentPawnIds = new HashSet<int>();
+
+        public static INpcManager? Instance
         {
-            get => RimMindServiceLocator.Get<NpcManager>() ?? _instance;
+            get => RimMindServiceLocator.Get<INpcManager>();
         }
 
-        private static readonly ConcurrentDictionary<int, Pawn> _pawnIndex = new ConcurrentDictionary<int, Pawn>();
+        public NpcManager(Game game) : base()
+        {
+            RimMindServiceLocator.Register<INpcManager>(this);
+        }
 
-        public static void IndexPawn(Pawn pawn)
+        public override void LoadedGame()
+        {
+            RimMindServiceLocator.Register<INpcManager>(this);
+            _pawnIndex.Clear();
+        }
+
+        public void RegisterActiveAgent(int thingId)
+        {
+            lock (_activeAgentPawnIds)
+                _activeAgentPawnIds.Add(thingId);
+        }
+
+        public void UnregisterActiveAgent(int thingId)
+        {
+            lock (_activeAgentPawnIds)
+                _activeAgentPawnIds.Remove(thingId);
+        }
+
+        public HashSet<int> GetActiveAgentPawnIds()
+        {
+            lock (_activeAgentPawnIds)
+                return new HashSet<int>(_activeAgentPawnIds);
+        }
+
+        public void IndexPawn(Pawn pawn)
         {
             if (pawn != null)
                 _pawnIndex[pawn.thingIDNumber] = pawn;
         }
 
-        public static void UnindexPawn(int thingId)
+        public void UnindexPawn(int thingId)
         {
             _pawnIndex.TryRemove(thingId, out _);
         }
 
-        internal static void ClearPawnIndex()
+        internal void ClearPawnIndex()
         {
-            _pawnIndex.Clear();
-        }
-
-        public NpcManager(Game game) : base()
-        {
-            _instance = this;
-            RimMindServiceLocator.Register(this);
-        }
-
-        public override void LoadedGame()
-        {
-            _instance = this;
-            RimMindServiceLocator.Register(this);
             _pawnIndex.Clear();
         }
 
@@ -58,7 +74,7 @@ namespace RimMind.Core.Npc
             if (string.IsNullOrEmpty(npcId)) return;
             if (_registry.TryRemove(npcId, out var profile))
             {
-                AgentBus.AgentBus.Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
+                RimMindAPI.GetEventBus().Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
             }
         }
 
@@ -75,7 +91,7 @@ namespace RimMind.Core.Npc
 
         public IReadOnlyList<NpcProfile> GetAllNpcs() => _registry.Values.ToList();
 
-        public static string GetMapNpcId(Map map)
+        public string GetMapNpcId(Map map)
         {
             return $"map-{map.uniqueID}";
         }
@@ -88,7 +104,7 @@ namespace RimMind.Core.Npc
             return "NPC-storyteller";
         }
 
-        public static Pawn? FindPawnByNpcId(string npcId)
+        public Pawn? FindPawnByNpcId(string npcId)
         {
             if (string.IsNullOrEmpty(npcId) || !npcId.StartsWith("NPC-")) return null;
             if (!int.TryParse(npcId.Substring(4), out int thingId)) return null;
@@ -117,7 +133,7 @@ namespace RimMind.Core.Npc
             return worldPawn;
         }
 
-        public static Pawn? FindProxyPawnForMap(Map map)
+        public Pawn? FindProxyPawnForMap(Map map)
         {
             var colonist = map.mapPawns?.FreeColonists?
                 .FirstOrDefault(p => p.IsFreeNonSlaveColonist && !p.Dead);
@@ -140,7 +156,7 @@ namespace RimMind.Core.Npc
             }
             _registry ??= new ConcurrentDictionary<string, NpcProfile>();
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                _instance = this;
+                RimMindServiceLocator.Register<INpcManager>(this);
         }
     }
 }

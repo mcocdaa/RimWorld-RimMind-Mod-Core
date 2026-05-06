@@ -52,7 +52,7 @@ namespace RimMind.Core.Debug
         [DebugAction("RimMind", "Show Last Prompt", actionType = DebugActionType.Action)]
         public static void ShowLastPrompt()
         {
-            var entries = AIDebugLog.Instance?.Entries;
+            var entries = RimMindServiceLocator.Get<IAIDebugLog>()?.Entries;
             if (entries == null || entries.Count == 0)
             {
                 Log.Message("[RimMind-Core] No request records.");
@@ -68,14 +68,14 @@ namespace RimMind.Core.Debug
         [DebugAction("RimMind", "Clear Debug Log", actionType = DebugActionType.Action)]
         public static void ClearLog()
         {
-            AIDebugLog.Instance?.Clear();
+            RimMindServiceLocator.Get<IAIDebugLog>()?.Clear();
             Log.Message("[RimMind-Core] Debug log cleared.");
         }
 
         [DebugAction("RimMind", "Clear All Cooldowns", actionType = DebugActionType.Action)]
         public static void ClearCooldowns()
         {
-            AIRequestQueue.Instance?.ClearAllCooldowns();
+            RimMindServiceLocator.Get<IAIRequestQueue>()?.ClearAllCooldowns();
             Log.Message("[RimMind-Core] All cooldowns cleared.");
         }
 
@@ -115,7 +115,7 @@ namespace RimMind.Core.Debug
         [DebugAction("RimMind", "Show Queue State", actionType = DebugActionType.Action)]
         public static void ShowQueueState()
         {
-            var queue = AIRequestQueue.Instance;
+            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
             if (queue == null)
             {
                 Log.Warning("[RimMind-Core] AIRequestQueue not initialized.");
@@ -217,7 +217,7 @@ namespace RimMind.Core.Debug
         [DebugAction("RimMind", "Show Flywheel State", actionType = DebugActionType.Action)]
         public static void ShowFlywheelState()
         {
-            var store = FlywheelParameterStore.Instance;
+            var store = RimMindServiceLocator.Get<IFlywheelParameterStore>();
             if (store == null)
             {
                 Log.Warning("[RimMind-Core] FlywheelParameterStore not initialized.");
@@ -304,37 +304,9 @@ namespace RimMind.Core.Debug
             var eventBus = RimMindAPI.GetEventBus();
             sb.AppendLine($"  EventBus type: {eventBus?.GetType().Name ?? "null"}");
 
-            var handlersField = typeof(global::RimMind.Core.AgentBus.AgentBus).GetField("_handlers",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            if (handlersField != null)
-            {
-                var handlers = handlersField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, Delegate>>;
-                if (handlers != null)
-                {
-                    sb.AppendLine($"  Registered event types: {handlers.Count}");
-                    foreach (var kvp in handlers)
-                    {
-                        var snapshot = kvp.Value.ToArray();
-                        sb.AppendLine($"    {kvp.Key.Name}: {snapshot.Length} subscriber(s)");
-                        foreach (var sub in snapshot)
-                        {
-                            sb.AppendLine($"      [{sub.Key}] {sub.Value.Method.DeclaringType?.Name}.{sub.Value.Method.Name}");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                sb.AppendLine("  Could not access _handlers via reflection.");
-            }
+            sb.AppendLine($"  Registered event types: {eventBus.GetHandlerCount()}");
 
-            var bgQueueField = typeof(global::RimMind.Core.AgentBus.AgentBus).GetField("_backgroundQueue",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            if (bgQueueField != null)
-            {
-                var queue = bgQueueField.GetValue(null) as System.Collections.Concurrent.ConcurrentQueue<AgentBusEvent>;
-                sb.AppendLine($"  Background queue pending: {queue?.Count ?? 0}");
-            }
+            sb.AppendLine($"  Background queue pending: {eventBus.GetBackgroundQueueCount()}");
 
             Log.Message(sb.ToString());
         }
@@ -350,7 +322,7 @@ namespace RimMind.Core.Debug
             }
 
             var npcId = $"NPC-{pawn.thingIDNumber}";
-            var history = HistoryManager.Instance;
+            var history = RimMindAPI.GetHistoryManager();
             var count = history.GetHistoryCount(npcId);
 
             var sb = new System.Text.StringBuilder();
@@ -377,7 +349,7 @@ namespace RimMind.Core.Debug
         [DebugAction("RimMind", "Show NPC Manager State", actionType = DebugActionType.Action)]
         public static void ShowNpcManagerState()
         {
-            var mgr = NpcManager.Instance;
+            var mgr = RimMindServiceLocator.Get<INpcManager>();
             if (mgr == null)
             {
                 Log.Warning("[RimMind-Core] NpcManager not initialized.");

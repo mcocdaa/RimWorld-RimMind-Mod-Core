@@ -9,6 +9,7 @@ using RimMind.Core.Client.Player2;
 using RimMind.Core.Context;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
+using RimMind.Kernel.Queue;
 using Verse;
 
 namespace RimMind.Core.Npc
@@ -17,6 +18,7 @@ namespace RimMind.Core.Npc
     {
         private readonly Player2Client _client;
         private readonly string _gameId;
+        private readonly INpcManager _npcManager;
 
         private readonly List<LocalMemoryEntry> _localMemoryIndex = new List<LocalMemoryEntry>();
         private readonly object _indexLock = new object();
@@ -35,9 +37,10 @@ namespace RimMind.Core.Npc
         public bool SupportsCommands => true;
         public bool SupportsStructuredOutput => true;
 
-        public Player2StorageDriver(Player2Client client)
+        public Player2StorageDriver(Player2Client client, INpcManager npcManager)
         {
             _client = client;
+            _npcManager = npcManager;
             _gameId = Player2Client.GameClientId;
         }
 
@@ -81,7 +84,7 @@ namespace RimMind.Core.Npc
 
         public bool IsNpcAlive(string npcId)
         {
-            return NpcManager.Instance?.IsNpcAlive(npcId) == true;
+            return _npcManager?.IsNpcAlive(npcId) == true;
         }
 
         public async Task<NpcChatResult> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)

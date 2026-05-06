@@ -7,26 +7,25 @@ using Verse;
 
 namespace RimMind.Core.Internal
 {
-    public class AIDebugLog : GameComponent
+    public class AIDebugLog : GameComponent, IAIDebugLog
     {
         private const int MaxEntries = 200;
 
         private readonly Queue<AIDebugEntry> _entries = new Queue<AIDebugEntry>(MaxEntries);
         private readonly ConcurrentQueue<AIDebugEntry> _pendingEntries = new ConcurrentQueue<AIDebugEntry>();
 
-        private static AIDebugLog? _instance;
-        public static AIDebugLog? Instance => _instance;
+        public static IAIDebugLog? Instance => RimMindServiceLocator.Get<IAIDebugLog>();
 
         public AIDebugLog(Game game)
         {
-            _instance = this;
+            RimMindServiceLocator.Register<IAIDebugLog>(this);
         }
 
         public override void ExposeData()
         {
             base.ExposeData();
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                _instance = this;
+                RimMindServiceLocator.Register<IAIDebugLog>(this);
         }
 
         public IReadOnlyList<AIDebugEntry> Entries => _entries.ToList();
@@ -60,9 +59,9 @@ namespace RimMind.Core.Internal
             return sb.ToString();
         }
 
-        public static void Record(AIRequest request, AIResponse response, int elapsedMs)
+        public void Record(AIRequest request, AIResponse response, int elapsedMs)
         {
-            _instance?._pendingEntries.Enqueue(new AIDebugEntry
+            _pendingEntries.Enqueue(new AIDebugEntry
             {
                 Source = request.RequestId ?? "",
                 ModelName = RimMindCoreMod.Settings?.modelName ?? "",
@@ -89,6 +88,7 @@ namespace RimMind.Core.Internal
                 RequestPayloadBytes = response.RequestPayloadBytes,
             });
         }
+
     }
 
     public class AIDebugEntry

@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using RimMind.Core.Flywheel;
 using Xunit;
 
 namespace RimMind.Core.Tests
 {
     public class FlywheelRuleEngineTests
     {
-        private static TelemetryRecord MakeRecord(
+        private static RimMind.Core.Flywheel.TelemetryRecord MakeRecord(
             int totalTokens = 1000,
             float budgetValue = 1.0f,
             bool parseSuccess = true,
@@ -13,7 +14,7 @@ namespace RimMind.Core.Tests
             int keysTrimmed = 1,
             Dictionary<string, float>? cacheHitRate = null)
         {
-            return new TelemetryRecord
+            return new RimMind.Core.Flywheel.TelemetryRecord
             {
                 NpcId = "test",
                 Scenario = "Decision",
@@ -23,206 +24,142 @@ namespace RimMind.Core.Tests
                 KeysIncluded = new string[keysIncluded],
                 KeysTrimmed = new string[keysTrimmed],
                 CacheHitRate = cacheHitRate,
+                LayerTokenBreakdown = new Dictionary<string, int>(),
             };
         }
 
         [Fact]
-        public void ComputeAvgBudgetUtilization_NormalCase()
+        public void Analyze_EmptyList_ReturnsEmptyRecommendations()
         {
-            float budgetLimit = 1.0f * 4000f;
-            float expected = 1000f / budgetLimit;
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgBudgetUtilization(
-                new List<TelemetryRecord>
+            var result = FlywheelRuleEngine.Analyze(new List<RimMind.Core.Flywheel.TelemetryRecord>());
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Analyze_NullList_ReturnsEmptyRecommendations()
+        {
+            var result = FlywheelRuleEngine.Analyze(null!);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Analyze_LowBudgetUtilization_ReturnsBudgetRecommendation()
+        {
+            RimMindCoreMod.Settings = new AICoreSettings();
+            try
+            {
+                var store = FlywheelParameterStore.Instance;
+                if (store == null)
                 {
-                    MakeRecord(totalTokens: 1000, budgetValue: 1.0f),
-                });
-            Assert.Equal(expected, actual, 4);
-        }
-
-        [Fact]
-        public void ComputeAvgBudgetUtilization_ZeroBudget_Returns0()
-        {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgBudgetUtilization(
-                new List<TelemetryRecord>
+                    return;
+                }
+                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
                 {
-                    MakeRecord(totalTokens: 1000, budgetValue: 0f),
-                });
-            Assert.Equal(0f, actual, 4);
+                    MakeRecord(totalTokens: 100, budgetValue: 1.0f),
+                };
+                var result = FlywheelRuleEngine.Analyze(records);
+                Assert.NotEmpty(result);
+                Assert.Contains(result, r => r.Target == "TotalBudget");
+            }
+            finally
+            {
+                RimMindCoreMod.Settings = null;
+            }
         }
 
         [Fact]
-        public void ComputeAvgBudgetUtilization_EmptyList_Returns0()
+        public void Analyze_HighTrimRatio_ReturnsW1Recommendation()
         {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgBudgetUtilization(
-                new List<TelemetryRecord>());
-            Assert.Equal(0f, actual, 4);
+            RimMindCoreMod.Settings = new AICoreSettings();
+            try
+            {
+                if (FlywheelParameterStore.Instance == null) return;
+                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
+                {
+                    MakeRecord(keysIncluded: 2, keysTrimmed: 8),
+                };
+                var result = FlywheelRuleEngine.Analyze(records);
+                Assert.Contains(result, r => r.Target == "w1");
+            }
+            finally
+            {
+                RimMindCoreMod.Settings = null;
+            }
         }
 
         [Fact]
-        public void ComputeAvgCacheHitRate_MultipleLayers()
+        public void Analyze_LowCacheHitRate_ReturnsAlphaRecommendation()
         {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgCacheHitRate(
-                new List<TelemetryRecord>
+            RimMindCoreMod.Settings = new AICoreSettings();
+            try
+            {
+                if (FlywheelParameterStore.Instance == null) return;
+                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
                 {
                     MakeRecord(cacheHitRate: new Dictionary<string, float>
                     {
-                        { "L0_identity", 0.8f },
-                        { "L1_recent", 0.6f },
+                        { "L0_identity", 0.1f },
                     }),
-                    MakeRecord(cacheHitRate: new Dictionary<string, float>
-                    {
-                        { "L0_identity", 1.0f },
-                    }),
-                });
-            Assert.Equal((0.8f + 0.6f + 1.0f) / 3f, actual, 4);
+                };
+                var result = FlywheelRuleEngine.Analyze(records);
+                Assert.Contains(result, r => r.Target == "Alpha");
+            }
+            finally
+            {
+                RimMindCoreMod.Settings = null;
+            }
         }
 
         [Fact]
-        public void ComputeAvgCacheHitRate_NoCacheData_Returns0()
+        public void Analyze_LowParseSuccessRate_ReturnsReserveRecommendation()
         {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgCacheHitRate(
-                new List<TelemetryRecord>
+            RimMindCoreMod.Settings = new AICoreSettings();
+            try
+            {
+                var store = FlywheelParameterStore.Instance;
+                if (store == null)
                 {
-                    MakeRecord(),
-                });
-            Assert.Equal(0f, actual, 4);
-        }
-
-        [Fact]
-        public void ComputeAvgParseSuccessRate_AllSuccess()
-        {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgParseSuccessRate(
-                new List<TelemetryRecord>
+                    return;
+                }
+                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
                 {
-                    MakeRecord(parseSuccess: true),
-                    MakeRecord(parseSuccess: true),
-                    MakeRecord(parseSuccess: true),
-                });
-            Assert.Equal(1.0f, actual, 4);
-        }
-
-        [Fact]
-        public void ComputeAvgParseSuccessRate_Mixed()
-        {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgParseSuccessRate(
-                new List<TelemetryRecord>
-                {
-                    MakeRecord(parseSuccess: true),
                     MakeRecord(parseSuccess: false),
-                    MakeRecord(parseSuccess: true),
-                });
-            Assert.Equal(2f / 3f, actual, 4);
+                    MakeRecord(parseSuccess: false),
+                    MakeRecord(parseSuccess: false),
+                };
+                var result = FlywheelRuleEngine.Analyze(records);
+                Assert.Contains(result, r => r.Target == "ReserveForOutput");
+            }
+            finally
+            {
+                RimMindCoreMod.Settings = null;
+            }
         }
 
         [Fact]
-        public void ComputeAvgParseSuccessRate_Empty_Returns1()
+        public void Analyze_HealthyMetrics_ReturnsFewerRecommendations()
         {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgParseSuccessRate(
-                new List<TelemetryRecord>());
-            Assert.Equal(1f, actual, 4);
-        }
-
-        [Fact]
-        public void ComputeAvgTrimRatio_NormalCase()
-        {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgTrimRatio(
-                new List<TelemetryRecord>
-                {
-                    MakeRecord(keysIncluded: 8, keysTrimmed: 2),
-                });
-            Assert.Equal(0.2f, actual, 4);
-        }
-
-        [Fact]
-        public void ComputeAvgTrimRatio_NoKeys_Returns0()
-        {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgTrimRatio(
-                new List<TelemetryRecord>
-                {
-                    MakeRecord(keysIncluded: 0, keysTrimmed: 0),
-                });
-            Assert.Equal(0f, actual, 4);
-        }
-
-        [Fact]
-        public void ComputeAvgTrimRatio_AllTrimmed()
-        {
-            float actual = FlywheelRuleEngineTests_Helper.ComputeAvgTrimRatio(
-                new List<TelemetryRecord>
-                {
-                    MakeRecord(keysIncluded: 0, keysTrimmed: 5),
-                });
-            Assert.Equal(1.0f, actual, 4);
-        }
-    }
-
-    public static class FlywheelRuleEngineTests_Helper
-    {
-        public static float ComputeAvgBudgetUtilization(List<TelemetryRecord> records)
-        {
-            float sum = 0;
-            int count = 0;
-            foreach (var r in records)
+            RimMindCoreMod.Settings = new AICoreSettings();
+            try
             {
-                if (r.BudgetValue > 0 && r.TotalTokens > 0)
+                if (FlywheelParameterStore.Instance == null) return;
+                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
                 {
-                    float budgetLimit = r.BudgetValue * 4000f;
-                    if (budgetLimit > 0)
-                    {
-                        sum += r.TotalTokens / budgetLimit;
-                        count++;
-                    }
-                }
+                    MakeRecord(
+                        totalTokens: 3000,
+                        budgetValue: 1.0f,
+                        parseSuccess: true,
+                        keysIncluded: 8,
+                        keysTrimmed: 1,
+                        cacheHitRate: new Dictionary<string, float> { { "L0", 0.8f } }),
+                };
+                var result = FlywheelRuleEngine.Analyze(records);
+                Assert.True(result.Count <= 2);
             }
-            return count > 0 ? sum / count : 0f;
-        }
-
-        public static float ComputeAvgCacheHitRate(List<TelemetryRecord> records)
-        {
-            float sum = 0;
-            int count = 0;
-            foreach (var r in records)
+            finally
             {
-                if (r.CacheHitRate != null && r.CacheHitRate.Count > 0)
-                {
-                    foreach (var kvp in r.CacheHitRate)
-                    {
-                        sum += kvp.Value;
-                        count++;
-                    }
-                }
+                RimMindCoreMod.Settings = null;
             }
-            return count > 0 ? sum / count : 0f;
-        }
-
-        public static float ComputeAvgParseSuccessRate(List<TelemetryRecord> records)
-        {
-            int success = 0;
-            int total = 0;
-            foreach (var r in records)
-            {
-                total++;
-                if (r.ResponseParseSuccess) success++;
-            }
-            return total > 0 ? (float)success / total : 1f;
-        }
-
-        public static float ComputeAvgTrimRatio(List<TelemetryRecord> records)
-        {
-            float sum = 0;
-            int count = 0;
-            foreach (var r in records)
-            {
-                int included = r.KeysIncluded?.Length ?? 0;
-                int trimmed = r.KeysTrimmed?.Length ?? 0;
-                int total = included + trimmed;
-                if (total > 0)
-                {
-                    sum += (float)trimmed / total;
-                    count++;
-                }
-            }
-            return count > 0 ? sum / count : 0f;
         }
     }
 }

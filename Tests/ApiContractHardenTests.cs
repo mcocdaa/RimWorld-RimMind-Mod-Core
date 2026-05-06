@@ -2,8 +2,11 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Xunit;
+using RimMind.Core.Agent;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
+using RimMind.Core.Flywheel;
+using RimMind.Core.Internal;
 
 namespace RimMind.Core.Tests
 {
@@ -145,45 +148,51 @@ namespace RimMind.Core.Tests
         }
 
         [Fact]
-        public void IContextEngine_DoesNotExposeInvalidateLayer()
+        public void IContextEngine_ExposesInvalidateLayer()
         {
             var method = typeof(IContextEngine).GetMethod("InvalidateLayer");
-            Assert.Null(method);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method.ReturnType);
         }
 
         [Fact]
-        public void IContextEngine_DoesNotExposeInvalidateKey()
+        public void IContextEngine_ExposesInvalidateKey()
         {
             var method = typeof(IContextEngine).GetMethod("InvalidateKey");
-            Assert.Null(method);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method.ReturnType);
         }
 
         [Fact]
-        public void IContextEngine_DoesNotExposeUpdateBaseline()
+        public void IContextEngine_ExposesUpdateBaseline()
         {
             var method = typeof(IContextEngine).GetMethod("UpdateBaseline");
-            Assert.Null(method);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method.ReturnType);
         }
 
         [Fact]
-        public void IContextEngine_DoesNotExposeInvalidateNpc()
+        public void IContextEngine_ExposesInvalidateNpc()
         {
             var method = typeof(IContextEngine).GetMethod("InvalidateNpc");
-            Assert.Null(method);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method.ReturnType);
         }
 
         [Fact]
-        public void IContextEngine_DoesNotExposeTouchCache()
+        public void IContextEngine_ExposesTouchCache()
         {
             var method = typeof(IContextEngine).GetMethod("TouchCache");
-            Assert.Null(method);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method.ReturnType);
         }
 
         [Fact]
-        public void IContextEngine_DoesNotExposeRemoveL0CacheForNpc()
+        public void IContextEngine_ExposesRemoveL0CacheForNpc()
         {
             var method = typeof(IContextEngine).GetMethod("RemoveL0CacheForNpc");
-            Assert.Null(method);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method.ReturnType);
         }
 
         [Fact]
@@ -193,30 +202,43 @@ namespace RimMind.Core.Tests
         }
     }
 
-    public class ModCooldownGettersTypeTests
+    public class InterfaceExtractionTests
     {
         [Fact]
-        public void ConcurrentDictionary_IsIReadOnlyDictionary()
+        public void BudgetScheduler_ImplementsInterface()
         {
-            var dict = new ConcurrentDictionary<string, Func<int>>();
-            IReadOnlyDictionary<string, Func<int>> readOnly = dict;
-            Assert.NotNull(readOnly);
+            IBudgetScheduler scheduler = new BudgetScheduler();
+            Assert.NotNull(scheduler);
         }
 
         [Fact]
-        public void IReadOnlyDictionary_DoesNotExposeTryAdd()
+        public void HistoryManager_ImplementsInterface()
         {
-            var iface = typeof(IReadOnlyDictionary<string, Func<int>>);
-            var method = iface.GetMethod("TryAdd");
-            Assert.Null(method);
+            IHistoryManager mgr = new HistoryManager();
+            Assert.NotNull(mgr);
         }
 
         [Fact]
-        public void IReadOnlyDictionary_DoesNotExposeClear()
+        public void IClientManager_IsDefined()
         {
-            var iface = typeof(IReadOnlyDictionary<string, Func<int>>);
-            var method = iface.GetMethod("Clear");
-            Assert.Null(method);
+            Assert.True(typeof(IClientManager).IsInterface);
+        }
+
+        [Fact]
+        public void ProviderRegistry_ImplementsInterface()
+        {
+            IProviderRegistry reg = new ProviderRegistry();
+            Assert.NotNull(reg);
+        }
+
+        [Fact]
+        public void StrategyOptimizer_UsesConcurrentDictionary()
+        {
+            var opt = new StrategyOptimizer();
+            opt.AdjustWeight("test", 1.0f);
+            opt.AdjustWeight("test2", 0.5f);
+            var top = opt.GetTopN(10);
+            Assert.Equal(2, top.Count);
         }
     }
 }

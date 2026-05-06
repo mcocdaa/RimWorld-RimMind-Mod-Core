@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Core.Agent;
+using RimMind.Core.AgentBus;
 using RimMind.Core.UI;
 using RimWorld;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace RimMind.Core.Comps
 
     public class CompPawnAgent : ThingComp
     {
-        public PawnAgent Agent { get; private set; } = null!;
+        public IPawnAgent? Agent { get; private set; }
 
         private Pawn Pawn => (Pawn)parent;
 
@@ -26,7 +27,7 @@ namespace RimMind.Core.Comps
             base.PostSpawnSetup(respawningAfterLoad);
             if (Agent == null)
             {
-                Agent = new PawnAgent(Pawn);
+                Agent = new PawnAgent(Pawn, RimMindAPI.GetEventBus());
             }
         }
 
@@ -39,19 +40,19 @@ namespace RimMind.Core.Comps
         public override void PostExposeData()
         {
             base.PostExposeData();
-            var agent = Agent;
+            PawnAgent? agent = Agent as PawnAgent;
             Scribe_Deep.Look(ref agent, "pawnAgent");
             if (agent != null) Agent = agent;
 
             if (Agent == null && parent is Pawn pawn)
             {
-                Agent = new PawnAgent(pawn);
+                Agent = new PawnAgent(pawn, RimMindAPI.GetEventBus());
             }
 
             if (Agent != null && Agent.Pawn == null)
             {
                 Agent.Cleanup();
-                Agent = new PawnAgent(Pawn);
+                Agent = new PawnAgent(Pawn, RimMindAPI.GetEventBus());
             }
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && Agent != null)

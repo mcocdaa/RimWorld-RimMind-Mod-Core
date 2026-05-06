@@ -1,79 +1,68 @@
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using RimMind.Core.Client;
 using Xunit;
 
 namespace RimMind.Core.Tests
 {
     public class MessageExtractionTests
     {
-        private static string ExtractMessageFromJson(string content)
+        [Fact]
+        public void JsonRepairHelper_Repair_ReturnsInputUnchanged()
         {
-            if (string.IsNullOrEmpty(content) || !content.TrimStart().StartsWith("{")) return content;
-            try
-            {
-                var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                if (obj != null && obj.TryGetValue("reply", out var msg) && msg != null)
-                {
-                    string? extracted = msg.ToString();
-                    if (!string.IsNullOrEmpty(extracted)) return extracted;
-                }
-            }
-            catch { }
-            return content;
+            var json = "{\"reply\":\"hello\"}";
+            Assert.Equal(json, JsonRepairHelper.Repair(json));
         }
 
         [Fact]
-        public void DialogueResponseJson_ExtractsReply()
+        public void JsonRepairHelper_TryRepairTruncatedJson_NullInput_ReturnsNull()
         {
-            var json = "{\"reply\":\"早啊，有什么事吗？\",\"thought\":{\"tag\":\"NONE\",\"description\":\"平淡问候\"}}";
-            var result = ExtractMessageFromJson(json);
-            Assert.Equal("早啊，有什么事吗？", result);
+            Assert.Null(JsonRepairHelper.TryRepairTruncatedJson(null));
         }
 
         [Fact]
-        public void MonologueResponseJson_ExtractsReply()
+        public void JsonRepairHelper_TryRepairTruncatedJson_EmptyInput_ReturnsNull()
         {
-            var json = "{\"reply\":\"这矿洞真冷……不知道还要挖多久。\",\"thought\":{\"tag\":\"STRESSED\",\"description\":\"感到疲惫\"}}";
-            var result = ExtractMessageFromJson(json);
-            Assert.Equal("这矿洞真冷……不知道还要挖多久。", result);
+            Assert.Null(JsonRepairHelper.TryRepairTruncatedJson(""));
         }
 
         [Fact]
-        public void PlainText_PassedThrough()
+        public void JsonRepairHelper_TryRepairTruncatedJson_ValidJson_ReturnsNull()
         {
-            var text = "你好，有什么需要帮忙的吗？";
-            var result = ExtractMessageFromJson(text);
-            Assert.Equal(text, result);
+            Assert.Null(JsonRepairHelper.TryRepairTruncatedJson("{\"key\":\"value\"}"));
         }
 
         [Fact]
-        public void NullOrEmpty_PassedThrough()
+        public void JsonRepairHelper_TryRepairTruncatedJson_TrailingComma_Removed()
         {
-            Assert.Null(ExtractMessageFromJson(null!));
-            Assert.Equal("", ExtractMessageFromJson(""));
+            var result = JsonRepairHelper.TryRepairTruncatedJson("{\"key\":\"value\",");
+            Assert.Equal("{\"key\":\"value\"}", result);
         }
 
         [Fact]
-        public void InvalidJson_PassedThrough()
+        public void JsonRepairHelper_TryRepairTruncatedJson_MissingClosingBrace_Added()
         {
-            var text = "{not valid json";
-            Assert.Equal(text, ExtractMessageFromJson(text));
+            var result = JsonRepairHelper.TryRepairTruncatedJson("{\"key\":\"value\"");
+            Assert.Equal("{\"key\":\"value\"}", result);
         }
 
         [Fact]
-        public void JsonWithoutReplyKey_PassedThrough()
+        public void JsonRepairHelper_TryRepairTruncatedJson_MissingClosingBracket_Added()
         {
-            var json = "{\"error\":\"something went wrong\"}";
-            var result = ExtractMessageFromJson(json);
-            Assert.Equal(json, result);
+            var result = JsonRepairHelper.TryRepairTruncatedJson("[1,2,3");
+            Assert.Equal("[1,2,3]", result);
         }
 
         [Fact]
-        public void JsonWithEmptyReply_ReturnsOriginal()
+        public void JsonRepairHelper_TryRepairTruncatedJson_UnclosedString_Closed()
         {
-            var json = "{\"reply\":\"\"}";
-            var result = ExtractMessageFromJson(json);
-            Assert.Equal(json, result);
+            var result = JsonRepairHelper.TryRepairTruncatedJson("{\"key\":\"value");
+            Assert.Equal("{\"key\":\"value\"}", result);
+        }
+
+        [Fact]
+        public void JsonRepairHelper_TryRepairTruncatedJson_ComplexTruncation_Repaired()
+        {
+            var result = JsonRepairHelper.TryRepairTruncatedJson("{\"items\":[1,2");
+            Assert.Equal("{\"items\":[1,2]}", result);
         }
     }
 }

@@ -1,45 +1,44 @@
 using System.Collections.Generic;
+using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using Verse;
 using Xunit;
 
 namespace RimMind.Core.Tests
 {
-    [CollectionDefinition("NpcManager", DisableParallelization = true)]
-    public class NpcManagerCollection { }
-
-    [Collection("NpcManager")]
     public class NpcManagerTests
     {
+        private readonly NpcManager _manager = new NpcManager(new Game());
+
         private static void ResetStubs()
         {
-            NpcManager.ClearPawnIndex();
             Find.Maps.Clear();
             Find.WorldPawns = null;
+            RimMindServiceLocator.Reset();
         }
 
         [Fact]
         public void FindPawnByNpcId_NullInput_ReturnsNull()
         {
-            Assert.Null(NpcManager.FindPawnByNpcId(null));
+            Assert.Null(_manager.FindPawnByNpcId(null!));
         }
 
         [Fact]
         public void FindPawnByNpcId_EmptyInput_ReturnsNull()
         {
-            Assert.Null(NpcManager.FindPawnByNpcId(""));
+            Assert.Null(_manager.FindPawnByNpcId(""));
         }
 
         [Fact]
         public void FindPawnByNpcId_NoNpcPrefix_ReturnsNull()
         {
-            Assert.Null(NpcManager.FindPawnByNpcId("123"));
+            Assert.Null(_manager.FindPawnByNpcId("123"));
         }
 
         [Fact]
         public void FindPawnByNpcId_InvalidIdPart_ReturnsNull()
         {
-            Assert.Null(NpcManager.FindPawnByNpcId("NPC-abc"));
+            Assert.Null(_manager.FindPawnByNpcId("NPC-abc"));
         }
 
         [Fact]
@@ -51,7 +50,7 @@ namespace RimMind.Core.Tests
             map.mapPawns.AllPawns.Add(pawn);
             Find.Maps.Add(map);
 
-            var result = NpcManager.FindPawnByNpcId("NPC-42");
+            var result = _manager.FindPawnByNpcId("NPC-42");
 
             Assert.Same(pawn, result);
         }
@@ -64,7 +63,7 @@ namespace RimMind.Core.Tests
             Find.WorldPawns = new WorldPawns();
             Find.WorldPawns.AllPawnsAlive.Add(pawn);
 
-            var result = NpcManager.FindPawnByNpcId("NPC-99");
+            var result = _manager.FindPawnByNpcId("NPC-99");
 
             Assert.Same(pawn, result);
         }
@@ -81,7 +80,7 @@ namespace RimMind.Core.Tests
             Find.WorldPawns = new WorldPawns();
             Find.WorldPawns.AllPawnsAlive.Add(worldPawn);
 
-            var result = NpcManager.FindPawnByNpcId("NPC-7");
+            var result = _manager.FindPawnByNpcId("NPC-7");
 
             Assert.Same(mapPawn, result);
         }
@@ -93,7 +92,7 @@ namespace RimMind.Core.Tests
             Find.Maps.Add(new Map { mapPawns = new MapPawns() });
             Find.WorldPawns = new WorldPawns();
 
-            Assert.Null(NpcManager.FindPawnByNpcId("NPC-999"));
+            Assert.Null(_manager.FindPawnByNpcId("NPC-999"));
         }
 
         [Fact]
@@ -107,7 +106,7 @@ namespace RimMind.Core.Tests
             Find.Maps.Add(mapWithNull);
             Find.Maps.Add(mapWithPawn);
 
-            var result = NpcManager.FindPawnByNpcId("NPC-10");
+            var result = _manager.FindPawnByNpcId("NPC-10");
 
             Assert.Same(pawn, result);
         }
@@ -118,7 +117,7 @@ namespace RimMind.Core.Tests
             ResetStubs();
             Find.WorldPawns = null;
 
-            Assert.Null(NpcManager.FindPawnByNpcId("NPC-1"));
+            Assert.Null(_manager.FindPawnByNpcId("NPC-1"));
         }
 
         [Fact]
@@ -134,8 +133,8 @@ namespace RimMind.Core.Tests
             Find.Maps.Add(map1);
             Find.Maps.Add(map2);
 
-            Assert.Same(pawn2, NpcManager.FindPawnByNpcId("NPC-200"));
-            Assert.Same(pawn1, NpcManager.FindPawnByNpcId("NPC-100"));
+            Assert.Same(pawn2, _manager.FindPawnByNpcId("NPC-200"));
+            Assert.Same(pawn1, _manager.FindPawnByNpcId("NPC-100"));
         }
     }
 }

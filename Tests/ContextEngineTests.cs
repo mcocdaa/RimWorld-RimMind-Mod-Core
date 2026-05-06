@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Flywheel;
+using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using Verse;
 using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace RimMind.Core.Tests
 {
@@ -16,15 +20,18 @@ namespace RimMind.Core.Tests
         private readonly Pawn _pawn;
         private readonly string _npcId;
         private readonly AICoreSettings? _originalSettings;
-        private readonly FlywheelParameterStore? _originalFlywheel;
+        private readonly IFlywheelParameterStore? _originalFlywheel;
+        private readonly NpcManager _npcManager;
 
         public ContextEngineTests()
         {
+            RimMindServiceLocator.Reset();
+            _npcManager = new NpcManager(new Game());
             _historyManager = new HistoryManager();
             _engine = new ContextEngine(_historyManager);
             _pawn = new Pawn { thingIDNumber = 42, Dead = false };
             _npcId = $"NPC-{_pawn.thingIDNumber}";
-            NpcManager.IndexPawn(_pawn);
+            _npcManager.IndexPawn(_pawn);
             _originalSettings = RimMindCoreMod.Settings;
             _originalFlywheel = FlywheelParameterStore.Instance;
             RimMindCoreMod.Settings = new AICoreSettings
@@ -46,11 +53,12 @@ namespace RimMind.Core.Tests
             _engine.Dispose();
             RimMindCoreMod.Settings = _originalSettings;
             if (_originalFlywheel != null)
-                _originalFlywheel.FinalizeInit();
+                RimMindServiceLocator.Register<IFlywheelParameterStore>(_originalFlywheel);
             ContextKeyRegistry.Clear();
             ScenarioRegistry.Clear();
             RelevanceTable.Clear();
-            NpcManager.ClearPawnIndex();
+            _npcManager.ClearPawnIndex();
+            RimMindServiceLocator.Reset();
         }
 
         private void RegisterTestKey(string key, ContextLayer layer, float priority, string content)
@@ -187,7 +195,7 @@ namespace RimMind.Core.Tests
         [Fact]
         public void TouchCache_EvictsOldestWhenOverCapacity()
         {
-            RimMindCoreMod.Settings.Context.maxCacheEntries = 3;
+            RimMindCoreMod.Settings!.Context!.maxCacheEntries = 3;
 
             for (int i = 0; i < 5; i++)
             {
@@ -405,5 +413,61 @@ namespace RimMind.Core.Tests
             Assert.Equal(0, _engine.GetL1BlockCacheCount());
             Assert.Equal(0, _engine.GetDiffStoreCount());
         }
+
+        [Fact]
+        public void Constructor_WithInjectedNpcManager_UsesInjectedInstance()
+        {
+            var mockNpcMgr = new MockNpcManager();
+            using var engine = new ContextEngine(_historyManager, npcManager: mockNpcMgr);
+
+            var request = CreateRequest();
+            var snapshot = engine.BuildSnapshot(request);
+
+            Assert.True(mockNpcMgr.FindPawnByNpcIdCalled);
+        }
+
+        [Fact]
+        public void Constructor_NullNpcManager_FallsBackToServiceLocator()
+        {
+            using var engine = new ContextEngine(_historyManager, npcManager: null);
+            var request = CreateRequest();
+            var snapshot = engine.BuildSnapshot(request);
+            Assert.NotNull(snapshot);
+        }
+
+        [Fact]
+        public void CommitPayload_ClearedAfterBuildSnapshot()
+        {
+            RegisterTestKey("commit_l0", ContextLayer.L0_Static, 1.0f, "content");
+
+            var snapshot = _engine.BuildSnapshot(CreateRequest());
+            Assert.NotNull(snapshot);
+            Assert.Null(snapshot._commitPayload);
+        }
+    }
+
+    internal class MockNpcManager : INpcManager
+    {
+        public bool FindPawnByNpcIdCalled { get; private set; }
+
+        public Pawn? FindPawnByNpcId(string npcId)
+        {
+            FindPawnByNpcIdCalled = true;
+            return null;
+        }
+
+        public Pawn? FindProxyPawnForMap(Map map) => null;
+        public void SpawnNpc(NpcProfile profile) { }
+        public void KillNpc(string npcId) { }
+        public bool IsNpcAlive(string npcId) => false;
+        public NpcProfile? GetNpc(string npcId) => null;
+        public IReadOnlyList<NpcProfile> GetAllNpcs() => new List<NpcProfile>();
+        public string GetNpcForMap(Map map) => "";
+        public void RegisterActiveAgent(int thingId) { }
+        public void UnregisterActiveAgent(int thingId) { }
+        public HashSet<int> GetActiveAgentPawnIds() => new HashSet<int>();
+        public void IndexPawn(Pawn pawn) { }
+        public void UnindexPawn(int thingId) { }
+        public string GetMapNpcId(Map map) => "";
     }
 }

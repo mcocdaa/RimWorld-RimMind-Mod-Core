@@ -5,7 +5,16 @@ namespace RimMind.Core.Prompt
     public class PromptSection
     {
         public string Tag { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
+        private string _content = string.Empty;
+        public string Content
+        {
+            get => _content;
+            set
+            {
+                _content = value ?? string.Empty;
+                EstimatedTokens = EstimateTokens(_content);
+            }
+        }
         public int Priority { get; set; }
         public int EstimatedTokens { get; set; }
         public Func<string, string>? Compress { get; set; }
@@ -25,7 +34,6 @@ namespace RimMind.Core.Prompt
             Tag = tag ?? string.Empty;
             Content = content ?? string.Empty;
             Priority = priority;
-            EstimatedTokens = EstimateTokens(Content);
         }
 
         public static int EstimateTokens(string text)

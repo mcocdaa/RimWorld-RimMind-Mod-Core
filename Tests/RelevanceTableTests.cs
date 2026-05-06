@@ -4,10 +4,6 @@ using Xunit;
 
 namespace RimMind.Core.Tests
 {
-    [CollectionDefinition("RelevanceTable", DisableParallelization = true)]
-    public class RelevanceTableCollectionDefinition { }
-
-    [Collection("RelevanceTable")]
     public class RelevanceTableTests
     {
         public RelevanceTableTests()

@@ -190,7 +190,7 @@ namespace RimMind.Core.Context
         {
             while (_entryCount > MaxEntryItems && _entryOrder.Count > 0)
             {
-                var oldest = _entryOrder.First.Value;
+                var oldest = _entryOrder.First!.Value;
                 _entryOrder.RemoveFirst();
                 if (_entryCache.TryGetValue(oldest, out var keyDict))
                 {
