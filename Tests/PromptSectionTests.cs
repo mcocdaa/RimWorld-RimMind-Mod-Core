@@ -1,4 +1,4 @@
-using RimMind.Core.Prompt;
+using RimMind.Kernel.Prompt;
 using Xunit;
 
 namespace RimMind.Core.Tests

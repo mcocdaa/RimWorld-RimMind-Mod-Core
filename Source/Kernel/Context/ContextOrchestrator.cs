@@ -7,10 +7,10 @@ using RimMind.Core.Context;
 using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
-using RimMind.Core.Prompt;
 using RimMind.Core.Settings;
-using RimWorld;
-using Verse;
+using RimMind.Kernel.Abstractions;
+using RimMind.Kernel.Logging;
+using RimMind.Kernel.Prompt;
 
 namespace RimMind.Kernel.Context
 {
@@ -196,8 +196,10 @@ namespace RimMind.Kernel.Context
 
             if (!string.IsNullOrEmpty(request.CurrentQuery))
             {
+                var translationService = RimMindServiceLocator.Get<ITranslationService>();
                 string queryContent = !string.IsNullOrEmpty(request.SpeakerName)
-                    ? "RimMind.Core.Prompt.Dialogue.SpeakerSays".Translate(request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
+                    ? translationService?.Translate("RimMind.Core.Prompt.Dialogue.SpeakerSays", request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
+                        ?? $"[{request.SpeakerName}]: {PromptSanitizer.SanitizeUserInput(request.CurrentQuery!)}"
                     : PromptSanitizer.SanitizeUserInput(request.CurrentQuery!);
                 messages.Add(new ChatMessage { Role = "user", Content = queryContent, LayerTag = "L4" });
             }
@@ -207,7 +209,10 @@ namespace RimMind.Kernel.Context
             {
                 string scenarioLabel = !string.IsNullOrEmpty(request.Scenario)
                     ? request.Scenario! : "general";
-                messages.Add(new ChatMessage { Role = "user", Content = "RimMind.Core.Prompt.AutoAwait".Translate(scenarioLabel) });
+                var translationService = RimMindServiceLocator.Get<ITranslationService>();
+                string autoAwaitContent = translationService?.Translate("RimMind.Core.Prompt.AutoAwait", scenarioLabel)
+                    ?? $"[AutoAwait: {scenarioLabel}]";
+                messages.Add(new ChatMessage { Role = "user", Content = autoAwaitContent });
             }
 
             snapshot.SetMessages(messages);
@@ -282,7 +287,7 @@ namespace RimMind.Kernel.Context
 
             if (RimMindCoreMod.Settings?.debugLogging == true)
             {
-                Log.Message($"[RimMind-Core] Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
+                RimMindLogger.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
             }
         }
 

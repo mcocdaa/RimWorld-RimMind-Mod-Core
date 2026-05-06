@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Flywheel;
 using Xunit;
 
 namespace RimMind.Core.Tests

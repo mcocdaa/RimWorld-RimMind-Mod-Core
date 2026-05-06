@@ -8,13 +8,14 @@ using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Extensions;
-using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
-using RimMind.Core.Prompt;
 using RimMind.Core.Registry;
 using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
 using RimMind.Core.UI;
+using RimMind.Kernel.Bus;
+using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
 using Verse;
 

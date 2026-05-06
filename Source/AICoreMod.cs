@@ -1,11 +1,12 @@
 using HarmonyLib;
 using RimMind.Contracts.Extension;
 using RimMind.Core.Context;
-using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
 using RimMind.Core.UI;
+using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Json;
 using UnityEngine;
 using Verse;
 
@@ -19,6 +20,20 @@ namespace RimMind.Core
         {
             RimMindRuntime.Initialize();
             Settings = GetSettings<RimMindCoreSettings>();
+
+            if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
+            {
+                LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    Verse.Log.Warning("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
+                    Find.WindowStack.Add(new Verse.Dialog_MessageBox(
+                        "RimMind.Core.UpgradeWarning".Translate(),
+                        "OK".Translate(),
+                        null));
+                });
+            }
+            Settings.SavedModVersion = "2.0.0";
+
             JsonTagExtractor.OnWarning = Log.Warning;
             new Harmony("mcocdaa.RimMindCore").PatchAll();
 

@@ -354,4 +354,5 @@
   <RimMind.Core.Scenario.Personality>人格评估场景</RimMind.Core.Scenario.Personality>
   <RimMind.Core.Scenario.Storyteller>叙事场景</RimMind.Core.Scenario.Storyteller>
   <RimMind.Core.Scenario.Memory>暗记忆生成场景</RimMind.Core.Scenario.Memory>
+  <RimMind.Core.UpgradeWarning>RimMind v2.0 包含破坏性变更。旧存档可能不完全兼容。AI 请求队列和部分内部结构已重组。建议开始新游戏以获得最佳体验。</RimMind.Core.UpgradeWarning>
 </LanguageData>

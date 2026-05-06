@@ -1,6 +1,7 @@
 using RimMind.Core.Agent;
 using RimMind.Core.AgentBus;
 using RimMind.Core.Comps;
+using RimMind.Kernel.Bus;
 using Verse;
 using Verse.AI;
 using Xunit;

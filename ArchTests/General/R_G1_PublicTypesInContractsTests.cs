@@ -29,10 +29,14 @@ namespace RimMind.Core.ArchTests.General
                 .ResideInNamespaceStartingWith("RimMind.Core")
                 .Or()
                 .ResideInNamespaceStartingWith("RimMind.Contracts")
+                .Or()
+                .ResideInNamespaceStartingWith("RimMind.Kernel")
+                .Or()
+                .ResideInNamespaceStartingWith("RimMind.Adapters")
                 .GetResult();
 
             result.IsSuccessful.Should().BeTrue(
-                $"All RimMind public types must reside in RimMind.Core.* or RimMind.Contracts.* namespaces. Violating types:\n  {result.FormatFailingTypes()}");
+                $"All RimMind public types must reside in RimMind.Core.*, RimMind.Contracts.*, RimMind.Kernel.*, or RimMind.Adapters.* namespaces. Violating types:\n  {result.FormatFailingTypes()}");
         }
     }
 }

@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Context;
-using RimWorld;
-using Verse;
+using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Context
 {
@@ -20,7 +19,7 @@ namespace RimMind.Kernel.Context
             ContextSnapshot snapshot,
             List<KeyMeta> filteredKeys,
             BudgetAllocation schedule,
-            Pawn? pawn,
+            object? pawn,
             IContextDiffTracker diffTracker,
             IContextCacheManager cacheManager)
         {
@@ -57,7 +56,7 @@ namespace RimMind.Kernel.Context
                     });
                 }
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Embedding snapshot failed: {ex.Message}"); }
+            catch (Exception ex) { RimMindLogger.Warning($"Embedding snapshot failed: {ex.Message}"); }
         }
     }
 }

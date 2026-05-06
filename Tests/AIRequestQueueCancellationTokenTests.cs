@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using RimMind.Core.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Runtime;
+using RimMind.Kernel.Queue;
 using Verse;
 using Xunit;
 
@@ -17,7 +18,7 @@ namespace RimMind.Core.Tests
             RimMindRuntime.Initialize();
         }
 
-        private AIRequestQueue CreateQueue()
+        private AIRequestQueueImpl CreateQueue()
         {
             RimMindCoreMod.Settings = new AICoreSettings
             {
@@ -27,7 +28,7 @@ namespace RimMind.Core.Tests
                 queueProcessInterval = 60,
                 defaultModCooldownTicks = 3600,
             };
-            return new AIRequestQueue(new Game());
+            return new AIRequestQueueImpl();
         }
 
         [Fact]
@@ -77,7 +78,7 @@ namespace RimMind.Core.Tests
             var queue = CreateQueue();
             var tokenBefore = queue.GetCurrentCancellationToken();
 
-            queue.LoadedGame();
+            queue.Reset();
 
             Assert.True(tokenBefore.IsCancellationRequested);
             Assert.False(queue.GetCurrentCancellationToken().IsCancellationRequested);
@@ -100,7 +101,7 @@ namespace RimMind.Core.Tests
 
             await Task.Delay(200);
 
-            queue.GameComponentTick();
+            queue.Tick();
 
             Assert.NotNull(result);
             Assert.True(result!.Success);
@@ -126,7 +127,7 @@ namespace RimMind.Core.Tests
 
             await Task.Delay(200);
 
-            queue.GameComponentTick();
+            queue.Tick();
 
             Assert.NotNull(result);
             Assert.True(result!.Success);
@@ -163,9 +164,9 @@ namespace RimMind.Core.Tests
 
     public static class AIRequestQueueTestExtensions
     {
-        public static CancellationToken GetCurrentCancellationToken(this AIRequestQueue queue)
+        public static CancellationToken GetCurrentCancellationToken(this AIRequestQueueImpl queue)
         {
-            var field = typeof(AIRequestQueue).GetField("_cts",
+            var field = typeof(AIRequestQueueImpl).GetField("_cts",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
             Assert.NotNull(field);

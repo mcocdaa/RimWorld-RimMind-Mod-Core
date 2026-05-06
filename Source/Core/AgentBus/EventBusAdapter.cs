@@ -1,6 +1,7 @@
 using System;
 using RimMind.Contracts;
 using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 
 namespace RimMind.Core.AgentBus
 {

@@ -6,8 +6,10 @@ using RimMind.Core.Agent;
 using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
-using RimMind.Core.Flywheel;
 using RimMind.Core.Runtime;
+using RimMind.Adapters.Verse;
+using RimMind.Kernel.Bus;
+using RimMind.Kernel.Flywheel;
 using Verse;
 using Xunit;
 

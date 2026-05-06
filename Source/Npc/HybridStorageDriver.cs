@@ -32,7 +32,7 @@ namespace RimMind.Core.Npc
         {
             var localResult = await _local.SpawnNpcAsync(profile);
             try { await _remote.SpawnNpcAsync(profile); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote SpawnNpc failed: {ex.Message}", isWarning: true); }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote SpawnNpc failed: {ex.Message}", isWarning: true); }
             return localResult;
         }
 
@@ -40,7 +40,7 @@ namespace RimMind.Core.Npc
         {
             var localResult = await _local.KillNpcAsync(npcId);
             try { await _remote.KillNpcAsync(npcId); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote KillNpc failed: {ex.Message}", isWarning: true); }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote KillNpc failed: {ex.Message}", isWarning: true); }
             return localResult;
         }
 
@@ -57,7 +57,7 @@ namespace RimMind.Core.Npc
             }
             catch (Exception ex) when (IsTransientException(ex))
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {ex.Message}", isWarning: true);
                 return await _local.ChatAsync(snapshot, ct);
             }
         }
@@ -70,7 +70,7 @@ namespace RimMind.Core.Npc
             }
             catch (Exception ex) when (IsTransientException(ex))
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {ex.Message}", isWarning: true);
                 return await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
             }
         }
@@ -83,7 +83,7 @@ namespace RimMind.Core.Npc
             }
             catch (Exception ex) when (IsTransientException(ex))
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {ex.Message}", isWarning: true);
                 return await _local.ChatStreamingAsync(npcId, sender, message, onChunk, gameStateInfo, ct);
             }
         }
@@ -93,14 +93,14 @@ namespace RimMind.Core.Npc
             var local = await _local.GetHistoryAsync(npcId, limit);
             if (!string.IsNullOrEmpty(local)) return local;
             try { return await _remote.GetHistoryAsync(npcId, limit); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetHistory failed: {ex.Message}", isWarning: true); return local; }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetHistory failed: {ex.Message}", isWarning: true); return local; }
         }
 
         public async Task<bool> PutAsync(string key, string value)
         {
             var localResult = await _local.PutAsync(key, value);
             try { await _remote.PutAsync(key, value); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote Put failed: {ex.Message}", isWarning: true); }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote Put failed: {ex.Message}", isWarning: true); }
             return localResult;
         }
 
@@ -109,14 +109,14 @@ namespace RimMind.Core.Npc
             var local = await _local.GetAsync(key);
             if (local != null) return local;
             try { return await _remote.GetAsync(key); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote Get failed: {ex.Message}", isWarning: true); return null; }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote Get failed: {ex.Message}", isWarning: true); return null; }
         }
 
         public async Task<bool> DeleteAsync(string key)
         {
             var localResult = await _local.DeleteAsync(key);
             try { await _remote.DeleteAsync(key); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote Delete failed: {ex.Message}", isWarning: true); }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote Delete failed: {ex.Message}", isWarning: true); }
             return localResult;
         }
 
@@ -125,14 +125,14 @@ namespace RimMind.Core.Npc
             var local = await _local.GetBatchAsync(keys);
             if (local != null && local.Count > 0) return local;
             try { return await _remote.GetBatchAsync(keys); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetBatch failed: {ex.Message}", isWarning: true); return local!; }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetBatch failed: {ex.Message}", isWarning: true); return local!; }
         }
 
         public async Task<bool> SaveAllEntriesAsync(string json)
         {
             var localResult = await _local.SaveAllEntriesAsync(json);
             try { await _remote.SaveAllEntriesAsync(json); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote SaveAllEntries failed: {ex.Message}", isWarning: true); }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote SaveAllEntries failed: {ex.Message}", isWarning: true); }
             return localResult;
         }
 
@@ -141,7 +141,7 @@ namespace RimMind.Core.Npc
             var local = await _local.LoadAllEntriesAsync();
             if (local != null) return local;
             try { return await _remote.LoadAllEntriesAsync(); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote LoadAllEntries failed: {ex.Message}", isWarning: true); return null; }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote LoadAllEntries failed: {ex.Message}", isWarning: true); return null; }
         }
 
         public async Task<List<string>> QueryMemoriesAsync(string npcId, string query, int limit = 10)
@@ -149,7 +149,7 @@ namespace RimMind.Core.Npc
             var local = await _local.QueryMemoriesAsync(npcId, query, limit);
             if (local != null && local.Count > 0) return local;
             try { return await _remote.QueryMemoriesAsync(npcId, query, limit); }
-            catch (Exception ex) { AIRequestQueue.LogFromBackground($"[RimMind-Core] HybridDriver: remote QueryMemories failed: {ex.Message}", isWarning: true); return local!; }
+            catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote QueryMemories failed: {ex.Message}", isWarning: true); return local!; }
         }
     }
 }

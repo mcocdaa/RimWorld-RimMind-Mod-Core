@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Flywheel;
 using Xunit;
 
 namespace RimMind.Core.Tests
@@ -32,9 +32,9 @@ namespace RimMind.Core.Tests
             RimMindCoreMod.Settings = null;
         }
 
-        private static RimMind.Core.Flywheel.TelemetryRecord MakeRecord(string npcId = "test", string scenario = "Decision")
+        private static TelemetryRecord MakeRecord(string npcId = "test", string scenario = "Decision")
         {
-            return new RimMind.Core.Flywheel.TelemetryRecord
+            return new TelemetryRecord
             {
                 NpcId = npcId,
                 Scenario = scenario,

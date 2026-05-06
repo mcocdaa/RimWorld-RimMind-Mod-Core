@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using RimMind.Core.Context;
 using RimMind.Core.Npc;
-using RimMind.Core.Prompt;
+using RimMind.Kernel.Prompt;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;

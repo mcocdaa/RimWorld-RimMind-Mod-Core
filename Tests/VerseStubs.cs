@@ -5,6 +5,9 @@ using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 using RimMind.Contracts;
+using RimMind.Kernel.Bus;
+using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Prompt;
 
 namespace RimMind.Core.AgentBus
 {
@@ -681,7 +684,7 @@ namespace RimMind.Core
     public static class RimMindAPI
     {
         private static readonly Context.ContextEngine _contextEngine = new Context.ContextEngine(new Context.HistoryManager());
-        public static Flywheel.FlywheelTelemetryCollector Telemetry { get; } = new Flywheel.FlywheelTelemetryCollector();
+        public static FlywheelTelemetryCollector Telemetry { get; } = new FlywheelTelemetryCollector();
         public static List<Extensions.IParameterTuner> ParameterTuners = new List<Extensions.IParameterTuner>();
         public static void RegisterParameterTuner(Extensions.IParameterTuner tuner) { }
         internal static void ResetForNewGame() { }
@@ -713,8 +716,10 @@ namespace RimMind.Core.Runtime
             ?? throw new InvalidOperationException("RimMindRuntime not initialized. Call Initialize() first.");
 
         public AgentBus.IEventBus EventBus { get; internal set; }
-        public Flywheel.FlywheelTelemetryCollector Telemetry { get; internal set; }
+        public FlywheelTelemetryCollector Telemetry { get; internal set; }
         public Context.ContextEngine ContextEngine { get; internal set; }
+        public Kernel.Queue.AIRequestQueueImpl QueueImpl { get; internal set; }
+        public Internal.IAIRequestQueue Queue => QueueImpl;
         public bool IsShutdown { get; internal set; }
         public IReadOnlyList<Extensions.IParameterTuner> ParameterTunersList => new List<Extensions.IParameterTuner>();
         public IReadOnlyList<Sensor.ISensorProvider> SensorProvidersList => new List<Sensor.ISensorProvider>();
@@ -722,9 +727,10 @@ namespace RimMind.Core.Runtime
 
         private RimMindRuntime()
         {
-            EventBus = new AgentBus.EventBusAdapter(new AgentBus.AgentBusImpl());
-            Telemetry = new Flywheel.FlywheelTelemetryCollector();
+            EventBus = new AgentBus.EventBusAdapter(new AgentBusImpl());
+            Telemetry = new FlywheelTelemetryCollector();
             ContextEngine = new Context.ContextEngine(new Context.HistoryManager());
+            QueueImpl = new Kernel.Queue.AIRequestQueueImpl();
         }
 
         public void RegisterParameterTuner(Extensions.IParameterTuner tuner) { }
@@ -744,9 +750,10 @@ namespace RimMind.Core.Runtime
 
         public void Reset()
         {
-            EventBus = new AgentBus.EventBusAdapter(new AgentBus.AgentBusImpl());
-            Telemetry = new Flywheel.FlywheelTelemetryCollector();
+            EventBus = new AgentBus.EventBusAdapter(new AgentBusImpl());
+            Telemetry = new FlywheelTelemetryCollector();
             ContextEngine = new Context.ContextEngine(new Context.HistoryManager());
+            QueueImpl = new Kernel.Queue.AIRequestQueueImpl();
             IsShutdown = false;
         }
 
@@ -1245,7 +1252,7 @@ namespace RimMind.Core.Client
     }
 }
 
-namespace RimMind.Core.Prompt
+namespace RimMind.Kernel.Prompt
 {
     public class PromptBudget
     {
@@ -1306,7 +1313,7 @@ namespace RimMind.Core.Prompt
 
     public class ContextComposer
     {
-        public static string ComposeSystemPrompt(List<Context.ContextEntry> entries)
+        public static string ComposeSystemPrompt(List<Core.Context.ContextEntry> entries)
         {
             return string.Join("\n", entries.Where(e => !string.IsNullOrEmpty(e.Content)).Select(e => e.Content));
         }

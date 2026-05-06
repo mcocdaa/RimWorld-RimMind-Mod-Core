@@ -8,6 +8,7 @@ using RimMind.Core.Internal;
 using RimMind.Core.Runtime;
 using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
+using RimMind.Kernel.Json;
 using Verse;
 
 namespace RimMind.Core.Agent

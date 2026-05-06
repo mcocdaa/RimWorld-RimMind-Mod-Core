@@ -1,10 +1,12 @@
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Flywheel;
 using Verse;
 
 namespace RimMind.Core.Settings
 {
     public class RimMindCoreSettings : ModSettings
     {
+        public string? SavedModVersion;
+
         public AIProvider provider = AIProvider.OpenAI;
 
         public string apiKey = string.Empty;
@@ -66,6 +68,7 @@ namespace RimMind.Core.Settings
         public override void ExposeData()
         {
             base.ExposeData();
+            Scribe_Values.Look(ref SavedModVersion, "savedModVersion");
             Scribe_Values.Look(ref provider, "provider", AIProvider.OpenAI);
             string storedKey = ApiKeyObfuscator.Obfuscate(apiKey);
             Scribe_Values.Look(ref storedKey, "apiKey", string.Empty);

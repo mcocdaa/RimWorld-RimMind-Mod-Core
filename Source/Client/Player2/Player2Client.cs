@@ -59,14 +59,14 @@ namespace RimMind.Core.Client.Player2
                 string? localKey = await TryGetLocalPlayer2Key();
                 if (!string.IsNullOrEmpty(localKey))
                 {
-                    AIRequestQueue.LogFromBackground("[RimMind-Core] Player2 local app detected.");
+                    AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Player2 local app detected.");
                     ShowNotification("RimMind.Core.Player2.LocalDetected");
                     return new Player2Client(localKey!, isLocal: true, settings);
                 }
 
                 if (!string.IsNullOrEmpty(settings.apiKey))
                 {
-                    AIRequestQueue.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
+                    AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
                     return new Player2Client(settings.apiKey, isLocal: false, settings);
                 }
 
@@ -75,7 +75,7 @@ namespace RimMind.Core.Client.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
                 return new Player2Client(string.Empty, isLocal: false, settings);
             }
         }
@@ -93,7 +93,7 @@ namespace RimMind.Core.Client.Player2
             string json = BuildRequestJson(request);
 
             if (_settings.debugLogging)
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] �� {request.RequestId} (Player2)\n{json}");
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] >> {request.RequestId} (Player2)\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
@@ -110,7 +110,7 @@ namespace RimMind.Core.Client.Player2
                 sw.Stop();
 
                 if (_settings.debugLogging)
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] �� {request.RequestId} ({tokens} tok)\n{content}");
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] << {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
                 response.PromptTokens = promptTokens;
@@ -126,7 +126,7 @@ namespace RimMind.Core.Client.Player2
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -241,7 +241,7 @@ namespace RimMind.Core.Client.Player2
                         loginRequest.downloadHandler.text);
                     if (response != null && !string.IsNullOrEmpty(response.P2Key))
                     {
-                        AIRequestQueue.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
+                        AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
                         return response.P2Key;
                     }
                     return null!;
@@ -249,7 +249,7 @@ namespace RimMind.Core.Client.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
                 return null!;
             }
         }
@@ -285,7 +285,7 @@ namespace RimMind.Core.Client.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Player2 health check loop crashed: {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 health check loop crashed: {ex.Message}", isWarning: true);
                 _healthCheckActive = false;
             }
         }
@@ -316,12 +316,12 @@ namespace RimMind.Core.Client.Player2
 
                 _lastHealthCheck = DateTime.Now;
                 if (webRequest.responseCode != 200)
-                    AIRequestQueue.LogFromBackground(
+                    AIRequestQueueImpl.LogFromBackground(
                         $"[RimMind-Core] Player2 health check failed: {webRequest.responseCode}", isWarning: true);
             }
             catch (Exception ex)
             {
-                AIRequestQueue.LogFromBackground(
+                AIRequestQueueImpl.LogFromBackground(
                     $"[RimMind-Core] Player2 health check exception: {ex.Message}", isWarning: true);
             }
         }

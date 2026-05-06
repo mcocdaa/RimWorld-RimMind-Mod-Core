@@ -5,7 +5,7 @@ namespace RimMind.Kernel.Queue
         public static bool IsTransient(string error)
         {
             if (string.IsNullOrEmpty(error)) return false;
-            if (RimMind.Contracts.Extension.QuotaExceededException.IsQuotaError(error)) return false;
+            if (RimMind.Core.Client.QuotaExceededException.IsQuotaError(error)) return false;
             string lower = error.ToLowerInvariant();
             return lower.Contains("timeout")
                 || lower.Contains("connection")

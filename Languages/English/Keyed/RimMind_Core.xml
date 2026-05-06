@@ -354,4 +354,5 @@
   <RimMind.Core.Scenario.Personality>Personality evaluation scenario</RimMind.Core.Scenario.Personality>
   <RimMind.Core.Scenario.Storyteller>Narrative scenario</RimMind.Core.Scenario.Storyteller>
   <RimMind.Core.Scenario.Memory>Dark memory generation scenario</RimMind.Core.Scenario.Memory>
+  <RimMind.Core.UpgradeWarning>RimMind v2.0 has breaking changes. Old saves may not be fully compatible. AI request queues and some internal structures have been reorganized. Please start a new game for the best experience.</RimMind.Core.UpgradeWarning>
 </LanguageData>

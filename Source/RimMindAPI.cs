@@ -10,14 +10,14 @@ using RimMind.Core.AgentBus;
 using RimMind.Core.Client;
 using RimMind.Core.Context;
 using RimMind.Core.Extensions;
-using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
-using RimMind.Core.Prompt;
 using RimMind.Core.Runtime;
 using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
 using RimMind.Core.UI;
+using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Prompt;
 using RimWorld;
 using Verse;
 

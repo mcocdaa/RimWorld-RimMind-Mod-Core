@@ -1,5 +1,6 @@
 using System;
 using RimMind.Core.Internal;
+using RimMind.Kernel.Json;
 using Xunit;
 
 // 测试纯逻辑层，不依赖 RimWorld

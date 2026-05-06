@@ -66,7 +66,7 @@ namespace RimMind.Core.Client.OpenAI
             {
                 var noFormatResp = await SendAsyncInner(request, useResponseFormat: false);
                 if (noFormatResp.Success && wantFormat != (_settings.forceJsonMode && request.UseJsonMode))
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
                 return noFormatResp;
             }
 
@@ -79,7 +79,7 @@ namespace RimMind.Core.Client.OpenAI
 
             if (IsResponseFormatError(response))
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
                 _formatCapabilityCache[cacheKey] = "none";
                 response = await SendAsyncInner(request, useResponseFormat: false);
             }
@@ -92,7 +92,7 @@ namespace RimMind.Core.Client.OpenAI
             string json = BuildRequestJson(request, useResponseFormat);
 
             if (_settings.debugLogging)
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? {request.RequestId}\n{json}");
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? {request.RequestId}\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
@@ -111,7 +111,7 @@ namespace RimMind.Core.Client.OpenAI
                 sw.Stop();
 
                 if (_settings.debugLogging)
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? {request.RequestId} ({tokens} tok)\n{content}");
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
                 response.ReasoningContent = reasoningContent;
@@ -128,7 +128,7 @@ namespace RimMind.Core.Client.OpenAI
             catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.HttpStatusCode = ex.StatusCode;
@@ -140,7 +140,7 @@ namespace RimMind.Core.Client.OpenAI
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
@@ -169,7 +169,7 @@ namespace RimMind.Core.Client.OpenAI
                     }
                 }
                 if (startIndex > 0)
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] Using cached format '{cachedBest}' for {request.RequestId} (skipping {startIndex} unsupported mode(s))");
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Using cached format '{cachedBest}' for {request.RequestId} (skipping {startIndex} unsupported mode(s))");
             }
 
             for (int i = startIndex; i < formatModes.Length; i++)
@@ -190,7 +190,7 @@ namespace RimMind.Core.Client.OpenAI
 
                 if (IsResponseFormatError(response))
                 {
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] Format '{mode}' not supported for {request.RequestId}, downgrading", isWarning: true);
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Format '{mode}' not supported for {request.RequestId}, downgrading", isWarning: true);
                     continue;
                 }
 
@@ -213,7 +213,7 @@ namespace RimMind.Core.Client.OpenAI
             string json = BuildStructuredRequestJson(request, jsonSchema, tools, formatMode);
 
             if (_settings.debugLogging)
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} (format={formatMode})\n{json}");
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} (format={formatMode})\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
@@ -233,7 +233,7 @@ namespace RimMind.Core.Client.OpenAI
                 sw.Stop();
 
                 if (_settings.debugLogging)
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} ({tokens} tok)\n{content}");
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = new AIResponse
                 {
@@ -268,9 +268,9 @@ namespace RimMind.Core.Client.OpenAI
                 }
                 else if (tools != null && tools.Count > 0 && !string.IsNullOrEmpty(content))
                 {
-                    AIRequestQueue.LogFromBackground($"[RimMind-Core] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
                     if (_settings.debugLogging && content.Length > 0)
-                        AIRequestQueue.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
+                        AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
                 }
 
                 RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
@@ -279,7 +279,7 @@ namespace RimMind.Core.Client.OpenAI
             catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.HttpStatusCode = ex.StatusCode;
@@ -291,7 +291,7 @@ namespace RimMind.Core.Client.OpenAI
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 var response = AIResponse.Failure(request.RequestId, ex.Message);
                 response.ProcessingMs = sw.ElapsedMilliseconds;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);

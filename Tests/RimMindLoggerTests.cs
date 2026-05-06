@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using RimMind.Core;
+using RimMind.Kernel.Logging;
 using Verse;
 using Xunit;
 

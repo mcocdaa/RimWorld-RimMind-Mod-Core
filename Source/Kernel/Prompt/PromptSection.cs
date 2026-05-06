@@ -1,0 +1,70 @@
+using System;
+
+namespace RimMind.Kernel.Prompt
+{
+    public class PromptSection
+    {
+        public string Tag { get; set; } = string.Empty;
+        private string _content = string.Empty;
+        public string Content
+        {
+            get => _content;
+            set
+            {
+                _content = value ?? string.Empty;
+                EstimatedTokens = EstimateTokens(_content);
+            }
+        }
+        public int Priority { get; set; }
+        public int EstimatedTokens { get; set; }
+        public Func<string, string>? Compress { get; set; }
+        public string? LayerTag { get; set; }
+
+        public const int PriorityCore = 0;
+        public const int PriorityCurrentInput = 1;
+        public const int PriorityKeyState = 3;
+        public const int PriorityMemory = 5;
+        public const int PriorityAuxiliary = 8;
+        public const int PriorityCustom = 10;
+
+        public PromptSection() { }
+
+        public PromptSection(string tag, string content, int priority = PriorityAuxiliary)
+        {
+            Tag = tag ?? string.Empty;
+            Content = content ?? string.Empty;
+            Priority = priority;
+        }
+
+        public static int EstimateTokens(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0;
+            int cjk = 0, other = 0;
+            foreach (char c in text)
+            {
+                if (c > 0x2E80) cjk++;
+                else other++;
+            }
+            return (int)(other / 4.0 + cjk / 1.5 + 0.5);
+        }
+
+        public bool IsTrimable => Priority > PriorityCore;
+
+        public bool IsCompressible => Compress != null && IsTrimable;
+
+        public PromptSection Clone()
+        {
+            return new PromptSection
+            {
+                Tag = Tag,
+                Content = Content,
+                Priority = Priority,
+                EstimatedTokens = EstimatedTokens,
+                Compress = Compress,
+                LayerTag = LayerTag,
+            };
+        }
+
+        public override string ToString() => $"[{Tag}] P{Priority} ~{EstimatedTokens}tok";
+    }
+}

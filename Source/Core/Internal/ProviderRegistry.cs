@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Context;
-using RimMind.Core.Prompt;
+using RimMind.Kernel.Prompt;
 using RimWorld;
 using Verse;
 

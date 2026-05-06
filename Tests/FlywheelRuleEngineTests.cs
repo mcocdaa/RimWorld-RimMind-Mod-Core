@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Flywheel;
 using Xunit;
 
 namespace RimMind.Core.Tests
 {
     public class FlywheelRuleEngineTests
     {
-        private static RimMind.Core.Flywheel.TelemetryRecord MakeRecord(
+        private static TelemetryRecord MakeRecord(
             int totalTokens = 1000,
             float budgetValue = 1.0f,
             bool parseSuccess = true,
@@ -14,7 +14,7 @@ namespace RimMind.Core.Tests
             int keysTrimmed = 1,
             Dictionary<string, float>? cacheHitRate = null)
         {
-            return new RimMind.Core.Flywheel.TelemetryRecord
+            return new TelemetryRecord
             {
                 NpcId = "test",
                 Scenario = "Decision",
@@ -31,7 +31,7 @@ namespace RimMind.Core.Tests
         [Fact]
         public void Analyze_EmptyList_ReturnsEmptyRecommendations()
         {
-            var result = FlywheelRuleEngine.Analyze(new List<RimMind.Core.Flywheel.TelemetryRecord>());
+            var result = FlywheelRuleEngine.Analyze(new List<TelemetryRecord>());
             Assert.Empty(result);
         }
 
@@ -53,7 +53,7 @@ namespace RimMind.Core.Tests
                 {
                     return;
                 }
-                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
+                var records = new List<TelemetryRecord>
                 {
                     MakeRecord(totalTokens: 100, budgetValue: 1.0f),
                 };
@@ -74,7 +74,7 @@ namespace RimMind.Core.Tests
             try
             {
                 if (FlywheelParameterStore.Instance == null) return;
-                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
+                var records = new List<TelemetryRecord>
                 {
                     MakeRecord(keysIncluded: 2, keysTrimmed: 8),
                 };
@@ -94,7 +94,7 @@ namespace RimMind.Core.Tests
             try
             {
                 if (FlywheelParameterStore.Instance == null) return;
-                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
+                var records = new List<TelemetryRecord>
                 {
                     MakeRecord(cacheHitRate: new Dictionary<string, float>
                     {
@@ -121,7 +121,7 @@ namespace RimMind.Core.Tests
                 {
                     return;
                 }
-                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
+                var records = new List<TelemetryRecord>
                 {
                     MakeRecord(parseSuccess: false),
                     MakeRecord(parseSuccess: false),
@@ -143,7 +143,7 @@ namespace RimMind.Core.Tests
             try
             {
                 if (FlywheelParameterStore.Instance == null) return;
-                var records = new List<RimMind.Core.Flywheel.TelemetryRecord>
+                var records = new List<TelemetryRecord>
                 {
                     MakeRecord(
                         totalTokens: 3000,

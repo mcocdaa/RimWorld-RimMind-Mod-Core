@@ -6,9 +6,9 @@ using RimMind.Contracts.Extension;
 using RimMind.Core.Client;
 using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
-using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
+using RimMind.Kernel.Flywheel;
 using UnityEngine;
 using Verse;
 

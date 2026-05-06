@@ -6,6 +6,8 @@ using RimMind.Core.Client;
 using RimMind.Core.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
+using RimMind.Kernel.Bus;
+using RimMind.Kernel.Flywheel;
 using Verse;
 using Verse.AI;
 using Xunit;

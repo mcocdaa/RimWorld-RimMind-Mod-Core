@@ -117,7 +117,7 @@ namespace RimMind.Core.Npc
             }
             catch (System.Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
                 return new NpcChatResult { Error = ex.Message };
             }
         }
@@ -333,7 +333,7 @@ namespace RimMind.Core.Npc
             }
             catch (System.Exception ex)
             {
-                AIRequestQueue.LogFromBackground($"[RimMind-Core] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}", isWarning: true);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}", isWarning: true);
             }
         }
     }
