@@ -1,4 +1,4 @@
-﻿﻿using System.Collections.Generic;
+﻿﻿﻿﻿using System.Collections.Generic;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
@@ -28,6 +28,16 @@ namespace RimMind.Core.Agent
         public PerceptionBuffer PerceptionBuffer => _perceiver.Buffer;
 
         public bool IsActive => State == AgentState.Active;
+
+        public PawnAgent()
+        {
+            Pawn = null!;
+            _eventBus = null!;
+            _recorder = new PawnRecorder(null!, null!, () => State);
+            _actor = new PawnActor(null!, null!, _goalStack, _recorder);
+            _thinker = new PawnThinker(null!, null!, _goalStack, _actor, _recorder);
+            _perceiver = new PawnPerceiver(null!, null!, () => State);
+        }
 
         public PawnAgent(Pawn pawn, IEventBus eventBus)
         {

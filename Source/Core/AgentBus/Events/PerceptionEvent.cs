@@ -1,8 +1,6 @@
-using RimMind.Contracts;
-
 namespace RimMind.Kernel.Bus
 {
-    public class PerceptionEvent : AgentBusEvent
+    public class PerceptionEvent : Contracts.AgentBusEvent
     {
         public string PerceptionType = "";
         public string Content = "";
@@ -17,7 +15,7 @@ namespace RimMind.Kernel.Bus
             Content = content;
             Importance = importance;
             Timestamp = Verse.Find.TickManager?.TicksGame ?? 0;
-            EventType = AgentBusEventType.Perception;
+            EventType = Contracts.AgentBusEventType.Perception;
         }
     }
 }

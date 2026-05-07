@@ -1,8 +1,6 @@
-using RimMind.Contracts;
-
 namespace RimMind.Kernel.Bus
 {
-    public class AgentLifecycleEvent : AgentBusEvent
+    public class AgentLifecycleEvent : Contracts.AgentBusEvent
     {
         public string PreviousState = "";
         public string NewState = "";
@@ -13,7 +11,7 @@ namespace RimMind.Kernel.Bus
             PawnId = pawnId;
             PreviousState = previousState;
             NewState = newState;
-            EventType = AgentBusEventType.Lifecycle;
+            EventType = Contracts.AgentBusEventType.Lifecycle;
         }
     }
 }

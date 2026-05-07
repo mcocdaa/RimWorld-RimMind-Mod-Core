@@ -117,7 +117,7 @@ namespace RimMind.Core.Runtime
         }
 
         public IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension
-            => new RimMind.Core.Registry.ExtensionRegistry<T>();
+            => new RimMind.Kernel.Registry.ExtensionRegistry<T>();
 
         public void RegisterAgentIdentityProvider(Func<Verse.Pawn, AgentIdentity?> provider) { }
         public AgentIdentity? GetAgentIdentity(Verse.Pawn pawn) => null;
@@ -211,6 +211,18 @@ namespace RimMind.Core.Tests
     internal sealed class VerseTickProvider : RimMind.Kernel.Abstractions.ITickProvider
     {
         public int TicksGame => Verse.Find.TickManager?.TicksGame ?? 0;
+    }
+}
+
+namespace RimMind.Core.Sensor
+{
+    public class SensorManager : Verse.GameComponent, ISensorManager
+    {
+        public static ISensorManager? Instance => RimMindServiceLocator.Get<ISensorManager>();
+        public SensorManager() : base() { }
+        public SensorManager(Verse.Game game) : base() { }
+        public List<RimMind.Core.Client.StructuredTool> BuildAgentTools(Verse.Pawn pawn) => new();
+        public void RegisterSensorContextKeys() { }
     }
 }
 
@@ -320,6 +332,7 @@ namespace RimMind.Core.Npc
 
     public class NpcManager : Verse.GameComponent, INpcManager
     {
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<int, Verse.Pawn> _pawnIndex = new();
         public static INpcManager? Instance => RimMindServiceLocator.Get<INpcManager>();
 
         public NpcManager() : base() { }
@@ -331,14 +344,57 @@ namespace RimMind.Core.Npc
         public NpcProfile? GetNpc(string npcId) => null;
         public IReadOnlyList<NpcProfile> GetAllNpcs() => Array.Empty<NpcProfile>();
         public string GetNpcForMap(Verse.Map map) => "";
-        public Verse.Pawn? FindPawnByNpcId(string npcId) => null;
+
+        public Verse.Pawn? FindPawnByNpcId(string npcId)
+        {
+            if (string.IsNullOrEmpty(npcId) || !npcId.StartsWith("NPC-")) return null;
+            if (!int.TryParse(npcId.Substring(4), out int thingId)) return null;
+
+            if (_pawnIndex.TryGetValue(thingId, out var indexed))
+            {
+                if (!indexed.DestroyedOrNull() && !indexed.Dead) return indexed;
+                _pawnIndex.TryRemove(thingId, out _);
+            }
+
+            foreach (var map in Verse.Find.Maps)
+            {
+                if (map?.mapPawns == null) continue;
+                var pawn = map.mapPawns.AllPawns.FirstOrDefault(p => p.thingIDNumber == thingId);
+                if (pawn != null)
+                {
+                    _pawnIndex[thingId] = pawn;
+                    return pawn;
+                }
+            }
+
+            var worldPawn = Verse.Find.WorldPawns?.AllPawnsAlive.FirstOrDefault(p => p.thingIDNumber == thingId);
+            if (worldPawn != null)
+            {
+                _pawnIndex[thingId] = worldPawn;
+                return worldPawn;
+            }
+
+            return null;
+        }
+
         public Verse.Pawn? FindProxyPawnForMap(Verse.Map map) => null;
         public void RegisterActiveAgent(int thingId) { }
         public void UnregisterActiveAgent(int thingId) { }
         public HashSet<int> GetActiveAgentPawnIds() => new HashSet<int>();
-        public void IndexPawn(Verse.Pawn pawn) { }
-        public void UnindexPawn(int thingId) { }
+        public void IndexPawn(Verse.Pawn pawn) { if (pawn != null) _pawnIndex[pawn.thingIDNumber] = pawn; }
+        public void UnindexPawn(int thingId) { _pawnIndex.TryRemove(thingId, out _); }
         public string GetMapNpcId(Verse.Map map) => "";
+        public void ClearPawnIndex() { _pawnIndex.Clear(); }
+    }
+
+    internal static class TransientExceptionChecker
+    {
+        public static bool IsTransient(Exception ex)
+        {
+            if (ex is TimeoutException) return true;
+            if (ex is HttpHelper.HttpException httpEx && httpEx.StatusCode >= 500 && httpEx.StatusCode < 600) return true;
+            return false;
+        }
     }
 
     public class NpcProfileBuilder

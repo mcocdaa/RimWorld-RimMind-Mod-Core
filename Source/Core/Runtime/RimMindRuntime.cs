@@ -9,7 +9,7 @@ using RimMind.Core.Client;
 using RimMind.Kernel.Context;
 using RimMind.Core.Extensions;
 using RimMind.Core.Internal;
-using RimMind.Core.Registry;
+using RimMind.Kernel.Registry;
 using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
 using RimMind.Adapters.UI;

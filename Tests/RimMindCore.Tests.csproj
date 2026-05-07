@@ -43,7 +43,8 @@
     <Compile Include="../Source/Core/Internal/IOverlayService.cs" />
     <Compile Include="../Source/Core/Perception/**/*.cs" />
     <Compile Include="../Source/Core/Registry/**/*.cs" />
-    <Compile Include="../Source/Core/Sensor/**/*.cs" />
+    <Compile Include="../Source/Core/Sensor/ISensorProvider.cs" />
+    <Compile Include="../Source/Core/Sensor/ISensorManager.cs" />
     <Compile Include="../Source/Core/AIDebugLog.cs" />
     <Compile Include="../Source/Core/AIProvider.cs" />
     <Compile Include="../Source/Npc/NpcTypes.cs" />

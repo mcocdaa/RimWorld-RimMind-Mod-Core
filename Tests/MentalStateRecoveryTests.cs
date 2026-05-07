@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using RimMind.Contracts;
 using RimMind.Core.Agent;
@@ -118,7 +118,7 @@ namespace RimMind.Core.Tests
             _agent.Tick();
 
             Assert.Contains(_capturedEvents, e =>
-                e.EventType == AgentBusEventType.Lifecycle);
+                e.EventType == Contracts.AgentBusEventType.Lifecycle);
         }
     }
 }

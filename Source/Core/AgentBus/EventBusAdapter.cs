@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿﻿﻿﻿using System;
 using RimMind.Contracts;
 using RimMind.Kernel.Bus;
 
@@ -13,22 +13,22 @@ namespace RimMind.Kernel.Bus
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
         }
 
-        public void Subscribe<T>(string key, Action<T> handler) where T : AgentBusEvent
+        public void Subscribe<T>(string key, Action<T> handler) where T : Contracts.AgentBusEvent
             => _bus.Subscribe(key, handler);
 
-        public string Subscribe<T>(Action<T> handler) where T : AgentBusEvent
+        public string Subscribe<T>(Action<T> handler) where T : Contracts.AgentBusEvent
             => _bus.Subscribe(handler);
 
-        public void Unsubscribe<T>(string key) where T : AgentBusEvent
+        public void Unsubscribe<T>(string key) where T : Contracts.AgentBusEvent
             => _bus.Unsubscribe<T>(key);
 
-        public void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent
+        public void Unsubscribe<T>(Action<T> handler) where T : Contracts.AgentBusEvent
             => _bus.Unsubscribe(handler);
 
-        public void Publish<T>(T evt) where T : AgentBusEvent
+        public void Publish<T>(T evt) where T : Contracts.AgentBusEvent
             => _bus.Publish(evt);
 
-        public void PublishFromBackground<T>(T evt) where T : AgentBusEvent
+        public void PublishFromBackground<T>(T evt) where T : Contracts.AgentBusEvent
             => _bus.PublishFromBackground(evt);
 
         public void FlushBackgroundQueue()

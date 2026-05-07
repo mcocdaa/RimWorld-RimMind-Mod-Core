@@ -19,9 +19,21 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"using\s+RimWorld\.Planet\s*;",
         };
 
-        private static readonly HashSet<string> AllowedFiles = new()
+        private static readonly string[] AllowedFullyQualifiedTypes = new[]
         {
-            "AgentBusImpl.cs",
+            "Verse.Pawn",
+            "Verse.IExposable",
+            "Verse.Game",
+            "Verse.Map",
+            "Verse.Thing",
+            "Verse.Scribe_Values",
+            "Verse.Scribe_Collections",
+            "Verse.Scribe_Deep",
+            "Verse.Scribe",
+            "Verse.Scribe.mode",
+            "Verse.LoadSaveMode",
+            "Verse.LookMode",
+            "Verse.TaggedString",
         };
 
         [Fact]
@@ -32,15 +44,14 @@ namespace RimMind.Core.ArchTests.PhaseC
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
             var kernelDir = Path.Combine(sourceDir, "Kernel");
-            kernelDir.Should().NotBeNull("Kernel directory must exist");
+            Directory.Exists(kernelDir).Should().BeTrue("Kernel directory must exist");
+            Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories).Should().NotBeEmpty(
+                "Kernel directory must contain at least one .cs file");
 
             var violatingFiles = new List<string>();
 
             foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
             {
-                var fileName = Path.GetFileName(file);
-                if (AllowedFiles.Contains(fileName)) continue;
-
                 var relativePath = file.Substring(kernelDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 var source = File.ReadAllText(file);
 
@@ -56,8 +67,72 @@ namespace RimMind.Core.ArchTests.PhaseC
             }
 
             violatingFiles.Should().BeEmpty(
-                "Kernel namespace must not import Verse or RimWorld. " +
-                "Only Verse.Pawn and Verse.IExposable may be used via fully-qualified names (no 'using Verse;'). " +
+                "R-C1: Kernel namespace must not import Verse or RimWorld via 'using' directives. " +
+                "Only Verse.Pawn and Verse.IExposable may be used via fully-qualified names. " +
+                $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
+        }
+
+        [Fact]
+        [Trait("Phase", "C")]
+        public void R_C1_Kernel_FullyQualified_VerseUsage_ShouldBeLimited()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNull("Source directory must exist for analysis");
+
+            var kernelDir = Path.Combine(sourceDir, "Kernel");
+            if (!Directory.Exists(kernelDir)) return;
+
+            var disallowedFqUsage = new List<string>();
+            var fqPattern = @"Verse\.\w+";
+
+            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
+            {
+                var relativePath = file.Substring(kernelDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var source = File.ReadAllText(file);
+
+                if (Regex.IsMatch(source, @"using\s+Verse")) continue;
+
+                foreach (Match match in Regex.Matches(source, fqPattern))
+                {
+                    var matchedType = match.Value;
+                    if (!AllowedFullyQualifiedTypes.Contains(matchedType))
+                    {
+                        disallowedFqUsage.Add($"Kernel/{relativePath} (found: {matchedType})");
+                    }
+                }
+            }
+
+            disallowedFqUsage.Should().BeEmpty(
+                "R-C1: Kernel may only use fully-qualified Verse.Pawn, Verse.IExposable, Verse.Game, Verse.Map, Verse.Thing. " +
+                "Other Verse types must go through Kernel abstractions (ILogSink, IPathProvider, etc.). " +
+                $"Disallowed usages:\n  {string.Join("\n  ", disallowedFqUsage)}");
+        }
+
+        [Fact]
+        [Trait("Phase", "C")]
+        public void R_C1_Kernel_Namespace_ShouldBe_RimMind_Kernel()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNull("Source directory must exist for analysis");
+
+            var kernelDir = Path.Combine(sourceDir, "Kernel");
+            if (!Directory.Exists(kernelDir)) return;
+
+            var violatingFiles = new List<string>();
+            var expectedNsPattern = @"namespace\s+RimMind\.Kernel";
+
+            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
+            {
+                var source = File.ReadAllText(file);
+                if (!Regex.IsMatch(source, expectedNsPattern))
+                {
+                    var relativePath = file.Substring(kernelDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    violatingFiles.Add($"Kernel/{relativePath}");
+                }
+            }
+
+            violatingFiles.Should().BeEmpty(
+                "R-C1: All files in Kernel/ directory must use RimMind.Kernel.* namespace. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

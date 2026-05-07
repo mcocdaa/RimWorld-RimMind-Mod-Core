@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Client;
@@ -30,7 +30,7 @@ namespace RimMind.Core.Tests
             RimMindServiceLocator.Register<ITickProvider>(new VerseTickProvider());
             _npcManager = new NpcManager(new Game());
             _historyManager = new HistoryManager();
-            _engine = new ContextEngine(_historyManager);
+            _engine = new ContextEngine(_historyManager, _npcManager);
             _pawn = new Pawn { thingIDNumber = 42, Dead = false };
             _npcId = $"NPC-{_pawn.thingIDNumber}";
             _npcManager.IndexPawn(_pawn);

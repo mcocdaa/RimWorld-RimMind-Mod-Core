@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Comps;
 using RimMind.Core.Runtime;
@@ -44,7 +44,8 @@ namespace RimMind.Core.Agent
                 bool executed = false;
                 try
                 {
-                    executed = bridge.Execute(actionId, pawn, targetPawn, null, EventId);
+                    bridge.Execute(pawn, actionId, targetPawn?.LabelShortCap);
+                    executed = true;
                 }
                 catch (System.Exception ex)
                 {

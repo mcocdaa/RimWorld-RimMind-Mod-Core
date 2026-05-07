@@ -1,4 +1,4 @@
-﻿﻿using RimMind.Core.Agent;
+﻿﻿﻿﻿using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Comps;
 using Verse;

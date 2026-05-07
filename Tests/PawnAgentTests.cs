@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;

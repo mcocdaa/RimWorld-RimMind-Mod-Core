@@ -1,8 +1,6 @@
-using RimMind.Contracts;
-
 namespace RimMind.Kernel.Bus
 {
-    public class ActionEvent : AgentBusEvent
+    public class ActionEvent : Contracts.AgentBusEvent
     {
         public string ActionName = "";
         public bool Success;
@@ -17,7 +15,7 @@ namespace RimMind.Kernel.Bus
             Success = success;
             ResultReason = resultReason;
             EventId = eventId;
-            EventType = AgentBusEventType.Action;
+            EventType = Contracts.AgentBusEventType.Action;
         }
     }
 }

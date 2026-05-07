@@ -15,7 +15,7 @@ namespace RimMind.Kernel.Bus
             DecisionType = decisionType;
             Reason = reason;
             Action = action;
-            EventType = AgentBusEventType.Decision;
+            EventType = Contracts.AgentBusEventType.Decision;
         }
     }
 }

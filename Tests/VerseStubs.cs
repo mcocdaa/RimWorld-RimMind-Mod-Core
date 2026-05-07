@@ -10,6 +10,26 @@ namespace UnityEngine
         public Rect(float x, float y, float width, float height) { this.x = x; this.y = y; this.width = width; this.height = height; }
     }
 
+    public struct Vector2
+    {
+        public float x, y;
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+        public static Vector2 zero => new Vector2(0, 0);
+        public static Vector2 one => new Vector2(1, 1);
+    }
+
+    public struct Color
+    {
+        public float r, g, b, a;
+        public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; }
+        public static Color white => new Color(1, 1, 1);
+        public static Color red => new Color(1, 0, 0);
+        public static Color green => new Color(0, 1, 0);
+        public static Color yellow => new Color(1, 1, 0);
+        public static Color cyan => new Color(0, 1, 1);
+        public static Color gray => new Color(0.5f, 0.5f, 0.5f);
+    }
+
     public static class Mathf
     {
         public static float Clamp(float value, float min, float max)
@@ -21,6 +41,34 @@ namespace UnityEngine
 
         public static float Max(float a, float b) => a > b ? a : b;
         public static float Min(float a, float b) => a < b ? a : b;
+    }
+}
+
+namespace UnityEngine.Networking
+{
+    public class UnityWebRequest
+    {
+        public string url = "";
+        public bool isDone = true;
+        public bool isNetworkError = false;
+        public bool isHttpError = false;
+        public string error = "";
+        public long responseCode = 0;
+        public byte[]? downloadHandlerData;
+        public string downloadHandlerText = "";
+
+        public static UnityWebRequest Get(string url) => new UnityWebRequest { url = url };
+        public static UnityWebRequest Post(string url, string postData) => new UnityWebRequest { url = url };
+        public static UnityWebRequest Put(string url, string bodyData) => new UnityWebRequest { url = url };
+        public virtual void SendWebRequest() { isDone = true; }
+        public virtual void Abort() { }
+        public virtual void Dispose() { }
+    }
+
+    public class DownloadHandler
+    {
+        public virtual byte[]? data => null;
+        public virtual string text => "";
     }
 }
 
@@ -59,6 +107,11 @@ namespace Verse
     }
 
     public class Game { }
+
+    public static class EffecterDefOf
+    {
+        public static Def? Construction;
+    }
 
     public class ModSettings : IExposable
     {
@@ -106,6 +159,8 @@ namespace Verse
     public class Thing
     {
         public int thingIDNumber;
+        public string ThingID => thingIDNumber.ToString();
+        public bool Destroyed => false;
     }
 
     public class ThingWithComps : Thing
@@ -159,6 +214,7 @@ namespace Verse
     public class Pawn : ThingWithComps
     {
         public bool Dead;
+        public bool Downed;
         public bool IsFreeNonSlaveColonist;
         public bool DestroyedOrNull() => false;
         public Map? Map;
@@ -228,6 +284,7 @@ namespace Verse
         public static WorldPawns? WorldPawns;
         public static Storyteller? Storyteller;
         public static SignalManager? SignalManager = new SignalManager();
+        public static WindowStack WindowStack = new WindowStack();
     }
 
     public class TickManager
@@ -319,6 +376,7 @@ namespace Verse
         public TaggedString defaultLabel;
         public TaggedString defaultDesc;
         public Action? action;
+        public Texture2D? icon;
     }
 
     public static class ContentFinder<T>
@@ -333,16 +391,24 @@ namespace Verse
         public static bool DevMode = false;
     }
 
-    public class Window { }
+    public class Window
+    {
+        public virtual UnityEngine.Vector2 InitialSize => new UnityEngine.Vector2(500f, 400f);
+    }
 
     public class Dialog_MessageBox : Window
     {
         public Dialog_MessageBox(TaggedString text, TaggedString okBtnLabel, Action? okAction = null) { }
     }
 
-    public static class WindowStack
+    public class WindowStack
     {
-        public static void Add(Window window) { }
+        public void Add(Window window) { }
+    }
+
+    public class Window_AgentDialogue : Window
+    {
+        public Window_AgentDialogue(Pawn pawn) { }
     }
 
     public class Mod
@@ -359,6 +425,17 @@ namespace Verse
     {
         public float x, y, width, height;
         public Rect(float x, float y, float width, float height) { this.x = x; this.y = y; this.width = width; this.height = height; }
+    }
+
+    public class Listing_Standard
+    {
+        public void Begin(Rect rect) { }
+        public void End() { }
+        public void Label(string label) { }
+        public void Gap(float height = 12f) { }
+        public bool ButtonText(string label) => false;
+        public void CheckboxLabeled(string label, ref bool checkOn) { }
+        public void TextFieldNumeric<T>(ref T value, string? label = null, float labelWidth = 0f) where T : struct { }
     }
 
     public class ThingComp
@@ -385,7 +462,7 @@ namespace Verse.AI
         Never, Instant, Delay, PatherArrive, WaitForPatherToEnd, FinishLastToil
     }
 
-    public enum TargetIndex { A = 0, B = 1, C = 2 }
+    public enum TargetIndex { None = -1, A = 0, B = 1, C = 2 }
 
     public struct LocalTargetInfo
     {
@@ -489,11 +566,15 @@ namespace Verse.AI
     {
         public Verse.Pawn pawn = null!;
         public Job job = null!;
+        public Thing? TargetThingA => job.targetA.Thing;
+        public Thing? TargetThingB => job.targetB.Thing;
         public virtual IEnumerable<Toil> MakeNewToil() { yield break; }
         protected virtual IEnumerable<Toil> MakeNewToils() { yield break; }
         public virtual bool TryMakePreToilReservations(bool errorOnFailed) => true;
         public virtual void Notify_Starting() { }
         protected virtual void Cleanup(Verse.AI.JobCondition condition) { }
+        protected void EndJobWith(Verse.AI.JobCondition condition) { }
+        protected void AddFailCondition(Func<bool> condition) { }
     }
 
     public struct JobIssueParams { }

@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Contracts.Extension;
 
-namespace RimMind.Core.Registry;
+namespace RimMind.Kernel.Registry;
 
 internal sealed class ExtensionRegistry<T> : IExtensionRegistry<T> where T : class, IExtension
 {

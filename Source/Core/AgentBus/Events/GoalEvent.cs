@@ -1,8 +1,6 @@
-using RimMind.Contracts;
-
 namespace RimMind.Kernel.Bus
 {
-    public class GoalEvent : AgentBusEvent
+    public class GoalEvent : Contracts.AgentBusEvent
     {
         public string GoalDescription = "";
         public string Status = "";
@@ -15,7 +13,7 @@ namespace RimMind.Kernel.Bus
             GoalDescription = goalDescription;
             Status = status;
             Category = category;
-            EventType = AgentBusEventType.Goal;
+            EventType = Contracts.AgentBusEventType.Goal;
         }
     }
 }
