@@ -11,6 +11,29 @@ namespace RimMind.Kernel.Logging
         private const string Prefix = "[RimMind-Core]";
         private static readonly int _mainThreadId = Thread.CurrentThread.ManagedThreadId;
         private static readonly ConcurrentQueue<(string level, string message)> _backgroundLogs = new ConcurrentQueue<(string, string)>();
+        private static readonly AsyncLocal<string?> _currentTraceId = new AsyncLocal<string?>();
+
+        public static IDisposable BeginTraceScope(string traceId)
+        {
+            var prev = _currentTraceId.Value;
+            _currentTraceId.Value = traceId;
+            return new TraceScope(prev);
+        }
+
+        public static string? CurrentTraceId => _currentTraceId.Value;
+
+        private static string FormatPrefix()
+        {
+            var trace = _currentTraceId.Value;
+            return trace != null ? $"{Prefix}[trace={trace}]" : Prefix;
+        }
+
+        private sealed class TraceScope : IDisposable
+        {
+            private readonly string? _previous;
+            public TraceScope(string? previous) { _previous = previous; }
+            public void Dispose() { _currentTraceId.Value = _previous; }
+        }
 
         private static ILogSink? GetSink() => RimMindServiceLocator.Get<ILogSink>();
 
@@ -34,7 +57,7 @@ namespace RimMind.Kernel.Logging
 
         public static void Message(string message)
         {
-            string formatted = $"{Prefix} {message}";
+            string formatted = $"{FormatPrefix()} {message}";
             if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
                 WriteToSink("Message", formatted);
             else
@@ -43,7 +66,7 @@ namespace RimMind.Kernel.Logging
 
         public static void Warning(string message)
         {
-            string formatted = $"{Prefix} {message}";
+            string formatted = $"{FormatPrefix()} {message}";
             if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
                 WriteToSink("Warning", formatted);
             else
@@ -52,7 +75,7 @@ namespace RimMind.Kernel.Logging
 
         public static void Error(string message)
         {
-            string formatted = $"{Prefix} {message}";
+            string formatted = $"{FormatPrefix()} {message}";
             if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
                 WriteToSink("Error", formatted);
             else

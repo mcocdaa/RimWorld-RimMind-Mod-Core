@@ -26,6 +26,7 @@ namespace RimMind.Kernel.Flywheel
         public string[] KeysIncluded = null!;
         public string[] KeysTrimmed = null!;
         public Dictionary<string, int> LayerTokenBreakdown = null!;
+        public string? TraceId;
         public long TimestampTicks;
         public Dictionary<string, int>? KeyChangeFreq;
         public Dictionary<string, float>? CacheHitRate;

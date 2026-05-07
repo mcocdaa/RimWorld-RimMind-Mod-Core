@@ -3,6 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Contracts;
 using RimMind.Contracts.Extension;
+using RimMind.Contracts.Pipeline;
+using RimMind.Contracts.Pipeline.AI;
+using RimMind.Contracts.Pipeline.Npc;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
@@ -15,6 +18,9 @@ using RimMind.Core.Settings;
 using RimMind.Adapters.UI;
 using RimMind.Core.UI;
 using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Pipeline;
+using RimMind.Kernel.Pipeline.AI;
+using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
 using Verse;
@@ -40,6 +46,8 @@ namespace RimMind.Core.Runtime
         public AIRequestQueueImpl QueueImpl { get; private set; }
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; private set; }
+        public IPipeline<AIRequestContext> AIRequestPipeline { get; private set; }
+        public IPipeline<NpcChatContext> NpcChatPipeline { get; private set; }
 
         private readonly ConcurrentDictionary<Type, object> _registries
             = new ConcurrentDictionary<Type, object>();
@@ -71,6 +79,10 @@ namespace RimMind.Core.Runtime
             AudioPlayer = new NullAudioPlayer();
             Telemetry = new FlywheelTelemetryCollector();
             QueueImpl = new AIRequestQueueImpl();
+            AIRequestPipeline = AIRequestPipelineFactory.Build(
+                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
+            NpcChatPipeline = NpcChatPipelineFactory.Build(
+                GetExtensionRegistry<IMiddleware<NpcChatContext>>());
 
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
         }
@@ -103,6 +115,10 @@ namespace RimMind.Core.Runtime
             EventBus = new EventBusAdapter(AgentBus);
             ClientManager = new ClientManager();
             QueueImpl = new AIRequestQueueImpl();
+            AIRequestPipeline = AIRequestPipelineFactory.Build(
+                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
+            NpcChatPipeline = NpcChatPipelineFactory.Build(
+                GetExtensionRegistry<IMiddleware<NpcChatContext>>());
             _isShutdown = false;
         }
 

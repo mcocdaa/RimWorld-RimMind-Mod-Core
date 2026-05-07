@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using System.Linq;
+﻿﻿﻿﻿﻿﻿using System.Linq;
 using FluentAssertions;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;

@@ -1,16 +1,18 @@
-﻿﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Extension;
+using RimMind.Contracts.Pipeline;
+using RimMind.Contracts.Pipeline.AI;
+using RimMind.Contracts.Pipeline.Npc;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
 using RimMind.Kernel.Context;
 using RimMind.Core.Extensions;
-using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using RimMind.Core.Runtime;
 using RimMind.Core.Sensor;
@@ -18,6 +20,8 @@ using RimMind.Core.Settings;
 using RimMind.Adapters.UI;
 using RimMind.Core.UI;
 using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Logging;
+using RimMind.Kernel.Pipeline;
 using RimMind.Kernel.Prompt;
 using RimWorld;
 using Verse;
@@ -70,22 +74,9 @@ namespace RimMind.Core
             if (RimMindRuntime.Instance.IsShutdown) return new NpcChatResult { Error = "RimMind is shut down." };
             try
             {
-                var driver = StorageDriverFactory.GetDriver();
-                if (!driver.IsNpcAlive(request.NpcId) && request.NpcId.StartsWith("NPC-")
-                    && int.TryParse(request.NpcId.Substring(4), out _))
-                {
-                    var npcMgr = RimMindServiceLocator.Get<INpcManager>();
-                    var pawn = npcMgr?.FindPawnByNpcId(request.NpcId);
-                    if (pawn != null)
-                    {
-                        var profile = NpcProfileBuilder.BuildPawnNpc(pawn);
-                        await driver.SpawnNpcAsync(profile);
-                        LongEventHandler.ExecuteWhenFinished(() => npcMgr?.SpawnNpc(profile));
-                    }
-                }
-
-                var snapshot = RimMindRuntime.Instance.ContextEngine.BuildSnapshot(request);
-                return await driver.ChatAsync(snapshot, ct);
+                var ctx = new NpcChatContext { Request = request, Ct = ct };
+                await RimMindRuntime.Instance.NpcChatPipeline.ExecuteAsync(ctx);
+                return ctx.Result ?? new NpcChatResult { Error = ctx.IsShortCircuited ? ctx.ShortCircuitReason : "Pipeline produced no result." };
             }
             catch (Exception ex)
             {
@@ -141,61 +132,47 @@ namespace RimMind.Core
                 ExpireAtTicks = Find.TickManager.TicksGame + (RimMindCoreMod.Settings?.requestExpireTicks ?? 30000),
                 UseJsonMode = true, Priority = AIRequestPriority.Normal,
             };
+            if (!string.IsNullOrEmpty(schema)) aiRequest.JsonSchema = schema;
+            if (tools != null && tools.Count > 0) aiRequest.Tools = tools;
 
-            Action<AIResponse> wrappedOnComplete = (response) =>
+            var ctx = new AIRequestContext { Request = aiRequest, Client = GetClient() };
+            RimMindRuntime.Instance.AIRequestPipeline.ExecuteAsync(ctx).ContinueWith(_ =>
             {
-                try
-                {
-                    bool parseSuccess = response.Success && !string.IsNullOrEmpty(response.Content);
-                    Telemetry.Record(new TelemetryRecord
-                    {
-                        NpcId = request.NpcId, Scenario = request.Scenario,
-                        PromptTokens = response.PromptTokens, CompletionTokens = response.CompletionTokens,
-                        TotalTokens = response.TokensUsed, CachedTokens = response.CachedTokens,
-                        BudgetValue = snapshot.BudgetValue,
-                        KeysIncluded = snapshot.IncludedKeys, KeysTrimmed = snapshot.TrimmedKeys,
-                        LayerTokenBreakdown = new Dictionary<string, int>
-                        {
-                            { "L0", snapshot.Meta.L0Tokens }, { "L1", snapshot.Meta.L1Tokens },
-                            { "L2", snapshot.Meta.L2Tokens }, { "L3", snapshot.Meta.L3Tokens },
-                            { "L4", snapshot.Meta.L4Tokens }, { "L5", snapshot.Meta.L5Tokens },
-                        },
-                        KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0 ? new Dictionary<string, int>(snapshot.KeyChangeCounts) : null,
-                        ScoreDistribution = snapshot.KeyScores.Count > 0 ? new Dictionary<string, float>(snapshot.KeyScores) : null,
-                        DiffCount = snapshot.DiffCount,
-                        LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0 ? new Dictionary<string, long>(snapshot.LatencyByLayerMs) : null,
-                        RequestLatencyMs = snapshot.BuildStartTicks > 0 ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond : 0,
-                        ResponseParseSuccess = parseSuccess, TimestampTicks = DateTime.Now.Ticks,
-                    });
-                }
-                catch (Exception ex) { Log.Warning($"[RimMind-Core] Telemetry record failed: {ex.Message}"); }
-                onComplete?.Invoke(response);
-            };
+                RecordStructuredTelemetry(request, snapshot, ctx.Response);
+                onComplete?.Invoke(ctx.Response ?? AIResponse.Failure(aiRequest.RequestId, "Pipeline failed"));
+            }, TaskContinuationOptions.ExecuteSynchronously);
+        }
 
+        private static void RecordStructuredTelemetry(ContextRequest request, ContextSnapshot snapshot, AIResponse? response)
+        {
             try
             {
-                RequestStructuredAsync(aiRequest, schema, wrappedOnComplete, tools);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[RimMind-Core] RequestStructuredAsync threw, falling back to queue: {ex.Message}");
-                Log.Warning($"[RimMind-Core] Structured request failed, falling back to plain request for {request.NpcId}");
-                var fallbackRequest = new AIRequest
+                bool parseSuccess = response?.Success ?? false;
+                Telemetry.Record(new TelemetryRecord
                 {
-                    SystemPrompt = string.Empty,
-                    Messages = new List<ChatMessage>(snapshot.Messages),
-                    MaxTokens = snapshot.MaxTokens, Temperature = snapshot.Temperature,
-                    RequestId = aiRequest.RequestId, ModId = aiRequest.ModId,
-                    ExpireAtTicks = aiRequest.ExpireAtTicks,
-                    UseJsonMode = true, Priority = aiRequest.Priority,
-                };
-                var queue = RimMindRuntime.Instance.Queue;
-                var client = GetClient();
-                if (client != null)
-                    queue.Enqueue(fallbackRequest, wrappedOnComplete, client);
-                else
-                    wrappedOnComplete?.Invoke(AIResponse.Failure(fallbackRequest.RequestId, "No AI client available"));
+                    NpcId = request.NpcId, Scenario = request.Scenario,
+                    PromptTokens = response?.PromptTokens ?? 0,
+                    CompletionTokens = response?.CompletionTokens ?? 0,
+                    TotalTokens = response?.TokensUsed ?? 0,
+                    CachedTokens = response?.CachedTokens ?? 0,
+                    BudgetValue = snapshot.BudgetValue,
+                    KeysIncluded = snapshot.IncludedKeys, KeysTrimmed = snapshot.TrimmedKeys,
+                    LayerTokenBreakdown = new Dictionary<string, int>
+                    {
+                        { "L0", snapshot.Meta.L0Tokens }, { "L1", snapshot.Meta.L1Tokens },
+                        { "L2", snapshot.Meta.L2Tokens }, { "L3", snapshot.Meta.L3Tokens },
+                        { "L4", snapshot.Meta.L4Tokens }, { "L5", snapshot.Meta.L5Tokens },
+                    },
+                    KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0 ? new Dictionary<string, int>(snapshot.KeyChangeCounts) : null,
+                    ScoreDistribution = snapshot.KeyScores.Count > 0 ? new Dictionary<string, float>(snapshot.KeyScores) : null,
+                    DiffCount = snapshot.DiffCount,
+                    LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0 ? new Dictionary<string, long>(snapshot.LatencyByLayerMs) : null,
+                    RequestLatencyMs = snapshot.BuildStartTicks > 0 ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond : 0,
+                    TraceId = RimMindLogger.CurrentTraceId,
+                    ResponseParseSuccess = parseSuccess, TimestampTicks = DateTime.Now.Ticks,
+                });
             }
+            catch (Exception ex) { Log.Warning($"[RimMind-Core] Telemetry record failed: {ex.Message}"); }
         }
 
         public static string BuildMapContext(Map map, bool brief = false)
