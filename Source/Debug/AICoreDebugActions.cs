@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Linq;
 using RimMind.Core.Agent;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
-using RimMind.Core.Context;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Context;
+using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using RimMind.Core.Settings;

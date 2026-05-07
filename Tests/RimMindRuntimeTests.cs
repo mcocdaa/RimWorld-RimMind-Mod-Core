@@ -1,8 +1,7 @@
-using System;
-using RimMind.Core.AgentBus;
-using RimMind.Core.Context;
-using RimMind.Core.Runtime;
+﻿﻿using System;
 using RimMind.Kernel.Bus;
+using RimMind.Kernel.Context;
+using RimMind.Core.Runtime;
 using RimMind.Kernel.Flywheel;
 using Verse;
 using Xunit;

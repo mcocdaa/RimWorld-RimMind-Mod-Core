@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using RimMind.Core.Agent;
-using RimMind.Core.AgentBus;
-using RimMind.Core.UI;
+using RimMind.Kernel.Bus;
+using RimMind.Adapters.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;

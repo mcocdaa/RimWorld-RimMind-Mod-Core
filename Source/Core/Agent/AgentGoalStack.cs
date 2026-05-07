@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Runtime;
 using Verse;
 

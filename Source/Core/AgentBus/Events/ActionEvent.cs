@@ -1,4 +1,6 @@
-namespace RimMind.Core.AgentBus
+using RimMind.Contracts;
+
+namespace RimMind.Kernel.Bus
 {
     public class ActionEvent : AgentBusEvent
     {

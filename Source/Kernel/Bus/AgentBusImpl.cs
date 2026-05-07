@@ -2,10 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using RimMind.Contracts;
-using RimMind.Core.AgentBus;
 using RimMind.Core.Internal;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;
+using ContractsAgentBusEvent = RimMind.Contracts.AgentBusEvent;
 
 namespace RimMind.Kernel.Bus
 {
@@ -21,17 +21,17 @@ namespace RimMind.Kernel.Bus
 
         private readonly struct PendingEvent
         {
-            public readonly AgentBusEvent Event;
-            public readonly Action<AgentBusEvent> Invoker;
+            public readonly ContractsAgentBusEvent Event;
+            public readonly Action<ContractsAgentBusEvent> Invoker;
 
-            public PendingEvent(AgentBusEvent evt, Action<AgentBusEvent> invoker)
+            public PendingEvent(ContractsAgentBusEvent evt, Action<ContractsAgentBusEvent> invoker)
             {
                 Event = evt;
                 Invoker = invoker;
             }
         }
 
-        public string Subscribe<T>(Action<T> handler) where T : AgentBusEvent
+        public string Subscribe<T>(Action<T> handler) where T : ContractsAgentBusEvent
         {
             AssertMainThread();
             if (handler == null) return "";
@@ -40,7 +40,7 @@ namespace RimMind.Kernel.Bus
             return key;
         }
 
-        public void Subscribe<T>(string key, Action<T> handler) where T : AgentBusEvent
+        public void Subscribe<T>(string key, Action<T> handler) where T : ContractsAgentBusEvent
         {
             AssertMainThread();
             if (handler == null || string.IsNullOrEmpty(key)) return;
@@ -49,7 +49,7 @@ namespace RimMind.Kernel.Bus
             dict[key] = handler;
         }
 
-        public void Unsubscribe<T>(string key) where T : AgentBusEvent
+        public void Unsubscribe<T>(string key) where T : ContractsAgentBusEvent
         {
             AssertMainThread();
             if (string.IsNullOrEmpty(key)) return;
@@ -58,7 +58,7 @@ namespace RimMind.Kernel.Bus
                 dict.TryRemove(key, out _);
         }
 
-        public void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent
+        public void Unsubscribe<T>(Action<T> handler) where T : ContractsAgentBusEvent
         {
             AssertMainThread();
             if (handler == null) return;
@@ -77,7 +77,7 @@ namespace RimMind.Kernel.Bus
                 dict.TryRemove(keyToRemove, out _);
         }
 
-        public void Publish<T>(T evt) where T : AgentBusEvent
+        public void Publish<T>(T evt) where T : ContractsAgentBusEvent
         {
             AssertMainThread();
             if (evt == null) return;
@@ -98,14 +98,14 @@ namespace RimMind.Kernel.Bus
             }
         }
 
-        public void PublishFromBackground<T>(T evt) where T : AgentBusEvent
+        public void PublishFromBackground<T>(T evt) where T : ContractsAgentBusEvent
         {
             if (evt == null) return;
-            Action<AgentBusEvent> invoker = e => DispatchToHandlers((T)e);
+            Action<ContractsAgentBusEvent> invoker = e => DispatchToHandlers((T)e);
             _backgroundQueue.Enqueue(new PendingEvent(evt, invoker));
         }
 
-        private void DispatchToHandlers<T>(T evt) where T : AgentBusEvent
+        private void DispatchToHandlers<T>(T evt) where T : ContractsAgentBusEvent
         {
             var type = typeof(T);
             if (!_handlers.TryGetValue(type, out var dict)) return;

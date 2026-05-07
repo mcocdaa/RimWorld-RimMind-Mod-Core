@@ -1,6 +1,7 @@
 using System;
+using RimMind.Contracts;
 
-namespace RimMind.Core.AgentBus
+namespace RimMind.Kernel.Bus
 {
     public interface IEventBus
     {

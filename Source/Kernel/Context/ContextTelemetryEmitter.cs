@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Context

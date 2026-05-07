@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Client;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Core.Settings;
 using Verse;
 

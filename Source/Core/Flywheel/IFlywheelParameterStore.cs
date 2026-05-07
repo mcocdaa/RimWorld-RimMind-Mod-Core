@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace RimMind.Core.Flywheel
+namespace RimMind.Kernel.Flywheel
 {
     public interface IFlywheelParameterStore
     {

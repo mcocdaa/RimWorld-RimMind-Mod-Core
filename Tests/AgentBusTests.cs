@@ -1,8 +1,7 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
-using RimMind.Core.AgentBus;
-using RimMind.Core.Context;
 using RimMind.Kernel.Bus;
+using RimMind.Kernel.Context;
 using Xunit;
 
 namespace RimMind.Core.Tests

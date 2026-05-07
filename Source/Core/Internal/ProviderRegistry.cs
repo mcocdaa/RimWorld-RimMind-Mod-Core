@@ -1,8 +1,8 @@
-using System;
+﻿﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Kernel.Prompt;
 using RimWorld;
 using Verse;
@@ -26,8 +26,10 @@ namespace RimMind.Core.Internal
             _pawnProviders[category] = (modId, provider, priority);
             float priorityFloat = 1.0f - (priority / 10.0f);
             ContextLayer layer = InferLayer(priority);
-            var wrappedProvider = new Func<Pawn, List<ContextEntry>>(pawn =>
+            var wrappedProvider = new Func<object, List<ContextEntry>>(pawnObj =>
             {
+                var pawn = pawnObj as Pawn;
+                if (pawn == null) return new List<ContextEntry>();
                 string? val = provider(pawn);
                 return string.IsNullOrEmpty(val) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(val!) };
             });

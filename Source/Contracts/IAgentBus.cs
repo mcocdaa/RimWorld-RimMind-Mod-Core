@@ -1,5 +1,4 @@
 using System;
-using RimMind.Core.AgentBus;
 
 namespace RimMind.Contracts;
 

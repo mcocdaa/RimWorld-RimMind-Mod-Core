@@ -1,9 +1,9 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Client.Player2;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Core.Internal;
 using RimMind.Kernel.Queue;
 

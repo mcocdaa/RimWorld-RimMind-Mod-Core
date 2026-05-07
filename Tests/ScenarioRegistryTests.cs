@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using Xunit;
 
 namespace RimMind.Core.Tests

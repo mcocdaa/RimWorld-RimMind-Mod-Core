@@ -1,12 +1,12 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Client;
-using RimMind.Core.Context;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Abstractions;
+using RimMind.Kernel.Context;
+using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
-using RimMind.Kernel.Flywheel;
 using Verse;
 using Xunit;
 
@@ -27,6 +27,7 @@ namespace RimMind.Core.Tests
         public ContextEngineTests()
         {
             RimMindServiceLocator.Reset();
+            RimMindServiceLocator.Register<ITickProvider>(new VerseTickProvider());
             _npcManager = new NpcManager(new Game());
             _historyManager = new HistoryManager();
             _engine = new ContextEngine(_historyManager);

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core;
 using RimMind.Core.Client;
-using RimMind.Core.Context;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Context;
+using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using RimMind.Core.Settings;
@@ -67,7 +67,7 @@ namespace RimMind.Kernel.Context
 
             var pawn = _npcManager?.FindPawnByNpcId(request.NpcId);
             if (pawn == null && request.Map != null)
-                pawn = _npcManager?.FindProxyPawnForMap(request.Map!);
+                pawn = _npcManager?.FindProxyPawnForMap((Verse.Map)request.Map!);
             var allKeys = ContextKeyRegistry.GetAll();
 
             var scenarioMeta = ScenarioRegistry.Get(request.Scenario ?? ScenarioIds.Dialogue);

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core.UI
+namespace RimMind.Adapters.UI
 {
     public static class RequestOverlay
     {

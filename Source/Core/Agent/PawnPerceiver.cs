@@ -1,6 +1,6 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Sensor;
 using Verse;
 

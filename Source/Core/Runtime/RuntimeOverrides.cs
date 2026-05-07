@@ -1,8 +1,9 @@
 using System;
 using RimMind.Core.Agent;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
+using RimMind.Adapters.UI;
 using RimMind.Core.UI;
 
 namespace RimMind.Core.Runtime

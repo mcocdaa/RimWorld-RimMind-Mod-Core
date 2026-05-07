@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Core.Npc;
 using RimMind.Kernel.Prompt;
 using RimWorld;
@@ -43,7 +43,7 @@ namespace RimMind.Core.Internal
 
             var ctx = RimMindCoreMod.Settings.Context;
 
-            entries.Add(new ContextEntry("RimMind.Core.Prompt.MapStatusHeader".Translate()));
+            entries.Add(new ContextEntry("RimMind.Kernel.Prompt.MapStatusHeader".Translate()));
 
             if (ctx.IncludeGameTime)
             {
@@ -53,7 +53,7 @@ namespace RimMind.Core.Internal
                 string dateStr = GenDate.DateFullStringAt(ticks, longLat);
                 int day = (int)(ticks / 60000L);
                 entries.Add(new ContextEntry(
-                    "RimMind.Core.Prompt.TimeFormat".Translate(dateStr, $"{hour:D2}"))
+                    "RimMind.Kernel.Prompt.TimeFormat".Translate(dateStr, $"{hour:D2}"))
                 {
                     Metadata = new Dictionary<string, string>
                     {
@@ -73,11 +73,11 @@ namespace RimMind.Core.Internal
                 {
                     var names = colonists.Select(p => p.Name.ToStringShort);
                     string nameList = string.Join(", ", names);
-                    content = "RimMind.Core.Prompt.ColonistCount".Translate(count, nameList);
+                    content = "RimMind.Kernel.Prompt.ColonistCount".Translate(count, nameList);
                 }
                 else
                 {
-                    content = "RimMind.Core.Prompt.ColonistCountBrief".Translate(count);
+                    content = "RimMind.Kernel.Prompt.ColonistCountBrief".Translate(count);
                 }
                 entries.Add(new ContextEntry(content)
                 {
@@ -98,7 +98,7 @@ namespace RimMind.Core.Internal
                 {
                     var names = prisoners.Select(p => p.Name.ToStringShort);
                     string nameList = string.Join(", ", names);
-                    otherSb.AppendLine("RimMind.Core.Prompt.PrisonerCount".Translate(prisoners.Count, nameList));
+                    otherSb.AppendLine("RimMind.Kernel.Prompt.PrisonerCount".Translate(prisoners.Count, nameList));
                 }
             }
 
@@ -106,14 +106,14 @@ namespace RimMind.Core.Internal
             {
                 float wealth = map.wealthWatcher.WealthTotal;
                 string threat = ThreatLabel(wealth);
-                otherSb.AppendLine("RimMind.Core.Prompt.WealthWithThreat".Translate($"{wealth:F0}", threat));
+                otherSb.AppendLine("RimMind.Kernel.Prompt.WealthWithThreat".Translate($"{wealth:F0}", threat));
             }
 
             if (ctx.IncludeThreats)
             {
                 float wealth = map.wealthWatcher.WealthTotal;
                 string threat = ThreatLabel(wealth);
-                otherSb.AppendLine("RimMind.Core.Prompt.ThreatLevel".Translate(threat));
+                otherSb.AppendLine("RimMind.Kernel.Prompt.ThreatLevel".Translate(threat));
             }
 
             if (ctx.IncludeFood)
@@ -128,13 +128,13 @@ namespace RimMind.Core.Internal
                         foodNutrition += map.resourceCounter.GetCount(def) * def.ingestible.CachedNutrition;
                     }
                 }
-                otherSb.AppendLine("RimMind.Core.Prompt.FoodStorage".Translate($"{foodNutrition:F0}"));
+                otherSb.AppendLine("RimMind.Kernel.Prompt.FoodStorage".Translate($"{foodNutrition:F0}"));
             }
 
             if (ctx.IncludeSeason)
-                otherSb.Append("RimMind.Core.Prompt.Season".Translate(GenLocalDate.Season(map).Label()));
+                otherSb.Append("RimMind.Kernel.Prompt.Season".Translate(GenLocalDate.Season(map).Label()));
             if (ctx.IncludeWeather)
-                otherSb.AppendLine("RimMind.Core.Prompt.Weather".Translate(map.weatherManager.curWeather.label));
+                otherSb.AppendLine("RimMind.Kernel.Prompt.Weather".Translate(map.weatherManager.curWeather.label));
             else if (ctx.IncludeSeason)
                 otherSb.AppendLine();
 
@@ -158,46 +158,46 @@ namespace RimMind.Core.Internal
             var data = PawnDataExtractor.Extract(pawn);
             var ctx = RimMindCoreMod.Settings.Context;
             var sb = new StringBuilder();
-            sb.Append("RimMind.Core.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
+            sb.Append("RimMind.Kernel.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
 
             var basics = new List<string>();
-            if (ctx.IncludeAge) basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(data.Age));
+            if (ctx.IncludeAge) basics.Add("RimMind.Kernel.Prompt.AgeFormat".Translate(data.Age));
             if (ctx.IncludeGender) basics.Add(data.GenderLabel);
             if (ctx.IncludeRace) basics.Add(data.RaceLabel);
             if (basics.Count > 0) sb.AppendLine(string.Join("  ", basics));
             else sb.AppendLine();
 
             if (ctx.IncludeGenes && data.NotableGenes.Count > 0)
-                sb.AppendLine("RimMind.Core.Prompt.Genes".Translate(string.Join(", ", data.NotableGenes)));
+                sb.AppendLine("RimMind.Kernel.Prompt.Genes".Translate(string.Join(", ", data.NotableGenes)));
 
             if (ctx.IncludeBackstory && (data.ChildhoodTitle != null || data.AdulthoodTitle != null))
             {
                 var parts = new List<string>();
                 if (data.ChildhoodTitle != null)
-                    parts.Add("RimMind.Core.Prompt.Childhood".Translate(data.ChildhoodTitle));
+                    parts.Add("RimMind.Kernel.Prompt.Childhood".Translate(data.ChildhoodTitle));
                 if (data.AdulthoodTitle != null)
-                    parts.Add("RimMind.Core.Prompt.Adulthood".Translate(data.AdulthoodTitle));
+                    parts.Add("RimMind.Kernel.Prompt.Adulthood".Translate(data.AdulthoodTitle));
                 if (parts.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.Backstory".Translate(string.Join("  ", parts)));
+                    sb.AppendLine("RimMind.Kernel.Prompt.Backstory".Translate(string.Join("  ", parts)));
             }
 
             if (ctx.IncludeIdeology && data.IdeologyName != null)
-                sb.AppendLine("RimMind.Core.Prompt.IdeologyFormat".Translate(data.IdeologyName, data.IdeologyMemes));
+                sb.AppendLine("RimMind.Kernel.Prompt.IdeologyFormat".Translate(data.IdeologyName, data.IdeologyMemes));
 
             if (ctx.IncludeMood && data.MoodString != null)
             {
                 if (data.InMentalState)
-                    sb.AppendLine("RimMind.Core.Prompt.MoodBreak".Translate(data.MoodString, data.MentalStateInspectLine));
+                    sb.AppendLine("RimMind.Kernel.Prompt.MoodBreak".Translate(data.MoodString, data.MentalStateInspectLine));
                 else if (data.Downed)
-                    sb.AppendLine("RimMind.Core.Prompt.MoodDowned".Translate(data.MoodString));
+                    sb.AppendLine("RimMind.Kernel.Prompt.MoodDowned".Translate(data.MoodString));
                 else
-                    sb.AppendLine("RimMind.Core.Prompt.MoodPercent".Translate(data.MoodString, $"{data.MoodPercent:F0}"));
+                    sb.AppendLine("RimMind.Kernel.Prompt.MoodPercent".Translate(data.MoodString, $"{data.MoodPercent:F0}"));
             }
 
             if (ctx.IncludeMoodThoughts && data.MoodThoughts.Count > 0)
             {
                 var factors = data.MoodThoughts.Select(t => $"{t.Label}({t.Offset:+0;-0})");
-                sb.AppendLine("RimMind.Core.Prompt.MoodFactors".Translate(string.Join(", ", factors)));
+                sb.AppendLine("RimMind.Kernel.Prompt.MoodFactors".Translate(string.Join(", ", factors)));
             }
 
             if (ctx.IncludeHealth && data.Hediffs.Count > 0)
@@ -206,17 +206,17 @@ namespace RimMind.Core.Internal
                 foreach (var h in data.Hediffs)
                 {
                     if (!h.IsBad || h.Severity < 0.05f || !h.Visible) continue;
-                    string partLabel = h.PartLabel ?? "RimMind.Core.Prompt.FullBody".Translate();
+                    string partLabel = h.PartLabel ?? "RimMind.Kernel.Prompt.FullBody".Translate();
                     notable.Add($"{partLabel}: {h.HediffLabel}");
                 }
                 if (notable.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.HealthIssues".Translate(string.Join(", ", notable.Take(8))));
+                    sb.AppendLine("RimMind.Kernel.Prompt.HealthIssues".Translate(string.Join(", ", notable.Take(8))));
             }
 
             if (ctx.IncludeCapacities && data.Capacities.Count > 0)
             {
                 var low = data.Capacities.Select(c => $"{c.Label}{c.Level * 100f:F0}%");
-                sb.AppendLine("RimMind.Core.Prompt.Capacities".Translate(string.Join(", ", low)));
+                sb.AppendLine("RimMind.Kernel.Prompt.Capacities".Translate(string.Join(", ", low)));
             }
 
             if (ctx.IncludeSkills && data.Skills.Count > 0)
@@ -226,33 +226,33 @@ namespace RimMind.Core.Internal
                     .Select(s => $"{s.Label}({s.Level})")
                     .ToList();
                 if (skills.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.Skills".Translate(string.Join("  ", skills)));
+                    sb.AppendLine("RimMind.Kernel.Prompt.Skills".Translate(string.Join("  ", skills)));
             }
 
             if (ctx.IncludeCurrentJob)
             {
                 string jobLabel = data.CurrentJobReport
                     ?? data.CurrentJobDefLabel
-                    ?? "RimMind.Core.Prompt.None".Translate();
-                sb.AppendLine("RimMind.Core.Prompt.CurrentJob".Translate(jobLabel));
+                    ?? "RimMind.Kernel.Prompt.None".Translate();
+                sb.AppendLine("RimMind.Kernel.Prompt.CurrentJob".Translate(jobLabel));
             }
 
             if (ctx.IncludeWorkPriorities && data.WorkPriorities.Count > 0)
             {
-                sb.AppendLine("RimMind.Core.Prompt.WorkPriorities".Translate(
+                sb.AppendLine("RimMind.Kernel.Prompt.WorkPriorities".Translate(
                     string.Join("  ", data.WorkPriorities.Select(e => $"{e.Label}({e.Priority})"))));
             }
 
             if (ctx.IncludeTraits && data.TraitLabels.Count > 0)
-                sb.AppendLine("RimMind.Core.Prompt.Traits".Translate(string.Join(", ", data.TraitLabels)));
+                sb.AppendLine("RimMind.Kernel.Prompt.Traits".Translate(string.Join(", ", data.TraitLabels)));
 
             if (ctx.IncludeEquipment)
             {
                 var parts = new List<string>();
                 if (data.WeaponLabel != null)
-                    parts.Add("RimMind.Core.Prompt.Weapon".Translate(data.WeaponLabel));
+                    parts.Add("RimMind.Kernel.Prompt.Weapon".Translate(data.WeaponLabel));
                 if (data.ApparelLabels.Count > 0)
-                    parts.Add("RimMind.Core.Prompt.Apparel".Translate(string.Join(", ", data.ApparelLabels)));
+                    parts.Add("RimMind.Kernel.Prompt.Apparel".Translate(string.Join(", ", data.ApparelLabels)));
                 if (parts.Count > 0)
                     sb.AppendLine(string.Join("  ", parts));
             }
@@ -267,37 +267,37 @@ namespace RimMind.Core.Internal
                         string label = def?.LabelCap ?? kv.Key;
                         return kv.Value > 1 ? $"{label}×{kv.Value}" : label;
                     });
-                sb.AppendLine("RimMind.Core.Prompt.Inventory".Translate(string.Join(", ", itemStrs)));
+                sb.AppendLine("RimMind.Kernel.Prompt.Inventory".Translate(string.Join(", ", itemStrs)));
             }
 
             if (ctx.IncludeLocation && data.HasMap)
             {
                 int temp = Mathf.RoundToInt(data.Temperature);
-                sb.AppendLine("RimMind.Core.Prompt.Location".Translate(data.RoomLabel, $"{temp}"));
+                sb.AppendLine("RimMind.Kernel.Prompt.Location".Translate(data.RoomLabel, $"{temp}"));
             }
 
             if (ctx.IncludeRelations && data.Relations.Count > 0)
             {
                 var relParts = data.Relations.Select(r => $"{r.RelationLabel}({r.OtherName})");
-                sb.AppendLine("RimMind.Core.Prompt.Relations".Translate(string.Join(", ", relParts)));
+                sb.AppendLine("RimMind.Kernel.Prompt.Relations".Translate(string.Join(", ", relParts)));
             }
 
             if (ctx.IncludeCombatStatus)
             {
                 if (data.InCombat)
                 {
-                    string targetLabel = data.EnemyTargetLabel ?? "RimMind.Core.Prompt.Unknown".Translate();
-                    sb.AppendLine("RimMind.Core.Prompt.InCombat".Translate(targetLabel));
+                    string targetLabel = data.EnemyTargetLabel ?? "RimMind.Kernel.Prompt.Unknown".Translate();
+                    sb.AppendLine("RimMind.Kernel.Prompt.InCombat".Translate(targetLabel));
                 }
                 if (data.Drafted)
-                    sb.AppendLine("RimMind.Core.Prompt.Drafted".Translate());
+                    sb.AppendLine("RimMind.Kernel.Prompt.Drafted".Translate());
             }
 
             if (ctx.IncludeSurroundings && pawn.Map != null)
             {
                 string surroundings = BuildSurroundings(pawn);
                 if (!string.IsNullOrEmpty(surroundings))
-                    sb.AppendLine("RimMind.Core.Prompt.Surroundings".Translate(surroundings));
+                    sb.AppendLine("RimMind.Kernel.Prompt.Surroundings".Translate(surroundings));
             }
 
             return sb.ToString().TrimEnd();
@@ -358,16 +358,16 @@ namespace RimMind.Core.Internal
 
             var parts = new List<string>();
             if (buildings.Count > 0)
-                parts.Add("RimMind.Core.Prompt.SurroundingsBuildings".Translate(string.Join(", ", buildings.Distinct().Take(5))));
+                parts.Add("RimMind.Kernel.Prompt.SurroundingsBuildings".Translate(string.Join(", ", buildings.Distinct().Take(5))));
             if (items.Count > 0)
             {
                 var itemStrs = items.OrderByDescending(kv => kv.Value)
                     .Take(m)
                     .Select(kv => $"{DefDatabase<ThingDef>.GetNamedSilentFail(kv.Key)?.LabelCap ?? kv.Key}×{kv.Value}");
-                parts.Add("RimMind.Core.Prompt.SurroundingsItems".Translate(string.Join(", ", itemStrs)));
+                parts.Add("RimMind.Kernel.Prompt.SurroundingsItems".Translate(string.Join(", ", itemStrs)));
             }
             if (animals.Count > 0)
-                parts.Add("RimMind.Core.Prompt.SurroundingsAnimals".Translate(string.Join(", ", animals.Distinct().Take(4))));
+                parts.Add("RimMind.Kernel.Prompt.SurroundingsAnimals".Translate(string.Join(", ", animals.Distinct().Take(4))));
 
             return parts.Count > 0 ? string.Join("  ", parts) : string.Empty;
         }
@@ -385,10 +385,10 @@ namespace RimMind.Core.Internal
             string tier = ThreatClassifier.ClassifyThreatTier(wealth, high, medium, low, threatScale);
             return tier switch
             {
-                "Extreme" => "RimMind.Core.Prompt.Threat.Extreme".Translate(),
-                "High"    => "RimMind.Core.Prompt.Threat.High".Translate(),
-                "Medium"  => "RimMind.Core.Prompt.Threat.Medium".Translate(),
-                _         => "RimMind.Core.Prompt.Threat.Low".Translate()
+                "Extreme" => "RimMind.Kernel.Prompt.Threat.Extreme".Translate(),
+                "High"    => "RimMind.Kernel.Prompt.Threat.High".Translate(),
+                "Medium"  => "RimMind.Kernel.Prompt.Threat.Medium".Translate(),
+                _         => "RimMind.Kernel.Prompt.Threat.Low".Translate()
             };
         }
 
@@ -451,17 +451,17 @@ namespace RimMind.Core.Internal
             sb.Append(data.Name + "  ");
 
             var basics = new List<string>();
-            basics.Add("RimMind.Core.Prompt.AgeFormat".Translate(data.Age));
+            basics.Add("RimMind.Kernel.Prompt.AgeFormat".Translate(data.Age));
             basics.Add(data.GenderLabel);
             basics.Add(data.RaceLabel);
             sb.AppendLine(string.Join("  ", basics));
 
             if (data.MoodString != null)
             {
-                string moodLabel = data.InMentalState ? "RimMind.Core.Prompt.CompactMentalBreak".Translate()
-                    : data.Downed ? "RimMind.Core.Prompt.CompactDowned".Translate()
+                string moodLabel = data.InMentalState ? "RimMind.Kernel.Prompt.CompactMentalBreak".Translate()
+                    : data.Downed ? "RimMind.Kernel.Prompt.CompactDowned".Translate()
                     : $"{data.MoodPercent:F0}%";
-                sb.AppendLine("RimMind.Core.Prompt.CompactMood".Translate(moodLabel));
+                sb.AppendLine("RimMind.Kernel.Prompt.CompactMood".Translate(moodLabel));
             }
 
             if (data.Hediffs.Count > 0)
@@ -470,32 +470,32 @@ namespace RimMind.Core.Internal
                 foreach (var h in data.Hediffs)
                 {
                     if (!h.IsBad || h.Severity < 0.05f || !h.Visible) continue;
-                    string partLabel = h.PartLabel ?? "RimMind.Core.Prompt.FullBody".Translate();
+                    string partLabel = h.PartLabel ?? "RimMind.Kernel.Prompt.FullBody".Translate();
                     notable.Add($"{partLabel}:{h.HediffLabel}");
                     if (notable.Count >= 3) break;
                 }
                 if (notable.Count > 0)
-                    sb.AppendLine("RimMind.Core.Prompt.CompactHealth".Translate(string.Join(", ", notable)));
+                    sb.AppendLine("RimMind.Kernel.Prompt.CompactHealth".Translate(string.Join(", ", notable)));
             }
 
             string jobLabel = data.CurrentJobReport
                 ?? data.CurrentJobDefLabel
-                ?? "RimMind.Core.Prompt.None".Translate();
-            sb.AppendLine("RimMind.Core.Prompt.CompactJob".Translate(jobLabel));
+                ?? "RimMind.Kernel.Prompt.None".Translate();
+            sb.AppendLine("RimMind.Kernel.Prompt.CompactJob".Translate(jobLabel));
 
             if (data.HasMap)
             {
                 int temp = Mathf.RoundToInt(data.Temperature);
-                sb.AppendLine("RimMind.Core.Prompt.CompactLocation".Translate(data.RoomLabel, $"{temp}"));
+                sb.AppendLine("RimMind.Kernel.Prompt.CompactLocation".Translate(data.RoomLabel, $"{temp}"));
             }
 
             if (data.WeaponLabel != null)
-                sb.AppendLine("RimMind.Core.Prompt.CompactWeapon".Translate(data.WeaponLabel));
+                sb.AppendLine("RimMind.Kernel.Prompt.CompactWeapon".Translate(data.WeaponLabel));
 
             if (data.Drafted)
-                sb.AppendLine("RimMind.Core.Prompt.Drafted".Translate());
+                sb.AppendLine("RimMind.Kernel.Prompt.Drafted".Translate());
             if (data.EnemyTargetLabel != null)
-                sb.AppendLine("RimMind.Core.Prompt.InCombat".Translate(data.EnemyTargetLabel));
+                sb.AppendLine("RimMind.Kernel.Prompt.InCombat".Translate(data.EnemyTargetLabel));
 
             return sb.ToString().TrimEnd();
         }
@@ -590,7 +590,7 @@ namespace RimMind.Core.Internal
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
             if (!data.HasMap) return "";
-            return "RimMind.Core.Prompt.Colony.Status".Translate(data.ColonistCount, $"{data.ColonyWealth:F0}", data.ThreatCount);
+            return "RimMind.Kernel.Prompt.Colony.Status".Translate(data.ColonistCount, $"{data.ColonyWealth:F0}", data.ThreatCount);
         }
 
         public static string ExtractHealth(Pawn pawn)
@@ -602,7 +602,7 @@ namespace RimMind.Core.Internal
                 .Select(h => h.HediffLabel)
                 .Take(5)
                 .ToList();
-            return notable.Count > 0 ? string.Join(", ", notable) : "RimMind.Core.Prompt.Health.Healthy".Translate();
+            return notable.Count > 0 ? string.Join(", ", notable) : "RimMind.Kernel.Prompt.Health.Healthy".Translate();
         }
 
         public static string ExtractMood(Pawn pawn)
@@ -611,7 +611,7 @@ namespace RimMind.Core.Internal
             var data = PawnDataExtractor.Extract(pawn);
             if (data.MoodString == null) return "";
             if (data.InMentalState)
-                return "RimMind.Core.Prompt.Mood.MentalBreak".Translate(data.MentalStateInspectLine ?? "");
+                return "RimMind.Kernel.Prompt.Mood.MentalBreak".Translate(data.MentalStateInspectLine ?? "");
             return $"{data.MoodPercent:F0}%";
         }
 
@@ -619,7 +619,7 @@ namespace RimMind.Core.Internal
         {
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
-            return data.CurrentJobReport ?? data.CurrentJobDefLabel ?? "RimMind.Core.Prompt.Job.Idle".Translate();
+            return data.CurrentJobReport ?? data.CurrentJobDefLabel ?? "RimMind.Kernel.Prompt.Job.Idle".Translate();
         }
 
         public static string ExtractCombatStatus(Pawn pawn)
@@ -627,10 +627,10 @@ namespace RimMind.Core.Internal
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
             var parts = new List<string>();
-            if (data.Drafted) parts.Add("RimMind.Core.Prompt.Combat.Drafted".Translate());
+            if (data.Drafted) parts.Add("RimMind.Kernel.Prompt.Combat.Drafted".Translate());
             if (data.EnemyTargetLabel != null)
-                parts.Add("RimMind.Core.Prompt.Combat.Fighting".Translate(data.EnemyTargetLabel));
-            return parts.Count > 0 ? string.Join(" | ", parts) : "RimMind.Core.Prompt.Combat.NotInCombat".Translate();
+                parts.Add("RimMind.Kernel.Prompt.Combat.Fighting".Translate(data.EnemyTargetLabel));
+            return parts.Count > 0 ? string.Join(" | ", parts) : "RimMind.Kernel.Prompt.Combat.NotInCombat".Translate();
         }
 
         public static string ExtractTargetInfo(Pawn pawn)
@@ -641,7 +641,7 @@ namespace RimMind.Core.Internal
             string label = data.EnemyTargetHpPercent.HasValue
                 ? $"{data.EnemyTargetLabel} (HP:{data.EnemyTargetHpPercent.Value:F0}%)"
                 : data.EnemyTargetLabel;
-            return "RimMind.Core.Prompt.Target.Info".Translate(label);
+            return "RimMind.Kernel.Prompt.Target.Info".Translate(label);
         }
     }
 }

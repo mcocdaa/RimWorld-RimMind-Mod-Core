@@ -1,10 +1,10 @@
-using HarmonyLib;
+﻿﻿using HarmonyLib;
 using RimMind.Contracts.Extension;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Core.Internal;
 using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
-using RimMind.Core.UI;
+using RimMind.Adapters.UI;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Json;
 using UnityEngine;

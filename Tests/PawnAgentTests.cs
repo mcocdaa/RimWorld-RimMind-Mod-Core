@@ -1,14 +1,13 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using RimMind.Core.Agent;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
-using RimMind.Core.Flywheel;
+using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using RimMind.Core.Runtime;
-using RimMind.Kernel.Bus;
-using RimMind.Kernel.Flywheel;
+using RimMind.Core.Settings;
 using Verse;
 using Xunit;
 

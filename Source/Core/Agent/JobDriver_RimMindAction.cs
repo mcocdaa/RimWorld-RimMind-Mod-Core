@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using RimMind.Core.AgentBus;
+﻿using System.Collections.Generic;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Comps;
 using RimMind.Core.Runtime;
 using Verse;

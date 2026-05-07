@@ -2,7 +2,7 @@ using System.Linq;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core.UI
+namespace RimMind.Adapters.UI
 {
     public class Window_RequestLog : Window
     {

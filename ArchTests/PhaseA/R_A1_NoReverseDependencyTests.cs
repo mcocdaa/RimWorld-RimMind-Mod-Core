@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -11,8 +11,8 @@ namespace RimMind.Core.ArchTests.PhaseA
     {
         private static readonly (string ns, string dir)[] InternalNamespaces = new[]
         {
-            ("RimMind.Core.AgentBus", "Core\\AgentBus"),
-            ("RimMind.Core.Context", "Core\\Context"),
+            ("RimMind.Kernel.Bus", "Core\\AgentBus"),
+            ("RimMind.Kernel.Context", "Core\\Context"),
             ("RimMind.Core.Agent", "Core\\Agent"),
             ("RimMind.Core.Perception", "Core\\Perception")
         };

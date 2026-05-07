@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Core;
 using RimMind.Core.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;

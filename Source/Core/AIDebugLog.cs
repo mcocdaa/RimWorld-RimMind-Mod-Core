@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -120,7 +120,7 @@ namespace RimMind.Core.Internal
                 int day = GameTick / 60000 + 1;
                 int hour = (GameTick % 60000) / 2500;
                 int min = ((GameTick % 60000) % 2500) * 60 / 2500;
-                return "RimMind.Core.Prompt.Time.Format".Translate(day, $"{hour:D2}", $"{min:D2}");
+                return "RimMind.Kernel.Prompt.Time.Format".Translate(day, $"{hour:D2}", $"{min:D2}");
             }
         }
     }

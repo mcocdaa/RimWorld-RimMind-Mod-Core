@@ -12,7 +12,7 @@ using RimMind.Kernel.Flywheel;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core.UI
+namespace RimMind.Adapters.UI
 {
     /// <summary>
     /// 多分页设置界面。
@@ -695,18 +695,18 @@ namespace RimMind.Core.UI
             listing.Begin(viewRect);
 
             GUI.color = Color.gray;
-            listing.Label("RimMind.Core.Prompts.Desc".Translate());
+            listing.Label("RimMind.Kernel.Prompts.Desc".Translate());
             GUI.color = Color.white;
             listing.Gap(8f);
 
             SettingsUIHelper.DrawCustomPromptSection(listing,
-                "RimMind.Core.Prompts.PawnPromptLabel".Translate(),
+                "RimMind.Kernel.Prompts.PawnPromptLabel".Translate(),
                 ref s.customPawnPrompt, 100f);
 
             listing.Gap(12f);
 
             SettingsUIHelper.DrawCustomPromptSection(listing,
-                "RimMind.Core.Prompts.MapPromptLabel".Translate(),
+                "RimMind.Kernel.Prompts.MapPromptLabel".Translate(),
                 ref s.customMapPrompt, 100f);
 
             listing.End();
@@ -727,12 +727,12 @@ namespace RimMind.Core.UI
             listing.Begin(viewRect);
 
             GUI.color = Color.gray;
-            listing.Label("RimMind.Core.Context.Desc".Translate());
+            listing.Label("RimMind.Kernel.Context.Desc".Translate());
             GUI.color = Color.white;
             listing.Gap(8f);
 
             // ── 预设卡片 ─────────────────────────────────────────────────────
-            SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.Context.Presets".Translate());
+            SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Kernel.Context.Presets".Translate());
             DrawPresetCards(listing, ctx);
             listing.Gap(12f);
 
@@ -743,72 +743,72 @@ namespace RimMind.Core.UI
             var left = new Listing_Standard();
             left.Begin(new Rect(anchor.x, anchor.y, colW, 9999f));
             GUI.color = new Color(0.6f, 0.78f, 1f);
-            left.Label("RimMind.Core.Context.PawnInfo".Translate());
+            left.Label("RimMind.Kernel.Context.PawnInfo".Translate());
             GUI.color = Color.white;
             left.Gap(4f);
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeRace".Translate(), ref ctx.IncludeRace, "RimMind.Core.Context.IncludeRace.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeAge".Translate(), ref ctx.IncludeAge, "RimMind.Core.Context.IncludeAge.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeGender".Translate(), ref ctx.IncludeGender, "RimMind.Core.Context.IncludeGender.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeBackstory".Translate(), ref ctx.IncludeBackstory, "RimMind.Core.Context.IncludeBackstory.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeIdeology".Translate(), ref ctx.IncludeIdeology, "RimMind.Core.Context.IncludeIdeology.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeTraits".Translate(), ref ctx.IncludeTraits, "RimMind.Core.Context.IncludeTraits.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeSkills".Translate(), ref ctx.IncludeSkills, "RimMind.Core.Context.IncludeSkills.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeRace".Translate(), ref ctx.IncludeRace, "RimMind.Kernel.Context.IncludeRace.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeAge".Translate(), ref ctx.IncludeAge, "RimMind.Kernel.Context.IncludeAge.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeGender".Translate(), ref ctx.IncludeGender, "RimMind.Kernel.Context.IncludeGender.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeBackstory".Translate(), ref ctx.IncludeBackstory, "RimMind.Kernel.Context.IncludeBackstory.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeIdeology".Translate(), ref ctx.IncludeIdeology, "RimMind.Kernel.Context.IncludeIdeology.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeTraits".Translate(), ref ctx.IncludeTraits, "RimMind.Kernel.Context.IncludeTraits.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeSkills".Translate(), ref ctx.IncludeSkills, "RimMind.Kernel.Context.IncludeSkills.Desc".Translate());
             if (ctx.IncludeSkills)
             {
-                left.Label($"  {"RimMind.Core.Context.MinSkillLevel".Translate()}: {ctx.MinSkillLevel}");
+                left.Label($"  {"RimMind.Kernel.Context.MinSkillLevel".Translate()}: {ctx.MinSkillLevel}");
                 ctx.MinSkillLevel = (int)left.Slider(ctx.MinSkillLevel, 1f, 15f);
             }
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeHealth".Translate(), ref ctx.IncludeHealth, "RimMind.Core.Context.IncludeHealth.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeCapacities".Translate(), ref ctx.IncludeCapacities, "RimMind.Core.Context.IncludeCapacities.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeMood".Translate(), ref ctx.IncludeMood, "RimMind.Core.Context.IncludeMood.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeMoodThoughts".Translate(), ref ctx.IncludeMoodThoughts, "RimMind.Core.Context.IncludeMoodThoughts.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeCurrentJob".Translate(), ref ctx.IncludeCurrentJob, "RimMind.Core.Context.IncludeCurrentJob.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeWorkPriorities".Translate(), ref ctx.IncludeWorkPriorities, "RimMind.Core.Context.IncludeWorkPriorities.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeEquipment".Translate(), ref ctx.IncludeEquipment, "RimMind.Core.Context.IncludeEquipment.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeInventory".Translate(), ref ctx.IncludeInventory, "RimMind.Core.Context.IncludeInventory.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeLocation".Translate(), ref ctx.IncludeLocation, "RimMind.Core.Context.IncludeLocation.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeRelations".Translate(), ref ctx.IncludeRelations, "RimMind.Core.Context.IncludeRelations.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeGenes".Translate(), ref ctx.IncludeGenes, "RimMind.Core.Context.IncludeGenes.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeCombatStatus".Translate(), ref ctx.IncludeCombatStatus, "RimMind.Core.Context.IncludeCombatStatus.Desc".Translate());
-            left.CheckboxLabeled("RimMind.Core.Context.IncludeSurroundings".Translate(), ref ctx.IncludeSurroundings, "RimMind.Core.Context.IncludeSurroundings.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeHealth".Translate(), ref ctx.IncludeHealth, "RimMind.Kernel.Context.IncludeHealth.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeCapacities".Translate(), ref ctx.IncludeCapacities, "RimMind.Kernel.Context.IncludeCapacities.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeMood".Translate(), ref ctx.IncludeMood, "RimMind.Kernel.Context.IncludeMood.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeMoodThoughts".Translate(), ref ctx.IncludeMoodThoughts, "RimMind.Kernel.Context.IncludeMoodThoughts.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeCurrentJob".Translate(), ref ctx.IncludeCurrentJob, "RimMind.Kernel.Context.IncludeCurrentJob.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeWorkPriorities".Translate(), ref ctx.IncludeWorkPriorities, "RimMind.Kernel.Context.IncludeWorkPriorities.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeEquipment".Translate(), ref ctx.IncludeEquipment, "RimMind.Kernel.Context.IncludeEquipment.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeInventory".Translate(), ref ctx.IncludeInventory, "RimMind.Kernel.Context.IncludeInventory.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeLocation".Translate(), ref ctx.IncludeLocation, "RimMind.Kernel.Context.IncludeLocation.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeRelations".Translate(), ref ctx.IncludeRelations, "RimMind.Kernel.Context.IncludeRelations.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeGenes".Translate(), ref ctx.IncludeGenes, "RimMind.Kernel.Context.IncludeGenes.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeCombatStatus".Translate(), ref ctx.IncludeCombatStatus, "RimMind.Kernel.Context.IncludeCombatStatus.Desc".Translate());
+            left.CheckboxLabeled("RimMind.Kernel.Context.IncludeSurroundings".Translate(), ref ctx.IncludeSurroundings, "RimMind.Kernel.Context.IncludeSurroundings.Desc".Translate());
             float leftH = left.CurHeight;
             left.End();
 
             var right = new Listing_Standard();
             right.Begin(new Rect(anchor.x + colW + 20f, anchor.y, colW, 9999f));
             GUI.color = new Color(0.6f, 0.78f, 1f);
-            right.Label("RimMind.Core.Context.Environment".Translate());
+            right.Label("RimMind.Kernel.Context.Environment".Translate());
             GUI.color = Color.white;
             right.Gap(4f);
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeGameTime".Translate(), ref ctx.IncludeGameTime, "RimMind.Core.Context.IncludeGameTime.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeColonistCount".Translate(), ref ctx.IncludeColonistCount, "RimMind.Core.Context.IncludeColonistCount.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeColonistNames".Translate(), ref ctx.IncludeColonistNames, "RimMind.Core.Context.IncludeColonistNames.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeWealth".Translate(), ref ctx.IncludeWealth, "RimMind.Core.Context.IncludeWealth.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeFood".Translate(), ref ctx.IncludeFood, "RimMind.Core.Context.IncludeFood.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeSeason".Translate(), ref ctx.IncludeSeason, "RimMind.Core.Context.IncludeSeason.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeWeather".Translate(), ref ctx.IncludeWeather, "RimMind.Core.Context.IncludeWeather.Desc".Translate());
-            right.CheckboxLabeled("RimMind.Core.Context.IncludeThreats".Translate(), ref ctx.IncludeThreats, "RimMind.Core.Context.IncludeThreats.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeGameTime".Translate(), ref ctx.IncludeGameTime, "RimMind.Kernel.Context.IncludeGameTime.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeColonistCount".Translate(), ref ctx.IncludeColonistCount, "RimMind.Kernel.Context.IncludeColonistCount.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeColonistNames".Translate(), ref ctx.IncludeColonistNames, "RimMind.Kernel.Context.IncludeColonistNames.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeWealth".Translate(), ref ctx.IncludeWealth, "RimMind.Kernel.Context.IncludeWealth.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeFood".Translate(), ref ctx.IncludeFood, "RimMind.Kernel.Context.IncludeFood.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeSeason".Translate(), ref ctx.IncludeSeason, "RimMind.Kernel.Context.IncludeSeason.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeWeather".Translate(), ref ctx.IncludeWeather, "RimMind.Kernel.Context.IncludeWeather.Desc".Translate());
+            right.CheckboxLabeled("RimMind.Kernel.Context.IncludeThreats".Translate(), ref ctx.IncludeThreats, "RimMind.Kernel.Context.IncludeThreats.Desc".Translate());
             float rightH = right.CurHeight;
             right.End();
 
             listing.Gap(Mathf.Max(leftH, rightH) + 8f);
 
-            SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.Context.Budget".Translate());
-            listing.Label($"{"RimMind.Core.Context.ContextBudget".Translate()}: {ctx.ContextBudget:F1}");
+            SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Kernel.Context.Budget".Translate());
+            listing.Label($"{"RimMind.Kernel.Context.ContextBudget".Translate()}: {ctx.ContextBudget:F1}");
             GUI.color = Color.gray;
-            listing.Label("  " + "RimMind.Core.Context.ContextBudget.Desc".Translate());
+            listing.Label("  " + "RimMind.Kernel.Context.ContextBudget.Desc".Translate());
             GUI.color = Color.white;
             ctx.ContextBudget = listing.Slider(ctx.ContextBudget, 0.1f, 2.0f);
 
-            listing.Label($"{"RimMind.Core.Context.BudgetW1".Translate()}: {ctx.BudgetW1:F2}");
+            listing.Label($"{"RimMind.Kernel.Context.BudgetW1".Translate()}: {ctx.BudgetW1:F2}");
             GUI.color = Color.gray;
-            listing.Label("  " + "RimMind.Core.Context.BudgetW1.Desc".Translate());
+            listing.Label("  " + "RimMind.Kernel.Context.BudgetW1.Desc".Translate());
             GUI.color = Color.white;
             ctx.BudgetW1 = Mathf.Round(listing.Slider(ctx.BudgetW1, 0f, 1f) * 20f) / 20f;
 
-            listing.Label($"{"RimMind.Core.Context.BudgetW2".Translate()}: {ctx.BudgetW2:F2}");
+            listing.Label($"{"RimMind.Kernel.Context.BudgetW2".Translate()}: {ctx.BudgetW2:F2}");
             GUI.color = Color.gray;
-            listing.Label("  " + "RimMind.Core.Context.BudgetW2.Desc".Translate());
+            listing.Label("  " + "RimMind.Kernel.Context.BudgetW2.Desc".Translate());
             GUI.color = Color.white;
             ctx.BudgetW2 = Mathf.Round(listing.Slider(ctx.BudgetW2, 0f, 1f) * 20f) / 20f;
 
@@ -829,7 +829,7 @@ namespace RimMind.Core.UI
             GUI.color = Color.white;
             s.contextCalibrateInterval = (int)listing.Slider(s.contextCalibrateInterval, 5000f, 60000f);
 
-            if (listing.ButtonText("RimMind.Core.Context.ResetDefault".Translate()))
+            if (listing.ButtonText("RimMind.Kernel.Context.ResetDefault".Translate()))
             {
                 RimMindCoreMod.Settings.Context = new ContextSettings();
                 _selectedPreset = ContextPreset.Standard;
@@ -873,13 +873,13 @@ namespace RimMind.Core.UI
 
                 GUI.color = selected ? Color.white : new Color(0.8f, 0.8f, 0.8f);
                 Widgets.Label(new Rect(inner.x, inner.y, inner.width, Text.LineHeight),
-                    $"RimMind.Core.Context.Preset.{preset}".Translate());
+                    $"RimMind.Kernel.Context.Preset.{preset}".Translate());
 
                 Text.Font = GameFont.Tiny;
                 GUI.color = selected ? new Color(0.85f, 0.85f, 0.85f) : new Color(0.55f, 0.55f, 0.55f);
                 Widgets.Label(new Rect(inner.x, inner.y + Text.LineHeight + 2f,
                                        inner.width, inner.height - Text.LineHeight - 2f),
-                    $"RimMind.Core.Context.Preset.{preset}.Desc".Translate());
+                    $"RimMind.Kernel.Context.Preset.{preset}.Desc".Translate());
 
                 Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.UpperLeft;

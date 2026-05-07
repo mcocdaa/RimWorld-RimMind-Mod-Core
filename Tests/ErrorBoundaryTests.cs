@@ -2,6 +2,7 @@ using System;
 using RimMind.Core.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
+using RimMind.Core.Settings;
 using Xunit;
 
 namespace RimMind.Core.Tests

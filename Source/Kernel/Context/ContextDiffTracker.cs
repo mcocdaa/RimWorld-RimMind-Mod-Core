@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RimMind.Core;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
 using RimMind.Kernel.Abstractions;

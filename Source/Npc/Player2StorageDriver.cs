@@ -1,4 +1,4 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Core.Client.Player2;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
 using RimMind.Kernel.Queue;

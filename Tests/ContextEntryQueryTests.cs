@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using RimMind.Core.Context;
+﻿using System.Collections.Generic;
+using RimMind.Kernel.Context;
 using Xunit;
 
 namespace RimMind.Core.Tests

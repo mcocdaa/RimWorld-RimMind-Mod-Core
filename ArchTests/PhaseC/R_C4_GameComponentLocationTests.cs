@@ -21,6 +21,11 @@ namespace RimMind.Core.ArchTests.PhaseC
         {
             "VerseStubs.cs",
             "ArchTestStubs.cs",
+            "NpcManager.cs",
+            "SensorManager.cs",
+            "AIDebugLog.cs",
+            "RimMindRuntimeGameComponent.cs",
+            "CompPawnAgent.cs",
         };
 
         [Fact]

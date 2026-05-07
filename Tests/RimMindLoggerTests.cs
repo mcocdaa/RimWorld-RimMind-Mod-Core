@@ -1,119 +1,88 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using RimMind.Core;
+using RimMind.Core.Internal;
+using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;
-using Verse;
 using Xunit;
 
 namespace RimMind.Core.Tests
 {
+    internal class TestLogSink : ILogSink
+    {
+        public ConcurrentQueue<(string level, string message)> Messages { get; } = new();
+
+        public void Message(string msg) => Messages.Enqueue(("Message", msg));
+        public void Warning(string msg) => Messages.Enqueue(("Warning", msg));
+        public void Error(string msg) => Messages.Enqueue(("Error", msg));
+    }
+
     public class RimMindLoggerTests
     {
+        private readonly TestLogSink _sink = new();
+
+        public RimMindLoggerTests()
+        {
+            RimMindServiceLocator.Register<ILogSink>(_sink);
+        }
+
         [Fact]
         public void Message_FromBackgroundThread_EnqueuesToBackgroundQueue()
         {
-            string? loggedMessage = null;
-            var originalMessage = Log.Message;
-            Log.Message = msg => loggedMessage = msg;
-
-            try
+            var thread = new Thread(() =>
             {
-                var thread = new Thread(() =>
-                {
-                    RimMindLogger.Message("bg message");
-                });
-                thread.Start();
-                thread.Join();
+                RimMindLogger.Message("bg message");
+            });
+            thread.Start();
+            thread.Join();
 
-                RimMindLogger.FlushBackgroundLogs();
+            RimMindLogger.FlushBackgroundLogs();
 
-                Assert.NotNull(loggedMessage);
-                Assert.Contains("[RimMind-Core] bg message", loggedMessage);
-            }
-            finally
-            {
-                Log.Message = originalMessage;
-            }
+            Assert.Contains(_sink.Messages, m => m.level == "Message" && m.message.Contains("[RimMind-Core] bg message"));
         }
 
         [Fact]
         public void Warning_FromBackgroundThread_EnqueuesWarnLevel()
         {
-            string? loggedWarning = null;
-            var originalWarning = Log.Warning;
-            Log.Warning = msg => loggedWarning = msg;
-
-            try
+            var thread = new Thread(() =>
             {
-                var thread = new Thread(() =>
-                {
-                    RimMindLogger.Warning("bg warning");
-                });
-                thread.Start();
-                thread.Join();
+                RimMindLogger.Warning("bg warning");
+            });
+            thread.Start();
+            thread.Join();
 
-                RimMindLogger.FlushBackgroundLogs();
+            RimMindLogger.FlushBackgroundLogs();
 
-                Assert.NotNull(loggedWarning);
-                Assert.Contains("[RimMind-Core] bg warning", loggedWarning);
-            }
-            finally
-            {
-                Log.Warning = originalWarning;
-            }
+            Assert.Contains(_sink.Messages, m => m.level == "Warning" && m.message.Contains("[RimMind-Core] bg warning"));
         }
 
         [Fact]
         public void Error_FromBackgroundThread_EnqueuesErrorLevel()
         {
-            string? loggedError = null;
-            var originalError = Log.Error;
-            Log.Error = msg => loggedError = msg;
-
-            try
+            var thread = new Thread(() =>
             {
-                var thread = new Thread(() =>
-                {
-                    RimMindLogger.Error("bg error");
-                });
-                thread.Start();
-                thread.Join();
+                RimMindLogger.Error("bg error");
+            });
+            thread.Start();
+            thread.Join();
 
-                RimMindLogger.FlushBackgroundLogs();
+            RimMindLogger.FlushBackgroundLogs();
 
-                Assert.NotNull(loggedError);
-                Assert.Contains("[RimMind-Core] bg error", loggedError);
-            }
-            finally
-            {
-                Log.Error = originalError;
-            }
+            Assert.Contains(_sink.Messages, m => m.level == "Error" && m.message.Contains("[RimMind-Core] bg error"));
         }
 
         [Fact]
         public void FlushBackgroundLogs_OnMainThreadAfterBackgroundEnqueue_FlushesAll()
         {
-            var messages = new ConcurrentQueue<string>();
-            var originalMessage = Log.Message;
-            Log.Message = msg => messages.Enqueue(msg);
-
-            try
+            var thread = new Thread(() =>
             {
-                var thread = new Thread(() =>
-                {
-                    RimMindLogger.Message("flush test");
-                });
-                thread.Start();
-                thread.Join();
+                RimMindLogger.Message("flush test");
+            });
+            thread.Start();
+            thread.Join();
 
-                RimMindLogger.FlushBackgroundLogs();
+            RimMindLogger.FlushBackgroundLogs();
 
-                Assert.Single(messages);
-            }
-            finally
-            {
-                Log.Message = originalMessage;
-            }
+            Assert.Single(_sink.Messages);
         }
 
         [Fact]
@@ -125,58 +94,35 @@ namespace RimMind.Core.Tests
         [Fact]
         public void Message_ContainsPrefix()
         {
-            string? loggedMessage = null;
-            var originalMessage = Log.Message;
-            Log.Message = msg => loggedMessage = msg;
-
-            try
+            var thread = new Thread(() =>
             {
-                var thread = new Thread(() =>
-                {
-                    RimMindLogger.Message("prefix check");
-                });
-                thread.Start();
-                thread.Join();
+                RimMindLogger.Message("prefix check");
+            });
+            thread.Start();
+            thread.Join();
 
-                RimMindLogger.FlushBackgroundLogs();
+            RimMindLogger.FlushBackgroundLogs();
 
-                Assert.NotNull(loggedMessage);
-                Assert.StartsWith("[RimMind-Core]", loggedMessage);
-            }
-            finally
-            {
-                Log.Message = originalMessage;
-            }
+            Assert.Contains(_sink.Messages, m => m.message.StartsWith("[RimMind-Core]"));
         }
 
         [Fact]
         public void MultipleBackgroundMessages_AllFlushed()
         {
-            var messages = new ConcurrentQueue<string>();
-            var originalMessage = Log.Message;
-            Log.Message = msg => messages.Enqueue(msg);
-
-            try
+            for (int i = 0; i < 5; i++)
             {
-                for (int i = 0; i < 5; i++)
+                var idx = i;
+                var thread = new Thread(() =>
                 {
-                    var idx = i;
-                    var thread = new Thread(() =>
-                    {
-                        RimMindLogger.Message($"msg_{idx}");
-                    });
-                    thread.Start();
-                    thread.Join();
-                }
-
-                RimMindLogger.FlushBackgroundLogs();
-
-                Assert.Equal(5, messages.Count);
+                    RimMindLogger.Message($"msg_{idx}");
+                });
+                thread.Start();
+                thread.Join();
             }
-            finally
-            {
-                Log.Message = originalMessage;
-            }
+
+            RimMindLogger.FlushBackgroundLogs();
+
+            Assert.Equal(5, _sink.Messages.Count);
         }
     }
 }

@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using RimMind.Core.Internal;
 using RimMind.Core.Runtime;
 using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
 using RimMind.Kernel.Json;
+using RimMind.Kernel.Prompt;
 using Verse;
 
 namespace RimMind.Core.Agent

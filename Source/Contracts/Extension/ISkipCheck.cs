@@ -1,6 +1,3 @@
-using RimWorld;
-using Verse;
-
 namespace RimMind.Contracts.Extension;
 
 public enum SkipCheckKind
@@ -13,7 +10,7 @@ public enum SkipCheckKind
 
 public readonly struct SkipCheckArgs
 {
-    public Pawn? Pawn { get; init; }
+    public object? Pawn { get; init; }
     public string? Trigger { get; init; }
     public string? IntentId { get; init; }
 }

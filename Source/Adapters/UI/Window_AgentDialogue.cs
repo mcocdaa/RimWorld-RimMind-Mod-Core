@@ -1,10 +1,10 @@
 using RimMind.Core.Agent;
 using RimMind.Core.Comps;
-using RimMind.Core.Context;
+using RimMind.Kernel.Context;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core.UI
+namespace RimMind.Adapters.UI
 {
     public class Window_AgentDialogue : Window
     {
@@ -123,10 +123,10 @@ namespace RimMind.Core.UI
             var npcId = _npcId;
             _agent.ForceThink();
 
-            var request = new RimMind.Core.Context.ContextRequest
+            var request = new RimMind.Kernel.Context.ContextRequest
             {
                 NpcId = npcId,
-                Scenario = RimMind.Core.Context.ScenarioIds.Dialogue,
+                Scenario = RimMind.Kernel.Context.ScenarioIds.Dialogue,
                 Budget = 0.6f,
                 CurrentQuery = message,
                 MaxTokens = RimMindCoreMod.Settings.maxTokens,

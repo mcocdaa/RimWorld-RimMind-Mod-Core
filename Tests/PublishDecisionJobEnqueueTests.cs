@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
+using RimMind.Core;
 using RimMind.Core.Agent;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
-using RimMind.Core.Flywheel;
+using RimMind.Core.Extensions;
+using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
-using RimMind.Kernel.Bus;
-using RimMind.Kernel.Flywheel;
+using RimMind.Core.Settings;
 using Verse;
 using Verse.AI;
 using Xunit;
@@ -153,21 +154,22 @@ namespace RimMind.Core.Tests
         }
 
         private class TrackingActionBridge : IAgentActionBridge
+    {
+        private readonly Action _onExecute;
+
+        public TrackingActionBridge(Action onExecute)
         {
-            private readonly Action _onExecute;
-
-            public TrackingActionBridge(Action onExecute)
-            {
-                _onExecute = onExecute;
-            }
-
-            public bool Execute(string action, Pawn pawn, Pawn? target, string? param, string eventId)
-            {
-                _onExecute();
-                return true;
-            }
-
-            public List<StructuredTool>? GetAvailableTools(Pawn pawn) => null;
+            _onExecute = onExecute;
         }
+
+        public bool CanExecute(Pawn pawn, string action) => true;
+
+        public void Execute(Pawn pawn, string action, string? targetName = null)
+        {
+            _onExecute();
+        }
+
+        public List<StructuredTool>? GetAvailableTools(Pawn pawn) => null;
+    }
     }
 }

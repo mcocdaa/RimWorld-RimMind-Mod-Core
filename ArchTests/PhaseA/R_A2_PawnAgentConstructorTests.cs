@@ -1,7 +1,7 @@
-using System.Linq;
+﻿using System.Linq;
 using FluentAssertions;
 using RimMind.Core.Agent;
-using RimMind.Core.AgentBus;
+using RimMind.Kernel.Bus;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseA

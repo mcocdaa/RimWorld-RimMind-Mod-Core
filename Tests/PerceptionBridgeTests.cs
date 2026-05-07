@@ -1,8 +1,7 @@
-using System;
+﻿﻿using System;
 using System.Collections.Generic;
-using RimMind.Core.AgentBus;
-using RimMind.Core.Perception;
 using RimMind.Kernel.Bus;
+using RimMind.Core.Perception;
 using Verse;
 using Xunit;
 

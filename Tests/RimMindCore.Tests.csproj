@@ -7,6 +7,7 @@
     <AssemblyName>RimMindCore.Tests</AssemblyName>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,85 +18,40 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../Source/Kernel/Json/JsonTagExtractor.cs" />
-    <Compile Include="../Source/Kernel/Prompt/PromptSection.cs" />
-    <Compile Include="../Source/Kernel/Prompt/PromptSanitizer.cs" />
-    <Compile Include="../Source/Kernel/Prompt/TaskInstructionBuilder.cs" />
-    <Compile Include="../Source/Client/JsonRepairHelper.cs" />
-    <Compile Include="../Source/Client/StructuredTool.cs" />
-    <Compile Include="../Source/Core/Agent/StrategyOptimizer.cs" />
-    <Compile Include="../Source/Core/Agent/AgentGoalStack.cs" />
-    <Compile Include="../Source/Core/Agent/RiskLevel.cs" />
-    <Compile Include="../Source/Core/Agent/PawnAgent.cs" />
-    <Compile Include="../Source/Core/Agent/PawnPerceiver.cs" />
-    <Compile Include="../Source/Core/Agent/PawnThinker.cs" />
-    <Compile Include="../Source/Core/Agent/PawnActor.cs" />
-    <Compile Include="../Source/Core/Agent/PawnRecorder.cs" />
-    <Compile Include="../Source/Core/Agent/IPawnAgent.cs" />
-    <Compile Include="../Source/Core/Agent/RimMindActionDef.cs" />
-    <Compile Include="../Source/Core/Context/BudgetAllocation.cs" />
-    <Compile Include="../Source/Core/Context/ContextEntry.cs" />
-    <Compile Include="../Source/Core/Context/ContextSnapshot.cs" />
-    <Compile Include="../Source/Core/Context/RelevanceTable.cs" />
-    <Compile Include="../Source/Core/Context/ScenarioRegistry.cs" />
-    <Compile Include="../Source/Core/Context/BudgetScheduler.cs" />
-    <Compile Include="../Source/Core/Context/ContextRequest.cs" />
-    <Compile Include="../Source/Core/Context/EmbedCache.cs" />
-    <Compile Include="../Source/Core/Context/ContextEngine.cs" />
-    <Compile Include="../Source/Kernel/Context/ContextOrchestrator.cs" />
-    <Compile Include="../Source/Kernel/Context/ContextTelemetryEmitter.cs" />
-    <Compile Include="../Source/Core/Context/ContextCacheManager.cs" />
-    <Compile Include="../Source/Core/Context/ContextDiffTracker.cs" />
-    <Compile Include="../Source/Core/Context/ContextLayerBuilder.cs" />
-    <Compile Include="../Source/Core/Context/ContextKeyRegistry.cs" />
-    <Compile Include="../Source/Core/Context/HistoryManager.cs" />
-    <Compile Include="../Source/Kernel/Bus/AgentBusImpl.cs" />
-    <Compile Include="../Source/Contracts/Extension/IExtension.cs" />
-    <Compile Include="../Source/Contracts/Extension/IModCooldown.cs" />
-    <Compile Include="../Source/Contracts/Extension/IExtensionRegistry.cs" />
-    <Compile Include="../Source/Core/AgentBus/IEventBus.cs" />
-    <Compile Include="../Source/Core/AgentBus/EventBusAdapter.cs" />
-    <Compile Include="../Source/Core/AgentBus/Events/PerceptionEvent.cs" />
-    <Compile Include="../Source/Core/AgentBus/Events/DecisionEvent.cs" />
-    <Compile Include="../Source/Core/AgentBus/Events/GoalEvent.cs" />
-    <Compile Include="../Source/Core/AgentBus/Events/ActionEvent.cs" />
-    <Compile Include="../Source/Core/AgentBus/Events/AgentLifecycleEvent.cs" />
-    <Compile Include="../Source/Core/Agent/ThinkNode_RimMindAgent.cs" />
-    <Compile Include="../Source/Adapters/Verse/AgentBusGameComponent.cs" />
-    <Compile Include="../Source/Kernel/Flywheel/FlywheelParameterStore.cs" />
-    <Compile Include="../Source/Adapters/Verse/FlywheelGameComponent.cs" />
-    <Compile Include="../Source/Kernel/Flywheel/FlywheelRuleEngine.cs" />
-    <Compile Include="../Source/Kernel/Flywheel/FlywheelTelemetryCollector.cs" />
-    <Compile Include="../Source/Kernel/Queue/AIRequestQueueImpl.cs" />
-    <Compile Include="../Source/Kernel/Queue/RetryPolicy.cs" />
-    <Compile Include="../Source/Kernel/Queue/CooldownTable.cs" />
-    <Compile Include="../Source/Core/Internal/RimMindServiceLocator.cs" />
-    <Compile Include="../Source/Core/Internal/AIRequestPool.cs" />
-    <Compile Include="../Source/Client/IAIClient.cs" />
+    <Compile Include="VerseStubs.cs" />
+    <Compile Include="RimMindTestStubs.cs" />
+    <Compile Include="**\*.cs" Exclude="VerseStubs.cs;RimMindTestStubs.cs;obj\**\*.cs" />
+    <Compile Include="../Source/Kernel/**/*.cs" />
+    <Compile Include="../Source/Contracts/**/*.cs" />
     <Compile Include="../Source/Client/AIRequest.cs" />
     <Compile Include="../Source/Client/AIResponse.cs" />
-    <Compile Include="../Source/Contracts/ThreadAffinityAttribute.cs" />
-    <Compile Include="../Source/Core/Perception/PerceptionBridge.cs" />
-    <Compile Include="../Source/Npc/NpcManager.cs" />
-    <Compile Include="../Source/Npc/INpcManager.cs" />
-    <Compile Include="../Source/Core/AIDebugLog.cs" />
-    <Compile Include="../Source/Core/Context/IContextEngine.cs" />
-    <Compile Include="../Source/Core/Context/IContextCacheManager.cs" />
-    <Compile Include="../Source/Core/Context/IContextDiffTracker.cs" />
-    <Compile Include="../Source/Core/Context/IContextLayerBuilder.cs" />
-    <Compile Include="../Source/Core/Context/IBudgetScheduler.cs" />
-    <Compile Include="../Source/Core/Context/IHistoryManager.cs" />
-    <Compile Include="../Source/Kernel/Logging/RimMindLogger.cs" />
-    <Compile Include="../Source/Npc/TransientExceptionChecker.cs" />
+    <Compile Include="../Source/Client/IAIClient.cs" />
+    <Compile Include="../Source/Client/JsonRepairHelper.cs" />
+    <Compile Include="../Source/Client/StructuredTool.cs" />
+    <Compile Include="../Source/Core/Agent/**/*.cs" />
+    <Compile Include="../Source/Core/AgentBus/**/*.cs" />
+    <Compile Include="../Source/Core/Extensions/**/*.cs" />
+    <Compile Include="../Source/Core/Flywheel/**/*.cs" />
+    <Compile Include="../Source/Core/Internal/RimMindServiceLocator.cs" />
+    <Compile Include="../Source/Core/Internal/AIRequestPool.cs" />
     <Compile Include="../Source/Core/Internal/IProviderRegistry.cs" />
     <Compile Include="../Source/Core/Internal/ProviderRegistry.cs" />
     <Compile Include="../Source/Core/Internal/IClientManager.cs" />
     <Compile Include="../Source/Core/Internal/IAIRequestQueue.cs" />
     <Compile Include="../Source/Core/Internal/IAIDebugLog.cs" />
-    <Compile Include="../Source/Core/Flywheel/IFlywheelParameterStore.cs" />
     <Compile Include="../Source/Core/Internal/TrackedRequest.cs" />
-    <Compile Include="../Source/Core/Sensor/ISensorManager.cs" />
-    <Compile Include="../Source/Compilers/IsExternalInit.cs" />
+    <Compile Include="../Source/Core/Internal/IOverlayService.cs" />
+    <Compile Include="../Source/Core/Perception/**/*.cs" />
+    <Compile Include="../Source/Core/Registry/**/*.cs" />
+    <Compile Include="../Source/Core/Sensor/**/*.cs" />
+    <Compile Include="../Source/Core/AIDebugLog.cs" />
+    <Compile Include="../Source/Core/AIProvider.cs" />
+    <Compile Include="../Source/Npc/NpcTypes.cs" />
+    <Compile Include="../Source/Settings/**/*.cs" />
+    <Compile Include="../Source/Compilers/**/*.cs" />
+    <Compile Include="../Source/Comps/**/*.cs" />
+    <Compile Include="../Source/Adapters/Verse/AIRequestQueueGameComponent.cs" />
+    <Compile Include="../Source/Adapters/Verse/AgentBusGameComponent.cs" />
   </ItemGroup>
 
 </Project>
