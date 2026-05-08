@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Npc;
-using RimMind.Core.Settings;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Abstractions;
-using RimMind.Kernel.Prompt;
+using RimMind.Contracts.Prompt;
 
 namespace RimMind.Kernel.Context
 {

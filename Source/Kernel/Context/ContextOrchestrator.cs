@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core;
+using RimMind.Contracts;
 using RimMind.Contracts.Client;
-using RimMind.Kernel.Context;
-using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Flywheel;
+using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
-using RimMind.Core.Settings;
+using RimMind.Contracts.Prompt;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Abstractions;
+using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Prompt;
 
@@ -84,8 +87,8 @@ namespace RimMind.Kernel.Context
                 ? request.Budget
                 : (scenarioMeta?.DefaultBudget > 0
                     ? scenarioMeta.DefaultBudget
-                    : (RimMindCoreMod.Settings?.Context?.ContextBudget > 0
-                        ? RimMindCoreMod.Settings.Context.ContextBudget
+                    : (RimMindModAccessor.Settings?.Context?.ContextBudget > 0
+                        ? RimMindModAccessor.Settings.Context.ContextBudget
                         : 0.6f));
             var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
 
@@ -237,10 +240,10 @@ namespace RimMind.Kernel.Context
             if (snapshot.Messages == null || snapshot.Messages.Count == 0) return;
 
             int totalBudget = RimMindServiceLocator.Get<IFlywheelParameterStore>()?.TotalBudget ?? 4000;
-            int reserveForOutput = RimMindCoreMod.Settings?.maxTokens > 0
-                ? RimMindCoreMod.Settings.maxTokens
+            int reserveForOutput = RimMindModAccessor.Settings?.maxTokens > 0
+                ? RimMindModAccessor.Settings.maxTokens
                 : 800;
-            float budgetRatio = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f;
+            float budgetRatio = RimMindModAccessor.Settings?.Context?.ContextBudget ?? 0.6f;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;
 
@@ -285,7 +288,7 @@ namespace RimMind.Kernel.Context
             snapshot.EstimatedTokens = trimmed.Sum(s => s.EstimatedTokens);
             snapshot.Meta.TotalTokens = snapshot.EstimatedTokens;
 
-            if (RimMindCoreMod.Settings?.debugLogging == true)
+            if (RimMindModAccessor.Settings?.debugLogging == true)
             {
                 RimMindLogger.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
             }
@@ -295,7 +298,7 @@ namespace RimMind.Kernel.Context
         {
             if (string.IsNullOrEmpty(content)) return content;
             const int briefLimitFallback = 200;
-            int briefLimit = RimMindCoreMod.Settings?.Context?.contextBriefLimit ?? briefLimitFallback;
+            int briefLimit = RimMindModAccessor.Settings?.Context?.contextBriefLimit ?? briefLimitFallback;
             if (content.Length <= briefLimit) return content;
             int cut = briefLimit;
             if (char.IsHighSurrogate(content[cut - 1])) cut--;

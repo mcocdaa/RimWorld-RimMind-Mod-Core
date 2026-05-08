@@ -2,9 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core;
-using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
+using RimMind.Contracts;
+using RimMind.Contracts.Flywheel;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Flywheel
@@ -71,7 +72,7 @@ namespace RimMind.Kernel.Flywheel
             {
                 var handler = OnParameterChanged;
                 handler?.Invoke(key, value);
-                if (RimMindCoreMod.Settings?.debugLogging == true)
+                if (RimMindModAccessor.Settings?.debugLogging == true)
                     RimMindLogger.Message($"FlywheelParameterStore: {key} = {value} (was {old})");
             }
         }

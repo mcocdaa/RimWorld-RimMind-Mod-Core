@@ -24,7 +24,6 @@
     <Compile Remove="Internal\IAIDebugLog.cs" />
     <Compile Remove="Internal\IClientManager.cs" />
     <Compile Remove="Internal\IProviderRegistry.cs" />
-    <Compile Remove="Runtime\IRimMindRuntime.cs" />
     <Compile Remove="UI\IAudioPlayer.cs" />
   </ItemGroup>
 

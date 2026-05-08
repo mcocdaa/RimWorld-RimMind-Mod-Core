@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Npc;
+using RimMind.Core.Npc;
+using RimMind.Core.Pipeline.Common;
+using RimMind.Core.Runtime;
 using RimMind.Kernel.Pipeline;
 
 namespace RimMind.Core.Pipeline.Npc
@@ -14,12 +17,30 @@ namespace RimMind.Core.Pipeline.Npc
         {
             var defaults = new List<IMiddleware<NpcChatContext>>
             {
-                new NpcChatShortCircuitMiddleware(),
-                new NpcChatTraceContextMiddleware(),
+                new CommonShortCircuitMiddleware<NpcChatContext>(ctx =>
+                {
+                    if (RimMindRuntime.Instance.IsShutdown)
+                    {
+                        ctx.Result = new NpcChatResult { Error = "RimMind is shut down." };
+                        return "shutdown";
+                    }
+                    return null;
+                }, "ShortCircuit"),
+                new CommonTraceContextMiddleware<NpcChatContext>(),
                 new NpcAliveCheckMiddleware(),
                 new SnapshotBuildMiddleware(),
-                new NpcChatTelemetryMiddleware(),
-                new NpcChatRetryMiddleware(),
+                new CommonTelemetryMiddleware<NpcChatContext>((ctx, elapsed, err) =>
+                {
+                    ctx.Items["telemetry.elapsed_ms"] = elapsed.TotalMilliseconds;
+                    ctx.Items["telemetry.npc_id"] = ctx.Request.NpcId;
+                    ctx.Items["telemetry.scenario"] = ctx.Request.Scenario;
+                    ctx.Items["telemetry.success"] = ctx.Result?.Error == null;
+                }, "Telemetry"),
+                new CommonRetryMiddleware<NpcChatContext>(
+                    ex => TransientExceptionChecker.IsTransient(ex),
+                    3,
+                    TimeSpan.FromSeconds(1),
+                    "Retry"),
                 new StorageDriverInvokeMiddleware(),
             };
 

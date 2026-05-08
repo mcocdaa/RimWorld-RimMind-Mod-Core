@@ -1,26 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Extensions;
-using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
-using RimMind.Core.Runtime;
-using RimMind.Core.Settings;
+using RimMind.Contracts;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Flywheel;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
+using RimMind.Contracts.Settings;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Flywheel
 {
-    public class ParameterRecommendation
-    {
-        public string Target = null!;
-        public float CurrentValue;
-        public float RecommendedValue;
-        public float Confidence;
-        public string Reason = null!;
-    }
-
     public static class FlywheelRuleEngine
     {
         public static List<ParameterRecommendation> Analyze(List<TelemetryRecord> records)
@@ -129,7 +119,7 @@ namespace RimMind.Kernel.Flywheel
 
             ApplyAutoApplyMode(report, store!);
 
-            FlywheelAnalysisReportWriter.Write(report);
+            RimMindServiceLocator.Get<IAnalysisReportWriter>()?.Write(report);
 
             return recommendations;
         }
@@ -137,8 +127,8 @@ namespace RimMind.Kernel.Flywheel
         private static void ApplyAutoApplyMode(AnalysisReportRecord report, IFlywheelParameterStore? store)
         {
             if (store == null) return;
-            var mode = RimMindCoreMod.Settings?.autoApplyMode ?? FlywheelAutoApplyMode.Off;
-            float threshold = RimMindCoreMod.Settings?.autoApplyConfidenceThreshold ?? 0.8f;
+            var mode = RimMindModAccessor.Settings?.autoApplyMode ?? FlywheelAutoApplyMode.Off;
+            float threshold = RimMindModAccessor.Settings?.autoApplyConfidenceThreshold ?? 0.8f;
 
             if (mode == FlywheelAutoApplyMode.Off)
                 return;
@@ -147,7 +137,7 @@ namespace RimMind.Kernel.Flywheel
             {
                 if (mode == FlywheelAutoApplyMode.LogOnly)
                 {
-                    if (RimMindCoreMod.Settings?.debugLogging == true)
+                    if (RimMindModAccessor.Settings?.debugLogging == true)
                         RimMindLogger.Message($"Flywheel recommendation: {rec.Target} {rec.CurrentValue} -> {rec.RecommendedValue} (confidence={rec.Confidence}, reason={rec.Reason})");
                     continue;
                 }
@@ -157,13 +147,13 @@ namespace RimMind.Kernel.Flywheel
                     store.UpdateParameter(rec.Target, rec.RecommendedValue);
                     rec.Applied = true;
                     rec.ApplyTimestampTicks = DateTime.Now.Ticks;
-                    if (RimMindCoreMod.Settings?.debugLogging == true)
+                    if (RimMindModAccessor.Settings?.debugLogging == true)
                         RimMindLogger.Message($"Flywheel auto-applied: {rec.Target} = {rec.RecommendedValue}");
                 }
             }
 
             var config = BuildConfigFromStore(store!);
-            foreach (var tuner in RimMindRuntime.Instance.ParameterTunersList)
+            foreach (var tuner in RimMindServiceLocator.Get<IRimMindRuntime>()?.ParameterTunersList ?? new List<IKernelParameterTuner>())
             {
                 try { tuner.Tune(config); }
                 catch (Exception ex) { RimMindLogger.Warning($"ParameterTuner '{tuner.TunerId}' error: {ex.Message}"); }

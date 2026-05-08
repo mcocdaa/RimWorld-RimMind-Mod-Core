@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Flywheel;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
-using RimMind.Core.Runtime;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Context
@@ -35,7 +36,7 @@ namespace RimMind.Kernel.Context
             var store = RimMindServiceLocator.Get<IFlywheelParameterStore>();
             if (store == null) return;
             ApplyStoreParameters(store);
-            RimMindRuntime.Instance.RegisterParameterTuner(new BudgetSchedulerTuner(this));
+            RimMindServiceLocator.Get<IRimMindRuntime>()?.RegisterParameterTuner(new BudgetSchedulerTuner(this));
         }
 
         private void OnParameterChanged(string key, float value)
@@ -217,7 +218,7 @@ namespace RimMind.Kernel.Context
         }
     }
 
-    public class BudgetSchedulerTuner : IParameterTuner
+    public class BudgetSchedulerTuner : IKernelParameterTuner
     {
         private readonly BudgetScheduler _scheduler;
 

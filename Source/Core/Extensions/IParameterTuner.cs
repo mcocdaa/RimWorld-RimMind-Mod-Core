@@ -1,4 +1,4 @@
-using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 
 namespace RimMind.Core.Extensions
 {

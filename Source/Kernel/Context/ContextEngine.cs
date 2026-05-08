@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using RimMind.Contracts.Client;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
-using RimMind.Kernel.Context;
 
 namespace RimMind.Kernel.Context
 {
@@ -223,19 +223,19 @@ namespace RimMind.Kernel.Context
 
     internal class NullNpcManager : INpcManager
     {
-        public Verse.Pawn? FindPawnByNpcId(string npcId) => null;
-        public Verse.Pawn? FindProxyPawnForMap(Verse.Map map) => null;
+        public object? FindPawnByNpcId(string npcId) => null;
+        public object? FindProxyPawnForMap(object map) => null;
         public void SpawnNpc(NpcProfile profile) { }
         public void KillNpc(string npcId) { }
         public bool IsNpcAlive(string npcId) => false;
         public NpcProfile? GetNpc(string npcId) => null;
         public IReadOnlyList<NpcProfile> GetAllNpcs() => new List<NpcProfile>();
-        public string GetNpcForMap(Verse.Map map) => "";
+        public string GetNpcForMap(object map) => "";
         public void RegisterActiveAgent(int thingId) { }
         public void UnregisterActiveAgent(int thingId) { }
         public HashSet<int> GetActiveAgentPawnIds() => new HashSet<int>();
-        public void IndexPawn(Verse.Pawn pawn) { }
+        public void IndexPawn(object pawn) { }
         public void UnindexPawn(int thingId) { }
-        public string GetMapNpcId(Verse.Map map) => "";
+        public string GetMapNpcId(object map) => "";
     }
 }

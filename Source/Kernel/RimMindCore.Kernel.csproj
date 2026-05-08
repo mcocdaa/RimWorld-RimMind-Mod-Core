@@ -22,4 +22,12 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Context\BudgetSchedulerConfig.cs" />
+    <Compile Remove="Flywheel\AnalysisReportRecord.cs" />
+    <Compile Remove="Flywheel\FlywheelAutoApplyMode.cs" />
+    <Compile Remove="Context\ContextEntry.cs" />
+    <Compile Remove="Prompt\PromptSection.cs" />
+  </ItemGroup>
+
 </Project>

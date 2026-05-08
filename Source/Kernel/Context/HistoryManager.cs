@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Abstractions;
 
 namespace RimMind.Kernel.Context

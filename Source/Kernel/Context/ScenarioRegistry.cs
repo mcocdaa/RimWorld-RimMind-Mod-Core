@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;
 

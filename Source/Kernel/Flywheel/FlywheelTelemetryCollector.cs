@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
-using RimMind.Core;
+using RimMind.Contracts;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Context;
-using RimMind.Core.Internal;
-using RimMind.Core.Settings;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;
 
@@ -102,7 +104,7 @@ namespace RimMind.Kernel.Flywheel
             {
                 try
                 {
-                    string? settingsPath = RimMindCoreMod.Settings?.telemetryDataPath;
+                    string? settingsPath = RimMindModAccessor.Settings?.telemetryDataPath;
                     string basePath = RimMindServiceLocator.Get<IPathProvider>()?.SaveDataFolderPath ?? "/tmp/test";
                     string dir = !string.IsNullOrWhiteSpace(settingsPath)
                         ? settingsPath!

@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Core;
+using RimMind.Contracts;
 using RimMind.Contracts.Client;
-using RimMind.Core.Internal;
-using RimMind.Core.Settings;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.Runtime;
 
 namespace RimMind.Kernel.Queue
 {
@@ -49,7 +50,7 @@ namespace RimMind.Kernel.Queue
         public Action<string, bool>? LogHandler { get; set; }
         public Action? FlushBackgroundQueue { get; set; }
 
-        private int QueueProcessInterval => RimMindCoreMod.Settings?.queueProcessInterval ?? 60;
+        private int QueueProcessInterval => RimMindModAccessor.Settings?.queueProcessInterval ?? 60;
 
         public static IAIRequestQueue Instance
         {
@@ -114,11 +115,11 @@ namespace RimMind.Kernel.Queue
                     TrackingId = trackingId, Request = request, Callback = callback, Client = client,
                     IsLocalEndpointSnapshot = client.IsLocalEndpoint, State = AIRequestState.Queued,
                     EnqueuedAtTick = CurrentTick, AttemptCount = 1,
-                    MaxAttempts = request.MaxRetryCount.HasValue ? request.MaxRetryCount.Value + 1 : (RimMindCoreMod.Settings?.maxRetryCount ?? 2) + 1,
+                    MaxAttempts = request.MaxRetryCount.HasValue ? request.MaxRetryCount.Value + 1 : (RimMindModAccessor.Settings?.maxRetryCount ?? 2) + 1,
                 };
                 int insertIdx = queue.FindIndex(t => t.Request.Priority > request.Priority);
                 if (insertIdx >= 0) queue.Insert(insertIdx, tracked); else queue.Add(tracked);
-                if (RimMindCoreMod.Settings?.debugLogging == true)
+                if (RimMindModAccessor.Settings?.debugLogging == true)
                     EnqueueLog($"[RimMind-Core] Enqueued request {request.RequestId} (track={trackingId}) for mod {modId}, priority={request.Priority}, queue depth={queue.Count}");
                 TryProcessModQueue(modId, CurrentTick);
             }
@@ -130,7 +131,7 @@ namespace RimMind.Kernel.Queue
             {
                 if (client.IsLocalEndpoint && _isProcessingLocalRequest)
                 {
-                    if (RimMindCoreMod.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Immediate request {request.RequestId} deferred: local model busy");
+                    if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Immediate request {request.RequestId} deferred: local model busy");
                     Enqueue(request, callback, client);
                     return;
                 }
@@ -144,7 +145,7 @@ namespace RimMind.Kernel.Queue
                 _activeRequests[trackingId] = tracked;
                 _requestIdToActive[request.RequestId] = tracked;
                 if (client.IsLocalEndpoint) _isProcessingLocalRequest = true;
-                if (RimMindCoreMod.Settings?.debugLogging == true)
+                if (RimMindModAccessor.Settings?.debugLogging == true)
                     EnqueueLog($"[RimMind-Core] Immediate request {request.RequestId} (track={trackingId}) for mod {request.ModId}, bypassing queue");
                 FireRequest(tracked);
             }
@@ -166,13 +167,13 @@ namespace RimMind.Kernel.Queue
                     {
                         var t = queue[0];
                         if (t.Request.ExpireAtTicks > 0 && now > t.Request.ExpireAtTicks)
-                        { queue.RemoveAt(0); if (RimMindCoreMod.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Expired request {t.Request.RequestId} skipped"); continue; }
+                        { queue.RemoveAt(0); if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Expired request {t.Request.RequestId} skipped"); continue; }
                         break;
                     }
                     if (queue.Count > 0) readyRequests.Add((modId, queue[0]));
                 }
                 readyRequests.Sort((a, b) => { int p = (int)a.tracked.Request.Priority - (int)b.tracked.Request.Priority; if (p != 0) return p; return a.tracked.EnqueuedAtTick - b.tracked.EnqueuedAtTick; });
-                int maxConcurrent = RimMindCoreMod.Settings?.maxConcurrentRequests ?? 4;
+                int maxConcurrent = RimMindModAccessor.Settings?.maxConcurrentRequests ?? 4;
                 foreach (var (modId, tracked) in readyRequests)
                 {
                     if (_activeRequests.Count >= maxConcurrent) break;
@@ -184,7 +185,7 @@ namespace RimMind.Kernel.Queue
                     tracked.State = AIRequestState.Processing; tracked.StartedProcessingAtTick = now;
                     _activeRequests[tracked.TrackingId] = tracked; _requestIdToActive[tracked.Request.RequestId] = tracked;
                     if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = true;
-                    if (RimMindCoreMod.Settings?.debugLogging == true)
+                    if (RimMindModAccessor.Settings?.debugLogging == true)
                         EnqueueLog($"[RimMind-Core] Processing request {tracked.Request.RequestId} (track={tracked.TrackingId}) for mod {modId}, priority={tracked.Request.Priority}, cooldown={cooldownTicks}t, active={_activeRequests.Count}/{maxConcurrent}");
                     FireRequest(tracked);
                 }
@@ -229,7 +230,7 @@ namespace RimMind.Kernel.Queue
                     if (!_modQueues.TryGetValue(modId, out var queue)) { queue = new List<TrackedRequest>(); _modQueues[modId] = queue; }
                     int insertIdx = queue.FindIndex(t => t.Request.Priority > tracked.Request.Priority);
                     if (insertIdx >= 0) queue.Insert(insertIdx, tracked); else queue.Add(tracked);
-                    if (RimMindCoreMod.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Retrying request {tracked.Request.RequestId} (attempt {tracked.AttemptCount}/{tracked.MaxAttempts})");
+                    if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Retrying request {tracked.Request.RequestId} (attempt {tracked.AttemptCount}/{tracked.MaxAttempts})");
                 }
                 else
                 {
@@ -245,7 +246,7 @@ namespace RimMind.Kernel.Queue
             lock (_queueLock)
             {
                 if (_activeRequests.Count == 0) return;
-                int now = CurrentTick; int timeoutMs = RimMindCoreMod.Settings?.requestTimeoutMs ?? 30000; int timeoutTicks = timeoutMs / 16;
+                int now = CurrentTick; int timeoutMs = RimMindModAccessor.Settings?.requestTimeoutMs ?? 30000; int timeoutTicks = timeoutMs / 16;
                 var timedOut = new List<TrackedRequest>();
                 foreach (var kvp in _activeRequests) { if (kvp.Value.StartedProcessingAtTick > 0 && now - kvp.Value.StartedProcessingAtTick > timeoutTicks) timedOut.Add(kvp.Value); }
                 foreach (var tracked in timedOut)
@@ -255,7 +256,7 @@ namespace RimMind.Kernel.Queue
                     var response = AIResponse.Failure(tracked.Request.RequestId, $"Request timed out after {timeoutMs}ms");
                     response.AttemptCount = tracked.AttemptCount; response.Priority = tracked.Request.Priority;
                     _results.Enqueue((response, tracked.Callback));
-                    if (RimMindCoreMod.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Request {tracked.Request.RequestId} timed out after {timeoutTicks} ticks");
+                    if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Request {tracked.Request.RequestId} timed out after {timeoutTicks} ticks");
                 }
             }
         }

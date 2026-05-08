@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Verse;
 
 namespace RimMind.Contracts.Npc
 {
@@ -10,14 +9,14 @@ namespace RimMind.Contracts.Npc
         bool IsNpcAlive(string npcId);
         NpcProfile? GetNpc(string npcId);
         IReadOnlyList<NpcProfile> GetAllNpcs();
-        string GetNpcForMap(Map map);
-        Pawn? FindPawnByNpcId(string npcId);
-        Pawn? FindProxyPawnForMap(Map map);
+        string GetNpcForMap(object map);
+        object? FindPawnByNpcId(string npcId);
+        object? FindProxyPawnForMap(object map);
         void RegisterActiveAgent(int thingId);
         void UnregisterActiveAgent(int thingId);
         HashSet<int> GetActiveAgentPawnIds();
-        void IndexPawn(Pawn pawn);
+        void IndexPawn(object pawn);
         void UnindexPawn(int thingId);
-        string GetMapNpcId(Map map);
+        string GetMapNpcId(object map);
     }
 }

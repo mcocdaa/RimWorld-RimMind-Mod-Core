@@ -1,6 +1,6 @@
-using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 
-namespace RimMind.Kernel.Flywheel
+namespace RimMind.Contracts.Flywheel
 {
     public interface IKernelParameterTuner
     {

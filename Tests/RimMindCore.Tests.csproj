@@ -22,7 +22,7 @@
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="**\*.cs" Exclude="VerseStubs.cs;RimMindTestStubs.cs;obj\**\*.cs" />
     <Compile Include="../Source/Kernel/**/*.cs" Exclude="../Source/Kernel/**/obj/**" />
-    <Compile Include="../Source/Contracts/**/*.cs" Exclude="../Source/Contracts/**/obj/**;../Source/Contracts/Compilers/IsExternalInit.cs" />
+    <Compile Include="../Source/Contracts/**/*.cs" Exclude="../Source/Contracts/**/obj/**;../Source/Contracts/Compilers/IsExternalInit.cs;../Source/Contracts/Client/AIRequest.cs;../Source/Contracts/Client/AIResponse.cs;../Source/Contracts/Client/IAIClient.cs;../Source/Contracts/Client/StructuredTool.cs;../Source/Contracts/Client/AIRequestEnums.cs;../Source/Contracts/Npc/INpcManager.cs;../Source/Contracts/Npc/NpcTypes.cs;../Source/Contracts/AIProvider.cs;../Source/Contracts/Internal/RimMindServiceLocator.cs;../Source/Contracts/Internal/IAIRequestQueue.cs;../Source/Contracts/Internal/TrackedRequest.cs;../Source/Contracts/Internal/IAIDebugLog.cs;../Source/Contracts/Internal/IClientManager.cs;../Source/Contracts/Internal/IProviderRegistry.cs;../Source/Contracts/Flywheel/FlywheelAutoApplyMode.cs;../Source/Contracts/Extensions/IParameterTuner.cs;../Source/Contracts/Extensions/IAgentActionBridge.cs;../Source/Contracts/Extension/ISettingsTab.cs;../Source/Contracts/UI/IAudioPlayer.cs;../Source/Contracts/Context/BudgetSchedulerConfig.cs;../Source/Contracts/Context/ContextEntry.cs" />
     <Compile Include="../Source/Client/AIRequest.cs" />
     <Compile Include="../Source/Client/AIResponse.cs" />
     <Compile Include="../Source/Client/IAIClient.cs" />

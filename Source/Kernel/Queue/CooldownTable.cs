@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Contracts;
 using RimMind.Contracts.Extension;
-using RimMind.Core;
-using RimMind.Core.Internal;
-using RimMind.Core.Runtime;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
 
 namespace RimMind.Kernel.Queue
 {
@@ -59,13 +59,13 @@ namespace RimMind.Kernel.Queue
 
         public int GetModCooldownTicks(string modId)
         {
-            var cooldown = RimMindRuntime.Instance.GetExtensionRegistry<IModCooldown>().FindById(modId);
+            var cooldown = RimMindServiceLocator.Get<IRimMindRuntime>()?.GetExtensionRegistry<IModCooldown>().FindById(modId);
             if (cooldown != null)
             {
                 try { return cooldown.CooldownTicks; }
                 catch { }
             }
-            return RimMindCoreMod.Settings?.defaultModCooldownTicks ?? 3600;
+            return RimMindModAccessor.Settings?.defaultModCooldownTicks ?? 3600;
         }
     }
 }

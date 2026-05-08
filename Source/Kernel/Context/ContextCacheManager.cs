@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core;
+using RimMind.Contracts;
 using RimMind.Contracts.Client;
-using RimMind.Core.Internal;
-using RimMind.Core.Settings;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.Runtime;
 
 namespace RimMind.Kernel.Context
 {
@@ -19,7 +20,7 @@ namespace RimMind.Kernel.Context
         private readonly Dictionary<string, bool> _pendingCacheEvents = new Dictionary<string, bool>();
         private readonly EmbedCache _embedCache = new EmbedCache();
 
-        private int MaxCacheEntries => RimMindCoreMod.Settings?.Context?.maxCacheEntries ?? 100;
+        private int MaxCacheEntries => RimMindModAccessor.Settings?.Context?.maxCacheEntries ?? 100;
 
         public IReadOnlyDictionary<string, ChatMessage> L0Cache => _l0Cache;
         public IReadOnlyDictionary<string, Dictionary<string, string>> L1BlockCache => _l1BlockCache;

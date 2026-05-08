@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using RimMind.Core.Internal;
+using RimMind.Contracts;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;
 
@@ -78,6 +81,8 @@ namespace RimMind.Kernel.Context
         {
             if (_coreRegistered) return;
             _coreRegistered = true;
+
+            var ctx = RimMindServiceLocator.Get<IContextKeyProvider>();
 
             Register("system_instruction", ContextLayer.L0_Static, 1.0f,
                 pawnObj =>
@@ -164,54 +169,48 @@ namespace RimMind.Kernel.Context
                     return WrapEntry(T("RimMind.Core.Prompt.TaskInstruction.Base") ?? "");
                 }, "Core");
 
+            if (ctx == null) return;
+
             Register("map_structure", ContextLayer.L1_Baseline, 0.95f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn?.Map != null ? GameContextBuilder.BuildMapContextEntries(pawn.Map) : new List<ContextEntry>(); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn?.Map != null ? ctx.BuildMapContextEntries(pawn.Map) : new List<ContextEntry>(); }, "Core");
             Register("pawn_base_info", ContextLayer.L1_Baseline, 0.95f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractPawnBaseInfo(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractPawnBaseInfo(pawn)) : WrapEntry(""); }, "Core");
             Register("fixed_relations", ContextLayer.L1_Baseline, 0.9f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractFixedRelations(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractFixedRelations(pawn)) : WrapEntry(""); }, "Core");
             Register("ideology", ContextLayer.L1_Baseline, 0.9f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractIdeology(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractIdeology(pawn)) : WrapEntry(""); }, "Core");
             Register("skills_summary", ContextLayer.L1_Baseline, 0.85f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractSkillsSummary(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractSkillsSummary(pawn)) : WrapEntry(""); }, "Core");
 
             Register("current_area", ContextLayer.L2_Environment, 0.7f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractCurrentArea(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractCurrentArea(pawn)) : WrapEntry(""); }, "Core");
             Register("weather", ContextLayer.L2_Environment, 0.6f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractWeather(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractWeather(pawn)) : WrapEntry(""); }, "Core");
             Register("time_of_day", ContextLayer.L2_Environment, 0.65f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractTimeOfDay(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractTimeOfDay(pawn)) : WrapEntry(""); }, "Core");
             Register("nearby_pawns", ContextLayer.L2_Environment, 0.7f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractNearbyPawns(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractNearbyPawns(pawn)) : WrapEntry(""); }, "Core");
             Register("season", ContextLayer.L2_Environment, 0.5f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractSeason(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractSeason(pawn)) : WrapEntry(""); }, "Core");
             Register("colony_status", ContextLayer.L2_Environment, 0.6f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractColonyStatus(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractColonyStatus(pawn)) : WrapEntry(""); }, "Core");
 
             Register("health", ContextLayer.L3_State, 0.3f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractHealth(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractHealth(pawn)) : WrapEntry(""); }, "Core");
             Register("mood", ContextLayer.L3_State, 0.3f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractMood(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractMood(pawn)) : WrapEntry(""); }, "Core");
             Register("current_job", ContextLayer.L3_State, 0.25f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractCurrentJob(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractCurrentJob(pawn)) : WrapEntry(""); }, "Core");
             Register("combat_status", ContextLayer.L3_State, 0.2f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractCombatStatus(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractCombatStatus(pawn)) : WrapEntry(""); }, "Core");
             Register("target_info", ContextLayer.L3_State, 0.15f,
-                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(GameContextBuilder.ExtractTargetInfo(pawn)) : WrapEntry(""); }, "Core");
+                pawnObj => { var pawn = pawnObj as Verse.Pawn; return pawn != null ? WrapEntry(ctx.ExtractTargetInfo(pawn)) : WrapEntry(""); }, "Core");
             Register("task_progress", ContextLayer.L3_State, 0.2f,
                 pawnObj =>
                 {
                     var pawn = pawnObj as Verse.Pawn;
                     if (pawn == null) return WrapEntry("");
-                    var comp = pawn.TryGetComp<RimMind.Core.Comps.CompPawnAgent>();
-                    if (comp == null || comp.Agent == null) return WrapEntry("");
-                    var goals = comp.Agent.GoalStack.ActiveGoals;
-                    if (goals.Count == 0) return WrapEntry("");
-                    var sb = new System.Text.StringBuilder();
-                    sb.AppendLine("Current goals:");
-                    foreach (var g in goals)
-                        sb.AppendLine($"- [{g.Category}] {g.Description} (priority {g.Priority}, {g.Status})");
-                    return WrapEntry(sb.ToString().TrimEnd());
+                    return WrapEntry(ctx.ExtractTaskProgress(pawn));
                 }, "Core");
         }
 

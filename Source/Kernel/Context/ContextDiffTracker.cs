@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimMind.Core;
-using RimMind.Core.Internal;
-using RimMind.Core.Settings;
+using RimMind.Contracts;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Abstractions;
 
 namespace RimMind.Kernel.Context
@@ -176,7 +178,7 @@ namespace RimMind.Kernel.Context
             if (string.IsNullOrEmpty(oldValue) || string.IsNullOrEmpty(newValue)) return false;
             if (key == "mood" && _keyLastNumericValues.TryGetValue(npcId, out var moodNums))
             {
-                float moodThreshold = RimMindCoreMod.Settings?.Context?.moodDiffThreshold ?? 5f;
+                float moodThreshold = RimMindModAccessor.Settings?.Context?.moodDiffThreshold ?? 5f;
                 if (moodNums.TryGetValue("mood", out var currentMood)
                     && _previousNumericValues.TryGetValue(npcId, out var prevNums)
                     && prevNums.TryGetValue("mood", out var prevMood)
@@ -184,7 +186,7 @@ namespace RimMind.Kernel.Context
             }
             if (key == "current_area" && _keyLastNumericValues.TryGetValue(npcId, out var areaNums))
             {
-                float tempThreshold = RimMindCoreMod.Settings?.Context?.temperatureDiffThreshold ?? 5f;
+                float tempThreshold = RimMindModAccessor.Settings?.Context?.temperatureDiffThreshold ?? 5f;
                 if (areaNums.TryGetValue("current_area", out var currentTemp)
                     && _previousNumericValues.TryGetValue(npcId, out var prevNums2)
                     && prevNums2.TryGetValue("current_area", out var prevTemp)
@@ -195,7 +197,7 @@ namespace RimMind.Kernel.Context
 
         private void StoreNumericValuesFromPawn(string npcId, object pawn)
         {
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = RimMindServiceLocator.Get<IPawnDataExtractor>()?.Extract(pawn) ?? new PawnExtractedData();
             var dict = _keyLastNumericValues[npcId];
             if (data.MoodString != null)
                 dict["mood"] = data.MoodPercent;

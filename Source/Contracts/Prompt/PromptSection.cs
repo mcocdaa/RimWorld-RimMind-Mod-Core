@@ -1,6 +1,6 @@
 using System;
 
-namespace RimMind.Kernel.Prompt
+namespace RimMind.Contracts.Prompt
 {
     public class PromptSection
     {

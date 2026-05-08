@@ -1,9 +1,9 @@
-﻿﻿﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Prompt;
 using RimMind.Core.Npc;
-using RimMind.Kernel.Prompt;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;

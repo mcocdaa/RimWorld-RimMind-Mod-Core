@@ -1,5 +1,5 @@
 using System;
-using RimMind.Kernel.Flywheel;
+using RimMind.Contracts.Flywheel;
 using Verse;
 
 namespace RimMind.Core.Settings
