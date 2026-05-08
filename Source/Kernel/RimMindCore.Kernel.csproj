@@ -23,6 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="2_RimMindCore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Context\BudgetSchedulerConfig.cs" />
     <Compile Remove="Flywheel\AnalysisReportRecord.cs" />
     <Compile Remove="Flywheel\FlywheelAutoApplyMode.cs" />

@@ -15,6 +15,7 @@ using RimMind.Core.Pipeline.Npc;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Extensions;
 using RimMind.Contracts.Internal;
@@ -140,44 +141,11 @@ namespace RimMind.Core
             if (!string.IsNullOrEmpty(schema)) aiRequest.JsonSchema = schema;
             if (tools != null && tools.Count > 0) aiRequest.Tools = tools;
 
-            var ctx = new AIRequestContext { Request = aiRequest, Client = GetClient() };
+            var ctx = new AIRequestContext { Request = aiRequest, Client = GetClient(), Snapshot = snapshot };
             RimMindRuntime.Instance.AIRequestPipeline.ExecuteAsync(ctx).ContinueWith(_ =>
             {
-                RecordStructuredTelemetry(request, snapshot, ctx.Response);
                 onComplete?.Invoke(ctx.Response ?? AIResponse.Failure(aiRequest.RequestId, "Pipeline failed"));
             }, TaskContinuationOptions.ExecuteSynchronously);
-        }
-
-        private static void RecordStructuredTelemetry(ContextRequest request, ContextSnapshot snapshot, AIResponse? response)
-        {
-            try
-            {
-                bool parseSuccess = response?.Success ?? false;
-                Telemetry.Record(new TelemetryRecord
-                {
-                    NpcId = request.NpcId, Scenario = request.Scenario,
-                    PromptTokens = response?.PromptTokens ?? 0,
-                    CompletionTokens = response?.CompletionTokens ?? 0,
-                    TotalTokens = response?.TokensUsed ?? 0,
-                    CachedTokens = response?.CachedTokens ?? 0,
-                    BudgetValue = snapshot.BudgetValue,
-                    KeysIncluded = snapshot.IncludedKeys, KeysTrimmed = snapshot.TrimmedKeys,
-                    LayerTokenBreakdown = new Dictionary<string, int>
-                    {
-                        { "L0", snapshot.Meta.L0Tokens }, { "L1", snapshot.Meta.L1Tokens },
-                        { "L2", snapshot.Meta.L2Tokens }, { "L3", snapshot.Meta.L3Tokens },
-                        { "L4", snapshot.Meta.L4Tokens }, { "L5", snapshot.Meta.L5Tokens },
-                    },
-                    KeyChangeFreq = snapshot.KeyChangeCounts.Count > 0 ? new Dictionary<string, int>(snapshot.KeyChangeCounts) : null,
-                    ScoreDistribution = snapshot.KeyScores.Count > 0 ? new Dictionary<string, float>(snapshot.KeyScores) : null,
-                    DiffCount = snapshot.DiffCount,
-                    LatencyByLayerMs = snapshot.LatencyByLayerMs.Count > 0 ? new Dictionary<string, long>(snapshot.LatencyByLayerMs) : null,
-                    RequestLatencyMs = snapshot.BuildStartTicks > 0 ? (DateTime.Now.Ticks - snapshot.BuildStartTicks) / TimeSpan.TicksPerMillisecond : 0,
-                    TraceId = RimMindLogger.CurrentTraceId,
-                    ResponseParseSuccess = parseSuccess, TimestampTicks = DateTime.Now.Ticks,
-                });
-            }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Telemetry record failed: {ex.Message}"); }
         }
 
         public static string BuildMapContext(Map map, bool brief = false)
@@ -279,5 +247,17 @@ namespace RimMind.Core
         public static IReadOnlyList<ISensorProvider> SensorProviders => RimMindRuntime.Instance.SensorProvidersList;
 
         public static void ClearModCooldown(string modId) => RimMindRuntime.Instance.Queue?.ClearCooldown(modId);
+
+        public static void RegisterPawnContextProvider(string key, Func<Pawn, string?> provider, int priority = 8)
+        {
+            ContextKeyRegistry.Register(key, ContextLayer.L4_History, priority / 10f,
+                pawnObj =>
+                {
+                    var p = pawnObj as Pawn;
+                    if (p == null) return new List<ContextEntry>();
+                    var value = provider(p);
+                    return string.IsNullOrEmpty(value) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(value) };
+                }, "External");
+        }
     }
 }

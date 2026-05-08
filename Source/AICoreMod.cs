@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+using System;
+using HarmonyLib;
 using RimMind.Contracts.Extension;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Internal;
@@ -19,6 +20,8 @@ namespace RimMind.Core
 
         public RimMindCoreMod(ModContentPack content) : base(content)
         {
+            AssemblyLoadGuard.AssertAssembliesLoaded();
+
             RimMindRuntime.Initialize();
             Settings = GetSettings<RimMindCoreSettings>();
 
@@ -65,6 +68,38 @@ namespace RimMind.Core
         {
             _settings.requestOverlayEnabled = !_settings.requestOverlayEnabled;
             _settings.Write();
+        }
+    }
+
+    internal static class AssemblyLoadGuard
+    {
+        public static void AssertAssembliesLoaded()
+        {
+            var loaded = AppDomain.CurrentDomain.GetAssemblies();
+            var contracts = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "0_RimMindContracts");
+            var kernel = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "1_RimMindKernel");
+
+            if (contracts == null)
+            {
+                var msg = "[RimMind-Core] FATAL: 0_RimMindContracts.dll not loaded. " +
+                          "Check that the dll exists in Assemblies/ folder. " +
+                          "If you upgraded from v1.x, please subscribe to the new mod files.";
+                Log.Error(msg);
+                throw new System.InvalidOperationException(msg);
+            }
+
+            if (kernel == null)
+            {
+                var msg = "[RimMind-Core] FATAL: 1_RimMindKernel.dll not loaded. " +
+                          "Check that the dll exists in Assemblies/ folder.";
+                Log.Error(msg);
+                throw new System.InvalidOperationException(msg);
+            }
+
+            Log.Message($"[RimMind-Core] Assemblies loaded: " +
+                        $"Contracts={contracts.GetName().Version} " +
+                        $"Kernel={kernel.GetName().Version} " +
+                        $"Core={typeof(RimMindCoreMod).Assembly.GetName().Version}");
         }
     }
 }

@@ -13,7 +13,7 @@ namespace RimMind.Core.Pipeline.AI
     {
         public string Id => Name;
         public string Name => nameof(TelemetryMiddleware);
-        public int Order => 4;
+        public int Order => -200;
 
         public async Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {

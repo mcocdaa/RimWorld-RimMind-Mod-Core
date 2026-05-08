@@ -9,7 +9,7 @@ namespace RimMind.Core.Pipeline.Npc
     {
         public string Id => Name;
         public string Name => nameof(NpcChatTelemetryMiddleware);
-        public int Order => 4;
+        public int Order => -200;
 
         public async Task InvokeAsync(NpcChatContext context, MiddlewareDelegate<NpcChatContext> next)
         {

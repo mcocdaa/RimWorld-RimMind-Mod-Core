@@ -9,7 +9,7 @@ namespace RimMind.Core.Pipeline.Context
     {
         public string Id => Name;
         public string Name => nameof(ContextBuildTelemetryMiddleware);
-        public int Order => 4;
+        public int Order => -200;
 
         public async Task InvokeAsync(ContextBuildContext context, MiddlewareDelegate<ContextBuildContext> next)
         {

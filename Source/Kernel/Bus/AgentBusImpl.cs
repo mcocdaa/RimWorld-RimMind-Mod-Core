@@ -19,6 +19,8 @@ namespace RimMind.Kernel.Bus
 
         private int _autoKeyCounter;
 
+        private Func<ContractsAgentBusEvent, Delegate[], bool, bool>? _publishViaPipeline;
+
         private readonly struct PendingEvent
         {
             public readonly ContractsAgentBusEvent Event;
@@ -29,6 +31,11 @@ namespace RimMind.Kernel.Bus
                 Event = evt;
                 Invoker = invoker;
             }
+        }
+
+        internal void SetPublishViaPipeline(Func<ContractsAgentBusEvent, Delegate[], bool, bool> publishViaPipeline)
+        {
+            _publishViaPipeline = publishViaPipeline;
         }
 
         public string Subscribe<T>(Action<T> handler) where T : ContractsAgentBusEvent
@@ -81,28 +88,41 @@ namespace RimMind.Kernel.Bus
         {
             AssertMainThread();
             if (evt == null) return;
-            var type = typeof(T);
-            if (!_handlers.TryGetValue(type, out var dict)) return;
-            var snapshot = dict.ToArray();
-            foreach (var kvp in snapshot)
+
+            if (_publishViaPipeline != null)
             {
-                try
-                {
-                    if (kvp.Value is Action<T> action)
-                        action(evt);
-                }
-                catch (Exception ex)
-                {
-                    RimMindLogger.Warning($"AgentBus handler error for {typeof(T).Name}: {ex.Message}");
-                }
+                var subscribers = GetSubscribersSnapshot<T>();
+                _publishViaPipeline(evt, subscribers, false);
+                return;
             }
+
+            DispatchToHandlers(evt);
         }
 
         public void PublishFromBackground<T>(T evt) where T : ContractsAgentBusEvent
         {
             if (evt == null) return;
-            Action<ContractsAgentBusEvent> invoker = e => DispatchToHandlers((T)e);
+            Action<ContractsAgentBusEvent> invoker = e =>
+            {
+                var typed = (T)e;
+                if (_publishViaPipeline != null)
+                {
+                    var subscribers = GetSubscribersSnapshot<T>();
+                    _publishViaPipeline(typed, subscribers, true);
+                }
+                else
+                {
+                    DispatchToHandlers(typed);
+                }
+            };
             _backgroundQueue.Enqueue(new PendingEvent(evt, invoker));
+        }
+
+        private Delegate[] GetSubscribersSnapshot<T>() where T : ContractsAgentBusEvent
+        {
+            var type = typeof(T);
+            if (!_handlers.TryGetValue(type, out var dict)) return Array.Empty<Delegate>();
+            return dict.Values.ToArray();
         }
 
         private void DispatchToHandlers<T>(T evt) where T : ContractsAgentBusEvent

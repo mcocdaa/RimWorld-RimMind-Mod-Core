@@ -20,7 +20,7 @@ namespace RimMind.Core.Pipeline.Common
 
         public string Id => $"Common.{_name}";
         public string Name => _name;
-        public int Order => 900;
+        public int Order => -200;
 
         public async Task InvokeAsync(TContext context, MiddlewareDelegate<TContext> next)
         {

@@ -11,7 +11,7 @@ namespace RimMind.Core.Pipeline.Bus
     {
         public string Id => Name;
         public string Name => $"Telemetry_{typeof(T).Name}";
-        public int Order => 1;
+        public int Order => -200;
 
         public async Task InvokeAsync(BusPublishContext<T> context, MiddlewareDelegate<BusPublishContext<T>> next)
         {

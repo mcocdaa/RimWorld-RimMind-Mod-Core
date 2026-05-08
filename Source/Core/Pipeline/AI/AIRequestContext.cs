@@ -1,6 +1,7 @@
 using System;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Pipeline;
+using RimMind.Kernel.Context;
 
 namespace RimMind.Core.Pipeline.AI
 {
@@ -12,5 +13,6 @@ namespace RimMind.Core.Pipeline.AI
         public int RetryCount { get; set; }
         public IAIClient? Client { get; set; }
         public TimeSpan Elapsed { get; set; }
+        public ContextSnapshot? Snapshot { get; set; }
     }
 }

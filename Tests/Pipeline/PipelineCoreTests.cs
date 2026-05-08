@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
+using RimMind.Core.Pipeline.Common;
 using RimMind.Kernel.Pipeline;
 using Xunit;
 
@@ -170,6 +171,69 @@ namespace RimMind.Tests.Pipeline
 
             Assert.Equal("value_from_A", context.Items["key"]);
             Assert.Contains("B_read_value_from_A", context.ExecutionLog);
+        }
+
+        [Fact]
+        public async Task Pipeline_WithZeroMiddlewares_ExecutesWithoutError()
+        {
+            var pipeline = new Pipeline<TestPipelineContext>(Array.Empty<IMiddleware<TestPipelineContext>>());
+            var context = new TestPipelineContext();
+
+            await pipeline.ExecuteAsync(context);
+
+            Assert.False(context.IsShortCircuited);
+            Assert.Empty(context.ExecutionLog);
+        }
+
+        [Fact]
+        public async Task ShortCircuit_WithCustomReason_PreservesExactReasonText()
+        {
+            var sc = new CommonShortCircuitMiddleware<TestPipelineContext>(
+                _ => "custom_reason_42", "TestSC");
+            var pipeline = new Pipeline<TestPipelineContext>(
+                new IMiddleware<TestPipelineContext>[] { sc });
+            var context = new TestPipelineContext();
+
+            await pipeline.ExecuteAsync(context);
+
+            Assert.True(context.IsShortCircuited);
+            Assert.Equal("custom_reason_42", context.ShortCircuitReason);
+        }
+
+        [Fact]
+        public async Task NestedShortCircuit_DownstreamMiddlewareNeverInvoked()
+        {
+            int bInvokeCount = 0;
+            var middlewares = new IMiddleware<TestPipelineContext>[]
+            {
+                new TestMiddleware("A", shortCircuit: true),
+                new TestMiddleware("B", onInvoke: _ => bInvokeCount++)
+            };
+            var pipeline = new Pipeline<TestPipelineContext>(middlewares);
+            var context = new TestPipelineContext();
+
+            await pipeline.ExecuteAsync(context);
+
+            Assert.Equal(0, bInvokeCount);
+            Assert.Equal(new[] { "A" }, context.ExecutionLog);
+        }
+
+        [Fact]
+        public async Task Exception_InMiddleware_PropagatesWithTypeAndMessage()
+        {
+            var middlewares = new IMiddleware<TestPipelineContext>[]
+            {
+                new TestMiddleware("A"),
+                new TestMiddleware("B", throwException: true)
+            };
+            var pipeline = new Pipeline<TestPipelineContext>(middlewares);
+            var context = new TestPipelineContext();
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => pipeline.ExecuteAsync(context));
+
+            Assert.Equal("Exception from B", ex.Message);
+            Assert.Equal(new[] { "A", "B" }, context.ExecutionLog);
         }
     }
 }

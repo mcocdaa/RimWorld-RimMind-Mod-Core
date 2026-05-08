@@ -102,5 +102,46 @@ namespace RimMind.Tests.Pipeline.Npc
             var log = (List<string>)context.Items["log"]!;
             Assert.Equal(new[] { "A", "B", "C" }, log);
         }
+
+        [Fact]
+        public async Task ShortCircuit_PreventsDownstreamMiddlewareExecution()
+        {
+            var middlewares = new IMiddleware<NpcChatContext>[]
+            {
+                new NpcChatTestMiddleware("A", order: 0, shortCircuit: true),
+                new NpcChatTestMiddleware("B", order: 1),
+                new NpcChatTestMiddleware("C", order: 2),
+            };
+
+            var pipeline = new Pipeline<NpcChatContext>(middlewares);
+            var context = CreateContext();
+            context.Items["log"] = new List<string>();
+
+            await pipeline.ExecuteAsync(context);
+
+            var log = (List<string>)context.Items["log"]!;
+            Assert.Equal(new[] { "A" }, log);
+            Assert.True(context.IsShortCircuited);
+            Assert.Equal("short_circuited_by_A", context.ShortCircuitReason);
+        }
+
+        [Fact]
+        public async Task StreamingContextFlag_IsPreservedThroughPipeline()
+        {
+            var middlewares = new IMiddleware<NpcChatContext>[]
+            {
+                new NpcChatTestMiddleware("A", order: 0),
+                new NpcChatTestMiddleware("B", order: 1),
+            };
+
+            var pipeline = new Pipeline<NpcChatContext>(middlewares);
+            var context = CreateContext();
+            context.Items["log"] = new List<string>();
+            context.IsStreaming = true;
+
+            await pipeline.ExecuteAsync(context);
+
+            Assert.True(context.IsStreaming);
+        }
     }
 }

@@ -23,6 +23,8 @@ namespace RimMind.Kernel.Context
         private readonly ContextOrchestrator _orchestrator;
         private readonly ContextTelemetryEmitter _telemetryEmitter;
 
+        internal Func<ContextRequest, ContextSnapshot?>? PipelineBuildSnapshot { get; set; }
+
         public ContextEngine(IHistoryManager historyManager,
             INpcManager? npcManager = null,
             IContextCacheManager? cacheManager = null,
@@ -46,6 +48,8 @@ namespace RimMind.Kernel.Context
 
         public IBudgetScheduler GetScheduler() => _scheduler;
         public EmbeddingSnapshotStore GetEmbeddingSnapshotStore() => _embeddingSnapshotStore;
+        internal ContextOrchestrator Orchestrator => _orchestrator;
+        internal IContextCacheManager CacheManager => _cacheManager;
 
         public void TouchCache(string cacheKey)
         {
@@ -62,6 +66,13 @@ namespace RimMind.Kernel.Context
         public ContextSnapshot? BuildSnapshot(ContextRequest request)
         {
             if (_disposed) return null;
+            if (PipelineBuildSnapshot != null)
+            {
+                var snapshot = PipelineBuildSnapshot(request);
+                if (snapshot != null)
+                    CommitSnapshotSideEffects(snapshot);
+                return snapshot;
+            }
             _rwLock.EnterWriteLock();
             try
             {

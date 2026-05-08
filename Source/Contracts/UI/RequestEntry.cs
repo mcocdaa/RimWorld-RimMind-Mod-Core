@@ -10,6 +10,7 @@ namespace RimMind.Contracts.UI
         public string[]? optionTooltips;
         public Action<string>? callback;
         public object? pawn;
+        public string source = "";
         public bool systemBlocked;
         public int expireTicks;
         public int tick;

@@ -40,5 +40,9 @@ namespace RimMind.Kernel.Context
 
         public static string AgentDecision => Get("AgentDecision") ?? "";
         public static string Dialogue => Get("Dialogue") ?? "";
+        public static string PersonalityOutput => Get("PersonalityOutput") ?? "";
+        public static string DarkMemoryOutput => Get("DarkMemoryOutput") ?? "";
+        public static string AdviceOutput => Get("AdviceOutput") ?? "";
+        public static string IncidentOutput => Get("IncidentOutput") ?? "";
     }
 }

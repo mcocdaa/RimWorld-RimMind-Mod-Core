@@ -10,6 +10,8 @@ using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.AI;
 using RimMind.Core.Pipeline.Npc;
+using RimMind.Core.Pipeline.Context;
+using RimMind.Core.Pipeline.Bus;
 using RimMind.Core.Agent;
 using RimMind.Core.UI;
 using RimMind.Kernel.Bus;
@@ -51,6 +53,10 @@ namespace RimMind.Core.Runtime
         public FlywheelTelemetryCollector Telemetry { get; private set; }
         public IPipeline<AIRequestContext> AIRequestPipeline { get; private set; }
         public IPipeline<NpcChatContext> NpcChatPipeline { get; private set; }
+        public IPipeline<ContextBuildContext> ContextBuildPipeline { get; private set; }
+
+        private readonly ConcurrentDictionary<Type, object> _busPipelines
+            = new ConcurrentDictionary<Type, object>();
 
         private readonly ConcurrentDictionary<Type, object> _registries
             = new ConcurrentDictionary<Type, object>();
@@ -86,6 +92,25 @@ namespace RimMind.Core.Runtime
                 GetExtensionRegistry<IMiddleware<AIRequestContext>>());
             NpcChatPipeline = NpcChatPipelineFactory.Build(
                 GetExtensionRegistry<IMiddleware<NpcChatContext>>());
+            ContextBuildPipeline = ContextBuildPipelineFactory.Build(
+                ((ContextEngine)ContextEngine).Orchestrator,
+                ((ContextEngine)ContextEngine).CacheManager,
+                GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
+            ((ContextEngine)ContextEngine).PipelineBuildSnapshot = req =>
+            {
+                var ctx = new ContextBuildContext { Request = req };
+                ContextBuildPipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
+                return ctx.Snapshot;
+            };
+            ((AgentBusImpl)AgentBus).SetPublishViaPipeline((evt, subscribers, isBackground) =>
+            {
+                var eventType = evt.GetType();
+                var method = typeof(RimMindRuntime).GetMethod(
+                    nameof(PublishEventViaPipeline),
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var generic = method.MakeGenericMethod(eventType);
+                return (bool)generic.Invoke(this, new object[] { evt, subscribers, isBackground });
+            });
 
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
         }
@@ -122,6 +147,26 @@ namespace RimMind.Core.Runtime
                 GetExtensionRegistry<IMiddleware<AIRequestContext>>());
             NpcChatPipeline = NpcChatPipelineFactory.Build(
                 GetExtensionRegistry<IMiddleware<NpcChatContext>>());
+            ContextBuildPipeline = ContextBuildPipelineFactory.Build(
+                ((ContextEngine)ContextEngine).Orchestrator,
+                ((ContextEngine)ContextEngine).CacheManager,
+                GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
+            ((ContextEngine)ContextEngine).PipelineBuildSnapshot = req =>
+            {
+                var ctx = new ContextBuildContext { Request = req };
+                ContextBuildPipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
+                return ctx.Snapshot;
+            };
+            ((AgentBusImpl)AgentBus).SetPublishViaPipeline((evt, subscribers, isBackground) =>
+            {
+                var eventType = evt.GetType();
+                var method = typeof(RimMindRuntime).GetMethod(
+                    nameof(PublishEventViaPipeline),
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var generic = method.MakeGenericMethod(eventType);
+                return (bool)generic.Invoke(this, new object[] { evt, subscribers, isBackground });
+            });
+            _busPipelines.Clear();
             _isShutdown = false;
         }
 
@@ -138,6 +183,19 @@ namespace RimMind.Core.Runtime
         {
             return (IExtensionRegistry<T>)_registries.GetOrAdd(typeof(T),
                 _ => new ExtensionRegistry<T>());
+        }
+
+        private bool PublishEventViaPipeline<T>(T evt, Delegate[] subscribers, bool isBackground) where T : Contracts.AgentBusEvent
+        {
+            var pipeline = GetOrCreateBusPublishPipeline<T>();
+            var ctx = new BusPublishContext<T>
+            {
+                Event = evt,
+                IsBackground = isBackground,
+                Subscribers = subscribers
+            };
+            pipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
+            return true;
         }
 
         public void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
@@ -168,6 +226,14 @@ namespace RimMind.Core.Runtime
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
         public Player2Client? GetPlayer2Client() => ClientManager.GetPlayer2Client() as Player2Client;
         public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => ContextEngine.GetEmbeddingSnapshotStore();
+
+        public IPipeline<BusPublishContext<T>> GetOrCreateBusPublishPipeline<T>()
+            where T : RimMind.Contracts.AgentBusEvent
+        {
+            return (IPipeline<BusPublishContext<T>>)_busPipelines.GetOrAdd(typeof(T),
+                _ => BusPublishPipelineFactory<T>.Build(
+                    GetExtensionRegistry<IMiddleware<BusPublishContext<T>>>()));
+        }
 
         public void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<AIResponse> onComplete, List<StructuredTool>? tools = null)
         {

@@ -18,5 +18,6 @@ namespace RimMind.Contracts.Npc
         Task<bool> SaveAllEntriesAsync(string json);
         Task<string?> LoadAllEntriesAsync();
         Task<List<string>> QueryMemoriesAsync(string npcId, string query, int limit = 10);
+        Task<bool> PutAsync(string key, string value);
     }
 }
