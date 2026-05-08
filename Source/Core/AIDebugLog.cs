@@ -1,8 +1,9 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
+using RimMind.Contracts.Internal;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using Verse;
 
 namespace RimMind.Core.Internal
@@ -89,39 +90,5 @@ namespace RimMind.Core.Internal
             });
         }
 
-    }
-
-    public class AIDebugEntry
-    {
-        public int GameTick { get; set; }
-        public string Source { get; set; } = string.Empty;
-        public string ModelName { get; set; } = string.Empty;
-        public string FullSystemPrompt { get; set; } = string.Empty;
-        public string FullUserPrompt { get; set; } = string.Empty;
-        public string FullAssistantPrompt { get; set; } = string.Empty;
-        public string FullResponse { get; set; } = string.Empty;
-        public int ElapsedMs { get; set; }
-        public int TokensUsed { get; set; }
-        public bool IsError { get; set; }
-        public string ErrorMsg { get; set; } = string.Empty;
-
-        public AIRequestPriority Priority { get; set; }
-        public AIRequestState State { get; set; }
-        public int AttemptCount { get; set; }
-        public long QueueWaitMs { get; set; }
-        public long ProcessingMs { get; set; }
-        public long HttpStatusCode { get; set; }
-        public int RequestPayloadBytes { get; set; }
-
-        public string FormattedTime
-        {
-            get
-            {
-                int day = GameTick / 60000 + 1;
-                int hour = (GameTick % 60000) / 2500;
-                int min = ((GameTick % 60000) % 2500) * 60 / 2500;
-                return "RimMind.Kernel.Prompt.Time.Format".Translate(day, $"{hour:D2}", $"{min:D2}");
-            }
-        }
     }
 }

@@ -1,0 +1,175 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using FluentAssertions;
+using Xunit;
+
+namespace RimMind.Core.ArchTests.PhaseE
+{
+    public class TransientCheckerInMiddlewareTests
+    {
+        private static readonly string[] TransientCheckerPatterns = new[]
+        {
+            @"TransientExceptionChecker\.IsTransient",
+        };
+
+        private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            @"Core\Pipeline\AI\RetryMiddleware.cs",
+            @"Core\Pipeline\Common\CommonRetryMiddleware.cs",
+            @"Core\Pipeline\Npc\NpcChatRetryMiddleware.cs",
+            @"Core\Pipeline\Npc\NpcChatPipelineFactory.cs",
+        };
+
+        private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            @"Npc\HybridStorageDriver.cs",
+        };
+
+        [Fact]
+        [Trait("Phase", "E")]
+        public void R_E2_TransientExceptionChecker_Should_Only_Be_Called_In_RetryMiddleware()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
+
+            var violatingFiles = new List<string>();
+
+            foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+            {
+                var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                if (AllowedFiles.Contains(relativePath))
+                    continue;
+
+                if (KnownViolations.Contains(relativePath))
+                    continue;
+
+                var source = File.ReadAllText(file);
+
+                foreach (var pattern in TransientCheckerPatterns)
+                {
+                    if (Regex.IsMatch(source, pattern))
+                    {
+                        violatingFiles.Add($"{relativePath}");
+                        break;
+                    }
+                }
+            }
+
+            violatingFiles.Should().BeEmpty(
+                "R-E2: TransientExceptionChecker.IsTransient() calls must only appear in *RetryMiddleware*.cs files " +
+                "or *PipelineFactory*.cs files (where the call is part of middleware lambda setup). " +
+                "Transient exception checking is a retry concern — it should be encapsulated within the retry middleware layer, " +
+                "not scattered across business logic. Use the middleware pipeline for retry/fallback behavior. " +
+                $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
+        }
+
+        [Fact]
+        [Trait("Phase", "E")]
+        public void R_E2_TransientExceptionChecker_KnownViolations_Should_Not_Grow()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
+
+            var actualViolations = new List<string>();
+
+            foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+            {
+                var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                if (AllowedFiles.Contains(relativePath))
+                    continue;
+
+                var source = File.ReadAllText(file);
+
+                foreach (var pattern in TransientCheckerPatterns)
+                {
+                    if (Regex.IsMatch(source, pattern))
+                    {
+                        actualViolations.Add(relativePath);
+                        break;
+                    }
+                }
+            }
+
+            var newViolations = actualViolations
+                .Where(v => !KnownViolations.Contains(v))
+                .ToList();
+
+            newViolations.Should().BeEmpty(
+                "R-E2: New TransientExceptionChecker violations detected beyond the known whitelist. " +
+                "Known violations (to be refactored): " + string.Join(", ", KnownViolations) + ". " +
+                "New violations must either be moved into a RetryMiddleware or added to the whitelist with justification. " +
+                $"New violations:\n  {string.Join("\n  ", newViolations)}");
+        }
+
+        [Fact]
+        [Trait("Phase", "E")]
+        public void R_E2_RetryMiddleware_Files_Should_Exist()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
+
+            var expectedMiddlewareFiles = new[]
+            {
+                Path.Combine(sourceDir, "Core", "Pipeline", "AI", "RetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Core", "Pipeline", "Common", "CommonRetryMiddleware.cs"),
+            };
+
+            foreach (var expected in expectedMiddlewareFiles)
+            {
+                File.Exists(expected).Should().BeTrue(
+                    $"R-E2: Expected retry middleware file must exist at {expected}. " +
+                    "Without dedicated retry middleware, transient exception checking cannot be enforced as a pipeline concern.");
+            }
+        }
+
+        [Fact]
+        [Trait("Phase", "E")]
+        public void R_E2_TransientExceptionChecker_Definition_Should_Be_In_Kernel_Or_Contracts()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
+
+            var definitionFile = Directory.GetFiles(sourceDir, "TransientExceptionChecker.cs", SearchOption.AllDirectories)
+                .FirstOrDefault();
+
+            definitionFile.Should().NotBeNull(
+                "R-E2: TransientExceptionChecker.cs definition file must exist in the source tree");
+
+            if (definitionFile != null)
+            {
+                var relativePath = definitionFile.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                var isInKernelOrContracts = relativePath.StartsWith("Kernel") || relativePath.StartsWith("Contracts");
+
+                isInKernelOrContracts.Should().BeTrue(
+                    $"R-E2: TransientExceptionChecker is currently defined at {relativePath}. " +
+                    "It should be in Kernel/ or Contracts/ namespace so it can be shared across pipeline middlewares. " +
+                    "Currently in Core/Npc/ which creates a dependency issue.");
+            }
+        }
+
+        private static string FindSourceDirectory()
+        {
+            var dir = Path.GetDirectoryName(typeof(TransientCheckerInMiddlewareTests).Assembly.Location);
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir, "RimMind-Core", "Source");
+                if (Directory.Exists(candidate)) return candidate;
+
+                candidate = Path.Combine(dir, "Source");
+                if (Directory.Exists(candidate)) return candidate;
+
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return "";
+        }
+    }
+}

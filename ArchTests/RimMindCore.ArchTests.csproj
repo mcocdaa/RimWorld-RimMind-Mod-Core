@@ -29,8 +29,15 @@
     <Compile Include="PhaseB\**\*.cs" />
     <Compile Include="PhaseC\**\*.cs" />
     <Compile Include="PhaseD\**\*.cs" />
+    <Compile Include="PhaseE\**\*.cs" />
     <Compile Include="General\**\*.cs" />
     <Compile Include="../Tests/VerseStubs.cs" Link="VerseStubs.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Source\Contracts\RimMindCore.Contracts.csproj" />
+    <ProjectReference Include="..\Source\Kernel\RimMindCore.Kernel.csproj" />
+    <ProjectReference Include="..\Source\RimMindCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

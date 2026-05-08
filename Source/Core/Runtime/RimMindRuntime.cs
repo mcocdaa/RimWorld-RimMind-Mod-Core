@@ -1,26 +1,31 @@
+using RimMind.Contracts.Npc;
+using RimMind.Core.Internal;
+using RimMind.Core.Sensor;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Contracts;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.AI;
 using RimMind.Core.Pipeline.Npc;
 using RimMind.Core.Agent;
+using RimMind.Core.UI;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
-using RimMind.Core.Extensions;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Registry;
-using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
 using RimMind.Adapters.UI;
-using RimMind.Core.UI;
+using RimMind.Contracts.UI;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Pipeline;
 using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
+using RimMind.Core.Client.Player2;
 using Verse;
 
 namespace RimMind.Core.Runtime
@@ -33,14 +38,14 @@ namespace RimMind.Core.Runtime
         public static RimMindRuntime Instance => _instance
             ?? throw new InvalidOperationException("[RimMind-Core] RimMindRuntime not initialized. Call Initialize() first.");
 
-        public IAgentBus AgentBus { get; private set; }
-        public IEventBus EventBus { get; private set; }
-        public IContextEngine ContextEngine { get; private set; }
-        public IHistoryManager HistoryManager { get; private set; }
-        public IClientManager ClientManager { get; private set; }
-        public IAudioPlayer AudioPlayer { get; private set; }
-        public IProviderRegistry ProviderRegistry { get; private set; }
-        public IOverlayService OverlayService { get; private set; }
+        public IAgentBus AgentBus { get; internal set; }
+        public IEventBus EventBus { get; internal set; }
+        public IContextEngine ContextEngine { get; internal set; }
+        public IHistoryManager HistoryManager { get; internal set; }
+        public IClientManager ClientManager { get; internal set; }
+        public IAudioPlayer AudioPlayer { get; internal set; }
+        public IProviderRegistry ProviderRegistry { get; internal set; }
+        public IOverlayService OverlayService { get; internal set; }
         public AIRequestQueueImpl QueueImpl { get; private set; }
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; private set; }
@@ -161,7 +166,7 @@ namespace RimMind.Core.Runtime
 
         public IAIClient? GetClient() => ClientManager.GetClient();
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
-        public Player2Client? GetPlayer2Client() => ClientManager.GetPlayer2Client();
+        public Player2Client? GetPlayer2Client() => ClientManager.GetPlayer2Client() as Player2Client;
         public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => ContextEngine.GetEmbeddingSnapshotStore();
 
         public void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<AIResponse> onComplete, List<StructuredTool>? tools = null)

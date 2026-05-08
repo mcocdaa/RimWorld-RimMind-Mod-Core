@@ -1,9 +1,11 @@
-﻿﻿using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Prompt;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Npc;
+using RimMind.Contracts.Internal;
+using RimMind.Core;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -222,8 +224,8 @@ namespace RimMind.Core.Internal
             if (ctx.IncludeSkills && data.Skills.Count > 0)
             {
                 var skills = data.Skills
-                    .Where(s => s.Level >= ctx.MinSkillLevel)
-                    .Select(s => $"{s.Label}({s.Level})")
+                    .Where(s => s.Value >= ctx.MinSkillLevel)
+                    .Select(s => $"{s.Key}({s.Value})")
                     .ToList();
                 if (skills.Count > 0)
                     sb.AppendLine("RimMind.Kernel.Prompt.Skills".Translate(string.Join("  ", skills)));
@@ -243,8 +245,8 @@ namespace RimMind.Core.Internal
                     string.Join("  ", data.WorkPriorities.Select(e => $"{e.Label}({e.Priority})"))));
             }
 
-            if (ctx.IncludeTraits && data.TraitLabels.Count > 0)
-                sb.AppendLine("RimMind.Kernel.Prompt.Traits".Translate(string.Join(", ", data.TraitLabels)));
+            if (ctx.IncludeTraits && !string.IsNullOrEmpty(data.TraitLabels))
+                sb.AppendLine("RimMind.Kernel.Prompt.Traits".Translate(data.TraitLabels));
 
             if (ctx.IncludeEquipment)
             {
@@ -401,7 +403,8 @@ namespace RimMind.Core.Internal
         public static string CollectBasicGameState(string npcId, INpcManager? npcManager = null)
         {
             var sb = new StringBuilder();
-            var pawn = (npcManager ?? RimMindServiceLocator.Get<INpcManager>())?.FindPawnByNpcId(npcId);
+            var pawnObj = (npcManager ?? RimMindServiceLocator.Get<INpcManager>())?.FindPawnByNpcId(npcId);
+            var pawn = pawnObj as Pawn;
 
             if (pawn != null)
             {
@@ -515,7 +518,7 @@ namespace RimMind.Core.Internal
                 parts.Add(data.ChildhoodTitle);
             if (data.AdulthoodTitle != null)
                 parts.Add(data.AdulthoodTitle);
-            if (data.TraitLabels.Count > 0)
+            if (data.TraitLabels.Length > 0)
                 parts.Add($"Traits: {string.Join(", ", data.TraitLabels)}");
             return string.Join(" | ", parts);
         }
@@ -542,9 +545,9 @@ namespace RimMind.Core.Internal
             var data = PawnDataExtractor.Extract(pawn);
             if (data.Skills.Count == 0) return "";
             var top = data.Skills
-                .OrderByDescending(s => s.Level)
+                .OrderByDescending(s => s.Value)
                 .Take(5)
-                .Select(s => $"{s.Label}({s.Level})");
+                .Select(s => $"{s.Key}({s.Value})");
             return string.Join("  ", top);
         }
 
@@ -575,7 +578,7 @@ namespace RimMind.Core.Internal
         {
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
-            return data.NearbyPawnNames.Count > 0 ? string.Join(", ", data.NearbyPawnNames) : "";
+            return !string.IsNullOrEmpty(data.NearbyPawnNames) ? data.NearbyPawnNames : "";
         }
 
         public static string ExtractSeason(Pawn pawn)

@@ -1,4 +1,5 @@
-﻿﻿﻿﻿using System;
+using RimMind.Contracts.Npc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,9 +8,12 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Core.Client.Player2;
 using RimMind.Kernel.Context;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Client;
 using RimMind.Core.Settings;
 using RimMind.Kernel.Queue;
+using RimMind.Core;
+using RimMind.Core.Internal;
 using Verse;
 
 namespace RimMind.Core.Npc
@@ -42,6 +46,25 @@ namespace RimMind.Core.Npc
             _client = client;
             _npcManager = npcManager;
             _gameId = Player2Client.GameClientId;
+        }
+
+        public async Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
+        {
+            try
+            {
+                var request = new AIRequest
+                {
+                    NpcId = npcId,
+                    UserPrompt = message,
+                    SystemPrompt = context,
+                };
+                var response = await _client.SendAsync(request);
+                return new NpcChatResult(npcId, response?.Content ?? "") { Error = response?.Error };
+            }
+            catch (Exception ex)
+            {
+                return new NpcChatResult(npcId, "") { Error = ex.Message };
+            }
         }
 
         public async Task<bool> SpawnNpcAsync(NpcProfile profile)
@@ -191,7 +214,7 @@ namespace RimMind.Core.Npc
                 MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
                 Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
-            snapshot.AddMessage(new Client.ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
+            snapshot.AddMessage(new ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
 
             return await ChatAsync(snapshot, ct);
         }
@@ -317,7 +340,7 @@ namespace RimMind.Core.Npc
                 {
                     name = cmd.Name,
                     description = cmd.Description,
-                    parameters = cmd.Parameters != null ? JsonConvert.DeserializeObject(cmd.Parameters) : null,
+                    parameters = cmd.Parameters != null ? JsonConvert.DeserializeObject<object>(JsonConvert.SerializeObject(cmd.Parameters)) : null,
                     never_respond_with_message = cmd.NeverRespondWithMessage,
                 });
             }

@@ -4,11 +4,20 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Contracts;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Extension;
+using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Flywheel;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
+using RimMind.Contracts.Prompt;
+using RimMind.Contracts.Sensor;
+using RimMind.Contracts.Settings;
+using RimMind.Contracts.UI;
 using RimMind.Core.Agent;
 using RimMind.Core.Client;
 using RimMind.Core.Client.Player2;
-using RimMind.Core.Extensions;
 using RimMind.Core.Internal;
 using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
@@ -18,11 +27,9 @@ using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
 
-namespace RimMind.Core.Client
-{
-    public enum AIRequestState { Pending, Queued, Active, Processing, Completed, Failed, Cancelled, TimedOut, Error }
-    public enum AIRequestPriority { Low, Normal, High, Critical }
-}
+using IParameterTunerContract = RimMind.Contracts.Extensions.IParameterTuner;
+using IAgentActionBridgeContract = RimMind.Contracts.Extensions.IAgentActionBridge;
+using IStorageDriverKernel = RimMind.Kernel.Context.IStorageDriver;
 
 namespace RimMind.Core.Client.Player2
 {
@@ -53,7 +60,7 @@ namespace RimMind.Core.Runtime
         public IClientManager ClientManager { get; set; } = null!;
         public RimMind.Adapters.UI.IAudioPlayer AudioPlayer { get; set; } = null!;
         public IProviderRegistry ProviderRegistry { get; set; } = null!;
-        public IOverlayService OverlayService { get; set; } = null!;
+        public RimMind.Core.Internal.IOverlayService OverlayService { get; set; } = null!;
         public AIRequestQueueImpl QueueImpl { get; set; } = null!;
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; set; } = null!;
@@ -64,7 +71,7 @@ namespace RimMind.Core.Runtime
         {
             ProviderRegistry = new ProviderRegistry();
             ClientManager = new RimMind.Core.Internal.ClientManager();
-            OverlayService = new OverlayService();
+            OverlayService = new RimMind.Core.Internal.OverlayService();
             HistoryManager = new HistoryManager();
             ContextEngine = new ContextEngine(HistoryManager);
             AgentBus = new AgentBusImpl();
@@ -122,17 +129,17 @@ namespace RimMind.Core.Runtime
 
         public void RegisterAgentIdentityProvider(Func<Verse.Pawn, AgentIdentity?> provider) { }
         public AgentIdentity? GetAgentIdentity(Verse.Pawn pawn) => null;
-        public void RegisterAgentActionBridge(IAgentActionBridge bridge) { }
-        public IAgentActionBridge? GetAgentActionBridge() => null;
-        public void RegisterParameterTuner(IParameterTuner tuner) { }
+        public void RegisterAgentActionBridge(IAgentActionBridgeContract bridge) { }
+        public IAgentActionBridgeContract? GetAgentActionBridge() => null;
+        public void RegisterParameterTuner(IParameterTunerContract tuner) { }
         public void RegisterSensorProvider(ISensorProvider provider) { }
         public void UnregisterSensorProvider(string sensorId) { }
         public IAIClient? GetClient() => ClientManager.GetClient();
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
-        public Player2Client? GetPlayer2Client() => ClientManager.GetPlayer2Client();
+        public object? GetPlayer2Client() => ClientManager.GetPlayer2Client();
         public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => ContextEngine.GetEmbeddingSnapshotStore();
 
-        public List<IParameterTuner> ParameterTunersList => new List<IParameterTuner>();
+        public List<IParameterTunerContract> ParameterTunersList => new List<IParameterTunerContract>();
         public List<ISensorProvider> SensorProvidersList => new List<ISensorProvider>();
 
         public IDisposable WithOverrides(Action<RimMindRuntime> configure)
@@ -171,7 +178,7 @@ namespace RimMind.Core.Runtime
             private readonly IClientManager _clientManager;
             private readonly RimMind.Adapters.UI.IAudioPlayer _audioPlayer;
             private readonly IProviderRegistry _providerRegistry;
-            private readonly IOverlayService _overlayService;
+            private readonly RimMind.Core.Internal.IOverlayService _overlayService;
             private readonly AIRequestQueueImpl _queueImpl;
             private readonly FlywheelTelemetryCollector _telemetry;
             private readonly IAgentBus _agentBus;
@@ -222,7 +229,7 @@ namespace RimMind.Core.Sensor
         public static ISensorManager? Instance => RimMindServiceLocator.Get<ISensorManager>();
         public SensorManager() : base() { }
         public SensorManager(Verse.Game game) : base() { }
-        public List<RimMind.Core.Client.StructuredTool> BuildAgentTools(Verse.Pawn pawn) => new();
+        public List<StructuredTool> BuildAgentTools(object pawn) => new();
         public void RegisterSensorContextKeys() { }
     }
 }
@@ -270,26 +277,24 @@ namespace RimMind.Adapters.UI
 
 namespace RimMind.Core.Internal
 {
-    public class OverlayService : IOverlayService
+    public class OverlayService : RimMind.Core.Internal.IOverlayService
     {
-        private readonly List<RimMind.Adapters.UI.RequestEntry> _entries = new List<RimMind.Adapters.UI.RequestEntry>();
-        public void RegisterPendingRequest(RimMind.Adapters.UI.RequestEntry entry) { _entries.Add(entry); }
-        public IReadOnlyList<RimMind.Adapters.UI.RequestEntry> GetPendingRequests() => _entries.AsReadOnly();
+        private readonly List<RimMind.Contracts.UI.RequestEntry> _entries = new List<RimMind.Contracts.UI.RequestEntry>();
+        public void RegisterPendingRequest(RimMind.Contracts.UI.RequestEntry entry) { _entries.Add(entry); }
+        public IReadOnlyList<RimMind.Contracts.UI.RequestEntry> GetPendingRequests() => _entries.AsReadOnly();
     }
 
     public class ClientManager : IClientManager
     {
         public IAIClient? GetClient() => null;
         public void InvalidateCache() { }
-        public Player2Client? GetPlayer2Client() => null;
+        public object? GetPlayer2Client() => null;
     }
 }
 
 namespace RimMind.Core
 {
     using RimMind.Core.Settings;
-    using RimMind.Core.Extensions;
-    using RimMind.Core.Sensor;
 
     public class RimMindCoreMod : Verse.Mod
     {
@@ -300,38 +305,20 @@ namespace RimMind.Core
 
     public static class RimMindAPI
     {
-        public static void RegisterAgentActionBridge(IAgentActionBridge bridge) { }
-        public static IAgentActionBridge? GetAgentActionBridge() => null;
-        public static void RegisterParameterTuner(IParameterTuner tuner) { }
+        public static void RegisterAgentActionBridge(IAgentActionBridgeContract bridge) { }
+        public static IAgentActionBridgeContract? GetAgentActionBridge() => null;
+        public static void RegisterParameterTuner(IParameterTunerContract tuner) { }
         public static void RegisterSensorProvider(ISensorProvider provider) { }
         public static void UnregisterSensorProvider(string sensorId) { }
         public static IEventBus GetEventBus() => RimMind.Core.Runtime.RimMindRuntime.Instance.EventBus;
         public static IHistoryManager GetHistoryManager() => RimMind.Core.Runtime.RimMindRuntime.Instance.HistoryManager;
-        public static Player2Client? GetPlayer2Client() => RimMind.Core.Runtime.RimMindRuntime.Instance.GetPlayer2Client();
+        public static object? GetPlayer2Client() => RimMind.Core.Runtime.RimMindRuntime.Instance.GetPlayer2Client();
     }
 }
 
 namespace RimMind.Core.Npc
 {
-    public interface INpcManager
-    {
-        void SpawnNpc(NpcProfile profile);
-        void KillNpc(string npcId);
-        bool IsNpcAlive(string npcId);
-        NpcProfile? GetNpc(string npcId);
-        IReadOnlyList<NpcProfile> GetAllNpcs();
-        string GetNpcForMap(Verse.Map map);
-        Verse.Pawn? FindPawnByNpcId(string npcId);
-        Verse.Pawn? FindProxyPawnForMap(Verse.Map map);
-        void RegisterActiveAgent(int thingId);
-        void UnregisterActiveAgent(int thingId);
-        HashSet<int> GetActiveAgentPawnIds();
-        void IndexPawn(Verse.Pawn pawn);
-        void UnindexPawn(int thingId);
-        string GetMapNpcId(Verse.Map map);
-    }
-
-    public class NpcManager : Verse.GameComponent, INpcManager
+    public class NpcManager : Verse.GameComponent, RimMind.Contracts.Npc.INpcManager
     {
         private readonly System.Collections.Concurrent.ConcurrentDictionary<int, Verse.Pawn> _pawnIndex = new();
         public static INpcManager? Instance => RimMindServiceLocator.Get<INpcManager>();
@@ -386,6 +373,12 @@ namespace RimMind.Core.Npc
         public void UnindexPawn(int thingId) { _pawnIndex.TryRemove(thingId, out _); }
         public string GetMapNpcId(Verse.Map map) => "";
         public void ClearPawnIndex() { _pawnIndex.Clear(); }
+
+        string RimMind.Contracts.Npc.INpcManager.GetNpcForMap(object map) => GetNpcForMap((Verse.Map)map!);
+        object? RimMind.Contracts.Npc.INpcManager.FindPawnByNpcId(string npcId) => FindPawnByNpcId(npcId);
+        object? RimMind.Contracts.Npc.INpcManager.FindProxyPawnForMap(object map) => FindProxyPawnForMap((Verse.Map)map!);
+        void RimMind.Contracts.Npc.INpcManager.IndexPawn(object pawn) => IndexPawn((Verse.Pawn)pawn!);
+        string RimMind.Contracts.Npc.INpcManager.GetMapNpcId(object map) => GetMapNpcId((Verse.Map)map!);
     }
 
     internal static class TransientExceptionChecker
@@ -405,9 +398,8 @@ namespace RimMind.Core.Npc
 
     public static class StorageDriverFactory
     {
-        private static IStorageDriver _driver = new StubStorageDriver();
-
-        public static IStorageDriver GetDriver() => _driver;
+        private static IStorageDriverKernel _driver = new StubStorageDriver();
+        public static IStorageDriverKernel GetDriver() => _driver;
         public static void InvalidateCache() { }
     }
 }
@@ -427,26 +419,21 @@ namespace RimMind.Kernel.Context
     {
         bool IsNpcAlive(string npcId);
         Task<object> SpawnNpcAsync(object profile);
-        Task<RimMind.Core.Npc.NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
-        Task<RimMind.Core.Npc.NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default);
+        Task<NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
+        Task<NpcChatResult> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default);
+        Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default);
     }
 
     internal sealed class StubStorageDriver : IStorageDriver
     {
         public bool IsNpcAlive(string npcId) => false;
         public Task<object> SpawnNpcAsync(object profile) => Task.FromResult(new object());
-        public Task<RimMind.Core.Npc.NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
-            => Task.FromResult(new RimMind.Core.Npc.NpcChatResult());
-        public Task<RimMind.Core.Npc.NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default)
-            => Task.FromResult(new RimMind.Core.Npc.NpcChatResult());
-    }
-
-    public class PromptBudget
-    {
-        public int TotalTokens { get; set; }
-        public int RemainingTokens => TotalTokens;
-        public PromptBudget(int totalTokens, int reserveForOutput = 0) { TotalTokens = totalTokens; }
-        public List<PromptSection>? Compose(List<PromptSection> sections) => sections;
+        public Task<NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
+            => Task.FromResult(new NpcChatResult());
+        public Task<NpcChatResult> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default)
+            => Task.FromResult(new NpcChatResult());
+        public Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default)
+            => Task.FromResult(new NpcChatResult());
     }
 
     public static class PawnDataExtractor
@@ -466,10 +453,13 @@ namespace RimMind.Kernel.Context
 
 namespace RimMind.Kernel.Flywheel
 {
-    internal class FlywheelBuiltinTuner : IParameterTuner
+    internal class FlywheelBuiltinTuner : IParameterTunerContract
     {
+        public string Name => "builtin";
         public string TunerId => "builtin";
-        public void Tune(BudgetSchedulerConfig config) { }
+        public float TuneParameter(string parameterName, float currentValue) => currentValue;
+        public bool ShouldApply(string npcId) => true;
+        public void Tune(object config) { }
     }
 
     internal static class FlywheelAnalysisReportWriter
@@ -488,7 +478,7 @@ namespace RimMind.Core.Client
             public HttpException(int statusCode, string message) : base(message) { StatusCode = statusCode; }
         }
 
-        public static Task<(string body, int statusCode)> PostAsync(string url, string jsonBody, string authHeader, int timeoutMs = 30000)
+        public static Task<(string body, int statusCode)> PostAsync(string url, string jsonBody, string authHeader, int timeoutMs = 30000, float connectTimeout = 5000f)
             => Task.FromResult(("", 200));
     }
 
@@ -551,6 +541,6 @@ namespace RimMind.Core.Agent
 
     public class SchemaRegistry
     {
-        public string AgentDecision => "AgentDecision";
+        public static string AgentDecision => "AgentDecision";
     }
 }

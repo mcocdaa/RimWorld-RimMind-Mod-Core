@@ -1,9 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Client;
+using RimMind.Kernel.Abstractions;
+using RimMind.Kernel.Context;
+using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
+using RimMind.Core.Npc;
+using RimMind.Core.Settings;
+using Verse;
 using Xunit;
+
+using INpcManager = RimMind.Contracts.Npc.INpcManager;
 
 namespace RimMind.Core.Tests
 {

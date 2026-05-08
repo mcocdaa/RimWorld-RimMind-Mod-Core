@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.AI;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 
 namespace RimMind.Core.Pipeline.AI
 {
@@ -84,7 +84,7 @@ namespace RimMind.Core.Pipeline.AI
             sb.Append(context.Request.UserPrompt);
             sb.Append(context.Request.JsonSchema ?? string.Empty);
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString()));
-            return Convert.ToHexString(bytes);
+            return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
         }
     }
 }

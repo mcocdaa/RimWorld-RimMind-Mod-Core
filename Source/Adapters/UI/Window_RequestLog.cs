@@ -85,8 +85,8 @@ namespace RimMind.Adapters.UI
 
                 string header = entry.systemBlocked
                     ? "RimMind.Core.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
-                    : entry.pawn != null
-                        ? $"[{entry.pawn.Name.ToStringShort}] {entry.title}"
+                    : entry.pawn is Pawn p
+                        ? $"[{p.Name.ToStringShort}] {entry.title}"
                         : entry.title;
 
                 GUI.color = entry.systemBlocked ? new Color(1f, 0.6f, 0.4f) : new Color(0.85f, 0.9f, 1f);

@@ -1,4 +1,5 @@
 using System;
+using RimMind.Contracts;
 using RimMind.Contracts.Flywheel;
 using Verse;
 

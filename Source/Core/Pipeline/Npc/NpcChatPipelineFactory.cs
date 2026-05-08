@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Npc;
 using RimMind.Core.Pipeline.Common;
 using RimMind.Core.Runtime;

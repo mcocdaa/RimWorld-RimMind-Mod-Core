@@ -6,7 +6,7 @@ namespace RimMind.Adapters.Verse
     {
         private readonly RimMind.Kernel.Queue.AIRequestQueueImpl _impl;
 
-        public AIRequestQueueGameComponent(Game game) : base(game)
+        public AIRequestQueueGameComponent() : base()
         {
             _impl = RimMind.Core.Runtime.RimMindRuntime.Instance?.Queue
                 as RimMind.Kernel.Queue.AIRequestQueueImpl

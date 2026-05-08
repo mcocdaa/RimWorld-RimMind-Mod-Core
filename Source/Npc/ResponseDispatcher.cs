@@ -1,4 +1,5 @@
 using System;
+using RimMind.Contracts.Npc;
 using Verse;
 using RimWorld;
 
@@ -69,10 +70,7 @@ namespace RimMind.Core.Npc
                         continue;
                     }
 
-                    bool ok = bridge.Execute(cmd.Name, actor, null, cmd.Arguments);
-
-                    if (!ok)
-                        Log.Warning($"[RimMind-Core] ResponseDispatcher: command '{cmd.Name}' execution failed");
+                    bridge.Execute(actor, cmd.Name, null);
                 }
                 catch (Exception ex)
                 {

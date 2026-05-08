@@ -21,39 +21,52 @@
     <Compile Include="VerseStubs.cs" />
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="**\*.cs" Exclude="VerseStubs.cs;RimMindTestStubs.cs;obj\**\*.cs" />
+    <Compile Include="../Source/Contracts/**/*.cs" Exclude="../Source/Contracts/**/obj/**;../Source/Contracts/Compilers/IsExternalInit.cs" />
     <Compile Include="../Source/Kernel/**/*.cs" Exclude="../Source/Kernel/**/obj/**" />
-    <Compile Include="../Source/Contracts/**/*.cs" Exclude="../Source/Contracts/**/obj/**;../Source/Contracts/Compilers/IsExternalInit.cs;../Source/Contracts/Client/AIRequest.cs;../Source/Contracts/Client/AIResponse.cs;../Source/Contracts/Client/IAIClient.cs;../Source/Contracts/Client/StructuredTool.cs;../Source/Contracts/Client/AIRequestEnums.cs;../Source/Contracts/Npc/INpcManager.cs;../Source/Contracts/Npc/NpcTypes.cs;../Source/Contracts/AIProvider.cs;../Source/Contracts/Internal/RimMindServiceLocator.cs;../Source/Contracts/Internal/IAIRequestQueue.cs;../Source/Contracts/Internal/TrackedRequest.cs;../Source/Contracts/Internal/IAIDebugLog.cs;../Source/Contracts/Internal/IClientManager.cs;../Source/Contracts/Internal/IProviderRegistry.cs;../Source/Contracts/Flywheel/FlywheelAutoApplyMode.cs;../Source/Contracts/Extensions/IParameterTuner.cs;../Source/Contracts/Extensions/IAgentActionBridge.cs;../Source/Contracts/Extension/ISettingsTab.cs;../Source/Contracts/UI/IAudioPlayer.cs;../Source/Contracts/Context/BudgetSchedulerConfig.cs;../Source/Contracts/Context/ContextEntry.cs" />
-    <Compile Include="../Source/Client/AIRequest.cs" />
-    <Compile Include="../Source/Client/AIResponse.cs" />
-    <Compile Include="../Source/Client/IAIClient.cs" />
     <Compile Include="../Source/Client/JsonRepairHelper.cs" />
-    <Compile Include="../Source/Client/StructuredTool.cs" />
+    <Compile Include="../Source/Client/HttpHelper.cs" />
+    <Compile Include="../Source/Client/OpenAI/*.cs" />
+    <Compile Include="../Source/Client/Player2/*.cs" />
     <Compile Include="../Source/Core/Agent/**/*.cs" />
     <Compile Include="../Source/Core/AgentBus/**/*.cs" />
     <Compile Include="../Source/Core/Extensions/**/*.cs" />
     <Compile Include="../Source/Core/Flywheel/**/*.cs" Exclude="../Source/Core/Flywheel/IFlywheelParameterStore.cs" />
-    <Compile Include="../Source/Core/Internal/RimMindServiceLocator.cs" />
     <Compile Include="../Source/Core/Internal/AIRequestPool.cs" />
-    <Compile Include="../Source/Core/Internal/IProviderRegistry.cs" />
     <Compile Include="../Source/Core/Internal/ProviderRegistry.cs" />
-    <Compile Include="../Source/Core/Internal/IClientManager.cs" />
-    <Compile Include="../Source/Core/Internal/IAIRequestQueue.cs" />
-    <Compile Include="../Source/Core/Internal/IAIDebugLog.cs" />
-    <Compile Include="../Source/Core/Internal/TrackedRequest.cs" />
     <Compile Include="../Source/Core/Internal/IOverlayService.cs" />
+    <Compile Include="../Source/Core/Internal/ClientManager.cs" />
+    <Compile Include="../Source/Core/Internal/OverlayService.cs" />
     <Compile Include="../Source/Core/Perception/**/*.cs" />
     <Compile Include="../Source/Core/Registry/**/*.cs" />
     <Compile Include="../Source/Core/Sensor/ISensorProvider.cs" />
     <Compile Include="../Source/Core/Sensor/ISensorManager.cs" />
     <Compile Include="../Source/Core/AIDebugLog.cs" />
     <Compile Include="../Source/Core/AIProvider.cs" />
-    <Compile Include="../Source/Npc/NpcTypes.cs" />
-    <Compile Include="../Source/Settings/**/*.cs" />
+    <Compile Include="../Source/Core/Pipeline/**/*.cs" />
     <Compile Include="../Source/Compilers/**/*.cs" />
     <Compile Include="../Source/Comps/**/*.cs" />
     <Compile Include="../Source/Adapters/Verse/AIRequestQueueGameComponent.cs" />
     <Compile Include="../Source/Adapters/Verse/AgentBusGameComponent.cs" />
-    <Compile Include="../Source/Core/Pipeline/**/*.cs" />
+    <Compile Include="../Source/Settings/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="../Source/Core/AgentBus/IEventBus.cs" />
+    <Compile Remove="../Source/Core/AgentBus/Events/PerceptionEvent.cs" />
+    <Compile Remove="../Source/Core/AgentBus/Events/ActionEvent.cs" />
+    <Compile Remove="../Source/Core/AgentBus/Events/DecisionEvent.cs" />
+    <Compile Remove="../Source/Client/Player2/Player2Client.cs" />
+    <Compile Remove="../Source/Core/Internal/OverlayService.cs" />
+    <Compile Remove="../Source/Core/Internal/ClientManager.cs" />
+    <Compile Remove="../Source/Core/Agent/PerceptionPipeline.cs" />
+    <Compile Remove="../Source/Core/Agent/NpcProfileBuilder.cs" />
+    <Compile Remove="../Source/Npc/NpcManager.cs" />
+    <Compile Remove="../Source/Core/Runtime/RimMindRuntime.cs" />
+    <Compile Remove="../Source/Core/Sensor/SensorManager.cs" />
+    <Compile Remove="../Source/Settings/RimMindCoreSettingsUI.cs" />
+    <Compile Remove="../Source/Core/Extensions/FlywheelBuiltinTuner.cs" />
+    <Compile Remove="../Source/Client/HttpHelper.cs" />
+    <Compile Remove="../Source/Core/Sensor/ISensorManager.cs" />
   </ItemGroup>
 
 </Project>

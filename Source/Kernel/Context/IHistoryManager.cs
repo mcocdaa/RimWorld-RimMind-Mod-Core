@@ -10,5 +10,7 @@ namespace RimMind.Kernel.Context
         void ClearHistory(string npcId);
         void CompressIfNeeded(string npcId);
         void ReplaceLastAssistantTurn(string npcId, string content);
+        string GetAllForSave();
+        Dictionary<string, List<HistoryEntry>> GetAllForSaveDict();
     }
 }

@@ -4,6 +4,6 @@ namespace RimMind.Adapters.Verse
 {
     public sealed class VerseTickProvider : ITickProvider
     {
-        public int TicksGame => Verse.Find.TickManager?.TicksGame ?? 0;
+        public int TicksGame => global::Verse.Find.TickManager?.TicksGame ?? 0;
     }
 }

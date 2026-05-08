@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.AI;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
 

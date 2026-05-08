@@ -6,6 +6,8 @@ namespace RimMind.Contracts.Npc
     {
         public string Name = "";
         public string Description = "";
+        public string[] Parameters = new string[0];
+        public bool NeverRespondWithMessage;
 
         public NpcCommand() { }
 
@@ -14,6 +16,13 @@ namespace RimMind.Contracts.Npc
             Name = name;
             Description = description;
         }
+    }
+
+    public class TtsConfig
+    {
+        public string[] VoiceIds = new string[0];
+        public float Speed = 1.0f;
+        public string AudioFormat = "mp3";
     }
 
     public class NpcProfile
@@ -26,7 +35,9 @@ namespace RimMind.Contracts.Npc
         public string Backstory = "";
         public string CharacterDescription = "";
         public string SystemPrompt = "";
+        public string Type = "";
         public List<NpcCommand> Commands = new List<NpcCommand>();
+        public TtsConfig? TtsConfig;
 
         public NpcProfile() { }
 
@@ -36,6 +47,43 @@ namespace RimMind.Contracts.Npc
             PawnId = pawnId;
             DisplayName = displayName;
             Backstory = backstory;
+        }
+    }
+
+    public class NpcChatResult
+    {
+        public string NpcId = "";
+        public string Message = "";
+        public string Emotion = "";
+        public string? Error;
+        public string? AudioUrl;
+        public List<NpcCommandResult> Commands = new List<NpcCommandResult>();
+
+        public NpcChatResult() { }
+
+        public NpcChatResult(string npcId, string message, string emotion = "")
+        {
+            NpcId = npcId;
+            Message = message;
+            Emotion = emotion;
+        }
+    }
+
+    public class NpcCommandResult
+    {
+        public string Name = "";
+        public string[] Arguments = new string[0];
+        public bool Success;
+        public string Message = "";
+
+        public NpcCommandResult() { }
+
+        public NpcCommandResult(string name, string[]? arguments = null, bool success = true, string message = "")
+        {
+            Name = name;
+            Arguments = arguments ?? new string[0];
+            Success = success;
+            Message = message;
         }
     }
 }

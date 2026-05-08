@@ -1,4 +1,5 @@
 using System;
+using RimMind.Contracts.Client;
 using RimMind.Core.Client;
 
 namespace RimMind.Core.Npc

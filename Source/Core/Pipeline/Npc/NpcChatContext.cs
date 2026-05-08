@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Npc;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Pipeline;
 

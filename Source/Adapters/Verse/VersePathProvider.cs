@@ -4,6 +4,6 @@ namespace RimMind.Adapters.Verse
 {
     public sealed class VersePathProvider : IPathProvider
     {
-        public string SaveDataFolderPath => Verse.GenFilePaths.SaveDataFolderPath;
+        public string SaveDataFolderPath => global::Verse.GenFilePaths.SaveDataFolderPath;
     }
 }

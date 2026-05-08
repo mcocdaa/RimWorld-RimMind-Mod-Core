@@ -1,3 +1,4 @@
+using RimMind.Core;
 using RimMind.Core.Agent;
 using RimMind.Core.Comps;
 using RimMind.Kernel.Context;
@@ -141,7 +142,7 @@ namespace RimMind.Adapters.UI
             {
                 try
                 {
-                    var result = await driver.ChatAsync(snapshot);
+                    var result = await driver.ChatAsync(snapshot.NpcId, snapshot.CurrentQuery ?? "", null);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
                         var hm = RimMindAPI.GetHistoryManager();

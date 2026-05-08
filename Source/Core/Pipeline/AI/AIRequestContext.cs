@@ -1,5 +1,5 @@
 using System;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Contracts.Pipeline;
 
 namespace RimMind.Core.Pipeline.AI

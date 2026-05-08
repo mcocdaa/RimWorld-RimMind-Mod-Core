@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using System.Linq;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Settings;
 using LudeonTK;
 using RimWorld;
@@ -340,7 +340,7 @@ namespace RimMind.Core.Debug
                 }
             }
 
-            var allForSave = history.GetAllForSave();
+            var allForSave = history.GetAllForSaveDict();
             sb.AppendLine($"  Total NPC histories: {allForSave.Count}");
 
             Log.Message(sb.ToString());

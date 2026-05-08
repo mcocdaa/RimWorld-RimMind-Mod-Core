@@ -1,5 +1,8 @@
-﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
+using RimMind.Contracts;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
@@ -9,6 +12,7 @@ using RimMind.Core.Npc;
 using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
 using Verse;
+using Verse.AI;
 using Xunit;
 
 namespace RimMind.Core.Tests
@@ -17,7 +21,7 @@ namespace RimMind.Core.Tests
     {
         private readonly Pawn _pawn;
         private readonly PawnAgent _agent;
-        private readonly AICoreSettings? _originalSettings;
+        private readonly RimMindCoreSettings? _originalSettings;
         private readonly IFlywheelParameterStore? _originalFlywheel;
         private readonly NpcManager _npcManager;
         private readonly IEventBus _eventBus;
@@ -32,7 +36,7 @@ namespace RimMind.Core.Tests
             _npcManager.IndexPawn(_pawn);
             _originalSettings = RimMindCoreMod.Settings;
             _originalFlywheel = FlywheelParameterStore.Instance;
-            RimMindCoreMod.Settings = new AICoreSettings
+            RimMindCoreMod.Settings = new RimMindCoreSettings
             {
                 Context = new ContextSettings(),
                 maxTokens = 800,

@@ -1,3 +1,4 @@
+using RimMind.Contracts.UI;
 using System.Collections.Generic;
 using RimMind.Adapters.UI;
 

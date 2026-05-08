@@ -72,7 +72,7 @@ namespace RimMind.Core.Agent
             var waitToil = ToilMaker.MakeToil();
             waitToil.defaultCompleteMode = ToilCompleteMode.Delay;
             waitToil.defaultDuration = 30;
-            waitToil.WithEffect(EffecterDefOf.Construction, TargetIndex.None);
+            waitToil.WithEffect(() => DefDatabase<EffecterDef>.GetNamed("Construction"), TargetIndex.None);
             yield return waitToil;
 
             var finishToil = ToilMaker.MakeToil();
@@ -99,25 +99,6 @@ namespace RimMind.Core.Agent
             base.Notify_Starting();
             AddFailCondition(() => pawn.Downed || pawn.Dead);
             AddFailCondition(() => TargetThingA != null && TargetThingA.Destroyed);
-        }
-
-        protected override void Cleanup(JobCondition condition)
-        {
-            base.Cleanup(condition);
-            if (condition != JobCondition.Succeeded)
-            {
-                var comp = pawn.GetComp<CompPawnAgent>();
-                comp?.Agent?.RecordBehavior(new BehaviorRecord
-                {
-                    Action = job?.def?.defName ?? "unknown",
-                    Reason = "JobDriver failed",
-                    Success = false,
-                    ResultReason = $"Ended with {condition}",
-                    GoalProgressDelta = -0.05f,
-                    Timestamp = Find.TickManager.TicksGame,
-                    ActionEventId = EventId,
-                });
-            }
         }
     }
 }

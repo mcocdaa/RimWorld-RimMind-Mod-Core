@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
-using RimMind.Core.Client;
+using RimMind.Contracts;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
 using RimMind.Core.Settings;
@@ -65,7 +67,7 @@ namespace RimMind.Core.Internal
             OpenAIClient.InvalidateFormatCache();
         }
 
-        public Player2Client? GetPlayer2Client()
+        public object? GetPlayer2Client()
         {
             lock (_player2Lock)
             {

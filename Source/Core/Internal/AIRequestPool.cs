@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 
 namespace RimMind.Core.Internal
 {

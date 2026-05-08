@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Core;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Client;
-using RimMind.Core.Extensions;
 using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
@@ -162,14 +164,21 @@ namespace RimMind.Core.Tests
             _onExecute = onExecute;
         }
 
-        public bool CanExecute(Pawn pawn, string action) => true;
+        public bool CanExecute(string npcId, string actionName) => true;
 
-        public void Execute(Pawn pawn, string action, string? targetName = null)
+        public bool CanExecute(object pawn, string action) => true;
+
+        public void Execute(object pawn, string action, string? targetName = null)
         {
             _onExecute();
         }
 
-        public List<StructuredTool>? GetAvailableTools(Pawn pawn) => null;
+        public void ExecuteAction(string npcId, string actionName, string[]? args = null)
+        {
+            _onExecute();
+        }
+
+        public List<StructuredTool>? GetAvailableTools(object pawn) => null;
     }
     }
 }

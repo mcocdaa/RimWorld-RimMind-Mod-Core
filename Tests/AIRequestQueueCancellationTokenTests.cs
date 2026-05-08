@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Contracts.Client;
 using RimMind.Core.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Runtime;

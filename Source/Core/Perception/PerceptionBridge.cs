@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Comps;
-using RimMind.Core.Internal;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using Verse;
 
 namespace RimMind.Core.Perception
@@ -46,12 +46,16 @@ namespace RimMind.Core.Perception
             try
             {
                 string tag = $"RimMind.Perception.{perceptionType}";
-                var args = new SignalArgs();
-                args.args.Add("pawnId", pawnId);
-                args.args.Add("perceptionType", perceptionType);
-                args.args.Add("content", content);
-                args.args.Add("importance", importance);
-                Find.SignalManager?.SendSignal(new Signal(tag, args));
+                var signalType = System.Type.GetType("Verse.Signal, Assembly-CSharp");
+                var signalArgsType = System.Type.GetType("Verse.SignalArgs, Assembly-CSharp");
+                if (signalType == null || signalArgsType == null) return;
+                dynamic args = System.Activator.CreateInstance(signalArgsType);
+                args.args["pawnId"] = pawnId;
+                args.args["perceptionType"] = perceptionType;
+                args.args["content"] = content;
+                args.args["importance"] = importance;
+                dynamic signal = System.Activator.CreateInstance(signalType, tag, args);
+                Find.SignalManager?.SendSignal(signal);
             }
             catch { }
         }
@@ -61,11 +65,15 @@ namespace RimMind.Core.Perception
             try
             {
                 string tag = $"RimMind.Decision.{action}";
-                var args = new SignalArgs();
-                args.args.Add("pawnId", pawnId);
-                args.args.Add("action", action);
-                args.args.Add("reason", reason);
-                Find.SignalManager?.SendSignal(new Signal(tag, args));
+                var signalType = System.Type.GetType("Verse.Signal, Assembly-CSharp");
+                var signalArgsType = System.Type.GetType("Verse.SignalArgs, Assembly-CSharp");
+                if (signalType == null || signalArgsType == null) return;
+                dynamic args = System.Activator.CreateInstance(signalArgsType);
+                args.args["pawnId"] = pawnId;
+                args.args["action"] = action;
+                args.args["reason"] = reason;
+                dynamic signal = System.Activator.CreateInstance(signalType, tag, args);
+                Find.SignalManager?.SendSignal(signal);
             }
             catch { }
         }

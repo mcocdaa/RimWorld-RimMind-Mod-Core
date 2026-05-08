@@ -1,6 +1,8 @@
 using System;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Client;
-using RimMind.Core.Internal;
 using RimMind.Core.Npc;
 using RimMind.Core.Settings;
 using Xunit;
@@ -118,7 +120,7 @@ namespace RimMind.Core.Tests
         [Fact]
         public void AIDebugLog_Record_SettingsWithModelName_DoesNotThrow()
         {
-            RimMindCoreMod.Settings = new AICoreSettings { modelName = "test-model" };
+            RimMindCoreMod.Settings = new RimMindCoreSettings { modelName = "test-model" };
             var request = new AIRequest
             {
                 RequestId = "test_with_model",

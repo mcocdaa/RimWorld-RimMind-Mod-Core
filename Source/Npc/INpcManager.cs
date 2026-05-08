@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Contracts.Npc;
 using Verse;
 
 namespace RimMind.Core.Npc

@@ -5,7 +5,7 @@ using RimMind.Contracts.Extension;
 
 namespace RimMind.Kernel.Registry;
 
-internal sealed class ExtensionRegistry<T> : IExtensionRegistry<T> where T : class, IExtension
+public sealed class ExtensionRegistry<T> : IExtensionRegistry<T> where T : class, IExtension
 {
     private readonly ConcurrentDictionary<string, T> _items = new ConcurrentDictionary<string, T>();
 

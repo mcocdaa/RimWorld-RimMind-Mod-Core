@@ -5,7 +5,7 @@ using RimMind.Contracts.Pipeline;
 
 namespace RimMind.Kernel.Pipeline
 {
-    internal sealed class Pipeline<TContext> : IPipeline<TContext> where TContext : IPipelineContext
+    public sealed class Pipeline<TContext> : IPipeline<TContext> where TContext : IPipelineContext
     {
         private readonly IReadOnlyList<IMiddleware<TContext>> _middlewares;
 

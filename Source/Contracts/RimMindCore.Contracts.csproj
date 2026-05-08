@@ -18,13 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Extension\ISettingsTab.cs" />
-    <Compile Remove="Extensions\IAgentActionBridge.cs" />
-    <Compile Remove="Extensions\IParameterTuner.cs" />
-    <Compile Remove="Internal\IAIDebugLog.cs" />
-    <Compile Remove="Internal\IClientManager.cs" />
-    <Compile Remove="Internal\IProviderRegistry.cs" />
-    <Compile Remove="UI\IAudioPlayer.cs" />
   </ItemGroup>
 
 </Project>

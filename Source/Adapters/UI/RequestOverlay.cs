@@ -1,3 +1,5 @@
+using RimMind.Contracts.UI;
+using RimMind.Core;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -127,8 +129,8 @@ namespace RimMind.Adapters.UI
 
                 string header = entry.systemBlocked
                     ? "RimMind.Core.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
-                    : entry.pawn != null
-                        ? $"[{entry.pawn.Name.ToStringShort}] {entry.title}"
+                    : entry.pawn is Pawn p
+                        ? $"[{p.Name.ToStringShort}] {entry.title}"
                         : entry.title;
 
                 GUI.color = entry.systemBlocked ? new Color(1f, 0.6f, 0.4f) : new Color(0.85f, 0.9f, 1f);
@@ -239,8 +241,8 @@ namespace RimMind.Adapters.UI
                     float desiredWidth = currentEvent.mousePosition.x - _windowRect.x;
                     float desiredHeight = currentEvent.mousePosition.y - _windowRect.y;
 
-                    float maxWidth = Verse.UI.screenWidth - _windowRect.x;
-                    float maxHeight = Verse.UI.screenHeight - _windowRect.y;
+                    float maxWidth = global::Verse.UI.screenWidth - _windowRect.x;
+                    float maxHeight = global::Verse.UI.screenHeight - _windowRect.y;
 
                     _windowRect.width = Mathf.Clamp(desiredWidth, MinWidth, maxWidth);
                     _windowRect.height = Mathf.Clamp(desiredHeight, MinHeight, maxHeight);
@@ -249,8 +251,8 @@ namespace RimMind.Adapters.UI
                 else if (_isDragging)
                 {
                     _windowRect.position = currentEvent.mousePosition - _dragStartOffset;
-                    _windowRect.x = Mathf.Clamp(_windowRect.x, 0, Verse.UI.screenWidth - _windowRect.width);
-                    _windowRect.y = Mathf.Clamp(_windowRect.y, 0, Verse.UI.screenHeight - _windowRect.height);
+                    _windowRect.x = Mathf.Clamp(_windowRect.x, 0, global::Verse.UI.screenWidth - _windowRect.width);
+                    _windowRect.y = Mathf.Clamp(_windowRect.y, 0, global::Verse.UI.screenHeight - _windowRect.height);
                     currentEvent.Use();
                 }
             }

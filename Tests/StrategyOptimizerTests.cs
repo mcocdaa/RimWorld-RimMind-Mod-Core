@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using RimMind.Contracts.Client;
 using RimMind.Core.Agent;
-using RimMind.Core.Client;
 using Xunit;
 
 namespace RimMind.Core.Tests

@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Internal;
-using RimMind.Core.Pipeline.Npc;
+using RimMind.Contracts.Internal;
+using RimMind.Core.Agent;
 using RimMind.Core.Npc;
+using RimMind.Core.Pipeline.Npc;
+using RimMind.Contracts.Npc;
 using Verse;
 
 namespace RimMind.Core.Pipeline.Npc
@@ -21,7 +23,7 @@ namespace RimMind.Core.Pipeline.Npc
                 && int.TryParse(context.Request.NpcId.Substring(4), out _))
             {
                 var npcMgr = RimMindServiceLocator.Get<INpcManager>();
-                var pawn = npcMgr?.FindPawnByNpcId(context.Request.NpcId);
+                var pawn = npcMgr?.FindPawnByNpcId(context.Request.NpcId) as Pawn;
                 if (pawn != null)
                 {
                     var profile = NpcProfileBuilder.BuildPawnNpc(pawn);

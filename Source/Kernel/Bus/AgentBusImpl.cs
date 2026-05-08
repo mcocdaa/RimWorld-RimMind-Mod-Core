@@ -9,7 +9,7 @@ using ContractsAgentBusEvent = RimMind.Contracts.AgentBusEvent;
 
 namespace RimMind.Kernel.Bus
 {
-    internal sealed class AgentBusImpl : IAgentBus
+    public sealed class AgentBusImpl : IAgentBus
     {
         private readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, Delegate>> _handlers
             = new ConcurrentDictionary<Type, ConcurrentDictionary<string, Delegate>>();
@@ -147,8 +147,8 @@ namespace RimMind.Kernel.Bus
             _handlers.Clear();
         }
 
-        internal int GetHandlerCount() => _handlers.Count;
-        internal int GetBackgroundQueueCount() => _backgroundQueue.Count;
+        public int GetHandlerCount() => _handlers.Count;
+        public int GetBackgroundQueueCount() => _backgroundQueue.Count;
 
         private static void AssertMainThread()
         {

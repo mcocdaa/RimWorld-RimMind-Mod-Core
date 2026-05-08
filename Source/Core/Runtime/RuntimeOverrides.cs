@@ -1,10 +1,11 @@
 using System;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Context;
 using RimMind.Adapters.UI;
-using RimMind.Core.UI;
+using RimMind.Contracts.UI;
 
 namespace RimMind.Core.Runtime
 {

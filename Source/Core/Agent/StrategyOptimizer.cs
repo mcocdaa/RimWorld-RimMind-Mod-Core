@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using Verse;
 
 namespace RimMind.Core.Agent

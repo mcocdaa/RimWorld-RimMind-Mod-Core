@@ -1,8 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Npc;
 using RimMind.Core.Npc;
+using RimMind.Core.Pipeline.Npc;
+using RimMind.Contracts.Npc;
 
 namespace RimMind.Core.Pipeline.Npc
 {

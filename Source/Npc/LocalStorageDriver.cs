@@ -1,10 +1,11 @@
-﻿using System;
+using RimMind.Contracts.Npc;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
 using RimMind.Core.Settings;
 using Verse;
@@ -31,6 +32,11 @@ namespace RimMind.Core.Npc
         }
 
         private string PrefixKey(string key) => _keyPrefix + key;
+
+        public Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
+        {
+            return Task.FromResult(new NpcChatResult(npcId, "Local storage does not support chat."));
+        }
 
         public Task<bool> SpawnNpcAsync(NpcProfile profile)
         {
@@ -218,7 +224,7 @@ namespace RimMind.Core.Npc
                 commands.Add(new NpcCommandResult
                 {
                     Name = match.Groups[1].Value,
-                    Arguments = match.Groups[2].Success ? match.Groups[2].Value : "",
+                    Arguments = match.Groups[2].Success ? new[] { match.Groups[2].Value } : new string[0],
                 });
             }
             return commands;

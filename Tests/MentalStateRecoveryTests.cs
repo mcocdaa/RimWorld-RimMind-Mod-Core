@@ -1,6 +1,8 @@
-﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using RimMind.Contracts;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Client;

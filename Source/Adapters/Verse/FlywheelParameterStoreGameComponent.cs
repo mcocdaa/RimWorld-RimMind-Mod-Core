@@ -13,7 +13,7 @@ namespace RimMind.Adapters.Verse
             _store = new FlywheelParameterStore();
         }
 
-        public FlywheelParameterStoreGameComponent(Verse.Game game) : base()
+        public FlywheelParameterStoreGameComponent(global::Verse.Game game) : base()
         {
             _store = new FlywheelParameterStore();
         }
@@ -23,18 +23,18 @@ namespace RimMind.Adapters.Verse
         public override void ExposeData()
         {
             base.ExposeData();
-            if (Verse.Scribe.mode == Verse.LoadSaveMode.Saving)
+            if (global::Verse.Scribe.mode == global::Verse.LoadSaveMode.Saving)
             {
                 var (keys, values) = _store.GetSaveSnapshot();
-                Verse.Scribe_Collections.Look(ref keys, "paramKeys");
-                Verse.Scribe_Collections.Look(ref values, "paramValues");
+                global::Verse.Scribe_Collections.Look(ref keys, "paramKeys");
+                global::Verse.Scribe_Collections.Look(ref values, "paramValues");
             }
-            else if (Verse.Scribe.mode == Verse.LoadSaveMode.LoadingVars)
+            else if (global::Verse.Scribe.mode == global::Verse.LoadSaveMode.LoadingVars)
             {
                 var keys = new List<string>();
                 var values = new List<float>();
-                Verse.Scribe_Collections.Look(ref keys, "paramKeys");
-                Verse.Scribe_Collections.Look(ref values, "paramValues");
+                global::Verse.Scribe_Collections.Look(ref keys, "paramKeys");
+                global::Verse.Scribe_Collections.Look(ref values, "paramValues");
                 _store.LoadFromSnapshot(keys, values);
             }
         }

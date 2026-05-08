@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
+using RimMind.Contracts.Npc;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
 using Verse;
 
 namespace RimMind.Core.Npc
@@ -53,6 +54,8 @@ namespace RimMind.Core.Npc
                 _pawnIndex[pawn.thingIDNumber] = pawn;
         }
 
+        void INpcManager.IndexPawn(object pawn) => IndexPawn(pawn as Pawn);
+
         public void UnindexPawn(int thingId)
         {
             _pawnIndex.TryRemove(thingId, out _);
@@ -96,6 +99,8 @@ namespace RimMind.Core.Npc
             return $"map-{map.uniqueID}";
         }
 
+        string INpcManager.GetMapNpcId(object map) => GetMapNpcId(map as Map ?? throw new System.ArgumentNullException(nameof(map)));
+
         public string GetNpcForMap(Map map)
         {
             string mapNpcId = GetMapNpcId(map);
@@ -103,6 +108,8 @@ namespace RimMind.Core.Npc
                 return mapNpcId;
             return "NPC-storyteller";
         }
+
+        string INpcManager.GetNpcForMap(object map) => GetNpcForMap(map as Map ?? throw new System.ArgumentNullException(nameof(map)));
 
         public Pawn? FindPawnByNpcId(string npcId)
         {
@@ -141,6 +148,10 @@ namespace RimMind.Core.Npc
             return map.mapPawns?.AllPawns?
                 .FirstOrDefault(p => p.IsFreeNonSlaveColonist && !p.Dead) ?? null;
         }
+
+        object? INpcManager.FindPawnByNpcId(string npcId) => FindPawnByNpcId(npcId);
+
+        object? INpcManager.FindProxyPawnForMap(object map) => FindProxyPawnForMap(map as Map ?? throw new System.ArgumentNullException(nameof(map)));
 
         public override void ExposeData()
         {

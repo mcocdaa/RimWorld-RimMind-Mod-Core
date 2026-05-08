@@ -37,5 +37,8 @@ namespace RimMind.Kernel.Context
         {
             _schemas.Clear();
         }
+
+        public static string AgentDecision => Get("AgentDecision") ?? "";
+        public static string Dialogue => Get("Dialogue") ?? "";
     }
 }

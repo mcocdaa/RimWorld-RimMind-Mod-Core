@@ -1,3 +1,5 @@
+using RimMind.Contracts.Npc;
+using RimMind.Contracts;
 using RimMind.Core.Client.Player2;
 using RimMind.Core.Settings;
 using RimMind.Core;

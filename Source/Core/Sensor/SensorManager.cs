@@ -1,8 +1,11 @@
-﻿using System;
+using System;
+using RimMind.Contracts.Sensor;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Kernel.Context;
-using RimMind.Core.Extensions;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Runtime;
 using Verse;
 
@@ -45,12 +48,14 @@ namespace RimMind.Core.Sensor
                 string key = $"sensor_{sensor.SensorId}";
                 var captured = sensor;
                 ContextKeyRegistry.Register(key, ContextLayer.L5_Sensor, captured.Priority / 100f,
-                    pawn =>
+                    pawnObj =>
                     {
+                        var pawn = pawnObj as Pawn;
+                        if (pawn == null) return new List<RimMind.Contracts.Context.ContextEntry>();
                         string? data = captured.Sense(pawn);
                         if (string.IsNullOrEmpty(data))
-                            return new List<ContextEntry>();
-                        return new List<ContextEntry> { new ContextEntry(data!) };
+                            return new List<RimMind.Contracts.Context.ContextEntry>();
+                        return new List<RimMind.Contracts.Context.ContextEntry> { new RimMind.Contracts.Context.ContextEntry(data!) };
                     }, "Core");
             }
         }
@@ -90,17 +95,19 @@ namespace RimMind.Core.Sensor
         /// Build Agent Tools list from all registered sensors for the given pawn.
         /// Converts AgentToolDefinition to StructuredTool for AI tool calling.
         /// </summary>
-        public List<Client.StructuredTool> BuildAgentTools(Pawn pawn)
+        public List<StructuredTool> BuildAgentTools(object pawn)
         {
-            var tools = new List<Client.StructuredTool>();
+            var typedPawn = pawn as Pawn;
+            if (typedPawn == null) return new List<StructuredTool>();
+            var tools = new List<StructuredTool>();
             foreach (var sensor in RimMindRuntime.Instance.SensorProvidersList)
             {
                 try
                 {
-                    var defs = sensor.GetAgentTools(pawn);
+                    var defs = sensor.GetAgentTools(typedPawn);
                     foreach (var def in defs)
                     {
-                        tools.Add(new Client.StructuredTool
+                        tools.Add(new StructuredTool
                         {
                             Name = def.Name,
                             Description = def.Description,

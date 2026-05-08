@@ -26,10 +26,10 @@ namespace RimMind.Kernel.Context
 
         public void ExposeData()
         {
-            Verse.Scribe_Values.Look(ref Role, "role");
-            Verse.Scribe_Values.Look(ref Content, "content");
-            Verse.Scribe_Values.Look(ref Tick, "tick");
-            Verse.Scribe_Values.Look(ref Scenario, "scenario", null!);
+            global::Verse.Scribe_Values.Look(ref Role, "role");
+            global::Verse.Scribe_Values.Look(ref Content, "content");
+            global::Verse.Scribe_Values.Look(ref Tick, "tick");
+            global::Verse.Scribe_Values.Look(ref Scenario, "scenario", null!);
         }
     }
 
@@ -115,7 +115,13 @@ namespace RimMind.Kernel.Context
             }
         }
 
-        internal Dictionary<string, List<HistoryEntry>> GetAllForSave()
+        public string GetAllForSave()
+        {
+            var dict = GetAllForSaveDict();
+            return Newtonsoft.Json.JsonConvert.SerializeObject(dict);
+        }
+
+        public Dictionary<string, List<HistoryEntry>> GetAllForSaveDict()
         {
             var result = new Dictionary<string, List<HistoryEntry>>();
             foreach (var kvp in _histories)
@@ -140,8 +146,8 @@ namespace RimMind.Kernel.Context
 
         public void ExposeData()
         {
-            var dict = GetAllForSave();
-            Verse.Scribe_Collections.Look(ref dict, "histories", Verse.LookMode.Value, Verse.LookMode.Deep);
+            var dict = GetAllForSaveDict();
+            global::Verse.Scribe_Collections.Look(ref dict, "histories", Verse.LookMode.Value, Verse.LookMode.Deep);
             if (Verse.Scribe.mode == Verse.LoadSaveMode.LoadingVars)
             {
                 LoadFromSave(dict ?? new Dictionary<string, List<HistoryEntry>>());

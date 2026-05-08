@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.AI;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 
 namespace RimMind.Core.Pipeline.AI
 {

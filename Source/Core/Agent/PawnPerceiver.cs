@@ -1,7 +1,7 @@
-﻿﻿﻿﻿using System;
+﻿﻿﻿using System;
 using System.Collections.Generic;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Sensor;
+using RimMind.Kernel.Context;
 using Verse;
 
 namespace RimMind.Core.Agent

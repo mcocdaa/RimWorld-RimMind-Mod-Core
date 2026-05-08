@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.Bus;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Abstractions;
 
 namespace RimMind.Core.Pipeline.Bus

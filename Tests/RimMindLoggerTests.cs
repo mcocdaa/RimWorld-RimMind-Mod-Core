@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Internal;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;

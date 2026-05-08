@@ -31,13 +31,13 @@ namespace RimMind.Kernel.Context
 
         internal CommitPayload? _commitPayload;
 
-        internal void AddMessage(ChatMessage msg) => _messages.Add(msg);
-        internal void InsertMessage(int index, ChatMessage msg) => _messages.Insert(index, msg);
-        internal void SetMessages(List<ChatMessage> messages) => _messages = messages;
-        internal void ClearMessages() => _messages.Clear();
-        internal void AddEntry(ContextEntry entry) => _allEntries.Add(entry);
-        internal void AddEntries(IEnumerable<ContextEntry> entries) => _allEntries.AddRange(entries);
-        internal void SetCacheHitEvent(string key, bool value) => _cacheHitEvents[key] = value;
+        public void AddMessage(ChatMessage msg) => _messages.Add(msg);
+        public void InsertMessage(int index, ChatMessage msg) => _messages.Insert(index, msg);
+        public void SetMessages(List<ChatMessage> messages) => _messages = messages;
+        public void ClearMessages() => _messages.Clear();
+        public void AddEntry(ContextEntry entry) => _allEntries.Add(entry);
+        public void AddEntries(IEnumerable<ContextEntry> entries) => _allEntries.AddRange(entries);
+        public void SetCacheHitEvent(string key, bool value) => _cacheHitEvents[key] = value;
     }
 
     internal class CommitPayload

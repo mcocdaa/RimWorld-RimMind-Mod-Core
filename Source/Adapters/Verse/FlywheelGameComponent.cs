@@ -35,7 +35,6 @@ namespace RimMind.Adapters.Verse
             if (Scribe.mode == LoadSaveMode.Saving)
             {
                 RimMindRuntime.Instance.Telemetry.Flush();
-                RimMindRuntime.Instance.GetEmbeddingSnapshotStore()?.Flush();
             }
         }
 

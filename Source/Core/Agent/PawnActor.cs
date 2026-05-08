@@ -1,9 +1,9 @@
-﻿﻿﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Internal;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Perception;
 using RimWorld;
 using Verse;
@@ -38,7 +38,7 @@ namespace RimMind.Core.Agent
                 if (int.TryParse(targetName, out int targetThingId))
                 {
                     var indexed = RimMindServiceLocator.Get<INpcManager>()?.FindPawnByNpcId($"NPC-{targetThingId}");
-                    if (indexed != null) targetPawn = indexed;
+                    if (indexed != null) targetPawn = indexed as Pawn;
                 }
                 if (targetPawn == null)
                 {

@@ -1,10 +1,11 @@
-﻿﻿﻿﻿using System;
+using RimMind.Contracts.Npc;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Client.Player2;
 using RimMind.Kernel.Context;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Queue;
 
 namespace RimMind.Core.Npc
@@ -27,6 +28,11 @@ namespace RimMind.Core.Npc
         }
 
         private static bool IsTransientException(Exception ex) => TransientExceptionChecker.IsTransient(ex);
+
+        public async Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
+        {
+            return await _remote.ChatAsync(npcId, message, context);
+        }
 
         public async Task<bool> SpawnNpcAsync(NpcProfile profile)
         {

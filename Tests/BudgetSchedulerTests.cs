@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Context;
 using Xunit;
 

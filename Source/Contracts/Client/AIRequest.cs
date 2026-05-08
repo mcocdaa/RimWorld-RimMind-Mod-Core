@@ -8,6 +8,8 @@ namespace RimMind.Contracts.Client
 
         public string UserPrompt { get; set; } = string.Empty;
 
+        public string? NpcId { get; set; }
+
         public List<ChatMessage>? Messages { get; set; }
 
         public int MaxTokens { get; set; } = 800;

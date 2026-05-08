@@ -23,9 +23,9 @@ namespace RimMind.Core.Agent
             return new ThinkResult(job, this, default, false);
         }
 
-        public override ThinkNode DeepCopy(ThinkNode like)
+        public override ThinkNode DeepCopy(bool resolve = true)
         {
-            var node = (ThinkNode_RimMindAgent)base.DeepCopy(like);
+            var node = (ThinkNode_RimMindAgent)base.DeepCopy(resolve);
             return node;
         }
     }

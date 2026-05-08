@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Npc;
 using RimMind.Core.Npc;
+using RimMind.Core.Pipeline.Npc;
+using RimMind.Contracts.Npc;
 
 namespace RimMind.Core.Pipeline.Npc
 {
@@ -14,19 +15,10 @@ namespace RimMind.Core.Pipeline.Npc
         public async Task InvokeAsync(NpcChatContext context, MiddlewareDelegate<NpcChatContext> next)
         {
             var driver = StorageDriverFactory.GetDriver();
-            if (context.IsStreaming)
-            {
-                context.Result = await driver.ChatStreamingAsync(
-                    context.Request.NpcId,
-                    context.Request.SpeakerName ?? "",
-                    context.Request.CurrentQuery ?? "",
-                    context.OnStreamChunk,
-                    ct: context.Ct);
-            }
-            else
-            {
-                context.Result = await driver.ChatAsync(context.Snapshot!, context.Ct);
-            }
+            var npcId = context.Request.NpcId;
+            var query = context.Request.CurrentQuery ?? "";
+            var ctx = "";
+            context.Result = await driver.ChatAsync(npcId, query, ctx);
         }
     }
 }

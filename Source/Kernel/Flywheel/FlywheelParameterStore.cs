@@ -99,7 +99,7 @@ namespace RimMind.Kernel.Flywheel
             return new Dictionary<string, float>(_defaults);
         }
 
-        internal void LoadFromSnapshot(List<string> keys, List<float> values)
+        public void LoadFromSnapshot(List<string> keys, List<float> values)
         {
             if (keys != null && values != null && keys.Count == values.Count)
             {
@@ -108,7 +108,7 @@ namespace RimMind.Kernel.Flywheel
             }
         }
 
-        internal (List<string> keys, List<float> values) GetSaveSnapshot()
+        public (List<string> keys, List<float> values) GetSaveSnapshot()
         {
             var snapshot = _parameters.ToArray();
             var keys = new List<string>(snapshot.Select(kvp => kvp.Key));

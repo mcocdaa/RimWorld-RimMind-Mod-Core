@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Sensor;
 using RimMind.Core.Runtime;
-using RimMind.Core.Sensor;
 using RimMind.Core.Settings;
 using RimMind.Kernel.Json;
 using RimMind.Kernel.Prompt;
@@ -48,7 +48,7 @@ namespace RimMind.Core.Agent
                 MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
                 Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
             };
-            var schema = Context.SchemaRegistry.AgentDecision;
+            var schema = SchemaRegistry.AgentDecision;
             var snapshot = RimMindRuntime.Instance.ContextEngine.BuildSnapshot(ctxRequest);
             if (snapshot == null) return;
             var bridge = RimMindRuntime.Instance.GetAgentActionBridge();

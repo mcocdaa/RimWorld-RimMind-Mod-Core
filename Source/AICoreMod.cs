@@ -1,7 +1,8 @@
-﻿﻿﻿﻿using HarmonyLib;
+﻿using HarmonyLib;
 using RimMind.Contracts.Extension;
 using RimMind.Kernel.Context;
-using RimMind.Core.Internal;
+using RimMind.Contracts.Internal;
+using RimMind.Core.Extensions;
 using RimMind.Core.Runtime;
 using RimMind.Core.Settings;
 using RimMind.Adapters.UI;
@@ -25,7 +26,7 @@ namespace RimMind.Core
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
-                    Verse.Log.Warning("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
+                    global::Verse.Log.Warning("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
                     Find.WindowStack.Add(new Verse.Dialog_MessageBox(
                         "RimMind.Core.UpgradeWarning".Translate(),
                         "OK".Translate(),

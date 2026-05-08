@@ -1,3 +1,4 @@
+using RimMind.Contracts.UI;
 using Verse;
 
 namespace RimMind.Core.UI

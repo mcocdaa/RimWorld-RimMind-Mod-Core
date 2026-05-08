@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.Common;

@@ -1,4 +1,4 @@
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Core.Client.Player2;
 
 namespace RimMind.Core.Internal

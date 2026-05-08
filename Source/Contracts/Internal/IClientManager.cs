@@ -6,5 +6,6 @@ namespace RimMind.Contracts.Internal
     {
         IAIClient? GetClient();
         void InvalidateCache();
+        object? GetPlayer2Client();
     }
 }

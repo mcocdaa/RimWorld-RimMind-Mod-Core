@@ -1,12 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Xunit;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
-using RimMind.Core.Client;
+using RimMind.Core.Internal;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
+using Xunit;
 
 namespace RimMind.Core.Tests
 {

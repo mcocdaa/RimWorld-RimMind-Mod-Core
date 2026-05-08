@@ -1,14 +1,21 @@
-﻿﻿﻿﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Contracts.Client;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Client;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Npc;
+using RimMind.Core.Settings;
 using Verse;
 using Xunit;
+
+using INpcManager = RimMind.Contracts.Npc.INpcManager;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -20,7 +27,7 @@ namespace RimMind.Core.Tests
         private readonly HistoryManager _historyManager;
         private readonly Pawn _pawn;
         private readonly string _npcId;
-        private readonly AICoreSettings? _originalSettings;
+        private readonly RimMindCoreSettings? _originalSettings;
         private readonly IFlywheelParameterStore? _originalFlywheel;
         private readonly NpcManager _npcManager;
 
@@ -36,7 +43,7 @@ namespace RimMind.Core.Tests
             _npcManager.IndexPawn(_pawn);
             _originalSettings = RimMindCoreMod.Settings;
             _originalFlywheel = FlywheelParameterStore.Instance;
-            RimMindCoreMod.Settings = new AICoreSettings
+            RimMindCoreMod.Settings = new RimMindCoreSettings
             {
                 Context = new ContextSettings(),
                 maxTokens = 800,
@@ -452,24 +459,24 @@ namespace RimMind.Core.Tests
     {
         public bool FindPawnByNpcIdCalled { get; private set; }
 
-        public Verse.Pawn? FindPawnByNpcId(string npcId)
+        public object? FindPawnByNpcId(string npcId)
         {
             FindPawnByNpcIdCalled = true;
             return null;
         }
 
-        public Verse.Pawn? FindProxyPawnForMap(Verse.Map map) => null;
+        public object? FindProxyPawnForMap(object map) => null;
         public void SpawnNpc(NpcProfile profile) { }
         public void KillNpc(string npcId) { }
         public bool IsNpcAlive(string npcId) => false;
         public NpcProfile? GetNpc(string npcId) => null;
         public IReadOnlyList<NpcProfile> GetAllNpcs() => new List<NpcProfile>();
-        public string GetNpcForMap(Verse.Map map) => "";
+        public string GetNpcForMap(object map) => "";
         public void RegisterActiveAgent(int thingId) { }
         public void UnregisterActiveAgent(int thingId) { }
         public HashSet<int> GetActiveAgentPawnIds() => new HashSet<int>();
-        public void IndexPawn(Verse.Pawn pawn) { }
+        public void IndexPawn(object pawn) { }
         public void UnindexPawn(int thingId) { }
-        public string GetMapNpcId(Verse.Map map) => "";
+        public string GetMapNpcId(object map) => "";
     }
 }

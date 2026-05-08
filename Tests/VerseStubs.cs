@@ -191,6 +191,7 @@ namespace Verse
     public class Need
     {
         public float CurLevelPercentage = 1f;
+        public float CurLevel = 1f;
     }
 
     public class Pawn_NeedsTracker
@@ -239,6 +240,7 @@ namespace Verse
     public class Pawn_JobTracker
     {
         public Verse.AI.JobQueue? jobQueue;
+        public Verse.AI.Job? curJob;
     }
 
     public class Lord
@@ -344,10 +346,13 @@ namespace Verse
                 if (def.defName == name) return def;
             return null;
         }
+        public static T? GetNamed(string name) => GetNamedSilentFail(name);
         public static List<T> AllDefsListForReading => _all;
         public static void AddDef(T def) { _all.Add(def); }
         public static void Clear() { _all.Clear(); }
     }
+
+    public class EffecterDef : Def { }
 
     public class Hediff
     {
@@ -542,6 +547,7 @@ namespace Verse.AI
         public void Remove(QueuedJob queuedJob) { _queue.Remove(queuedJob); }
         public int Count => _queue.Count;
         public QueuedJob? Peek() => _queue.Count > 0 ? _queue[0] : null;
+        public QueuedJob? this[int index] => index >= 0 && index < _queue.Count ? _queue[index] : null;
     }
 
     public class Toil
@@ -555,6 +561,7 @@ namespace Verse.AI
 
         public Toil WithEffect(Verse.Def effecterDef, TargetIndex index) => this;
         public Toil WithEffect(Verse.Def effecterDef, Func<Verse.Pawn, TargetIndex> index) => this;
+        public Toil WithEffect(Func<Verse.Def?> effecterDefGetter, TargetIndex index) => this;
     }
 
     public static class ToilMaker

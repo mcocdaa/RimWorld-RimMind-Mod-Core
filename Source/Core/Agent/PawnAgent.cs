@@ -1,7 +1,7 @@
-﻿﻿﻿﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Internal;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Npc;
 using RimMind.Core.Settings;
 using Verse;
 using Verse.AI;
@@ -52,8 +52,7 @@ namespace RimMind.Core.Agent
         public void Tick()
         {
             if (State != AgentState.Active) return;
-            if (Pawn == null || Pawn.Dead) { TransitionTo(AgentState.Terminated); return; }
-            if (!PawnUtility.InValidState(Pawn)) return;
+            if (Pawn == null || Pawn.Dead || Pawn.Destroyed) { TransitionTo(AgentState.Terminated); return; }
 
             if (Pawn.InMentalState)
             {
@@ -77,7 +76,7 @@ namespace RimMind.Core.Agent
                 _recorder.StrategyOptimizer.DecayAll();
             }
 
-            if (Pawn != null && PawnUtility.PlayerForcedJobNowOrSoon(Pawn)) return;
+            if (Pawn != null && Pawn.jobs?.curJob?.playerForced == true) return;
 
             var perceptions = _perceiver.Collect();
 
@@ -93,10 +92,9 @@ namespace RimMind.Core.Agent
         {
             if (Pawn == null) return false;
 
-            var lord = Pawn.GetLord();
-            if (lord != null && !lord.AllowsFloatMenu(Pawn)) return false;
+            if (Pawn.mindState?.duty != null) return false;
 
-            if (PawnUtility.WillSoonHaveBasicNeed(Pawn))
+            if (Pawn.needs?.food?.CurLevel < 0.3f)
             {
                 _recorder.StrategyOptimizer.ApplyNeedUrgencyBoost();
                 return true;
@@ -151,10 +149,22 @@ namespace RimMind.Core.Agent
         {
             if (Pawn?.jobs?.jobQueue == null || !Pawn.jobs.jobQueue.AnyCanBeginNow(Pawn, true))
                 return null;
-            var queued = Pawn.jobs.jobQueue.FirstOrDefault(qj => qj.job?.jobGiver is ThinkNode_RimMindAgent);
+            QueuedJob? queued = null;
+            var jobQueue = Pawn.jobs.jobQueue;
+            for (int i = 0; i < jobQueue.Count; i++)
+            {
+                var qj = jobQueue[i];
+                if (qj?.job?.jobGiver is ThinkNode_RimMindAgent)
+                {
+                    queued = qj;
+                    break;
+                }
+            }
             if (queued != null)
             {
-                Pawn.jobs.jobQueue.Remove(queued);
+                var removeMethod = jobQueue.GetType().GetMethod("Remove", new[] { typeof(QueuedJob) });
+                if (removeMethod != null)
+                    removeMethod.Invoke(jobQueue, new object[] { queued });
                 return queued.job;
             }
             return null;

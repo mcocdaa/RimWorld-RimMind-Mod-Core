@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Verse;
 
 namespace RimMind.Core.Agent
@@ -7,6 +8,9 @@ namespace RimMind.Core.Agent
         public string NpcId = "";
         public int PawnId;
         public string DisplayName = "";
+        public List<string> Motivations = new List<string>();
+        public List<string> PersonalityTraits = new List<string>();
+        public List<string> CoreValues = new List<string>();
 
         public AgentIdentity() { }
 
