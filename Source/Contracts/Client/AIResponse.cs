@@ -1,4 +1,4 @@
-namespace RimMind.Core.Client
+namespace RimMind.Contracts.Client
 {
     public class AIResponse
     {

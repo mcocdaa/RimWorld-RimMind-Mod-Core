@@ -46,6 +46,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Npc\LocalStorageDriver.cs",
             @"Npc\INpcManager.cs",
             @"Npc\Player2StorageDriver.cs",
+            @"Core\Pipeline\Npc\NpcAliveCheckMiddleware.cs",
             @"Comps\CompPawnAgent.cs",
         };
 

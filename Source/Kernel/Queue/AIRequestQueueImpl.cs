@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
 

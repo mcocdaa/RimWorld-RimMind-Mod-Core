@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core.Client;
@@ -452,24 +452,24 @@ namespace RimMind.Core.Tests
     {
         public bool FindPawnByNpcIdCalled { get; private set; }
 
-        public Pawn? FindPawnByNpcId(string npcId)
+        public Verse.Pawn? FindPawnByNpcId(string npcId)
         {
             FindPawnByNpcIdCalled = true;
             return null;
         }
 
-        public Pawn? FindProxyPawnForMap(Map map) => null;
+        public Verse.Pawn? FindProxyPawnForMap(Verse.Map map) => null;
         public void SpawnNpc(NpcProfile profile) { }
         public void KillNpc(string npcId) { }
         public bool IsNpcAlive(string npcId) => false;
         public NpcProfile? GetNpc(string npcId) => null;
         public IReadOnlyList<NpcProfile> GetAllNpcs() => new List<NpcProfile>();
-        public string GetNpcForMap(Map map) => "";
+        public string GetNpcForMap(Verse.Map map) => "";
         public void RegisterActiveAgent(int thingId) { }
         public void UnregisterActiveAgent(int thingId) { }
         public HashSet<int> GetActiveAgentPawnIds() => new HashSet<int>();
-        public void IndexPawn(Pawn pawn) { }
+        public void IndexPawn(Verse.Pawn pawn) { }
         public void UnindexPawn(int thingId) { }
-        public string GetMapNpcId(Map map) => "";
+        public string GetMapNpcId(Verse.Map map) => "";
     }
 }

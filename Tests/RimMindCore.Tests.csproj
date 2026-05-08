@@ -21,8 +21,8 @@
     <Compile Include="VerseStubs.cs" />
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="**\*.cs" Exclude="VerseStubs.cs;RimMindTestStubs.cs;obj\**\*.cs" />
-    <Compile Include="../Source/Kernel/**/*.cs" />
-    <Compile Include="../Source/Contracts/**/*.cs" />
+    <Compile Include="../Source/Kernel/**/*.cs" Exclude="../Source/Kernel/**/obj/**" />
+    <Compile Include="../Source/Contracts/**/*.cs" Exclude="../Source/Contracts/**/obj/**;../Source/Contracts/Compilers/IsExternalInit.cs" />
     <Compile Include="../Source/Client/AIRequest.cs" />
     <Compile Include="../Source/Client/AIResponse.cs" />
     <Compile Include="../Source/Client/IAIClient.cs" />
@@ -31,7 +31,7 @@
     <Compile Include="../Source/Core/Agent/**/*.cs" />
     <Compile Include="../Source/Core/AgentBus/**/*.cs" />
     <Compile Include="../Source/Core/Extensions/**/*.cs" />
-    <Compile Include="../Source/Core/Flywheel/**/*.cs" />
+    <Compile Include="../Source/Core/Flywheel/**/*.cs" Exclude="../Source/Core/Flywheel/IFlywheelParameterStore.cs" />
     <Compile Include="../Source/Core/Internal/RimMindServiceLocator.cs" />
     <Compile Include="../Source/Core/Internal/AIRequestPool.cs" />
     <Compile Include="../Source/Core/Internal/IProviderRegistry.cs" />
@@ -53,6 +53,7 @@
     <Compile Include="../Source/Comps/**/*.cs" />
     <Compile Include="../Source/Adapters/Verse/AIRequestQueueGameComponent.cs" />
     <Compile Include="../Source/Adapters/Verse/AgentBusGameComponent.cs" />
+    <Compile Include="../Source/Core/Pipeline/**/*.cs" />
   </ItemGroup>
 
 </Project>

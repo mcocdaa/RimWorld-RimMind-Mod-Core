@@ -10,6 +10,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,10 +28,9 @@
     <Compile Include="PhaseA\**\*.cs" />
     <Compile Include="PhaseB\**\*.cs" />
     <Compile Include="PhaseC\**\*.cs" />
+    <Compile Include="PhaseD\**\*.cs" />
     <Compile Include="General\**\*.cs" />
     <Compile Include="../Tests/VerseStubs.cs" Link="VerseStubs.cs" />
-    <Compile Include="../Source/Contracts/**/*.cs" />
-    <Compile Include="../Source/Compilers/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>

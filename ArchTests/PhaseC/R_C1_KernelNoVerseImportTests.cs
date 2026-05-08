@@ -121,7 +121,9 @@ namespace RimMind.Core.ArchTests.PhaseC
             var violatingFiles = new List<string>();
             var expectedNsPattern = @"namespace\s+RimMind\.Kernel";
 
-            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
             {
                 var source = File.ReadAllText(file);
                 if (!Regex.IsMatch(source, expectedNsPattern))

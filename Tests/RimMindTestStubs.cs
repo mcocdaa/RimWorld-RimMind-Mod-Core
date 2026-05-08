@@ -58,7 +58,7 @@ namespace RimMind.Core.Runtime
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; set; } = null!;
 
-        public bool IsShutdown => false;
+        public bool IsShutdown { get; set; }
 
         private RimMindRuntime()
         {
@@ -72,6 +72,7 @@ namespace RimMind.Core.Runtime
             AudioPlayer = new RimMind.Adapters.UI.NullAudioPlayer();
             Telemetry = new FlywheelTelemetryCollector();
             QueueImpl = new AIRequestQueueImpl();
+            IsShutdown = false;
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
         }
 
@@ -101,7 +102,7 @@ namespace RimMind.Core.Runtime
             QueueImpl = new AIRequestQueueImpl();
         }
 
-        public void Shutdown() { }
+        public void Shutdown() { IsShutdown = true; }
 
         public void Dispose()
         {
@@ -399,7 +400,15 @@ namespace RimMind.Core.Npc
 
     public class NpcProfileBuilder
     {
-        public static object BuildPawnNpc(Verse.Pawn pawn) => new object();
+        public static NpcProfile BuildPawnNpc(Verse.Pawn pawn) => new NpcProfile();
+    }
+
+    public static class StorageDriverFactory
+    {
+        private static IStorageDriver _driver = new StubStorageDriver();
+
+        public static IStorageDriver GetDriver() => _driver;
+        public static void InvalidateCache() { }
     }
 }
 
@@ -419,6 +428,7 @@ namespace RimMind.Kernel.Context
         bool IsNpcAlive(string npcId);
         Task<object> SpawnNpcAsync(object profile);
         Task<RimMind.Core.Npc.NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
+        Task<RimMind.Core.Npc.NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default);
     }
 
     internal sealed class StubStorageDriver : IStorageDriver
@@ -426,6 +436,8 @@ namespace RimMind.Kernel.Context
         public bool IsNpcAlive(string npcId) => false;
         public Task<object> SpawnNpcAsync(object profile) => Task.FromResult(new object());
         public Task<RimMind.Core.Npc.NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
+            => Task.FromResult(new RimMind.Core.Npc.NpcChatResult());
+        public Task<RimMind.Core.Npc.NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default)
             => Task.FromResult(new RimMind.Core.Npc.NpcChatResult());
     }
 

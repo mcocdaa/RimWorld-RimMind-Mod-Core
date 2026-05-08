@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core;
 using RimMind.Kernel.Context;
-using RimMind.Core.Extensions;
+using RimMind.Contracts.Extensions;
 using RimMind.Kernel.Flywheel;
 using RimMind.Core.Internal;
 using RimMind.Core.Runtime;

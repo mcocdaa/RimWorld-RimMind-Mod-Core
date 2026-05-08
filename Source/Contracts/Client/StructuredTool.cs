@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace RimMind.Core.Client
+namespace RimMind.Contracts.Client
 {
     public class StructuredTool
     {

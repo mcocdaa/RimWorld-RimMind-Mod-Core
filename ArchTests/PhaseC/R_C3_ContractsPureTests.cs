@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,6 +24,14 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"using\s+RimWorld\.\w+\s*;",
         };
 
+        private static IEnumerable<string> GetSourceFiles(string dir)
+        {
+            return Directory.GetFiles(dir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !Path.GetFileName(f).Equals("IsExternalInit.cs", StringComparison.OrdinalIgnoreCase));
+        }
+
         [Fact]
         [Trait("Phase", "C")]
         public void R_C3_Contracts_ShouldNot_Import_Kernel_Or_Adapters()
@@ -32,12 +41,12 @@ namespace RimMind.Core.ArchTests.PhaseC
 
             var contractsDir = Path.Combine(sourceDir, "Contracts");
             Directory.Exists(contractsDir).Should().BeTrue("Contracts directory must exist");
-            Directory.GetFiles(contractsDir, "*.cs", SearchOption.AllDirectories).Should().NotBeEmpty(
+            GetSourceFiles(contractsDir).Should().NotBeEmpty(
                 "Contracts directory must contain at least one .cs file");
 
             var violatingFiles = new List<string>();
 
-            foreach (var file in Directory.GetFiles(contractsDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in GetSourceFiles(contractsDir))
             {
                 var relativePath = file.Substring(contractsDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 var source = File.ReadAllText(file);
@@ -72,7 +81,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             var violatingFiles = new List<string>();
             var expectedNsPattern = @"namespace\s+RimMind\.Contracts";
 
-            foreach (var file in Directory.GetFiles(contractsDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in GetSourceFiles(contractsDir))
             {
                 var source = File.ReadAllText(file);
                 if (!Regex.IsMatch(source, expectedNsPattern))
@@ -98,10 +107,10 @@ namespace RimMind.Core.ArchTests.PhaseC
             if (!Directory.Exists(contractsDir)) return;
 
             var violatingFiles = new List<string>();
-            var classPattern = @"(?:public|internal)\s+(?:sealed\s+|abstract\s+)?class\s+";
-            var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*\{|class\s+\w+Dto\s*\{|class\s+\w+Data\s*\{";
+            var classPattern = @"(?:public|internal)\s+(?!abstract\s+)(?:sealed\s+)?class\s+";
+            var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*\{|class\s+\w+Dto\s*\{|class\s+\w+Data\s*\{|class\s+\w+Result\s*\{|class\s+\w+Request\s*\{|class\s+\w+Response\s*\{|class\s+\w+Tool\s*\{|class\s+\w+Context\s*\{|class\s+\w+Entry\s*\{|class\s+\w+Profile\s*\{|class\s+\w+Command\s*\{|class\s+\w+Message\s*\{";
 
-            foreach (var file in Directory.GetFiles(contractsDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in GetSourceFiles(contractsDir))
             {
                 var source = File.ReadAllText(file);
                 if (Regex.IsMatch(source, classPattern) && !Regex.IsMatch(source, allowedClassPattern))

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Core.Internal;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Npc;
 using RimMind.Kernel.Abstractions;
 using RimMind.Kernel.Logging;
 

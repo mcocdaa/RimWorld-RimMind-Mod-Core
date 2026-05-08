@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using RimMind.Contracts;
 
-namespace RimMind.Core.Client
+namespace RimMind.Contracts.Client
 {
     public interface IAIClient
     {

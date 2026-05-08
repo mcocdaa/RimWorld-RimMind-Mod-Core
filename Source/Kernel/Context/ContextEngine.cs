@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Core.Internal;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Npc;
 using RimMind.Kernel.Context;
 
 namespace RimMind.Kernel.Context

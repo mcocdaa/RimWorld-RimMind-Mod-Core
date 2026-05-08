@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Core;
-using RimMind.Core.Client;
+using RimMind.Contracts.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
 
