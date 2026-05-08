@@ -56,6 +56,9 @@ namespace RimMind.Contracts.Settings
         public int queueProcessInterval = 60;
         public int defaultModCooldownTicks = 3600;
 
+        public int circuitBreakerFailureThreshold = 5;
+        public int circuitBreakerOpenDurationSec = 60;
+
         public bool IsConfigured()
         {
             if (provider == AIProvider.Player2)
@@ -107,6 +110,8 @@ namespace RimMind.Contracts.Settings
             Scribe_Values.Look(ref behaviorHistoryMax, "behaviorHistoryMax", 100);
             Scribe_Values.Look(ref queueProcessInterval, "queueProcessInterval", 60);
             Scribe_Values.Look(ref defaultModCooldownTicks, "defaultModCooldownTicks", 3600);
+            Scribe_Values.Look(ref circuitBreakerFailureThreshold, "circuitBreakerFailureThreshold", 5);
+            Scribe_Values.Look(ref circuitBreakerOpenDurationSec, "circuitBreakerOpenDurationSec", 60);
             Validate();
         }
 
@@ -120,6 +125,8 @@ namespace RimMind.Contracts.Settings
             if (agentTickInterval < 10) agentTickInterval = 10;
             if (maxToolCallDepth < 1) maxToolCallDepth = 1;
             if (contextDiffLifetimeTicks < 600) contextDiffLifetimeTicks = 600;
+            if (circuitBreakerFailureThreshold < 1) circuitBreakerFailureThreshold = 1;
+            if (circuitBreakerOpenDurationSec < 5) circuitBreakerOpenDurationSec = 5;
         }
     }
 }

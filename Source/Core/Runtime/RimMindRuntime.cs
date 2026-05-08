@@ -111,6 +111,13 @@ namespace RimMind.Core.Runtime
                 var generic = method.MakeGenericMethod(eventType);
                 return (bool)generic.Invoke(this, new object[] { evt, subscribers, isBackground });
             });
+            QueueImpl.SetExecuteViaPipeline((req, client) =>
+            {
+                var ctx = new AIRequestContext { Request = req, Client = client };
+                req.TraceId = ctx.TraceId;
+                AIRequestPipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
+                return ctx.Response ?? AIResponse.Failure(req.RequestId, "Pipeline produced no response");
+            });
 
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
         }
@@ -165,6 +172,13 @@ namespace RimMind.Core.Runtime
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var generic = method.MakeGenericMethod(eventType);
                 return (bool)generic.Invoke(this, new object[] { evt, subscribers, isBackground });
+            });
+            QueueImpl.SetExecuteViaPipeline((req, client) =>
+            {
+                var ctx = new AIRequestContext { Request = req, Client = client };
+                req.TraceId = ctx.TraceId;
+                AIRequestPipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
+                return ctx.Response ?? AIResponse.Failure(req.RequestId, "Pipeline produced no response");
             });
             _busPipelines.Clear();
             _isShutdown = false;

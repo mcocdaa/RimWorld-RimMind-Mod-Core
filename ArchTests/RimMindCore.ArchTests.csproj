@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <Compile Include="ArchTestExtensions.cs" />
-    <Compile Include="ArchTestStubs.cs" />
     <Compile Include="PhaseA\**\*.cs" />
     <Compile Include="PhaseB\**\*.cs" />
     <Compile Include="PhaseC\**\*.cs" />

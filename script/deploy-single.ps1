@@ -58,17 +58,53 @@ if (-not (Test-Path $RimWorldMods)) {
 }
 
 # 构建
-$CSPROJ = Get-ChildItem -Path (Join-Path $ModDir "Source") -Filter "*.csproj" -File -ErrorAction SilentlyContinue | Select-Object -First 1
-if ($CSPROJ) {
-    Write-Host "=== Building $ModName ===" -ForegroundColor Cyan
-    dotnet build $CSPROJ.FullName -c Release --nologo -v quiet
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Build failed"
-        exit $LASTEXITCODE
+$SourceDir = Join-Path $ModDir "Source"
+
+if ($ModName -eq "RimMind-Core") {
+    $contractsCsproj = Join-Path $SourceDir "Contracts\RimMindCore.Contracts.csproj"
+    $kernelCsproj = Join-Path $SourceDir "Kernel\RimMindCore.Kernel.csproj"
+    $coreCsproj = Get-ChildItem -Path $SourceDir -Filter "RimMindCore.csproj" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (-not (Test-Path $contractsCsproj)) {
+        Write-Error "Contracts csproj not found: $contractsCsproj"
+        exit 1
     }
-    Write-Host "  Build successful"
+    if (-not (Test-Path $kernelCsproj)) {
+        Write-Error "Kernel csproj not found: $kernelCsproj"
+        exit 1
+    }
+    if (-not $coreCsproj) {
+        Write-Error "Core csproj not found in $SourceDir"
+        exit 1
+    }
+
+    Write-Host "=== Building $ModName (Contracts) ===" -ForegroundColor Cyan
+    dotnet build $contractsCsproj -c Release --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "Contracts build failed"; exit $LASTEXITCODE }
+    Write-Host "  Contracts build successful"
+
+    Write-Host "=== Building $ModName (Kernel) ===" -ForegroundColor Cyan
+    dotnet build $kernelCsproj -c Release --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "Kernel build failed"; exit $LASTEXITCODE }
+    Write-Host "  Kernel build successful"
+
+    Write-Host "=== Building $ModName (Core) ===" -ForegroundColor Cyan
+    dotnet build $coreCsproj.FullName -c Release --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "Core build failed"; exit $LASTEXITCODE }
+    Write-Host "  Core build successful"
 } else {
-    Write-Host "No .csproj found in Source\, skipping build" -ForegroundColor Yellow
+    $CSPROJ = Get-ChildItem -Path $SourceDir -Filter "*.csproj" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($CSPROJ) {
+        Write-Host "=== Building $ModName ===" -ForegroundColor Cyan
+        dotnet build $CSPROJ.FullName -c Release --nologo -v quiet
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Build failed"
+            exit $LASTEXITCODE
+        }
+        Write-Host "  Build successful"
+    } else {
+        Write-Host "No .csproj found in Source\, skipping build" -ForegroundColor Yellow
+    }
 }
 
 # 部署

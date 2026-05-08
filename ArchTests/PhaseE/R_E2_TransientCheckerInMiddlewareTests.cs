@@ -24,7 +24,6 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Npc\HybridStorageDriver.cs",
         };
 
         [Fact]

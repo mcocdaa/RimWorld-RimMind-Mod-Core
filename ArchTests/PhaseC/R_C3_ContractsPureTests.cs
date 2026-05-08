@@ -34,7 +34,6 @@ namespace RimMind.Core.ArchTests.PhaseC
 
         private static readonly HashSet<string> KnownImportViolations = new(StringComparer.OrdinalIgnoreCase)
         {
-            @"Npc\INpcManager.cs",
             @"Settings\ContextSettings.cs",
             @"Settings\RimMindCoreSettings.cs",
         };

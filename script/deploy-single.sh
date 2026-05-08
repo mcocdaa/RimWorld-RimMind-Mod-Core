@@ -58,16 +58,58 @@ if [[ ! -d $RIMWORLD_MODS ]]; then
 fi
 
 # 构建
-CSPROJ=$(find "$MOD_DIR/Source" -maxdepth 1 -name "*.csproj" 2>/dev/null | head -1)
-if [[ -n $CSPROJ ]]; then
-	echo "=== Building $MOD_NAME ==="
-	if ! dotnet build "$CSPROJ" -c Release --nologo -v quiet; then
-		echo "Error: Build failed"
+SOURCE_DIR="$MOD_DIR/Source"
+
+if [[ $MOD_NAME == "RimMind-Core" ]]; then
+	CONTRACTS_CSPROJ="$SOURCE_DIR/Contracts/RimMindCore.Contracts.csproj"
+	KERNEL_CSPROJ="$SOURCE_DIR/Kernel/RimMindCore.Kernel.csproj"
+	CORE_CSPROJ=$(find "$SOURCE_DIR" -maxdepth 1 -name "RimMindCore.csproj" 2>/dev/null | head -1)
+
+	if [[ ! -f $CONTRACTS_CSPROJ ]]; then
+		echo "Error: Contracts csproj not found: $CONTRACTS_CSPROJ"
 		exit 1
 	fi
-	echo "  Build successful"
+	if [[ ! -f $KERNEL_CSPROJ ]]; then
+		echo "Error: Kernel csproj not found: $KERNEL_CSPROJ"
+		exit 1
+	fi
+	if [[ -z $CORE_CSPROJ ]]; then
+		echo "Error: Core csproj not found in $SOURCE_DIR"
+		exit 1
+	fi
+
+	echo "=== Building $MOD_NAME (Contracts) ==="
+	if ! dotnet build "$CONTRACTS_CSPROJ" -c Release --nologo -v quiet; then
+		echo "Error: Contracts build failed"
+		exit 1
+	fi
+	echo "  Contracts build successful"
+
+	echo "=== Building $MOD_NAME (Kernel) ==="
+	if ! dotnet build "$KERNEL_CSPROJ" -c Release --nologo -v quiet; then
+		echo "Error: Kernel build failed"
+		exit 1
+	fi
+	echo "  Kernel build successful"
+
+	echo "=== Building $MOD_NAME (Core) ==="
+	if ! dotnet build "$CORE_CSPROJ" -c Release --nologo -v quiet; then
+		echo "Error: Core build failed"
+		exit 1
+	fi
+	echo "  Core build successful"
 else
-	echo "No .csproj found in Source/, skipping build"
+	CSPROJ=$(find "$SOURCE_DIR" -maxdepth 1 -name "*.csproj" 2>/dev/null | head -1)
+	if [[ -n $CSPROJ ]]; then
+		echo "=== Building $MOD_NAME ==="
+		if ! dotnet build "$CSPROJ" -c Release --nologo -v quiet; then
+			echo "Error: Build failed"
+			exit 1
+		fi
+		echo "  Build successful"
+	else
+		echo "No .csproj found in Source/, skipping build"
+	fi
 fi
 
 # 部署

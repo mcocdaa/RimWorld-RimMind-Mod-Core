@@ -9,7 +9,6 @@ using RimMind.Core.Runtime;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Pipeline;
-using RimMind.Kernel.Queue;
 
 namespace RimMind.Core.Pipeline.AI
 {
@@ -73,11 +72,7 @@ namespace RimMind.Core.Pipeline.AI
                     try { RimMindRuntime.Instance.Telemetry.Record(record); } catch { }
                 }, "Telemetry"),
                 new CircuitBreakerMiddleware(),
-                new CommonRetryMiddleware<AIRequestContext>(
-                    ex => RetryPolicy.IsTransient(ex.Message),
-                    3,
-                    TimeSpan.FromSeconds(1),
-                    "Retry"),
+                new RetryMiddleware(),
                 new ClientInvokeMiddleware(),
             };
 

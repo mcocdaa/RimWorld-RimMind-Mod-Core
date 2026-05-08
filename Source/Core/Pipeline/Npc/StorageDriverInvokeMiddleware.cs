@@ -17,8 +17,17 @@ namespace RimMind.Core.Pipeline.Npc
             var driver = StorageDriverFactory.GetDriver();
             var npcId = context.Request.NpcId;
             var query = context.Request.CurrentQuery ?? "";
-            var ctx = "";
-            context.Result = await driver.ChatAsync(npcId, query, ctx);
+            var gameStateInfo = "";
+
+            if (context.IsStreaming && driver.SupportsStreaming)
+            {
+                context.Result = await driver.ChatStreamingAsync(
+                    npcId, "", query, context.OnStreamChunk, gameStateInfo, context.Ct);
+            }
+            else
+            {
+                context.Result = await driver.ChatAsync(npcId, query, gameStateInfo);
+            }
         }
     }
 }

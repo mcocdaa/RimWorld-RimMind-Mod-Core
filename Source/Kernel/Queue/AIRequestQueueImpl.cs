@@ -19,17 +19,6 @@ namespace RimMind.Kernel.Queue
         private readonly ConcurrentQueue<(string msg, bool isWarning)> _pendingLogs
             = new ConcurrentQueue<(string, bool)>();
 
-        private enum FireResultKind { Complete, Retry }
-        private struct PendingFireResult
-        {
-            public FireResultKind Kind;
-            public TrackedRequest Tracked;
-            public AIResponse Response;
-        }
-
-        private readonly ConcurrentQueue<PendingFireResult> _pendingFireResults
-            = new ConcurrentQueue<PendingFireResult>();
-
         private readonly object _queueLock = new object();
         private readonly ConcurrentDictionary<string, List<TrackedRequest>> _modQueues
             = new ConcurrentDictionary<string, List<TrackedRequest>>();
@@ -39,6 +28,8 @@ namespace RimMind.Kernel.Queue
             = new ConcurrentDictionary<string, TrackedRequest>();
 
         private readonly CooldownTable _cooldowns = new CooldownTable();
+
+        private Func<AIRequest, IAIClient, AIResponse>? _executeViaPipeline;
 
         private int _lastQueueProcessTick;
         private int _nextTrackingId;
@@ -66,11 +57,15 @@ namespace RimMind.Kernel.Queue
             RimMindServiceLocator.Register<IAIRequestQueue>(this);
         }
 
+        internal void SetExecuteViaPipeline(Func<AIRequest, IAIClient, AIResponse> executeViaPipeline)
+        {
+            _executeViaPipeline = executeViaPipeline;
+        }
+
         public void Tick()
         {
             FlushBackgroundQueue?.Invoke();
             while (_pendingLogs.TryDequeue(out var log)) { LogHandler?.Invoke(log.msg, log.isWarning); }
-            while (_pendingFireResults.TryDequeue(out var fireResult)) { ProcessFireResult(fireResult); }
             while (_results.TryDequeue(out var item))
             {
                 try { item.callback?.Invoke(item.response); }
@@ -114,8 +109,7 @@ namespace RimMind.Kernel.Queue
                 {
                     TrackingId = trackingId, Request = request, Callback = callback, Client = client,
                     IsLocalEndpointSnapshot = client.IsLocalEndpoint, State = AIRequestState.Queued,
-                    EnqueuedAtTick = CurrentTick, AttemptCount = 1,
-                    MaxAttempts = request.MaxRetryCount.HasValue ? request.MaxRetryCount.Value + 1 : (RimMindModAccessor.Settings?.maxRetryCount ?? 2) + 1,
+                    EnqueuedAtTick = CurrentTick, AttemptCount = 1, MaxAttempts = 1,
                 };
                 int insertIdx = queue.FindIndex(t => t.Request.Priority > request.Priority);
                 if (insertIdx >= 0) queue.Insert(insertIdx, tracked); else queue.Add(tracked);
@@ -206,39 +200,32 @@ namespace RimMind.Kernel.Queue
             Task.Run(async () =>
             {
                 AIResponse response;
-                try { ct.ThrowIfCancellationRequested(); response = await tracked.Client.SendAsync(tracked.Request); }
+                try
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (_executeViaPipeline != null)
+                    {
+                        response = _executeViaPipeline(tracked.Request, tracked.Client);
+                    }
+                    else
+                    {
+                        response = await tracked.Client.SendAsync(tracked.Request);
+                    }
+                }
                 catch (OperationCanceledException) { response = AIResponse.Cancelled(tracked.Request.RequestId, "Request cancelled"); }
-                catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] SendAsync threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Failure(tracked.Request.RequestId, ex.Message); }
+                catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Execute threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Failure(tracked.Request.RequestId, ex.Message); }
                 long queueWaitMs = (tracked.StartedProcessingAtTick > 0 && tracked.EnqueuedAtTick > 0) ? (tracked.StartedProcessingAtTick - tracked.EnqueuedAtTick) * 16L : 0;
-                response.AttemptCount = tracked.AttemptCount; response.QueueWaitMs = queueWaitMs; response.Priority = tracked.Request.Priority;
-                bool shouldRetry = !response.Success && tracked.AttemptCount < tracked.MaxAttempts && RetryPolicy.IsTransient(response.Error);
-                _pendingFireResults.Enqueue(new PendingFireResult { Kind = shouldRetry ? FireResultKind.Retry : FireResultKind.Complete, Tracked = tracked, Response = response });
+                response.QueueWaitMs = queueWaitMs; response.Priority = tracked.Request.Priority;
+                if (!response.Success && QuotaExceededException.IsQuotaError(response.Error))
+                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 quota exceeded for request {tracked.Request.RequestId}. Please top up your Joules balance or switch to another provider.", isWarning: true);
+                lock (_queueLock)
+                {
+                    _activeRequests.TryRemove(tracked.TrackingId, out _);
+                    _requestIdToActive.TryRemove(tracked.Request.RequestId, out _);
+                    if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
+                }
+                _results.Enqueue((response, tracked.Callback));
             }, ct);
-        }
-
-        private void ProcessFireResult(PendingFireResult result)
-        {
-            lock (_queueLock)
-            {
-                var tracked = result.Tracked;
-                _activeRequests.TryRemove(tracked.TrackingId, out _); _requestIdToActive.TryRemove(tracked.Request.RequestId, out _);
-                if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
-                if (result.Kind == FireResultKind.Retry)
-                {
-                    tracked.AttemptCount++; tracked.State = AIRequestState.Queued; tracked.StartedProcessingAtTick = 0;
-                    string modId = tracked.Request.ModId;
-                    if (!_modQueues.TryGetValue(modId, out var queue)) { queue = new List<TrackedRequest>(); _modQueues[modId] = queue; }
-                    int insertIdx = queue.FindIndex(t => t.Request.Priority > tracked.Request.Priority);
-                    if (insertIdx >= 0) queue.Insert(insertIdx, tracked); else queue.Add(tracked);
-                    if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Retrying request {tracked.Request.RequestId} (attempt {tracked.AttemptCount}/{tracked.MaxAttempts})");
-                }
-                else
-                {
-                    if (!result.Response.Success && QuotaExceededException.IsQuotaError(result.Response.Error))
-                        EnqueueLog($"[RimMind-Core] Player2 quota exceeded for request {tracked.Request.RequestId}. Please top up your Joules balance or switch to another provider.", true);
-                    _results.Enqueue((result.Response, tracked.Callback));
-                }
-            }
         }
 
         private void CheckActiveRequestTimeouts()
@@ -254,7 +241,7 @@ namespace RimMind.Kernel.Queue
                     _activeRequests.TryRemove(tracked.TrackingId, out _); _requestIdToActive.TryRemove(tracked.Request.RequestId, out _);
                     if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
                     var response = AIResponse.Failure(tracked.Request.RequestId, $"Request timed out after {timeoutMs}ms");
-                    response.AttemptCount = tracked.AttemptCount; response.Priority = tracked.Request.Priority;
+                    response.Priority = tracked.Request.Priority;
                     _results.Enqueue((response, tracked.Callback));
                     if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Request {tracked.Request.RequestId} timed out after {timeoutTicks} ticks");
                 }

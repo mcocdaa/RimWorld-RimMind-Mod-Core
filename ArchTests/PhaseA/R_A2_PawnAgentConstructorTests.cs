@@ -1,7 +1,7 @@
-﻿﻿﻿﻿﻿﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using FluentAssertions;
-using RimMind.Core.Agent;
-using RimMind.Kernel.Bus;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseA
@@ -12,13 +12,37 @@ namespace RimMind.Core.ArchTests.PhaseA
         [Trait("Phase", "A")]
         public void R_A2_PawnAgent_Constructor_ShouldInject_IEventBus()
         {
-            var ctorParams = typeof(PawnAgent).GetConstructors()
-                .SelectMany(c => c.GetParameters())
-                .ToList();
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
 
-            ctorParams.Should().ContainSingle(
-                p => p.ParameterType == typeof(IEventBus),
-                "PawnAgent constructor must accept IEventBus for dependency injection");
+            var pawnAgentFile = Directory.GetFiles(sourceDir, "PawnAgent.cs", SearchOption.AllDirectories)
+                .FirstOrDefault();
+
+            pawnAgentFile.Should().NotBeNull("PawnAgent.cs must exist in the source tree");
+
+            var source = File.ReadAllText(pawnAgentFile!);
+
+            var constructorPattern = @"public\s+PawnAgent\s*\([^)]*IEventBus[^)]*\)";
+            Regex.IsMatch(source, constructorPattern).Should().BeTrue(
+                "R-A2: PawnAgent constructor must accept IEventBus parameter for dependency injection. " +
+                "Direct dependency on RimMindAPI.GetEventBus() breaks the dependency inversion principle — " +
+                "the agent should receive its event bus through constructor injection, not reach for a global static.");
+        }
+
+        private static string FindSourceDirectory()
+        {
+            var dir = Path.GetDirectoryName(typeof(PawnAgentConstructorTests).Assembly.Location);
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir, "RimMind-Core", "Source");
+                if (Directory.Exists(candidate)) return candidate;
+
+                candidate = Path.Combine(dir, "Source");
+                if (Directory.Exists(candidate)) return candidate;
+
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return "";
         }
     }
 }

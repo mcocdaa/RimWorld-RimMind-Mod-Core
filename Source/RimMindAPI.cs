@@ -142,6 +142,7 @@ namespace RimMind.Core
             if (tools != null && tools.Count > 0) aiRequest.Tools = tools;
 
             var ctx = new AIRequestContext { Request = aiRequest, Client = GetClient(), Snapshot = snapshot };
+            aiRequest.TraceId = ctx.TraceId;
             RimMindRuntime.Instance.AIRequestPipeline.ExecuteAsync(ctx).ContinueWith(_ =>
             {
                 onComplete?.Invoke(ctx.Response ?? AIResponse.Failure(aiRequest.RequestId, "Pipeline failed"));

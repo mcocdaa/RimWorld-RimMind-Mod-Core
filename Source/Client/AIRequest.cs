@@ -29,6 +29,8 @@ namespace RimMind.Core.Client
 
         public int? MaxRetryCount { get; set; } = null;
 
+        public string? TraceId { get; set; }
+
         public void Reset()
         {
             SystemPrompt = string.Empty;
@@ -44,6 +46,7 @@ namespace RimMind.Core.Client
             Tools = null;
             Priority = AIRequestPriority.Normal;
             MaxRetryCount = null;
+            TraceId = null;
         }
     }
 

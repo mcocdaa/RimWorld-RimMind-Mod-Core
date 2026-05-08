@@ -37,11 +37,7 @@ namespace RimMind.Core.Pipeline.Npc
                     ctx.Items["telemetry.scenario"] = ctx.Request.Scenario;
                     ctx.Items["telemetry.success"] = ctx.Result?.Error == null;
                 }, "Telemetry"),
-                new CommonRetryMiddleware<NpcChatContext>(
-                    ex => TransientExceptionChecker.IsTransient(ex),
-                    3,
-                    TimeSpan.FromSeconds(1),
-                    "Retry"),
+                new NpcChatRetryMiddleware(),
                 new StorageDriverInvokeMiddleware(),
             };
 

@@ -23,6 +23,9 @@ namespace RimMind.Core.Pipeline.AI
 
                 await next(context).ConfigureAwait(false);
 
+                if (context.Response != null)
+                    context.Response.AttemptCount = attempt + 1;
+
                 if (context.Error == null)
                     return;
 

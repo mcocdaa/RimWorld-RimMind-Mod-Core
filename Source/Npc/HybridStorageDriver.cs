@@ -1,5 +1,5 @@
 using RimMind.Contracts.Npc;
-﻿﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,8 +26,6 @@ namespace RimMind.Core.Npc
             _local = new LocalStorageDriver(historyManager);
             _remote = new Player2StorageDriver(client, RimMindServiceLocator.Get<INpcManager>());
         }
-
-        private static bool IsTransientException(Exception ex) => TransientExceptionChecker.IsTransient(ex);
 
         public async Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
         {
@@ -61,7 +59,7 @@ namespace RimMind.Core.Npc
             {
                 return await _remote.ChatAsync(snapshot, ct);
             }
-            catch (Exception ex) when (IsTransientException(ex))
+            catch (Exception ex)
             {
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {ex.Message}", isWarning: true);
                 return await _local.ChatAsync(snapshot, ct);
@@ -74,7 +72,7 @@ namespace RimMind.Core.Npc
             {
                 return await _remote.ChatAsync(npcId, sender, message, gameStateInfo, ct);
             }
-            catch (Exception ex) when (IsTransientException(ex))
+            catch (Exception ex)
             {
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {ex.Message}", isWarning: true);
                 return await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
@@ -87,7 +85,7 @@ namespace RimMind.Core.Npc
             {
                 return await _remote.ChatStreamingAsync(npcId, sender, message, onChunk, gameStateInfo, ct);
             }
-            catch (Exception ex) when (IsTransientException(ex))
+            catch (Exception ex)
             {
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {ex.Message}", isWarning: true);
                 return await _local.ChatStreamingAsync(npcId, sender, message, onChunk, gameStateInfo, ct);

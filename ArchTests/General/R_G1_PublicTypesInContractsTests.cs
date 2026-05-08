@@ -1,42 +1,67 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using FluentAssertions;
-using NetArchTest.Rules;
-using RimMind.Core.ArchTests;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.General
 {
     public class PublicTypesInContractsTests
     {
+        private static readonly string[] ValidNamespacePrefixes = new[]
+        {
+            "RimMind.Core",
+            "RimMind.Contracts",
+            "RimMind.Kernel",
+            "RimMind.Adapters",
+        };
+
+        private static readonly HashSet<string> WhitelistFiles = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "RimMindCoreMod.cs",
+            "VerseStubs.cs",
+        };
+
         [Fact]
         [Trait("Phase", "General")]
-        public void R_G1_RimMindPublicTypes_ShouldResideIn_ValidNamespaces()
+        public void R_G1_PublicTypes_ShouldResideIn_ValidNamespaces()
         {
-            var validPrefixes = new[]
+            var sourceDir = ArchTestExtensions.FindSourceDirectory();
+            sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
+
+            var violatingFiles = new List<string>();
+            var publicClassPattern = @"(?:public|internal)\s+(?!abstract\s+)(?:sealed\s+)?(?:class|record|struct)\s+(\w+)";
+            var namespacePattern = @"namespace\s+([\w.]+)";
+
+            foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
             {
-                "RimMind.Core",
-                "RimMind.Contracts"
-            };
+                var fileName = Path.GetFileName(file);
+                if (WhitelistFiles.Contains(fileName)) continue;
 
-            var result = Types.InAssembly(typeof(PublicTypesInContractsTests).Assembly)
-                .That()
-                .ResideInNamespaceStartingWith("RimMind")
-                .And()
-                .ArePublic()
-                .And()
-                .AreNotInterfaces()
-                .Should()
-                .ResideInNamespaceStartingWith("RimMind.Core")
-                .Or()
-                .ResideInNamespaceStartingWith("RimMind.Contracts")
-                .Or()
-                .ResideInNamespaceStartingWith("RimMind.Kernel")
-                .Or()
-                .ResideInNamespaceStartingWith("RimMind.Adapters")
-                .GetResult();
+                var source = File.ReadAllText(file);
+                if (!Regex.IsMatch(source, publicClassPattern)) continue;
 
-            result.IsSuccessful.Should().BeTrue(
-                $"All RimMind public types must reside in RimMind.Core.*, RimMind.Contracts.*, RimMind.Kernel.*, or RimMind.Adapters.* namespaces. Violating types:\n  {result.FormatFailingTypes()}");
+                var nsMatch = Regex.Match(source, namespacePattern);
+                if (!nsMatch.Success) continue;
+
+                var ns = nsMatch.Groups[1].Value;
+                var isValid = ValidNamespacePrefixes.Any(prefix => ns.StartsWith(prefix + ".") || ns == prefix);
+
+                if (!isValid)
+                {
+                    var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    violatingFiles.Add($"{relativePath} (namespace: {ns})");
+                }
+            }
+
+            violatingFiles.Should().BeEmpty(
+                "R-G1: All public types must reside in RimMind.Core.*, RimMind.Contracts.*, RimMind.Kernel.*, or RimMind.Adapters.* namespaces. " +
+                "Internal implementation namespaces should not leak public types. " +
+                $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
     }
 }

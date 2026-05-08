@@ -417,22 +417,32 @@ namespace RimMind.Kernel.Context
 {
     public interface IStorageDriver
     {
+        bool IsRemote { get; }
+        bool SupportsStreaming { get; }
+        bool SupportsTts { get; }
+        bool SupportsCommands { get; }
+        bool SupportsStructuredOutput { get; }
         bool IsNpcAlive(string npcId);
         Task<object> SpawnNpcAsync(object profile);
         Task<NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
         Task<NpcChatResult> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default);
-        Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default);
+        Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
     }
 
     internal sealed class StubStorageDriver : IStorageDriver
     {
+        public bool IsRemote => false;
+        public bool SupportsStreaming => false;
+        public bool SupportsTts => false;
+        public bool SupportsCommands => false;
+        public bool SupportsStructuredOutput => false;
         public bool IsNpcAlive(string npcId) => false;
         public Task<object> SpawnNpcAsync(object profile) => Task.FromResult(new object());
         public Task<NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
             => Task.FromResult(new NpcChatResult());
         public Task<NpcChatResult> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default)
             => Task.FromResult(new NpcChatResult());
-        public Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, CancellationToken ct = default)
+        public Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
             => Task.FromResult(new NpcChatResult());
     }
 

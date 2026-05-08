@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Pipeline.AI;
 using RimMind.Contracts.Client;
+using RimMind.Core.Settings;
 
 namespace RimMind.Core.Pipeline.AI
 {
@@ -12,8 +13,11 @@ namespace RimMind.Core.Pipeline.AI
         public string Name => nameof(CircuitBreakerMiddleware);
         public int Order => 5;
 
-        private const int FailureThreshold = 5;
-        private static readonly TimeSpan OpenDuration = TimeSpan.FromSeconds(60);
+        private int FailureThreshold => RimMindCoreMod.Settings?.circuitBreakerFailureThreshold > 0
+            ? RimMindCoreMod.Settings.circuitBreakerFailureThreshold : 5;
+        private TimeSpan OpenDuration => TimeSpan.FromSeconds(
+            RimMindCoreMod.Settings?.circuitBreakerOpenDurationSec > 0
+            ? RimMindCoreMod.Settings.circuitBreakerOpenDurationSec : 60);
 
         private enum CircuitState { Closed, Open, HalfOpen }
 
