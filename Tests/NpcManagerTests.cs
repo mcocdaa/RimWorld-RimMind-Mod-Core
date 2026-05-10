@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts.Internal;
-using RimMind.Core.Registry;
+using RimMind.Core.Runtime;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using RimMind.Adapters.Verse;

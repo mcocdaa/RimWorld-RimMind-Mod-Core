@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Core.Runtime;
 using RimMind.Kernel.Context;
@@ -61,6 +62,8 @@ namespace RimMind.Tests.Pipeline.Npc
         [Fact]
         public async Task ShortCircuit_WhenShutdown()
         {
+            RimMindServiceLocator.Reset();
+            RimMindRuntime.ResetInstance();
             RimMindRuntime.Initialize();
             try
             {

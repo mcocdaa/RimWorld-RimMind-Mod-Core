@@ -129,7 +129,7 @@ namespace RimMind.Core.ArchTests.PhaseE
             }
         }
 
-        private static readonly string KnownDefinitionLocation = @"Core\Registry\TransientExceptionChecker.cs";
+        private static readonly string KnownDefinitionLocation = @"Core\Runtime\TransientExceptionChecker.cs";
 
         [Fact]
         [Trait("Phase", "E")]

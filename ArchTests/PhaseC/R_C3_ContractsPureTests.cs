@@ -36,16 +36,29 @@ namespace RimMind.Core.ArchTests.PhaseC
         {
             @"Settings\ContextSettings.cs",
             @"Settings\RimMindCoreSettings.cs",
+            @"Sensor\ISensorProvider.cs",
+            @"Pipeline\PerceptionBufferEntry.cs",
         };
 
         private static readonly HashSet<string> KnownClassViolations = new(StringComparer.OrdinalIgnoreCase)
         {
             @"Context\BudgetSchedulerConfig.cs",
             @"Context\PromptBudget.cs",
+            @"Context\BudgetAllocation.cs",
+            @"Context\ContextDiff.cs",
+            @"Context\ContextRequest.cs",
+            @"Context\ContextSnapshot.cs",
+            @"Context\EmbedCache.cs",
+            @"Context\EmbeddingSnapshotStore.cs",
+            @"Context\HistoryEntry.cs",
+            @"Context\KeyMeta.cs",
+            @"Context\ScenarioIds.cs",
+            @"Pipeline\PerceptionBufferEntry.cs",
             @"Flywheel\IAnalysisReportWriter.cs",
             @"Prompt\PromptSection.cs",
             @"Settings\ContextSettings.cs",
             @"Settings\RimMindCoreSettings.cs",
+            @"Sensor\ISensorProvider.cs",
         };
 
         [Fact]

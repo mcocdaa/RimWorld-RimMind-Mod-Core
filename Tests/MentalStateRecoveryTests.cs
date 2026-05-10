@@ -7,7 +7,7 @@ using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Adapters.Client;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Registry;
+using RimMind.Core.Runtime;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using RimMind.Adapters.Verse;

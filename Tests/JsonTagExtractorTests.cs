@@ -1,5 +1,5 @@
 using System;
-using RimMind.Core.Registry;
+using RimMind.Core.Runtime;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Json;
 using Xunit;

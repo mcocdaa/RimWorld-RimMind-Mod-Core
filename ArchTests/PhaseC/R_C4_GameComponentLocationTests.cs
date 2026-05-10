@@ -15,6 +15,8 @@ namespace RimMind.Core.ArchTests.PhaseC
             "WorldComponent",
             "MapComponent",
             "ThingComp",
+            "JobDriver",
+            "ThinkNode",
         };
 
         private static readonly HashSet<string> AllowedOutsideAdapters = new()
@@ -45,7 +47,6 @@ namespace RimMind.Core.ArchTests.PhaseC
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                 if (relativePath.StartsWith("Adapters" + Path.DirectorySeparatorChar)) continue;
-
                 var source = File.ReadAllText(file);
 
                 foreach (var baseClass in ComponentBaseClasses)

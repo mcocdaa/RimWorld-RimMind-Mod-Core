@@ -10,7 +10,7 @@ using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Flywheel;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Registry;
+using RimMind.Core.Runtime;
 using RimMind.Contracts.Internal;
 using RimMind.Adapters.Verse;
 using RimMind.Contracts.Settings;

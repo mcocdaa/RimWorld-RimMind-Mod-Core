@@ -11,7 +11,7 @@ using RimMind.Core.Runtime;
 using RimMind.Kernel.Registry;
 using RimMind.Contracts.Context;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Registry;
+using RimMind.Core.Runtime;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Settings;
 using Verse;

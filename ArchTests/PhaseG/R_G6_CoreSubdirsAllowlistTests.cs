@@ -11,7 +11,6 @@ namespace RimMind.Core.ArchTests.PhaseG
         {
             "Agent",
             "Perception",
-            "Registry",
             "Runtime",
             "Sensor",
         };
