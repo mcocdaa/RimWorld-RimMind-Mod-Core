@@ -1,5 +1,4 @@
 using RimMind.Contracts.Npc;
-using RimMind.Core.Internal;
 using RimMind.Core.Sensor;
 using System;
 using System.Collections.Concurrent;
@@ -8,31 +7,34 @@ using System.Linq;
 using RimMind.Contracts;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.AI;
-using RimMind.Core.Pipeline.Npc;
-using RimMind.Core.Pipeline.Context;
-using RimMind.Core.Pipeline.Bus;
+using RimMind.Kernel.Pipeline.AI;
+using RimMind.Kernel.Pipeline.Npc;
+using RimMind.Kernel.Pipeline.Context;
+using RimMind.Kernel.Pipeline.Bus;
 using RimMind.Core.Agent;
-using RimMind.Core.UI;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Extensions;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Registry;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Adapters.UI;
 using RimMind.Contracts.UI;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Pipeline;
 using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
-using RimMind.Core.Client.Player2;
+using RimMind.Adapters.Client.Player2;
+using RimMind.Core.Registry;
 using Verse;
+
+using RimMind.Contracts.Runtime;
+using RimMind.Contracts.Flywheel;
 
 namespace RimMind.Core.Runtime
 {
-    internal sealed class RimMindRuntime
+    internal sealed class RimMindRuntime : IRimMindRuntime
     {
         private static RimMindRuntime? _instance;
         private static readonly object _initLock = new object();
@@ -62,6 +64,8 @@ namespace RimMind.Core.Runtime
             = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners
             = new ConcurrentDictionary<string, IParameterTuner>();
+        private readonly ConcurrentDictionary<string, IKernelParameterTuner> _kernelParameterTuners
+            = new ConcurrentDictionary<string, IKernelParameterTuner>();
         private readonly ConcurrentDictionary<string, ISensorProvider> _sensorProviders
             = new ConcurrentDictionary<string, ISensorProvider>();
 
@@ -84,7 +88,7 @@ namespace RimMind.Core.Runtime
             HistoryManager = new HistoryManager();
             ContextEngine = new ContextEngine(HistoryManager);
             AgentBus = new AgentBusImpl();
-            EventBus = new EventBusAdapter(AgentBus);
+            EventBus = new SimpleEventBusAdapter(AgentBus);
             AudioPlayer = new NullAudioPlayer();
             Telemetry = new FlywheelTelemetryCollector();
             QueueImpl = new AIRequestQueueImpl();
@@ -120,6 +124,7 @@ namespace RimMind.Core.Runtime
             });
 
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
+            RimMindServiceLocator.Register<IRimMindRuntime>(this);
         }
 
         public static void Initialize()
@@ -147,7 +152,7 @@ namespace RimMind.Core.Runtime
             _sensorProviders.Clear();
             _registries.Clear();
             AgentBus = new AgentBusImpl();
-            EventBus = new EventBusAdapter(AgentBus);
+            EventBus = new SimpleEventBusAdapter(AgentBus);
             ClientManager = new ClientManager();
             QueueImpl = new AIRequestQueueImpl();
             AIRequestPipeline = AIRequestPipelineFactory.Build(
@@ -226,6 +231,12 @@ namespace RimMind.Core.Runtime
 
         public void RegisterParameterTuner(IParameterTuner tuner)
             => _parameterTuners[tuner.TunerId] = tuner;
+
+        void IRimMindRuntime.RegisterParameterTuner(IKernelParameterTuner tuner)
+            => _kernelParameterTuners[tuner.TunerId] = tuner;
+
+        IReadOnlyList<IKernelParameterTuner> IRimMindRuntime.ParameterTunersList
+            => _kernelParameterTuners.Values.ToList();
 
         public void RegisterSensorProvider(ISensorProvider provider)
             => _sensorProviders[provider.SensorId] = provider;
@@ -332,5 +343,21 @@ namespace RimMind.Core.Runtime
             public IClientManager ClientManager = null!;
             public IAudioPlayer AudioPlayer = null!;
         }
+    }
+
+    internal sealed class SimpleEventBusAdapter : IEventBus
+    {
+        private readonly IAgentBus _bus;
+        public SimpleEventBusAdapter(IAgentBus bus) => _bus = bus;
+        public void Subscribe<T>(string key, Action<T> handler) where T : Contracts.AgentBusEvent => _bus.Subscribe(key, handler);
+        public string Subscribe<T>(Action<T> handler) where T : Contracts.AgentBusEvent => _bus.Subscribe(handler);
+        public void Unsubscribe<T>(string key) where T : Contracts.AgentBusEvent => _bus.Unsubscribe<T>(key);
+        public void Unsubscribe<T>(Action<T> handler) where T : Contracts.AgentBusEvent => _bus.Unsubscribe(handler);
+        public void Publish<T>(T evt) where T : Contracts.AgentBusEvent => _bus.Publish(evt);
+        public void PublishFromBackground<T>(T evt) where T : Contracts.AgentBusEvent => _bus.PublishFromBackground(evt);
+        public void FlushBackgroundQueue() => _bus.FlushBackgroundQueue();
+        public void ClearAllSubscribers() => _bus.ClearAllSubscribers();
+        public int GetHandlerCount() => 0;
+        public int GetBackgroundQueueCount() => 0;
     }
 }

@@ -1,9 +1,10 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Npc;
-using RimMind.Core.Runtime;
+using RimMind.Kernel.Pipeline.Npc;
+using RimMind.Kernel.Context;
+using RimMind.Contracts.Internal;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     internal sealed class SnapshotBuildMiddleware : IMiddleware<NpcChatContext>
     {
@@ -13,7 +14,8 @@ namespace RimMind.Core.Pipeline.Npc
 
         public Task InvokeAsync(NpcChatContext context, MiddlewareDelegate<NpcChatContext> next)
         {
-            var snapshot = RimMindRuntime.Instance.ContextEngine.BuildSnapshot(context.Request);
+            var engine = RimMindServiceLocator.Get<IContextEngine>();
+            var snapshot = engine.BuildSnapshot(context.Request);
             context.Snapshot = snapshot;
             return next(context);
         }

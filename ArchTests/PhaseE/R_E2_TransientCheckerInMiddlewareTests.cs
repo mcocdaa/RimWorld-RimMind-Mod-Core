@@ -16,10 +16,10 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Core\Pipeline\AI\RetryMiddleware.cs",
-            @"Core\Pipeline\Common\CommonRetryMiddleware.cs",
-            @"Core\Pipeline\Npc\NpcChatRetryMiddleware.cs",
-            @"Core\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Kernel\Pipeline\AI\RetryMiddleware.cs",
+            @"Kernel\Pipeline\Common\CommonRetryMiddleware.cs",
+            @"Kernel\Pipeline\Npc\NpcChatRetryMiddleware.cs",
+            @"Kernel\Pipeline\Npc\NpcChatPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -129,7 +129,7 @@ namespace RimMind.Core.ArchTests.PhaseE
             }
         }
 
-        private static readonly string KnownDefinitionLocation = @"Npc\TransientExceptionChecker.cs";
+        private static readonly string KnownDefinitionLocation = @"Core\Registry\TransientExceptionChecker.cs";
 
         [Fact]
         [Trait("Phase", "E")]

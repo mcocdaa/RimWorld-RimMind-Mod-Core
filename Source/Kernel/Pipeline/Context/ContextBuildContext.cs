@@ -1,7 +1,7 @@
-using RimMind.Kernel.Context;
+﻿using RimMind.Kernel.Context;
 using RimMind.Contracts.Pipeline;
 
-namespace RimMind.Core.Pipeline.Context
+namespace RimMind.Kernel.Pipeline.Context
 {
     public sealed class ContextBuildContext : PipelineContextBase
     {

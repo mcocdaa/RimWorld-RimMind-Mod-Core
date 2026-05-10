@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Context;
 
-namespace RimMind.Core.Pipeline.AI
+namespace RimMind.Kernel.Pipeline.AI
 {
     public sealed class AIRequestContext : PipelineContextBase
     {

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimMind.Contracts.Context;
@@ -11,7 +11,7 @@ using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core.Internal
+namespace RimMind.Core
 {
     /// <summary>
     /// 构建游戏状态上下文文本，供各模块组装 AI Prompt。

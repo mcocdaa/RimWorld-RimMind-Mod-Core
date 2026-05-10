@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Comps;
+using RimMind.Adapters.Verse;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using Verse;

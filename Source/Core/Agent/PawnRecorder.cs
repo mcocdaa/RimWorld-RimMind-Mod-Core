@@ -1,8 +1,8 @@
-﻿﻿﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using Verse;
 
 namespace RimMind.Core.Agent

@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Settings;
 using RimMind.Core;
-using RimMind.Core.Client.OpenAI;
-using RimMind.Core.Client.Player2;
+using RimMind.Adapters.Client.OpenAI;
+using RimMind.Adapters.Client.Player2;
 using RimMind.Contracts.Internal;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Contracts.Flywheel;
 using UnityEngine;
 using Verse;
@@ -17,9 +18,9 @@ using Verse;
 namespace RimMind.Adapters.UI
 {
     /// <summary>
-    /// 多分页设置界面。
-    /// 使用 ButtonText 式导航（不占用 mod 标题区域）。
-    /// 子 mod 通过 RimMindAPI.Extensions&lt;ISettingsTab&gt;().Register() 注册额外分页。
+    /// 多分页设置界面�?
+    /// 使用 ButtonText 式导航（不占�?mod 标题区域）�?
+    /// �?mod 通过 RimMindAPI.Extensions&lt;ISettingsTab&gt;().Register() 注册额外分页�?
     /// </summary>
     public static class RimMindCoreSettingsUI
     {
@@ -174,7 +175,7 @@ namespace RimMind.Adapters.UI
 
             listing.Gap(6f);
 
-            // ── API 配置（OpenAI 兼容模式） ──────────────────────────────────
+            // ── API 配置（OpenAI 兼容模式�?──────────────────────────────────
             if (s.provider == AIProvider.OpenAI)
             {
                 listing.Label("RimMind.Core.Settings.ApiKey".Translate());
@@ -192,7 +193,7 @@ namespace RimMind.Adapters.UI
                     else
                     {
                         GUI.enabled = false;
-                        Widgets.TextField(field, new string('•', s.apiKey?.Length ?? 0));
+                        Widgets.TextField(field, new string('*', s.apiKey?.Length ?? 0));
                         GUI.enabled = true;
                     }
                     if (Widgets.ButtonText(toggle, _showApiKey ? "RimMind.Core.Settings.Hide".Translate() : "RimMind.Core.Settings.Show".Translate()))
@@ -237,7 +238,7 @@ namespace RimMind.Adapters.UI
                     else
                     {
                         GUI.enabled = false;
-                        Widgets.TextField(field, new string('•', s.apiKey?.Length ?? 0));
+                        Widgets.TextField(field, new string('*', s.apiKey?.Length ?? 0));
                         GUI.enabled = true;
                     }
                     if (Widgets.ButtonText(toggle, _showApiKey ? "RimMind.Core.Settings.Hide".Translate() : "RimMind.Core.Settings.Show".Translate()))
@@ -389,7 +390,7 @@ namespace RimMind.Adapters.UI
         }
 
         /// <summary>
-        /// 使用 OpenAIClient / Player2Client 发送测试请求，走正常 AI 请求管道。
+        /// 使用 OpenAIClient / Player2Client 发送测试请求，走正�?AI 请求管道�?
         /// </summary>
         private static void RunConnectionTest(RimMindCoreSettings s)
         {
@@ -428,7 +429,7 @@ namespace RimMind.Adapters.UI
                             var tok = response.TokensUsed;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus = $"✓ {content} ({tok} tok)";
+                                _testStatus = $"�?{content} ({tok} tok)";
                                 _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
                             });
                         }
@@ -437,7 +438,7 @@ namespace RimMind.Adapters.UI
                             var error = response.Error;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus = $"✗ {error}";
+                                _testStatus = $"�?{error}";
                                 _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                             });
                         }
@@ -447,7 +448,7 @@ namespace RimMind.Adapters.UI
                         var msg = ex.Message;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = $"✗ {msg}";
+                            _testStatus = $"�?{msg}";
                             _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                         });
                     }
@@ -495,7 +496,7 @@ namespace RimMind.Adapters.UI
                         var tok = response.TokensUsed;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = $"✓ {content} ({tok} tok)";
+                            _testStatus = $"�?{content} ({tok} tok)";
                             _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
                         });
                     }
@@ -504,7 +505,7 @@ namespace RimMind.Adapters.UI
                         var error = response.Error;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = $"✗ {error}";
+                            _testStatus = $"�?{error}";
                             _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                         });
                     }
@@ -514,7 +515,7 @@ namespace RimMind.Adapters.UI
                     var msg = ex.Message;
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        _testStatus = $"✗ {msg}";
+                        _testStatus = $"�?{msg}";
                         _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                     });
                 }
@@ -523,7 +524,7 @@ namespace RimMind.Adapters.UI
 
 
 
-        // ── 队列状态分页 ──────────────────────────────────────────────────────
+        // ── 队列状态分�?──────────────────────────────────────────────────────
 
         private static void DrawQueueTab(Rect inRect)
         {
@@ -557,7 +558,7 @@ namespace RimMind.Adapters.UI
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
 
-            // ── 总体状态 ──────────────────────────────────────────────────────
+            // ── 总体状�?──────────────────────────────────────────────────────
             SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.Settings.Queue.Status".Translate());
 
             string pauseLabel = queue.IsPaused
@@ -596,7 +597,7 @@ namespace RimMind.Adapters.UI
             if (Widgets.ButtonText(clearCdBtn, "RimMind.Core.Settings.Queue.ClearCooldowns".Translate()))
                 queue.ClearAllCooldowns();
 
-            // ── 各 Mod 队列 ──────────────────────────────────────────────────
+            // ── �?Mod 队列 ──────────────────────────────────────────────────
             SettingsUIHelper.DrawSectionHeader(listing, "RimMind.Core.Settings.Queue.PerMod".Translate());
 
             if (allModIds.Count == 0)
@@ -715,13 +716,13 @@ namespace RimMind.Adapters.UI
             Widgets.EndScrollView();
         }
 
-        // ── 上下文过滤分页 ────────────────────────────────────────────────────
+        // ── 上下文过滤分�?────────────────────────────────────────────────────
 
         private static void DrawContextTab(Rect inRect)
         {
             var ctx = RimMindCoreMod.Settings.Context;
 
-            // 估算内容高度（用 ScrollView）
+            // 估算内容高度（用 ScrollView�?
             Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 980f);
             Widgets.BeginScrollView(inRect, ref _contextScroll, viewRect);
 

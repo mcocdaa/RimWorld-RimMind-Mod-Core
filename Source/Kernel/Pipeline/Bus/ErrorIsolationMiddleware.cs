@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Bus;
+using RimMind.Kernel.Pipeline.Bus;
 
-namespace RimMind.Core.Pipeline.Bus
+namespace RimMind.Kernel.Pipeline.Bus
 {
     internal sealed class ErrorIsolationMiddleware<T> : IMiddleware<BusPublishContext<T>>
         where T : AgentBusEvent

@@ -4,12 +4,12 @@ using System.Linq;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
 using RimMind.Contracts.Npc;
-using RimMind.Core.Npc;
-using RimMind.Core.Pipeline.Common;
-using RimMind.Core.Runtime;
+using RimMind.Kernel.Pipeline.Common;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Pipeline;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     public static class NpcChatPipelineFactory
     {
@@ -20,7 +20,7 @@ namespace RimMind.Core.Pipeline.Npc
             {
                 new CommonShortCircuitMiddleware<NpcChatContext>(ctx =>
                 {
-                    if (RimMindRuntime.Instance.IsShutdown)
+                    if (RimMindServiceLocator.Get<IRimMindRuntime>()?.IsShutdown == true)
                     {
                         ctx.Result = new NpcChatResult { Error = "RimMind is shut down." };
                         return "shutdown";

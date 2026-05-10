@@ -1,11 +1,13 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.AI;
+using RimMind.Kernel.Pipeline.AI;
 using RimMind.Contracts.Client;
-using RimMind.Core.Runtime;
-using RimMind.Core.Settings;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
+using RimMind.Kernel.Logging;
+using RimMind.Core;
 
-namespace RimMind.Core.Pipeline.AI
+namespace RimMind.Kernel.Pipeline.AI
 {
     public sealed class ShortCircuitMiddleware : IMiddleware<AIRequestContext>
     {
@@ -15,7 +17,7 @@ namespace RimMind.Core.Pipeline.AI
 
         public Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {
-            if (RimMindRuntime.Instance.IsShutdown)
+            if (RimMindServiceLocator.Get<IRimMindRuntime>()?.IsShutdown == true)
             {
                 context.Response = AIResponse.Failure(context.Request.RequestId, "shutdown");
                 context.ShortCircuit("shutdown");

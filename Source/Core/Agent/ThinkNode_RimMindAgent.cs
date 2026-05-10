@@ -1,4 +1,4 @@
-using RimMind.Core.Comps;
+using RimMind.Adapters.Verse;
 using Verse;
 using Verse.AI;
 

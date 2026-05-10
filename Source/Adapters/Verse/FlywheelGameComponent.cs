@@ -1,7 +1,7 @@
 using System;
 using RimMind.Core;
 using RimMind.Core.Runtime;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Kernel.Flywheel;
 using Verse;
 

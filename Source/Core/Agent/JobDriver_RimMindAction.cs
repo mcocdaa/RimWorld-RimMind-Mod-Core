@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Comps;
+using RimMind.Adapters.Verse;
 using RimMind.Core.Runtime;
 using Verse;
 using Verse.AI;

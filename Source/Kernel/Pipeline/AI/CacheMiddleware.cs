@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.AI;
+using RimMind.Kernel.Pipeline.AI;
 using RimMind.Contracts.Client;
 
-namespace RimMind.Core.Pipeline.AI
+namespace RimMind.Kernel.Pipeline.AI
 {
     public sealed class CacheMiddleware : IMiddleware<AIRequestContext>
     {

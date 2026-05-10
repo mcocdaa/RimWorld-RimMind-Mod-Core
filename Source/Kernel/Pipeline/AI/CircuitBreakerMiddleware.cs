@@ -1,11 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.AI;
+using RimMind.Kernel.Pipeline.AI;
 using RimMind.Contracts.Client;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
+using RimMind.Core;
 
-namespace RimMind.Core.Pipeline.AI
+namespace RimMind.Kernel.Pipeline.AI
 {
     public sealed class CircuitBreakerMiddleware : IMiddleware<AIRequestContext>
     {

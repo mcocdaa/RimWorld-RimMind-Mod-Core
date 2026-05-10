@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Context;
+using RimMind.Kernel.Pipeline.Context;
 
-namespace RimMind.Core.Pipeline.Context
+namespace RimMind.Kernel.Pipeline.Context
 {
     internal sealed class ContextBuildTelemetryMiddleware : IMiddleware<ContextBuildContext>
     {

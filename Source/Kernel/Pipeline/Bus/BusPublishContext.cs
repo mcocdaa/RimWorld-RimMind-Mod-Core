@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
 
-namespace RimMind.Core.Pipeline.Bus
+namespace RimMind.Kernel.Pipeline.Bus
 {
     public sealed class BusPublishContext<T> : PipelineContextBase where T : AgentBusEvent
     {

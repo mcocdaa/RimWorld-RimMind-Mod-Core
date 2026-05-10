@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Npc;
+using RimMind.Kernel.Pipeline.Npc;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     internal sealed class NpcChatTelemetryMiddleware : IMiddleware<NpcChatContext>
     {

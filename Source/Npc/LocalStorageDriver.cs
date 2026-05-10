@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using Verse;
 
 namespace RimMind.Core.Npc

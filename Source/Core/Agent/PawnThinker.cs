@@ -7,7 +7,7 @@ using RimMind.Kernel.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Sensor;
 using RimMind.Core.Runtime;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Kernel.Json;
 using RimMind.Kernel.Prompt;
 using Verse;

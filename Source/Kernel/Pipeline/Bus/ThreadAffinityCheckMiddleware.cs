@@ -1,12 +1,12 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Bus;
+using RimMind.Kernel.Pipeline.Bus;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Abstractions;
 
-namespace RimMind.Core.Pipeline.Bus
+namespace RimMind.Kernel.Pipeline.Bus
 {
     internal sealed class ThreadAffinityCheckMiddleware<T> : IMiddleware<BusPublishContext<T>>
         where T : AgentBusEvent

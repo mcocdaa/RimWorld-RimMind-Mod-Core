@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Logging;
 
-namespace RimMind.Core.Pipeline.Common
+namespace RimMind.Kernel.Pipeline.Common
 {
     public sealed class CommonRetryMiddleware<TContext> : IMiddleware<TContext>
         where TContext : IPipelineContext

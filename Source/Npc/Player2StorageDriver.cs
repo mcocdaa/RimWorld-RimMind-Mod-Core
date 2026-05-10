@@ -6,14 +6,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using RimMind.Core.Client.Player2;
+using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Client;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Kernel.Queue;
+using RimMind.Kernel.Llm;
 using RimMind.Core;
-using RimMind.Core.Internal;
 using Verse;
 
 namespace RimMind.Core.Npc

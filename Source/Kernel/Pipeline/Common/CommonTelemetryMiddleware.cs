@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
 
-namespace RimMind.Core.Pipeline.Common
+namespace RimMind.Kernel.Pipeline.Common
 {
     public sealed class CommonTelemetryMiddleware<TContext> : IMiddleware<TContext>
         where TContext : IPipelineContext

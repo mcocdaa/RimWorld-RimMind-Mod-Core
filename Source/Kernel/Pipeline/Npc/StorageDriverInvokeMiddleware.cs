@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Core.Npc;
-using RimMind.Core.Pipeline.Npc;
+using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Contracts.Npc;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     internal sealed class StorageDriverInvokeMiddleware : IMiddleware<NpcChatContext>
     {

@@ -1,9 +1,9 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Context;
+using RimMind.Kernel.Pipeline.Context;
 using RimMind.Kernel.Context;
 
-namespace RimMind.Core.Pipeline.Context
+namespace RimMind.Kernel.Pipeline.Context
 {
     internal sealed class CacheStoreMiddleware : IMiddleware<ContextBuildContext>
     {

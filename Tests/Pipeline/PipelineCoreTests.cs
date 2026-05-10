@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Common;
+using RimMind.Kernel.Pipeline.Common;
 using RimMind.Kernel.Pipeline;
 using Xunit;
 

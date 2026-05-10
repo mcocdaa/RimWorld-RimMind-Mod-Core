@@ -32,6 +32,16 @@
     <Compile Remove="Flywheel\FlywheelAutoApplyMode.cs" />
     <Compile Remove="Context\ContextEntry.cs" />
     <Compile Remove="Prompt\PromptSection.cs" />
+    <Compile Remove="Pipeline\AI\ShortCircuitMiddleware.cs" />
+    <Compile Remove="Pipeline\AI\AIRequestPipelineFactory.cs" />
+    <Compile Remove="Pipeline\AI\CircuitBreakerMiddleware.cs" />
+    <Compile Remove="Pipeline\Context\BudgetTrimMiddleware.cs" />
+    <Compile Remove="Pipeline\Context\ContextBuildPipelineFactory.cs" />
+    <Compile Remove="Pipeline\Npc\NpcAliveCheckMiddleware.cs" />
+    <Compile Remove="Pipeline\Npc\StorageDriverInvokeMiddleware.cs" />
+    <Compile Remove="Pipeline\Npc\NpcChatPipelineFactory.cs" />
+    <Compile Remove="Pipeline\Npc\NpcChatShortCircuitMiddleware.cs" />
+    <Compile Remove="Llm\ResponseDispatcher.cs" />
   </ItemGroup>
 
 </Project>

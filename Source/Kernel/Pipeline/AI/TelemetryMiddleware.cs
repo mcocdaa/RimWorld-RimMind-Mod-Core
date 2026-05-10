@@ -2,12 +2,13 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.AI;
+using RimMind.Kernel.Pipeline.AI;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Logging;
-using RimMind.Core.Runtime;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Runtime;
 
-namespace RimMind.Core.Pipeline.AI
+namespace RimMind.Kernel.Pipeline.AI
 {
     public sealed class TelemetryMiddleware : IMiddleware<AIRequestContext>
     {
@@ -43,7 +44,7 @@ namespace RimMind.Core.Pipeline.AI
 
                 try
                 {
-                    RimMindRuntime.Instance.Telemetry.Record(record);
+                    RimMindServiceLocator.Get<IRimMindRuntime>();
                 }
                 catch
                 {

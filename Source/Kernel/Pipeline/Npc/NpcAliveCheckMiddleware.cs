@@ -1,13 +1,13 @@
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Contracts.Internal;
-using RimMind.Core.Agent;
-using RimMind.Core.Npc;
-using RimMind.Core.Pipeline.Npc;
 using RimMind.Contracts.Npc;
+using RimMind.Kernel.Pipeline.Npc;
+using RimMind.Core.Npc;
+using RimMind.Core.Agent;
 using Verse;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     internal sealed class NpcAliveCheckMiddleware : IMiddleware<NpcChatContext>
     {

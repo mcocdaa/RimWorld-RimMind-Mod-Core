@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading;
 using RimMind.Contracts.Npc;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Pipeline;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     public sealed class NpcChatContext : PipelineContextBase
     {

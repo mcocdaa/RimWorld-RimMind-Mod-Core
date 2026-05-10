@@ -1,11 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Npc;
-using RimMind.Core.Pipeline.Npc;
+using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Contracts.Npc;
 
-namespace RimMind.Core.Pipeline.Npc
+namespace RimMind.Kernel.Pipeline.Npc
 {
     internal sealed class NpcChatRetryMiddleware : IMiddleware<NpcChatContext>
     {
@@ -30,7 +29,7 @@ namespace RimMind.Core.Pipeline.Npc
                     if (context.Result?.Error == null || !IsTransientError(context.Result.Error))
                         return;
                 }
-                catch (Exception ex) when (TransientExceptionChecker.IsTransient(ex) && attempt < MaxRetries)
+                catch (Exception ex) when (IsTransientException(ex) && attempt < MaxRetries)
                 {
                 }
                 if (attempt < MaxRetries)
@@ -44,6 +43,11 @@ namespace RimMind.Core.Pipeline.Npc
             return error.Contains("429") || error.Contains("503") || error.Contains("504")
                 || error.Contains("timeout", StringComparison.OrdinalIgnoreCase)
                 || error.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsTransientException(Exception ex)
+        {
+            return ex is TimeoutException;
         }
     }
 }

@@ -1,7 +1,7 @@
-using RimMind.Core;
 using RimMind.Core.Agent;
-using RimMind.Core.Comps;
+using RimMind.Adapters.Verse;
 using RimMind.Kernel.Context;
+using RimMind.Core;
 using UnityEngine;
 using Verse;
 

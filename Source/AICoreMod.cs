@@ -1,11 +1,10 @@
 using System;
 using HarmonyLib;
 using RimMind.Contracts.Extension;
+using RimMind.Contracts.Settings;
 using RimMind.Kernel.Context;
-using RimMind.Contracts.Internal;
-using RimMind.Core.Extensions;
 using RimMind.Core.Runtime;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Adapters.UI;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Json;

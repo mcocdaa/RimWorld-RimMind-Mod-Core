@@ -1,8 +1,7 @@
 using RimMind.Contracts.Npc;
 using RimMind.Contracts;
-using RimMind.Core.Client.Player2;
-using RimMind.Core.Settings;
-using RimMind.Core;
+using RimMind.Adapters.Client.Player2;
+using RimMind.Kernel.Logging;
 using Verse;
 
 namespace RimMind.Core.Npc

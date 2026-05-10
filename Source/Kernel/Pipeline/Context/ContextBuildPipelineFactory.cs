@@ -1,12 +1,12 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Context;
+using RimMind.Kernel.Pipeline.Context;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Pipeline;
 
-namespace RimMind.Core.Pipeline.Context
+namespace RimMind.Kernel.Pipeline.Context
 {
     public static class ContextBuildPipelineFactory
     {

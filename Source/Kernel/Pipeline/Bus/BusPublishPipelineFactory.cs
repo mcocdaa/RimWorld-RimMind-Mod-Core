@@ -1,12 +1,12 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Bus;
+using RimMind.Kernel.Pipeline.Bus;
 using RimMind.Kernel.Pipeline;
 
-namespace RimMind.Core.Pipeline.Bus
+namespace RimMind.Kernel.Pipeline.Bus
 {
     public static class BusPublishPipelineFactory<T> where T : AgentBusEvent
     {

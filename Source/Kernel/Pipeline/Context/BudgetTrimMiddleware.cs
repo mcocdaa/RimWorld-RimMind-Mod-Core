@@ -2,17 +2,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Context;
+using RimMind.Kernel.Pipeline.Context;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Prompt;
 using RimMind.Contracts.Context;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Prompt;
+using RimMind.Core;
 
-namespace RimMind.Core.Pipeline.Context
+namespace RimMind.Kernel.Pipeline.Context
 {
     internal sealed class BudgetTrimMiddleware : IMiddleware<ContextBuildContext>
     {

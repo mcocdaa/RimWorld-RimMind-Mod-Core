@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Core.Client.Player2;
+using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Queue;

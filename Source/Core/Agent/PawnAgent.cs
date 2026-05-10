@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
-using RimMind.Core.Settings;
+using RimMind.Kernel.Logging;
 using Verse;
 using Verse.AI;
 

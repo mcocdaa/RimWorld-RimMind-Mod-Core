@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Pipeline.Context;
+using RimMind.Kernel.Pipeline.Context;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Pipeline;
