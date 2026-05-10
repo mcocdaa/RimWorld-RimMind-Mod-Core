@@ -30,6 +30,7 @@
     <Compile Include="PhaseD\**\*.cs" />
     <Compile Include="PhaseE\**\*.cs" />
     <Compile Include="PhaseG\**\*.cs" />
+    <Compile Include="PhaseJ\**\*.cs" />
     <Compile Include="General\**\*.cs" />
     <Compile Include="../Tests/VerseStubs.cs" Link="VerseStubs.cs" />
   </ItemGroup>

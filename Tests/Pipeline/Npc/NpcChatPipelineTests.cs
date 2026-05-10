@@ -77,8 +77,8 @@ namespace RimMind.Tests.Pipeline.Npc
 
                 Assert.True(context.IsShortCircuited);
                 Assert.Equal("shutdown", context.ShortCircuitReason);
-                Assert.NotNull(context.Result);
-                Assert.NotNull(context.Result.Error);
+                Assert.NotNull(context.ChatResult);
+                Assert.True(context.ChatResult.Value.IsErr);
             }
             finally
             {

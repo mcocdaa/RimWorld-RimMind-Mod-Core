@@ -41,12 +41,12 @@ namespace RimMind.Adapters.UI
                 Priority = AIRequestPriority.High,
             };
 
-            RimMindAPI.RequestImmediate(request, response =>
+            RimMindAPI.RequestImmediate(request, result =>
             {
-                if (response.Success)
-                    Messages.Message("RimMind.Core.Debug.ConnectionSuccess".Translate(response.Content), MessageTypeDefOf.PositiveEvent, false);
+                if (result.IsOk && result.Value.State == AIRequestState.Completed)
+                    Messages.Message("RimMind.Core.Debug.ConnectionSuccess".Translate(result.Value.Content), MessageTypeDefOf.PositiveEvent, false);
                 else
-                    Messages.Message("RimMind.Core.Debug.ConnectionFailed".Translate(response.Error), MessageTypeDefOf.NegativeEvent, false);
+                    Messages.Message("RimMind.Core.Debug.ConnectionFailed".Translate(result.IsErr ? result.Error.ToString() : result.Value.State.ToString()), MessageTypeDefOf.NegativeEvent, false);
             });
 
             Messages.Message("RimMind.Core.Debug.RequestSent".Translate(), MessageTypeDefOf.NeutralEvent, false);

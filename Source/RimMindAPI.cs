@@ -51,16 +51,16 @@ namespace RimMind.Core
         internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => RimMindRuntime.Instance.ContextEngine.GetEmbeddingSnapshotStore();
         public static FlywheelTelemetryCollector Telemetry => RimMindRuntime.Instance.Telemetry;
 
-        public static void RequestImmediate(AIRequest request, Action<AIResponse> onComplete)
+        public static void RequestImmediate(AIRequest request, Action<Result<AIResponse, RimMindError>> onComplete)
         {
             var queue = RimMindRuntime.Instance.Queue;
             var client = GetClient();
             if (client == null)
             {
-                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
+                onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
                 return;
             }
-            queue.EnqueueImmediate(request, onComplete, client);
+            queue.EnqueueImmediate(request, response => onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(response)), client);
         }
 
         public static void PauseQueue() => RimMindRuntime.Instance.Queue?.PauseQueue();
@@ -95,12 +95,12 @@ namespace RimMind.Core
             }
         }
 
-        public static void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<AIResponse> onComplete, List<StructuredTool>? tools = null)
+        public static void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<Result<AIResponse, RimMindError>> onComplete, List<StructuredTool>? tools = null)
         {
             var s = RimMindCoreMod.Settings;
             if (s == null || !s.IsConfigured())
             {
-                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
+                onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
                 return;
             }
 
@@ -114,22 +114,22 @@ namespace RimMind.Core
             var client = GetClient();
             if (client == null)
             {
-                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
+                onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
                 return;
             }
 
-            queue.Enqueue(request, onComplete, client);
+            queue.Enqueue(request, response => onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(response)), client);
         }
 
         public static ContextSnapshot BuildContextSnapshot(ContextRequest request)
             => RimMindRuntime.Instance.ContextEngine.BuildSnapshot(request);
 
         public static void RequestStructured(ContextRequest request, string schema,
-            Action<AIResponse> onComplete, List<StructuredTool>? tools = null)
+            Action<Result<AIResponse, RimMindError>> onComplete, List<StructuredTool>? tools = null)
         {
             if (RimMindRuntime.Instance.IsShutdown)
             {
-                onComplete?.Invoke(AIResponse.Ok($"Structured_{request.NpcId}", "", 0));
+                onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok($"Structured_{request.NpcId}", "", 0)));
                 return;
             }
 
@@ -150,8 +150,7 @@ namespace RimMind.Core
             aiRequest.TraceId = ctx.TraceId;
             RimMindRuntime.Instance.AIRequestPipeline.ExecuteAsync(ctx).ContinueWith(_ =>
             {
-                var response = ctx.Result?.Match(ok => ok, err => AIResponse.Ok(aiRequest.RequestId, "", 0)) ?? AIResponse.Ok(aiRequest.RequestId, "", 0);
-                onComplete?.Invoke(response);
+                onComplete?.Invoke(ctx.Result ?? Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal("Pipeline produced no result.")));
             }, TaskContinuationOptions.ExecuteSynchronously);
         }
 

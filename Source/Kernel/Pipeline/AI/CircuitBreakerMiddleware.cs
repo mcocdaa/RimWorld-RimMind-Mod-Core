@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using RimMind.Contracts.Client;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.AI;
 using RimMind.Kernel.Logging;

@@ -10,6 +10,8 @@ using RimMind.Kernel.Queue;
 using Verse;
 using Xunit;
 
+using RimMind.Contracts.Result;
+
 namespace RimMind.Core.Tests
 {
     public class AIRequestQueueCancellationTokenTests
@@ -105,7 +107,7 @@ namespace RimMind.Core.Tests
             queue.Tick();
 
             Assert.NotNull(result);
-            Assert.True(result!.Success);
+            Assert.Equal(AIRequestState.Completed, result!.State);
             Assert.Equal("stub response", result.Content);
         }
 
@@ -131,7 +133,7 @@ namespace RimMind.Core.Tests
             queue.Tick();
 
             Assert.NotNull(result);
-            Assert.True(result!.Success);
+            Assert.Equal(AIRequestState.Completed, result!.State);
             Assert.Equal("stub response", result.Content);
         }
 
@@ -151,14 +153,14 @@ namespace RimMind.Core.Tests
 
             public bool IsConfigured() => true;
 
-            public Task<AIResponse> SendAsync(AIRequest request)
+            public Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
             {
-                return Task.FromResult(AIResponse.Ok(request.RequestId, "stub response", 10));
+                return Task.FromResult(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "stub response", 10)));
             }
 
-            public Task<AIResponse> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
+            public Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
             {
-                return Task.FromResult(AIResponse.Ok(request.RequestId, "stub structured", 10));
+                return Task.FromResult(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "stub structured", 10)));
             }
         }
     }

@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Pipeline.Bus;
 using RimMind.Kernel.Pipeline;
 using Xunit;
@@ -65,8 +66,10 @@ namespace RimMind.Tests.Pipeline.Bus
             await pipeline.ExecuteAsync(context);
 
             Assert.Equal(2, context.HandlerErrors.Count);
-            Assert.IsType<InvalidOperationException>(context.HandlerErrors[0]);
-            Assert.IsType<ArgumentException>(context.HandlerErrors[1]);
+            Assert.Equal(RimMindErrorCode.InternalError, context.HandlerErrors[0].Code);
+            Assert.Equal(RimMindErrorCode.InternalError, context.HandlerErrors[1].Code);
+            Assert.Contains("error1", context.HandlerErrors[0].Message);
+            Assert.Contains("error2", context.HandlerErrors[1].Message);
         }
 
         [Fact]
@@ -124,9 +127,12 @@ namespace RimMind.Tests.Pipeline.Bus
             await pipeline.ExecuteAsync(context);
 
             Assert.Equal(3, context.HandlerErrors.Count);
-            Assert.IsType<InvalidOperationException>(context.HandlerErrors[0]);
-            Assert.IsType<ArgumentException>(context.HandlerErrors[1]);
-            Assert.IsType<SystemException>(context.HandlerErrors[2]);
+            Assert.Equal(RimMindErrorCode.InternalError, context.HandlerErrors[0].Code);
+            Assert.Equal(RimMindErrorCode.InternalError, context.HandlerErrors[1].Code);
+            Assert.Equal(RimMindErrorCode.InternalError, context.HandlerErrors[2].Code);
+            Assert.Contains("err1", context.HandlerErrors[0].Message);
+            Assert.Contains("err2", context.HandlerErrors[1].Message);
+            Assert.Contains("err3", context.HandlerErrors[2].Message);
         }
 
         [Fact]
@@ -161,7 +167,7 @@ namespace RimMind.Tests.Pipeline.Bus
 
             Assert.Single(callLog);
             Assert.Equal("dispatch", callLog[0]);
-            Assert.True(context.Items.ContainsKey("error_isolation.enabled"));
+            Assert.Empty(context.HandlerErrors);
             Assert.True(context.Items.ContainsKey("telemetry.elapsed_ms"));
         }
     }

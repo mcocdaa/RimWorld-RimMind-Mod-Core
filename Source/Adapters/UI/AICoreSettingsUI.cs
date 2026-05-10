@@ -422,8 +422,8 @@ namespace RimMind.Adapters.UI
                             Temperature = 0.7f,
                             ModId = "RimMind.Test"
                         };
-                        var response = await client.SendAsync(request);
-                        if (response.Success)
+                        var result = await client.SendAsync(request);
+                        if (result.TryGetValue(out var response))
                         {
                             var content = response.Content.Trim();
                             var tok = response.TokensUsed;
@@ -435,7 +435,7 @@ namespace RimMind.Adapters.UI
                         }
                         else
                         {
-                            var error = response.Error;
+                            var error = result.Error.Message;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
                                 _testStatus = $"✗ {error}";
@@ -489,11 +489,11 @@ namespace RimMind.Adapters.UI
                         Temperature = 0.7f,
                         ModId = "RimMind.Test"
                     };
-                    var response = await client.SendAsync(request);
-                    if (response.Success)
+                    var result = await client.SendAsync(request);
+                    if (result.TryGetValue(out var response2))
                     {
-                        var content = response.Content.Trim();
-                        var tok = response.TokensUsed;
+                        var content = response2.Content.Trim();
+                        var tok = response2.TokensUsed;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
                             _testStatus = $"✓ {content} ({tok} tok)";
@@ -502,7 +502,7 @@ namespace RimMind.Adapters.UI
                     }
                     else
                     {
-                        var error = response.Error;
+                        var error = result.Error.Message;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
                             _testStatus = $"✗ {error}";

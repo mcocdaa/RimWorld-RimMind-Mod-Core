@@ -154,7 +154,7 @@ namespace RimMind.Adapters.UI
                             {
                                 if (currentHistory[i].role == "assistant" && currentHistory[i].content == thinkingText)
                                 {
-                                    hm.ReplaceLastAssistantTurn(npcId, result.Message ?? "");
+                                    hm.ReplaceLastAssistantTurn(npcId, result.Value.Message ?? "");
                                     break;
                                 }
                             }

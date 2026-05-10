@@ -120,7 +120,7 @@ namespace RimMind.Core.Npc
             return await ChatAsync(snapshot, ct);
         }
 
-        public async Task<Result<NpcChatResult, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
+        public async IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
             var request = new ContextRequest
             {
@@ -136,7 +136,10 @@ namespace RimMind.Core.Npc
             var result = await ChatAsync(snapshot, ct);
             if (result.TryGetValue(out var chatResult) && chatResult.Message != null)
                 onChunk?.Invoke(chatResult.Message);
-            return result;
+            if (result.IsOk)
+                yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, chatResult.Message ?? "", chatResult.Emotion, isFinal: true));
+            else
+                yield return Result<NpcChatChunk, RimMindError>.Err(result.Error);
         }
 
         public Task<string> GetHistoryAsync(string npcId, int limit = 50)

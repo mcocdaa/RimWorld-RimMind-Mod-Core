@@ -91,7 +91,7 @@ namespace RimMind.Core.Agent
 
         private void HandleThinkResponse(AIResponse response, AgentGoal goal)
         {
-            if (!response.Success) return;
+            if (response.State != AIRequestState.Completed) return;
             if (string.IsNullOrEmpty(response.Content) && string.IsNullOrEmpty(response.ToolCallsJson)) return;
             if (!string.IsNullOrEmpty(response.ToolCallsJson)) { HandleToolCalls(response.ToolCallsJson!, goal); return; }
             var content = response.Content ?? "";
