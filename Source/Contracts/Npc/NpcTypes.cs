@@ -55,7 +55,6 @@ namespace RimMind.Contracts.Npc
         public string NpcId = "";
         public string Message = "";
         public string Emotion = "";
-        public string? Error;
         public string? AudioUrl;
         public List<NpcCommandResult> Commands = new List<NpcCommandResult>();
 
@@ -66,6 +65,25 @@ namespace RimMind.Contracts.Npc
             NpcId = npcId;
             Message = message;
             Emotion = emotion;
+        }
+    }
+
+    public class NpcChatChunk
+    {
+        public string NpcId = "";
+        public string Chunk = "";
+        public string Emotion = "";
+        public string? AudioUrl;
+        public bool IsFinal;
+
+        public NpcChatChunk() { }
+
+        public NpcChatChunk(string npcId, string chunk, string emotion = "", bool isFinal = false)
+        {
+            NpcId = npcId;
+            Chunk = chunk;
+            Emotion = emotion;
+            IsFinal = isFinal;
         }
     }
 

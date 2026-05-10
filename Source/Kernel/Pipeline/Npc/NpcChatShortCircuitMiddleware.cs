@@ -4,6 +4,7 @@ using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Contracts.Npc;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Runtime;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.Npc
 {
@@ -17,7 +18,7 @@ namespace RimMind.Kernel.Pipeline.Npc
         {
             if (RimMindServiceLocator.Get<IRimMindRuntime>()?.IsShutdown == true)
             {
-                context.Result = new NpcChatResult { Error = "RimMind is shut down." };
+                context.ChatResult = Result<NpcChatResult, RimMindError>.Err(RimMindErrors.PipelineShortCircuited("RimMind is shut down."));
                 context.ShortCircuit("shutdown");
                 return Task.CompletedTask;
             }

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Abstractions;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Logging
 {
@@ -11,28 +12,15 @@ namespace RimMind.Kernel.Logging
         private const string Prefix = "[RimMind-Core]";
         private static readonly int _mainThreadId = Thread.CurrentThread.ManagedThreadId;
         private static readonly ConcurrentQueue<(string level, string message)> _backgroundLogs = new ConcurrentQueue<(string, string)>();
-        private static readonly AsyncLocal<string?> _currentTraceId = new AsyncLocal<string?>();
 
-        public static IDisposable BeginTraceScope(string traceId)
-        {
-            var prev = _currentTraceId.Value;
-            _currentTraceId.Value = traceId;
-            return new TraceScope(prev);
-        }
+        public static IDisposable BeginTraceScope(string traceId) => TraceContext.BeginScope(traceId);
 
-        public static string? CurrentTraceId => _currentTraceId.Value;
+        public static string? CurrentTraceId => TraceContext.Current;
 
         private static string FormatPrefix()
         {
-            var trace = _currentTraceId.Value;
+            var trace = TraceContext.Current;
             return trace != null ? $"{Prefix}[trace={trace}]" : Prefix;
-        }
-
-        private sealed class TraceScope : IDisposable
-        {
-            private readonly string? _previous;
-            public TraceScope(string? previous) { _previous = previous; }
-            public void Dispose() { _currentTraceId.Value = _previous; }
         }
 
         private static ILogSink? GetSink() => RimMindServiceLocator.Get<ILogSink>();

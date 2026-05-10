@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Contracts.Npc
 {
@@ -13,8 +14,8 @@ namespace RimMind.Contracts.Npc
         bool SupportsCommands { get; }
         bool SupportsStructuredOutput { get; }
 
-        Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null);
-        Task<NpcChatResult> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
+        Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null);
+        IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
         Task<bool> SpawnNpcAsync(NpcProfile profile);
         Task<bool> KillNpcAsync(string npcId);
         bool IsNpcAlive(string npcId);

@@ -30,6 +30,8 @@ using RimMind.Adapters.Client.Player2;
 using RimWorld;
 using Verse;
 
+using RimMind.Contracts.Result;
+
 namespace RimMind.Core
 {
     public static class RimMindAPI
@@ -55,7 +57,7 @@ namespace RimMind.Core
             var client = GetClient();
             if (client == null)
             {
-                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not configured."));
+                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
                 return;
             }
             queue.EnqueueImmediate(request, onComplete, client);
@@ -73,18 +75,23 @@ namespace RimMind.Core
 
         public static int TotalQueuedCount => RimMindRuntime.Instance.Queue?.TotalQueuedCount ?? 0;
 
-        public static async Task<NpcChatResult> Chat(ContextRequest request, CancellationToken ct = default)
+        public static async Task<Result<NpcChatResult, RimMindError>> Chat(ContextRequest request, CancellationToken ct = default)
         {
-            if (RimMindRuntime.Instance.IsShutdown) return new NpcChatResult { Error = "RimMind is shut down." };
+            if (RimMindRuntime.Instance.IsShutdown)
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.PipelineShortCircuited("shutdown"));
             try
             {
                 var ctx = new NpcChatContext { Request = request, Ct = ct };
                 await RimMindRuntime.Instance.NpcChatPipeline.ExecuteAsync(ctx);
-                return ctx.Result ?? new NpcChatResult { Error = ctx.IsShortCircuited ? ctx.ShortCircuitReason : "Pipeline produced no result." };
+                if (ctx.ChatResult.HasValue)
+                    return ctx.ChatResult.Value;
+                if (ctx.IsShortCircuited)
+                    return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.PipelineShortCircuited(ctx.ShortCircuitReason ?? "unknown"));
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.Internal("Pipeline produced no result."));
             }
             catch (Exception ex)
             {
-                return new NpcChatResult { Error = ex.Message };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.Internal(ex.Message, ex));
             }
         }
 
@@ -93,7 +100,7 @@ namespace RimMind.Core
             var s = RimMindCoreMod.Settings;
             if (s == null || !s.IsConfigured())
             {
-                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not configured."));
+                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
                 return;
             }
 
@@ -107,7 +114,7 @@ namespace RimMind.Core
             var client = GetClient();
             if (client == null)
             {
-                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not available."));
+                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
                 return;
             }
 
@@ -122,7 +129,7 @@ namespace RimMind.Core
         {
             if (RimMindRuntime.Instance.IsShutdown)
             {
-                onComplete?.Invoke(AIResponse.Failure($"Structured_{request.NpcId}", "RimMind is shut down."));
+                onComplete?.Invoke(AIResponse.Ok($"Structured_{request.NpcId}", "", 0));
                 return;
             }
 
@@ -143,7 +150,8 @@ namespace RimMind.Core
             aiRequest.TraceId = ctx.TraceId;
             RimMindRuntime.Instance.AIRequestPipeline.ExecuteAsync(ctx).ContinueWith(_ =>
             {
-                onComplete?.Invoke(ctx.Response ?? AIResponse.Failure(aiRequest.RequestId, "Pipeline failed"));
+                var response = ctx.Result?.Match(ok => ok, err => AIResponse.Ok(aiRequest.RequestId, "", 0)) ?? AIResponse.Ok(aiRequest.RequestId, "", 0);
+                onComplete?.Invoke(response);
             }, TaskContinuationOptions.ExecuteSynchronously);
         }
 

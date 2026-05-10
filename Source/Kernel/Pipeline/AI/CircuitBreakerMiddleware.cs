@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.AI;
-using RimMind.Contracts.Client;
 using RimMind.Kernel.Logging;
 using RimMind.Core;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.AI
 {
@@ -37,30 +37,22 @@ namespace RimMind.Kernel.Pipeline.AI
                     }
                     else
                     {
-                        context.Response = AIResponse.Failure(context.Request.RequestId, "Circuit breaker is open");
+                        context.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.CircuitOpen());
                         context.ShortCircuit("circuit_open");
                         return;
                     }
                     break;
             }
 
-            try
-            {
-                await next(context).ConfigureAwait(false);
+            await next(context).ConfigureAwait(false);
 
-                if (context.Error != null || (context.Response != null && !context.Response.Success))
-                {
-                    OnFailure();
-                }
-                else
-                {
-                    OnSuccess();
-                }
-            }
-            catch
+            if (context.Result?.IsErr == true)
             {
                 OnFailure();
-                throw;
+            }
+            else
+            {
+                OnSuccess();
             }
         }
 

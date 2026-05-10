@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
+using RimMind.Contracts.Result;
 using RimMind.Contracts.Settings;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Queue;
@@ -49,7 +50,7 @@ namespace RimMind.Adapters.Client.OpenAI
             return false;
         }
 
-        public async Task<AIResponse> SendAsync(AIRequest request)
+        public async Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
         {
             if (!string.IsNullOrEmpty(request.JsonSchema) || (request.Tools != null && request.Tools.Count > 0))
                 return await SendStructuredAsync(request, request.JsonSchema, request.Tools);
@@ -66,13 +67,13 @@ namespace RimMind.Adapters.Client.OpenAI
             if (!wantFormat)
             {
                 var noFormatResp = await SendAsyncInner(request, useResponseFormat: false);
-                if (noFormatResp.Success && wantFormat != (_settings.forceJsonMode && request.UseJsonMode))
+                if (noFormatResp.IsOk && wantFormat != (_settings.forceJsonMode && request.UseJsonMode))
                     AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
                 return noFormatResp;
             }
 
             var response = await SendAsyncInner(request, useResponseFormat: true);
-            if (response.Success)
+            if (response.IsOk)
             {
                 _formatCapabilityCache[cacheKey] = "json_object";
                 return response;
@@ -87,7 +88,7 @@ namespace RimMind.Adapters.Client.OpenAI
             return response;
         }
 
-        private async Task<AIResponse> SendAsyncInner(AIRequest request, bool useResponseFormat)
+        private async Task<Result<AIResponse, RimMindError>> SendAsyncInner(AIRequest request, bool useResponseFormat)
         {
             string endpoint = FormatEndpoint(_settings.apiEndpoint);
             string json = BuildRequestJson(request, useResponseFormat);
@@ -124,34 +125,30 @@ namespace RimMind.Adapters.Client.OpenAI
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
                 RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Ok(response);
             }
             catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                var response = AIResponse.Failure(request.RequestId, ex.Message);
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.HttpStatusCode = ex.StatusCode;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                var error = RimMindErrors.ClientTransient(ex.Message, ex);
+                return Result<AIResponse, RimMindError>.Err(error);
+            }
+            catch (TaskCanceledException ex)
+            {
+                sw.Stop();
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Request cancelled ({request.RequestId}): {ex.Message}", isWarning: true);
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
             }
             catch (Exception ex)
             {
                 sw.Stop();
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                var response = AIResponse.Failure(request.RequestId, ex.Message);
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI request failed: {ex.Message}", ex));
             }
         }
 
-        public async Task<AIResponse> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
+        public async Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
         {
             string endpoint = FormatEndpoint(_settings.apiEndpoint);
             string cacheKey = BuildCacheKey();
@@ -180,7 +177,7 @@ namespace RimMind.Adapters.Client.OpenAI
 
                 var response = await TrySendStructuredAsync(request, endpoint, schema, tools, mode);
 
-                if (response.Success)
+                if (response.IsOk)
                 {
                     if (i > 0 || mode != "json_schema")
                         _formatCapabilityCache[cacheKey] = mode;
@@ -199,17 +196,17 @@ namespace RimMind.Adapters.Client.OpenAI
             }
 
             _formatCapabilityCache[cacheKey] = "none";
-            return AIResponse.Failure(request.RequestId, "All response_format modes failed");
+            return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientPermanent("All response_format modes failed"));
         }
 
-        public static bool IsResponseFormatError(AIResponse response)
+        public static bool IsResponseFormatError(Result<AIResponse, RimMindError> result)
         {
+            if (!result.TryGetValue(out var response)) return false;
             if (response.HttpStatusCode != 400 && response.HttpStatusCode != 422) return false;
-            string err = response.Error ?? "";
-            return err.Contains("response_format") || err.Contains("json_schema") || err.Contains("json_object");
+            return false;
         }
 
-        private async Task<AIResponse> TrySendStructuredAsync(AIRequest request, string endpoint, string? jsonSchema, List<StructuredTool>? tools, string formatMode)
+        private async Task<Result<AIResponse, RimMindError>> TrySendStructuredAsync(AIRequest request, string endpoint, string? jsonSchema, List<StructuredTool>? tools, string formatMode)
         {
             string json = BuildStructuredRequestJson(request, jsonSchema, tools, formatMode);
 
@@ -238,7 +235,6 @@ namespace RimMind.Adapters.Client.OpenAI
 
                 var response = new AIResponse
                 {
-                    Success = true,
                     Content = content,
                     ReasoningContent = reasoningContent,
                     RequestId = request.RequestId,
@@ -275,30 +271,25 @@ namespace RimMind.Adapters.Client.OpenAI
                 }
 
                 RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Ok(response);
             }
             catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                var response = AIResponse.Failure(request.RequestId, ex.Message);
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.HttpStatusCode = ex.StatusCode;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
+            }
+            catch (TaskCanceledException)
+            {
+                sw.Stop();
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Structured request cancelled ({request.RequestId})", isWarning: true);
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
             }
             catch (Exception ex)
             {
                 sw.Stop();
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                var response = AIResponse.Failure(request.RequestId, ex.Message);
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI structured request failed: {ex.Message}", ex));
             }
         }
 

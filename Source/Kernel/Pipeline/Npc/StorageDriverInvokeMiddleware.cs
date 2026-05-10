@@ -3,6 +3,7 @@ using RimMind.Contracts.Pipeline;
 using RimMind.Core.Npc;
 using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.Npc
 {
@@ -21,12 +22,28 @@ namespace RimMind.Kernel.Pipeline.Npc
 
             if (context.IsStreaming && driver.SupportsStreaming)
             {
-                context.Result = await driver.ChatStreamingAsync(
-                    npcId, "", query, context.OnStreamChunk, gameStateInfo, context.Ct);
+                NpcChatResult? aggregatedResult = null;
+                await foreach (var chunk in driver.ChatStreamingAsync(npcId, "", query, context.OnStreamChunk, gameStateInfo, context.Ct))
+                {
+                    if (chunk.IsOk && chunk.Value.IsFinal)
+                    {
+                        aggregatedResult = new NpcChatResult(chunk.Value.NpcId, chunk.Value.Chunk, chunk.Value.Emotion)
+                        {
+                            AudioUrl = chunk.Value.AudioUrl
+                        };
+                    }
+                    else if (chunk.IsErr)
+                    {
+                        context.ChatResult = Result<NpcChatResult, RimMindError>.Err(chunk.Error);
+                        return;
+                    }
+                }
+                if (aggregatedResult != null)
+                    context.ChatResult = Result<NpcChatResult, RimMindError>.Ok(aggregatedResult);
             }
             else
             {
-                context.Result = await driver.ChatAsync(npcId, query, gameStateInfo);
+                context.ChatResult = await driver.ChatAsync(npcId, query, gameStateInfo);
             }
         }
     }

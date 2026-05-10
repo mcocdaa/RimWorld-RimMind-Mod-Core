@@ -16,6 +16,6 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
   - repo: https://github.com/mcocdaa/ai-commit.git
-    rev: v1.0.1
+    rev: v1.0.2
     hooks:
       - id: ai-commit

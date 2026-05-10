@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.AI;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.AI
 {
@@ -37,7 +38,7 @@ namespace RimMind.Kernel.Pipeline.AI
                 {
                     _lruList.Remove(node);
                     _lruList.AddFirst(node);
-                    context.Response = node.Value.Response;
+                    context.Result = Result<AIResponse, RimMindError>.Ok(node.Value.Response);
                     context.ShortCircuit("cache_hit");
                     return Task.CompletedTask;
                 }
@@ -50,19 +51,20 @@ namespace RimMind.Kernel.Pipeline.AI
         {
             await next(context).ConfigureAwait(false);
 
-            if (context.Response != null && context.Response.Success)
+            if (context.Result?.IsOk == true)
             {
+                var response = context.Result.Value.Value;
                 lock (_lock)
                 {
                     if (_cache.TryGetValue(cacheKey, out var existingNode))
                     {
                         _lruList.Remove(existingNode);
                         _lruList.AddFirst(existingNode);
-                        existingNode.Value.Response = context.Response;
+                        existingNode.Value.Response = response;
                         return;
                     }
 
-                    var entry = new CacheEntry { Key = cacheKey, Response = context.Response };
+                    var entry = new CacheEntry { Key = cacheKey, Response = response };
                     var node = _lruList.AddFirst(entry);
                     _cache[cacheKey] = node;
 

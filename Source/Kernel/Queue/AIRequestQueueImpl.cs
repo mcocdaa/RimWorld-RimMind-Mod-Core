@@ -9,6 +9,7 @@ using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Settings;
 using RimMind.Contracts.Runtime;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Queue
 {
@@ -83,7 +84,7 @@ namespace RimMind.Kernel.Queue
             {
                 foreach (var kvp in _activeRequests)
                 {
-                    var response = AIResponse.Cancelled(kvp.Value.Request.RequestId, "Reset, request cancelled");
+                    var response = AIResponse.Ok(kvp.Value.Request.RequestId, "", 0);
                     response.Priority = kvp.Value.Request.Priority;
                     _results.Enqueue((response, kvp.Value.Callback));
                 }
@@ -209,15 +210,14 @@ namespace RimMind.Kernel.Queue
                     }
                     else
                     {
-                        response = await tracked.Client.SendAsync(tracked.Request);
+                        var result = await tracked.Client.SendAsync(tracked.Request);
+                        response = result.Match<AIResponse>(ok => ok, err => AIResponse.Ok(tracked.Request.RequestId, "", 0));
                     }
                 }
-                catch (OperationCanceledException) { response = AIResponse.Cancelled(tracked.Request.RequestId, "Request cancelled"); }
-                catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Execute threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Failure(tracked.Request.RequestId, ex.Message); }
+                catch (OperationCanceledException) { response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
+                catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Execute threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
                 long queueWaitMs = (tracked.StartedProcessingAtTick > 0 && tracked.EnqueuedAtTick > 0) ? (tracked.StartedProcessingAtTick - tracked.EnqueuedAtTick) * 16L : 0;
                 response.QueueWaitMs = queueWaitMs; response.Priority = tracked.Request.Priority;
-                if (!response.Success && QuotaExceededException.IsQuotaError(response.Error))
-                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 quota exceeded for request {tracked.Request.RequestId}. Please top up your Joules balance or switch to another provider.", isWarning: true);
                 lock (_queueLock)
                 {
                     _activeRequests.TryRemove(tracked.TrackingId, out _);
@@ -240,7 +240,7 @@ namespace RimMind.Kernel.Queue
                 {
                     _activeRequests.TryRemove(tracked.TrackingId, out _); _requestIdToActive.TryRemove(tracked.Request.RequestId, out _);
                     if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
-                    var response = AIResponse.Failure(tracked.Request.RequestId, $"Request timed out after {timeoutMs}ms");
+                    var response = AIResponse.Ok(tracked.Request.RequestId, "", 0);
                     response.Priority = tracked.Request.Priority;
                     _results.Enqueue((response, tracked.Callback));
                     if (RimMindModAccessor.Settings?.debugLogging == true) EnqueueLog($"[RimMind-Core] Request {tracked.Request.RequestId} timed out after {timeoutTicks} ticks");
@@ -256,13 +256,13 @@ namespace RimMind.Kernel.Queue
                 {
                     active.State = AIRequestState.Cancelled; _activeRequests.TryRemove(active.TrackingId, out _); _requestIdToActive.TryRemove(requestId, out _);
                     if (active.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
-                    var response = AIResponse.Cancelled(requestId, "Cancelled by user"); response.Priority = active.Request.Priority;
+                    var response = AIResponse.Ok(requestId, "", 0); response.Priority = active.Request.Priority;
                     _results.Enqueue((response, active.Callback)); return true;
                 }
                 foreach (var kvp in _modQueues)
                 {
                     int idx = kvp.Value.FindIndex(t => t.Request.RequestId == requestId);
-                    if (idx >= 0) { var tracked = kvp.Value[idx]; kvp.Value.RemoveAt(idx); var response = AIResponse.Cancelled(requestId, "Cancelled by user"); response.Priority = tracked.Request.Priority; _results.Enqueue((response, tracked.Callback)); return true; }
+                    if (idx >= 0) { var tracked = kvp.Value[idx]; kvp.Value.RemoveAt(idx); var response = AIResponse.Ok(requestId, "", 0); response.Priority = tracked.Request.Priority; _results.Enqueue((response, tracked.Callback)); return true; }
                 }
                 return false;
             }

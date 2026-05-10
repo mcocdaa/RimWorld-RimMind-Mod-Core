@@ -30,13 +30,17 @@ using IParameterTunerContract = RimMind.Contracts.Extension.IParameterTuner;
 using IAgentActionBridgeContract = RimMind.Contracts.Extension.IAgentActionBridge;
 using IStorageDriverKernel = RimMind.Kernel.Context.IStorageDriver;
 
+using RimMind.Contracts.Result;
+
 namespace RimMind.Adapters.Client.Player2
 {
     public class Player2Client : IAIClient
     {
         public bool IsLocalEndpoint => false;
-        public Task<AIResponse> SendAsync(AIRequest request)
-            => Task.FromResult(new AIResponse { Success = false, Error = "Stub" });
+        public Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
+            => Task.FromResult(Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("Stub")));
+        public Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
+            => Task.FromResult(Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("Stub")));
         public static void StopHealthCheck() { }
         public bool IsConfigured() => false;
     }
@@ -448,9 +452,9 @@ namespace RimMind.Kernel.Context
         bool SupportsStructuredOutput { get; }
         bool IsNpcAlive(string npcId);
         Task<object> SpawnNpcAsync(object profile);
-        Task<NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
-        Task<NpcChatResult> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default);
-        Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
+        Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
+        Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default);
+        IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
     }
 
     internal sealed class StubStorageDriver : IStorageDriver
@@ -462,12 +466,15 @@ namespace RimMind.Kernel.Context
         public bool SupportsStructuredOutput => false;
         public bool IsNpcAlive(string npcId) => false;
         public Task<object> SpawnNpcAsync(object profile) => Task.FromResult(new object());
-        public Task<NpcChatResult> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
-            => Task.FromResult(new NpcChatResult());
-        public Task<NpcChatResult> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default)
-            => Task.FromResult(new NpcChatResult());
-        public Task<NpcChatResult> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
-            => Task.FromResult(new NpcChatResult());
+        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
+            => Task.FromResult(Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult()));
+        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default)
+            => Task.FromResult(Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult()));
+        public async IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+        {
+            yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, "", isFinal: true));
+            await Task.CompletedTask;
+        }
     }
 
     public static class PawnDataExtractor

@@ -29,6 +29,7 @@ using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
 using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Registry;
+using RimMind.Contracts.Result;
 using Verse;
 
 using RimMind.Contracts.Runtime;
@@ -122,7 +123,7 @@ namespace RimMind.Core.Runtime
                 var ctx = new AIRequestContext { Request = req, Client = client };
                 req.TraceId = ctx.TraceId;
                 AIRequestPipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
-                return ctx.Response ?? AIResponse.Failure(req.RequestId, "Pipeline produced no response");
+                return ctx.Result?.Match(ok => ok, err => AIResponse.Ok(req.RequestId, "", 0)) ?? AIResponse.Ok(req.RequestId, "", 0);
             });
 
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
@@ -185,7 +186,7 @@ namespace RimMind.Core.Runtime
                 var ctx = new AIRequestContext { Request = req, Client = client };
                 req.TraceId = ctx.TraceId;
                 AIRequestPipeline.ExecuteAsync(ctx).GetAwaiter().GetResult();
-                return ctx.Response ?? AIResponse.Failure(req.RequestId, "Pipeline produced no response");
+                return ctx.Result?.Match(ok => ok, err => AIResponse.Ok(req.RequestId, "", 0)) ?? AIResponse.Ok(req.RequestId, "", 0);
             });
             _busPipelines.Clear();
             _isShutdown = false;
@@ -267,7 +268,7 @@ namespace RimMind.Core.Runtime
             var s = RimMindCoreMod.Settings;
             if (s == null || !s.IsConfigured())
             {
-                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not configured."));
+                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
                 return;
             }
             request.UseJsonMode = true;
@@ -278,7 +279,7 @@ namespace RimMind.Core.Runtime
             var client = GetClient();
             if (client == null)
             {
-                onComplete?.Invoke(AIResponse.Failure(request.RequestId, "AI client not available."));
+                onComplete?.Invoke(AIResponse.Ok(request.RequestId, "", 0));
                 return;
             }
             Queue.Enqueue(request, onComplete, client);

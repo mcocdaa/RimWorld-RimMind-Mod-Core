@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
+using RimMind.Contracts.Result;
 using RimMind.Contracts.Settings;
 using RimMind.Core;
 using RimMind.Kernel.Logging;
@@ -88,7 +89,7 @@ namespace RimMind.Adapters.Client.Player2
 
         public bool IsLocalEndpoint => _isLocalConnection;
 
-        public async Task<AIResponse> SendAsync(AIRequest request)
+        public async Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
         {
             if (!string.IsNullOrEmpty(request.JsonSchema) || (request.Tools != null && request.Tools.Count > 0))
                 return await SendStructuredAsync(request, request.JsonSchema, request.Tools);
@@ -125,18 +126,25 @@ namespace RimMind.Adapters.Client.Player2
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
                 RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Ok(response);
+            }
+            catch (TaskCanceledException)
+            {
+                sw.Stop();
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request cancelled ({request.RequestId})", isWarning: true);
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
+            }
+            catch (HttpHelper.HttpException ex)
+            {
+                sw.Stop();
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
             }
             catch (Exception ex)
             {
                 sw.Stop();
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                var response = AIResponse.Failure(request.RequestId, ex.Message);
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return response;
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"Player2 request failed: {ex.Message}", ex));
             }
         }
 
@@ -448,7 +456,6 @@ namespace RimMind.Adapters.Client.Player2
         private async Task<RawResponse> SendRawRequestAsync(string path, string method, string? jsonBody)
         {
             string endpoint = $"{CurrentApiUrl}{path}";
-            var result = new RawResponse();
             try
             {
                 using var webRequest = new UnityWebRequest(endpoint, method);
@@ -463,28 +470,38 @@ namespace RimMind.Adapters.Client.Player2
                 webRequest.timeout = 30;
 
                 var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone) { if (Current.Game == null) { result.Error = "Game exiting"; return result; } await Task.Delay(50); }
+                while (!asyncOp.isDone) { if (Current.Game == null) { return RawResponse.Err(RimMindErrors.ClientTransient("Game exiting")); } await Task.Delay(50); }
 
-                result.Content = webRequest.downloadHandler?.text;
-                result.Success = webRequest.result != UnityWebRequest.Result.ConnectionError
-                              && webRequest.result != UnityWebRequest.Result.ProtocolError;
-                if (!result.Success) result.Error = webRequest.error;
+                string? content = webRequest.downloadHandler?.text;
+                bool ok = webRequest.result != UnityWebRequest.Result.ConnectionError
+                          && webRequest.result != UnityWebRequest.Result.ProtocolError;
+                if (ok) return RawResponse.Ok(content);
+                return RawResponse.Err(RimMindErrors.ClientTransient(webRequest.error));
             }
-            catch (System.Exception ex) { result.Error = ex.Message; }
-            return result;
+            catch (System.Exception ex) { return RawResponse.Err(RimMindErrors.ClientTransient(ex.Message, ex)); }
         }
     }
 
     public class RawResponse
     {
-        public bool Success;
-        public string? Content;
-        public string? Error;
+        private readonly Result<string?, RimMindError> _result;
+
+        public string? Content => _result.TryGetValue(out var value) ? value : null;
+        public bool IsOk => _result.IsOk;
+        public RimMindError? Error => _result.TryGetError(out var err) ? err : null;
+
+        private RawResponse(Result<string?, RimMindError> result)
+        {
+            _result = result;
+        }
+
+        public static RawResponse Ok(string? content) => new RawResponse(Result<string?, RimMindError>.Ok(content));
+        public static RawResponse Err(RimMindError error) => new RawResponse(Result<string?, RimMindError>.Err(error));
     }
 
     public partial class Player2Client
     {
-        public async Task<AIResponse> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
+        public async Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
         {
             try
             {
@@ -557,7 +574,7 @@ namespace RimMind.Adapters.Client.Player2
                 while (!asyncOp.isDone)
                 {
                     if (Current.Game == null)
-                        return AIResponse.Failure(request.RequestId, "Game exiting");
+                        return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
                     await Task.Delay(100);
                 }
 
@@ -565,7 +582,7 @@ namespace RimMind.Adapters.Client.Player2
                     webRequest.result == UnityWebRequest.Result.ProtocolError)
                 {
                     string errBody = webRequest.downloadHandler?.text ?? webRequest.error ?? "Unknown error";
-                    return AIResponse.Failure(request.RequestId, errBody);
+                    return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(errBody));
                 }
 
                 var dto = JsonConvert.DeserializeObject<Player2ResponseDto>(webRequest.downloadHandler.text);
@@ -577,23 +594,31 @@ namespace RimMind.Adapters.Client.Player2
                 var toolCalls = dto?.Choices?.FirstOrDefault()?.Message?.ToolCalls;
                 var response = new AIResponse
                 {
-                    Success = true,
                     Content = content ?? "",
                     RequestId = request.RequestId,
                     TokensUsed = tokens,
                     PromptTokens = promptTokens,
                     CompletionTokens = completionTokens,
                     CachedTokens = cachedTokens,
+                    State = AIRequestState.Completed,
                 };
                 if (toolCalls != null && toolCalls.Count > 0)
                 {
                     response.ToolCallsJson = JsonConvert.SerializeObject(toolCalls);
                 }
-                return response;
+                return Result<AIResponse, RimMindError>.Ok(response);
+            }
+            catch (TaskCanceledException)
+            {
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
+            }
+            catch (HttpHelper.HttpException ex)
+            {
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
             }
             catch (System.Exception ex)
             {
-                return AIResponse.Failure(request.RequestId, ex.Message);
+                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"Player2 structured request failed: {ex.Message}", ex));
             }
         }
     }

@@ -1,8 +1,8 @@
-﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.AI;
 using RimMind.Kernel.Queue;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.AI
 {
@@ -19,17 +19,17 @@ namespace RimMind.Kernel.Pipeline.AI
         {
             for (int attempt = 0; attempt < MaxAttempts; attempt++)
             {
-                context.Error = null;
+                context.Result = null;
 
                 await next(context).ConfigureAwait(false);
 
-                if (context.Response != null)
-                    context.Response.AttemptCount = attempt + 1;
+                if (context.Result != null && context.Result.Value.IsOk)
+                    context.Result.Value.Value.AttemptCount = attempt + 1;
 
-                if (context.Error == null)
+                if (context.Result?.IsOk == true)
                     return;
 
-                if (!RetryPolicy.IsTransient(context.Error.Message))
+                if (context.Result?.IsErr == true && !IsTransientError(context.Result.Value.Error))
                     return;
 
                 if (attempt < MaxAttempts - 1)
@@ -38,6 +38,11 @@ namespace RimMind.Kernel.Pipeline.AI
                     await Task.Delay(DelaySeconds[attempt] * 1000).ConfigureAwait(false);
                 }
             }
+        }
+
+        private static bool IsTransientError(RimMindError error)
+        {
+            return error.Code == RimMindErrorCode.ClientTransientFailure;
         }
     }
 }

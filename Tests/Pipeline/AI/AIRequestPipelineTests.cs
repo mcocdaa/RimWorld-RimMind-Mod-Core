@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Result;
 using RimMind.Adapters.Client;
 using RimMind.Kernel.Pipeline.AI;
 using RimMind.Core.Runtime;
@@ -27,8 +28,7 @@ namespace RimMind.Tests.Pipeline.AI
         public Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {
             InvokeCount++;
-            context.Error = new Exception(_errorMessage);
-            context.Response = AIResponse.Failure(context.Request.RequestId, _errorMessage);
+            context.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(_errorMessage));
             return Task.CompletedTask;
         }
     }
@@ -44,7 +44,7 @@ namespace RimMind.Tests.Pipeline.AI
         public Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {
             InvokeCount++;
-            context.Response = AIResponse.Ok(context.Request.RequestId, "ok", 10);
+            context.Result = Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(context.Request.RequestId, "ok", 10));
             return Task.CompletedTask;
         }
     }
@@ -82,7 +82,7 @@ namespace RimMind.Tests.Pipeline.AI
         }
 
         [Fact]
-        public async Task ShortCircuit_SetsFailureResponse_WhenShutdown()
+        public async Task ShortCircuit_SetsErrResult_WhenShutdown()
         {
             RimMindRuntime.Initialize();
             try
@@ -96,8 +96,8 @@ namespace RimMind.Tests.Pipeline.AI
                 await pipeline.ExecuteAsync(context);
 
                 Assert.True(context.IsShortCircuited);
-                Assert.NotNull(context.Response);
-                Assert.False(context.Response.Success);
+                Assert.NotNull(context.Result);
+                Assert.True(context.Result!.Value.IsErr);
                 Assert.Equal("shutdown", context.ShortCircuitReason);
             }
             finally
@@ -153,8 +153,8 @@ namespace RimMind.Tests.Pipeline.AI
             await successPipeline.ExecuteAsync(context);
 
             Assert.False(context.IsShortCircuited);
-            Assert.NotNull(context.Response);
-            Assert.True(context.Response.Success);
+            Assert.NotNull(context.Result);
+            Assert.True(context.Result!.Value.IsOk);
         }
 
         [Fact]
@@ -168,8 +168,7 @@ namespace RimMind.Tests.Pipeline.AI
             await retry.InvokeAsync(context, ctx =>
             {
                 invokeCount++;
-                ctx.Error = new Exception("timeout");
-                ctx.Response = AIResponse.Failure(ctx.Request.RequestId, "timeout");
+                ctx.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient("timeout"));
                 return Task.CompletedTask;
             });
 
@@ -188,8 +187,7 @@ namespace RimMind.Tests.Pipeline.AI
             await retry.InvokeAsync(context, ctx =>
             {
                 invokeCount++;
-                ctx.Error = new Exception("invalid_api_key");
-                ctx.Response = AIResponse.Failure(ctx.Request.RequestId, "invalid_api_key");
+                ctx.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientPermanent("invalid_api_key"));
                 return Task.CompletedTask;
             });
 
@@ -287,12 +285,12 @@ namespace RimMind.Tests.Pipeline.AI
             var halfOpenCtx = CreateContext();
             await successPipeline.ExecuteAsync(halfOpenCtx);
             Assert.False(halfOpenCtx.IsShortCircuited);
-            Assert.True(halfOpenCtx.Response!.Success);
+            Assert.True(halfOpenCtx.Result!.Value.IsOk);
 
             var closedCtx = CreateContext();
             await successPipeline.ExecuteAsync(closedCtx);
             Assert.False(closedCtx.IsShortCircuited);
-            Assert.True(closedCtx.Response!.Success);
+            Assert.True(closedCtx.Result!.Value.IsOk);
         }
 
         [Fact]
@@ -314,9 +312,9 @@ namespace RimMind.Tests.Pipeline.AI
 
             Assert.True(openCtx.IsShortCircuited);
             Assert.Equal("circuit_open", openCtx.ShortCircuitReason);
-            Assert.NotNull(openCtx.Response);
-            Assert.False(openCtx.Response.Success);
-            Assert.Contains("Circuit breaker is open", openCtx.Response.Error);
+            Assert.NotNull(openCtx.Result);
+            Assert.True(openCtx.Result!.Value.IsErr);
+            Assert.Contains("Circuit breaker is open", openCtx.Result.Value.Error.Message);
         }
 
         [Fact]
@@ -329,14 +327,14 @@ namespace RimMind.Tests.Pipeline.AI
 
             var ctx1 = CreateContext(systemPrompt: "sys", userPrompt: "user");
             await pipeline.ExecuteAsync(ctx1);
-            var firstContent = ctx1.Response!.Content;
+            var firstContent = ctx1.Result!.Value.Value.Content;
 
             var ctx2 = CreateContext(systemPrompt: "sys", userPrompt: "user");
             await pipeline.ExecuteAsync(ctx2);
 
             Assert.True(ctx2.IsShortCircuited);
             Assert.Equal("cache_hit", ctx2.ShortCircuitReason);
-            Assert.Equal(firstContent, ctx2.Response!.Content);
+            Assert.Equal(firstContent, ctx2.Result!.Value.Value.Content);
             Assert.Equal(1, success.InvokeCount);
         }
 
@@ -368,8 +366,7 @@ namespace RimMind.Tests.Pipeline.AI
             await retry.InvokeAsync(context, ctx =>
             {
                 invokeCount++;
-                ctx.Error = new Exception("timeout");
-                ctx.Response = AIResponse.Failure(ctx.Request.RequestId, "timeout");
+                ctx.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient("timeout"));
                 return Task.CompletedTask;
             });
 
@@ -387,8 +384,7 @@ namespace RimMind.Tests.Pipeline.AI
             await retry.InvokeAsync(context, ctx =>
             {
                 invokeCount++;
-                ctx.Error = new Exception("invalid_api_key");
-                ctx.Response = AIResponse.Failure(ctx.Request.RequestId, "invalid_api_key");
+                ctx.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientPermanent("invalid_api_key"));
                 return Task.CompletedTask;
             });
 
@@ -411,8 +407,8 @@ namespace RimMind.Tests.Pipeline.AI
 
                 Assert.True(context.IsShortCircuited);
                 Assert.Equal("not_configured", context.ShortCircuitReason);
-                Assert.NotNull(context.Response);
-                Assert.False(context.Response.Success);
+                Assert.NotNull(context.Result);
+                Assert.True(context.Result!.Value.IsErr);
             }
             finally
             {
@@ -435,8 +431,8 @@ namespace RimMind.Tests.Pipeline.AI
                 await pipeline.ExecuteAsync(context);
 
                 Assert.True(context.Elapsed > TimeSpan.Zero);
-                Assert.NotNull(context.Response);
-                Assert.True(context.Response.Success);
+                Assert.NotNull(context.Result);
+                Assert.True(context.Result!.Value.IsOk);
             }
             finally
             {

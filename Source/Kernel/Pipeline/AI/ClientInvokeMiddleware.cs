@@ -1,4 +1,3 @@
-﻿using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.AI;
@@ -14,16 +13,7 @@ namespace RimMind.Kernel.Pipeline.AI
 
         public async Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {
-            try
-            {
-                var response = await context.Client!.SendAsync(context.Request).ConfigureAwait(false);
-                context.Response = response;
-            }
-            catch (Exception ex)
-            {
-                context.Error = ex;
-                context.Response = AIResponse.Failure(context.Request.RequestId, ex.Message);
-            }
+            context.Result = await context.Client!.SendAsync(context.Request).ConfigureAwait(false);
         }
     }
 }

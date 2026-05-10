@@ -7,6 +7,7 @@ using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Logging;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Runtime;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.AI
 {
@@ -32,14 +33,14 @@ namespace RimMind.Kernel.Pipeline.AI
                 {
                     NpcId = context.Request.ModId,
                     Scenario = context.Request.RequestId,
-                    PromptTokens = context.Response?.PromptTokens ?? 0,
-                    CompletionTokens = context.Response?.CompletionTokens ?? 0,
-                    TotalTokens = context.Response?.TokensUsed ?? 0,
-                    CachedTokens = context.Response?.CachedTokens ?? 0,
+                    PromptTokens = context.Result?.Match(ok => ok.PromptTokens, _ => 0) ?? 0,
+                    CompletionTokens = context.Result?.Match(ok => ok.CompletionTokens, _ => 0) ?? 0,
+                    TotalTokens = context.Result?.Match(ok => ok.TokensUsed, _ => 0) ?? 0,
+                    CachedTokens = context.Result?.Match(ok => ok.CachedTokens, _ => 0) ?? 0,
                     TraceId = RimMindLogger.CurrentTraceId,
                     RequestLatencyMs = sw.ElapsedMilliseconds,
                     TimestampTicks = DateTime.UtcNow.Ticks,
-                    ResponseParseSuccess = context.Response?.Success ?? false,
+                    ResponseParseSuccess = context.Result?.IsOk ?? false,
                 };
 
                 try

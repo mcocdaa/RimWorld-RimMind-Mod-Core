@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.Npc
 {
@@ -23,31 +24,25 @@ namespace RimMind.Kernel.Pipeline.Npc
         {
             for (int attempt = 0; attempt <= MaxRetries; attempt++)
             {
-                try
-                {
-                    await next(context);
-                    if (context.Result?.Error == null || !IsTransientError(context.Result.Error))
-                        return;
-                }
-                catch (Exception ex) when (IsTransientException(ex) && attempt < MaxRetries)
-                {
-                }
+                context.ChatResult = null;
+                await next(context);
+
+                if (context.ChatResult?.IsOk == true)
+                    return;
+
+                if (context.ChatResult?.IsErr == true && !IsTransientError(context.ChatResult.Value.Error))
+                    return;
+
                 if (attempt < MaxRetries)
                     await Task.Delay(Backoff[attempt]);
             }
         }
 
-        private static bool IsTransientError(string error)
+        private static bool IsTransientError(RimMindError error)
         {
-            if (string.IsNullOrEmpty(error)) return false;
-            return error.Contains("429") || error.Contains("503") || error.Contains("504")
-                || error.Contains("timeout", StringComparison.OrdinalIgnoreCase)
-                || error.Contains("rate limit", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static bool IsTransientException(Exception ex)
-        {
-            return ex is TimeoutException;
+            return error.Code == RimMindErrorCode.ClientTransientFailure
+                || error.Code == RimMindErrorCode.StorageDriverFailed
+                || error.Code == RimMindErrorCode.Timeout;
         }
     }
 }

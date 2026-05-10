@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.Npc;
@@ -24,7 +24,7 @@ namespace RimMind.Kernel.Pipeline.Npc
                 context.Items["telemetry.elapsed_ms"] = elapsed;
                 context.Items["telemetry.npc_id"] = context.Request.NpcId;
                 context.Items["telemetry.scenario"] = context.Request.Scenario;
-                context.Items["telemetry.success"] = context.Result?.Error == null;
+                context.Items["telemetry.success"] = context.ChatResult?.IsOk ?? false;
             }
         }
     }

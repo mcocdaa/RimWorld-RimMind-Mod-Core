@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.Bus;
+using RimMind.Kernel.Logging;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.Bus
 {
@@ -15,8 +17,16 @@ namespace RimMind.Kernel.Pipeline.Bus
 
         public async Task InvokeAsync(BusPublishContext<T> context, MiddlewareDelegate<BusPublishContext<T>> next)
         {
-            context.Items["error_isolation.enabled"] = true;
-            await next(context);
+            try
+            {
+                await next(context);
+            }
+            catch (Exception ex)
+            {
+                var error = RimMindErrors.Internal(ex.Message, ex);
+                context.HandlerErrors.Add(error);
+                RimMindLogger.Warning($"[ErrorIsolation] Isolated error in {typeof(T).Name} pipeline: {ex.Message}");
+            }
         }
     }
 }

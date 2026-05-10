@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Kernel.Logging;
@@ -34,9 +35,10 @@ namespace RimMind.Core.Npc
 
         private string PrefixKey(string key) => _keyPrefix + key;
 
-        public Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
+        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
         {
-            return Task.FromResult(new NpcChatResult(npcId, "Local storage does not support chat."));
+            return Task.FromResult(Result<NpcChatResult, RimMindError>.Err(
+                RimMindErrors.StorageDriverFailed("Local storage does not support chat")));
         }
 
         public Task<bool> SpawnNpcAsync(NpcProfile profile)
@@ -55,10 +57,10 @@ namespace RimMind.Core.Npc
 
         public bool IsNpcAlive(string npcId) => _npcRegistry.ContainsKey(npcId);
 
-        public async Task<NpcChatResult> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
         {
             if (!_npcRegistry.TryGetValue(snapshot.NpcId, out var profile))
-                return new NpcChatResult { Error = $"NPC {snapshot.NpcId} not found" };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.NpcNotFound(snapshot.NpcId));
 
             var request = new AIRequest
             {
@@ -74,22 +76,22 @@ namespace RimMind.Core.Npc
 
             var client = RimMindAPI.GetClient();
             if (client == null)
-                return new NpcChatResult { Error = "AI client not configured." };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.ClientNotConfigured(nameof(LocalStorageDriver)));
 
-            AIResponse response;
+            Result<AIResponse, RimMindError> aiResult;
             try
             {
-                response = await client.SendAsync(request);
+                aiResult = await client.SendAsync(request);
             }
             catch (Exception ex)
             {
-                return new NpcChatResult { Error = $"AI request failed: {ex.Message}" };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"AI request failed: {ex.Message}", ex));
             }
 
-            if (!response.Success)
-                return new NpcChatResult { Error = response.Error };
+            if (aiResult.IsErr)
+                return Result<NpcChatResult, RimMindError>.Err(aiResult.Error);
 
-            string content = response.Content ?? "";
+            string content = aiResult.Value.Content ?? "";
 
             content = ExtractReplyField(content);
 
@@ -99,10 +101,10 @@ namespace RimMind.Core.Npc
             _historyManager.AddTurn(snapshot.NpcId, userMessage ?? "", content, snapshot.Scenario);
             _historyManager.CompressIfNeeded(snapshot.NpcId);
 
-            return new NpcChatResult { Message = content, Commands = commands };
+            return Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult { Message = content, Commands = commands });
         }
 
-        public async Task<NpcChatResult> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
         {
             var request = new ContextRequest
             {
@@ -118,7 +120,7 @@ namespace RimMind.Core.Npc
             return await ChatAsync(snapshot, ct);
         }
 
-        public async Task<NpcChatResult> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
         {
             var request = new ContextRequest
             {
@@ -132,8 +134,8 @@ namespace RimMind.Core.Npc
             var engine = RimMindAPI.GetContextEngine();
             var snapshot = engine.BuildSnapshot(request);
             var result = await ChatAsync(snapshot, ct);
-            if (result.Message != null)
-                onChunk?.Invoke(result.Message);
+            if (result.TryGetValue(out var chatResult) && chatResult.Message != null)
+                onChunk?.Invoke(chatResult.Message);
             return result;
         }
 
@@ -193,9 +195,6 @@ namespace RimMind.Core.Npc
             return Task.FromResult(results);
         }
 
-        /// <summary>
-        /// �� JSON ��Ӧ����ȡ reply �ֶ��ı�
-         /// </summary>
          private static string ExtractReplyField(string content)
         {
             if (string.IsNullOrEmpty(content) || !content.TrimStart().StartsWith("{")) return content;

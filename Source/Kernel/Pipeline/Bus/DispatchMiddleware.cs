@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using RimMind.Contracts;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.Bus;
 using RimMind.Kernel.Logging;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.Bus
 {
@@ -25,7 +26,7 @@ namespace RimMind.Kernel.Pipeline.Bus
                 }
                 catch (Exception ex)
                 {
-                    context.HandlerErrors.Add(ex);
+                    context.HandlerErrors.Add(RimMindErrors.Internal(ex.Message, ex));
                     RimMindLogger.Warning($"AgentBus handler error for {typeof(T).Name}: {ex.Message}");
                 }
             }

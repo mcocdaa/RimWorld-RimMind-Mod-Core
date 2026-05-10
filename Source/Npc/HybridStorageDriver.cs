@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Adapters.Client.Player2;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
@@ -28,7 +29,7 @@ namespace RimMind.Core.Npc
             _remote = new Player2StorageDriver(client, RimMindServiceLocator.Get<INpcManager>());
         }
 
-        public async Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
         {
             return await _remote.ChatAsync(npcId, message, context);
         }
@@ -54,42 +55,58 @@ namespace RimMind.Core.Npc
             return _local.IsNpcAlive(npcId) || _remote.IsNpcAlive(npcId);
         }
 
-        public async Task<NpcChatResult> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
         {
-            try
-            {
-                return await _remote.ChatAsync(snapshot, ct);
-            }
-            catch (Exception ex)
-            {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {ex.Message}", isWarning: true);
-                return await _local.ChatAsync(snapshot, ct);
-            }
+            var remoteResult = await _remote.ChatAsync(snapshot, ct);
+            if (remoteResult.IsOk)
+                return remoteResult;
+
+            AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {remoteResult.Error?.Message}", isWarning: true);
+            return await _local.ChatAsync(snapshot, ct);
         }
 
-        public async Task<NpcChatResult> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
         {
-            try
-            {
-                return await _remote.ChatAsync(npcId, sender, message, gameStateInfo, ct);
-            }
-            catch (Exception ex)
-            {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {ex.Message}", isWarning: true);
-                return await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
-            }
+            var remoteResult = await _remote.ChatAsync(npcId, sender, message, gameStateInfo, ct);
+            if (remoteResult.IsOk)
+                return remoteResult;
+
+            AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {remoteResult.Error?.Message}", isWarning: true);
+            return await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
         }
 
-        public async Task<NpcChatResult> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
+        public async IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
-            try
+            var remoteResult = _remote.ChatStreamingAsync(npcId, sender, message, onChunk, gameStateInfo, ct);
+            var hasError = false;
+            RimMindError? remoteError = null;
+
+            await foreach (var chunk in remoteResult.WithCancellation(ct))
             {
-                return await _remote.ChatStreamingAsync(npcId, sender, message, onChunk, gameStateInfo, ct);
+                if (chunk.IsErr)
+                {
+                    hasError = true;
+                    remoteError = chunk.Error;
+                    break;
+                }
+                yield return chunk;
             }
-            catch (Exception ex)
+
+            if (hasError && remoteError != null)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {ex.Message}", isWarning: true);
-                return await _local.ChatStreamingAsync(npcId, sender, message, onChunk, gameStateInfo, ct);
+                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {remoteError.Message}", isWarning: true);
+                var localResult = await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
+                if (localResult.IsOk)
+                {
+                    var chatResult = localResult.Value;
+                    if (chatResult.Message != null)
+                        onChunk?.Invoke(chatResult.Message);
+                    yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, chatResult.Message ?? "", chatResult.Emotion, isFinal: true));
+                }
+                else
+                {
+                    yield return Result<NpcChatChunk, RimMindError>.Err(localResult.Error);
+                }
             }
         }
 

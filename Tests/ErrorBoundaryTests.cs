@@ -7,6 +7,8 @@ using RimMind.Contracts.Settings;
 using RimMind.Core.Runtime;
 using Xunit;
 
+using RimMind.Contracts.Result;
+
 namespace RimMind.Core.Tests
 {
     public class ErrorBoundaryTests
@@ -135,17 +137,18 @@ namespace RimMind.Core.Tests
         }
 
         [Fact]
-        public void NpcChatResult_ErrorProperty_StoresMessage()
+        public void Result_NpcChatResult_Err_StoresMessage()
         {
-            var result = new NpcChatResult { Error = "test error message" };
-            Assert.Equal("test error message", result.Error);
+            var result = Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed("test error message"));
+            Assert.True(result.IsErr);
+            Assert.Equal("test error message", result.Error.Message);
         }
 
         [Fact]
-        public void NpcChatResult_DefaultError_IsNull()
+        public void Result_NpcChatResult_Ok_IsSuccess()
         {
-            var result = new NpcChatResult();
-            Assert.Null(result.Error);
+            var result = Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult());
+            Assert.True(result.IsOk);
         }
     }
 }

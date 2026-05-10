@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Adapters.Client.Player2;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
@@ -49,7 +50,7 @@ namespace RimMind.Core.Npc
             _gameId = Player2Client.GameClientId;
         }
 
-        public async Task<NpcChatResult> ChatAsync(string npcId, string message, string? context = null)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
         {
             try
             {
@@ -59,12 +60,14 @@ namespace RimMind.Core.Npc
                     UserPrompt = message,
                     SystemPrompt = context,
                 };
-                var response = await _client.SendAsync(request);
-                return new NpcChatResult(npcId, response?.Content ?? "") { Error = response?.Error };
+                var aiResult = await _client.SendAsync(request);
+                if (aiResult.IsErr)
+                    return Result<NpcChatResult, RimMindError>.Err(aiResult.Error);
+                return Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult(npcId, aiResult.Value.Content ?? ""));
             }
             catch (Exception ex)
             {
-                return new NpcChatResult(npcId, "") { Error = ex.Message };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed(ex.Message, ex));
             }
         }
 
@@ -91,7 +94,7 @@ namespace RimMind.Core.Npc
                 string json = JsonConvert.SerializeObject(body, Formatting.None,
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 var response = await _client.SendRawAsync("/npcs/spawn", json);
-                return response.Success;
+                return response.IsOk;
             }
             catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.SpawnNpcAsync failed: {ex.Message}"); return false; }
         }
@@ -101,7 +104,7 @@ namespace RimMind.Core.Npc
             try
             {
                 var response = await _client.SendRawAsync($"/npcs/{npcId}/kill", "{}");
-                return response.Success;
+                return response.IsOk;
             }
             catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.KillNpcAsync failed: {ex.Message}"); return false; }
         }
@@ -111,12 +114,12 @@ namespace RimMind.Core.Npc
             return _npcManager?.IsNpcAlive(npcId) == true;
         }
 
-        public async Task<NpcChatResult> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
         {
             try
             {
                 if (_client == null || !_client.IsConfigured())
-                    return new NpcChatResult { Error = "Player2 client not configured." };
+                    return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.ClientNotConfigured(nameof(Player2StorageDriver)));
 
                 var body = new
                 {
@@ -131,22 +134,22 @@ namespace RimMind.Core.Npc
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 var response = await _client.SendRawAsync($"/npcs/{snapshot.NpcId}/chat", json);
 
-                if (!response.Success)
-                    return new NpcChatResult { Error = response.Error };
+                if (!response.IsOk)
+                    return Result<NpcChatResult, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("Raw request failed"));
 
                 var result = JsonConvert.DeserializeObject<NpcChatResult>(response.Content!);
                 result ??= new NpcChatResult { Message = response.Content ?? "" };
                 MaybeDispatch(result, snapshot.NpcId);
-                return result;
+                return Result<NpcChatResult, RimMindError>.Ok(result);
             }
             catch (System.Exception ex)
             {
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
-                return new NpcChatResult { Error = ex.Message };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed(ex.Message, ex));
             }
         }
 
-        public async Task<NpcChatResult> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
+        public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
         {
             try
             {
@@ -190,23 +193,22 @@ namespace RimMind.Core.Npc
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 var response = await _client.SendRawAsync($"/npcs/{npcId}/chat", json);
 
-                if (!response.Success)
-                    return new NpcChatResult { Error = response.Error };
+                if (!response.IsOk)
+                    return Result<NpcChatResult, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("Raw request failed"));
 
                 var result = JsonConvert.DeserializeObject<NpcChatResult>(response.Content!);
                 result ??= new NpcChatResult { Message = response.Content ?? "" };
                 MaybeDispatch(result, npcId);
-                return result;
+                return Result<NpcChatResult, RimMindError>.Ok(result);
             }
             catch (System.Exception ex)
             {
-                return new NpcChatResult { Error = ex.Message };
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed(ex.Message, ex));
             }
         }
 
-        public async Task<NpcChatResult> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default)
+        public async IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
-            // ���ݾɽӿڣ����� ContextSnapshot ί�е��� ChatAsync
             var snapshot = new ContextSnapshot
             {
                 NpcId = npcId,
@@ -217,7 +219,18 @@ namespace RimMind.Core.Npc
             };
             snapshot.AddMessage(new ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
 
-            return await ChatAsync(snapshot, ct);
+            var result = await ChatAsync(snapshot, ct);
+            if (result.IsErr)
+            {
+                yield return Result<NpcChatChunk, RimMindError>.Err(result.Error);
+                yield break;
+            }
+
+            var chatResult = result.Value;
+            if (chatResult.Message != null)
+                onChunk?.Invoke(chatResult.Message);
+
+            yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, chatResult.Message ?? "", chatResult.Emotion, isFinal: true));
         }
 
         public async Task<string> GetHistoryAsync(string npcId, int limit = 50)
@@ -225,7 +238,7 @@ namespace RimMind.Core.Npc
             try
             {
                 var response = await _client.GetRawAsync($"/npcs/{npcId}/history?limit={limit}");
-                return response.Success ? response.Content ?? "" : "";
+                return response.IsOk ? response.Content ?? "" : "";
             }
             catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.GetHistoryAsync failed: {ex.Message}"); return ""; }
         }
@@ -246,7 +259,7 @@ namespace RimMind.Core.Npc
                 var body = new { value = value };
                 string json = JsonConvert.SerializeObject(body);
                 var response = await _client.SendRawAsync($"/games/{_gameId}/data/user/{key}", json);
-                return response.Success;
+                return response.IsOk;
             }
             catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.PutAsync failed: {ex.Message}"); return false; }
         }
@@ -256,7 +269,7 @@ namespace RimMind.Core.Npc
             try
             {
                 var response = await _client.GetRawAsync($"/games/{_gameId}/data/user/{key}");
-                return response.Success ? response.Content : null;
+                return response.IsOk ? response.Content : null;
             }
             catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.GetAsync failed: {ex.Message}"); return null; }
         }
@@ -266,7 +279,7 @@ namespace RimMind.Core.Npc
             try
             {
                 var response = await _client.DeleteRawAsync($"/games/{_gameId}/data/user/{key}");
-                return response.Success;
+                return response.IsOk;
             }
             catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.DeleteAsync failed: {ex.Message}"); return false; }
         }
@@ -278,7 +291,7 @@ namespace RimMind.Core.Npc
                 var body = new { keys = keys };
                 string json = JsonConvert.SerializeObject(body);
                 var response = await _client.SendRawAsync($"/games/{_gameId}/data/user/batch", json);
-                if (!response.Success) return new Dictionary<string, string>();
+                if (!response.IsOk) return new Dictionary<string, string>();
                 return JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content!)
                     ?? new Dictionary<string, string>();
             }

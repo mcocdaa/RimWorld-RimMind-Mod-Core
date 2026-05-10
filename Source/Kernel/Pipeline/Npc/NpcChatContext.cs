@@ -4,6 +4,7 @@ using RimMind.Contracts.Npc;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Pipeline;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.Npc
 {
@@ -11,7 +12,7 @@ namespace RimMind.Kernel.Pipeline.Npc
     {
         public ContextRequest Request { get; set; } = null!;
         public ContextSnapshot? Snapshot { get; set; }
-        public NpcChatResult? Result { get; set; }
+        public Result<NpcChatResult, RimMindError>? ChatResult { get; set; }
         public CancellationToken Ct { get; set; }
         public bool IsStreaming { get; set; }
         public Action<string>? OnStreamChunk { get; set; }

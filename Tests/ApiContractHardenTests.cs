@@ -12,6 +12,8 @@ using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Registry;
 using Xunit;
 
+using RimMind.Contracts.Result;
+
 namespace RimMind.Core.Tests
 {
     public class AIResponseInitSetterTests
@@ -20,27 +22,24 @@ namespace RimMind.Core.Tests
         public void Ok_Factory_SetsInitProperties()
         {
             var response = AIResponse.Ok("req-1", "hello", 42);
-            Assert.True(response.Success);
             Assert.Equal("req-1", response.RequestId);
             Assert.Equal(AIRequestState.Completed, response.State);
         }
 
         [Fact]
-        public void Failure_Factory_SetsInitProperties()
+        public void Result_Ok_ContainsResponse()
         {
-            var response = AIResponse.Failure("req-2", "error msg");
-            Assert.False(response.Success);
-            Assert.Equal("req-2", response.RequestId);
-            Assert.Equal(AIRequestState.Error, response.State);
+            var result = Result<AIResponse, RimMindError>.Ok(AIResponse.Ok("req-2", "content", 10));
+            Assert.True(result.IsOk);
+            Assert.Equal("req-2", result.Value.RequestId);
         }
 
         [Fact]
-        public void Cancelled_Factory_SetsInitProperties()
+        public void Result_Err_ContainsError()
         {
-            var response = AIResponse.Cancelled("req-3", "timeout");
-            Assert.False(response.Success);
-            Assert.Equal("req-3", response.RequestId);
-            Assert.Equal(AIRequestState.Cancelled, response.State);
+            var result = Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
+            Assert.True(result.IsErr);
+            Assert.Equal(RimMindErrorCode.Cancelled, result.Error.Code);
         }
 
         [Fact]
@@ -48,11 +47,9 @@ namespace RimMind.Core.Tests
         {
             var response = new AIResponse
             {
-                Success = true,
                 RequestId = "init-test",
                 State = AIRequestState.Completed
             };
-            Assert.True(response.Success);
             Assert.Equal("init-test", response.RequestId);
             Assert.Equal(AIRequestState.Completed, response.State);
         }
@@ -62,7 +59,6 @@ namespace RimMind.Core.Tests
         {
             var response = AIResponse.Ok("req-4", "content", 10);
             response.Content = "updated";
-            response.Error = "err";
             response.TokensUsed = 99;
             response.PromptTokens = 50;
             response.CompletionTokens = 49;
@@ -84,13 +80,6 @@ namespace RimMind.Core.Tests
         {
             var response = new AIResponse();
             Assert.Equal(AIRequestState.Queued, response.State);
-        }
-
-        [Fact]
-        public void DefaultSuccess_IsFalse()
-        {
-            var response = new AIResponse();
-            Assert.False(response.Success);
         }
 
         [Fact]

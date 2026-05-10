@@ -12,12 +12,6 @@ namespace RimMind.Kernel.Llm
         {
             if (result == null) return;
 
-            if (!string.IsNullOrEmpty(result.Error))
-            {
-                Log.Warning($"[RimMind-Core] ResponseDispatcher: chat error - {result.Error}");
-                return;
-            }
-
             if (!string.IsNullOrEmpty(result.Message))
                 DispatchMessage(result.Message, pawn);
 

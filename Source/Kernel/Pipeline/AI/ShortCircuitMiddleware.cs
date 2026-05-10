@@ -6,6 +6,7 @@ using RimMind.Contracts.Internal;
 using RimMind.Contracts.Runtime;
 using RimMind.Kernel.Logging;
 using RimMind.Core;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Kernel.Pipeline.AI
 {
@@ -19,21 +20,21 @@ namespace RimMind.Kernel.Pipeline.AI
         {
             if (RimMindServiceLocator.Get<IRimMindRuntime>()?.IsShutdown == true)
             {
-                context.Response = AIResponse.Failure(context.Request.RequestId, "shutdown");
+                context.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.PipelineShortCircuited("shutdown"));
                 context.ShortCircuit("shutdown");
                 return Task.CompletedTask;
             }
 
             if (RimMindCoreMod.Settings?.IsConfigured() != true)
             {
-                context.Response = AIResponse.Failure(context.Request.RequestId, "not_configured");
+                context.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("ShortCircuit"));
                 context.ShortCircuit("not_configured");
                 return Task.CompletedTask;
             }
 
             if (context.Client == null)
             {
-                context.Response = AIResponse.Failure(context.Request.RequestId, "no_client");
+                context.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("no_client"));
                 context.ShortCircuit("no_client");
                 return Task.CompletedTask;
             }
