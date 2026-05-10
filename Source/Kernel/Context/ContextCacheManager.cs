@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Settings;
 using RimMind.Contracts.Runtime;

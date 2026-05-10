@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 
 namespace RimMind.Kernel.Pipeline.AI
 {

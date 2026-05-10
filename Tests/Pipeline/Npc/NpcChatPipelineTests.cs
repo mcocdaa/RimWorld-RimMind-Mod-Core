@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
-using RimMind.Core.Npc;
+using RimMind.Contracts.Npc;
 using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Core.Runtime;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Pipeline;
 using Xunit;
 

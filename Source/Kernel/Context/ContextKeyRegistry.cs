@@ -6,7 +6,7 @@ using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using RimMind.Contracts.Context;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Context

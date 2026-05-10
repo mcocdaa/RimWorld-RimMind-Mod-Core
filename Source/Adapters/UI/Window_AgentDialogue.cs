@@ -1,6 +1,7 @@
 using RimMind.Core.Agent;
 using RimMind.Adapters.Verse;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Core;
 using UnityEngine;
 using Verse;

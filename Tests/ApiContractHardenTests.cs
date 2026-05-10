@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
-using RimMind.Core.Internal;
+using RimMind.Core.Registry;
+using RimMind.Contracts.Internal;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Flywheel;
 using Xunit;
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using RimMind.Contracts.Internal;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 
 namespace RimMind.Kernel.Logging
 {

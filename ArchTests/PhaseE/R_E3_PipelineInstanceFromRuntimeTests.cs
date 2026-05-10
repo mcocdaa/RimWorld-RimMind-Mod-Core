@@ -11,10 +11,10 @@ namespace RimMind.Core.ArchTests.PhaseE
     {
         private static readonly HashSet<string> PipelineFactoryFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Core\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Core\Pipeline\Npc\NpcChatPipelineFactory.cs",
-            @"Core\Pipeline\Bus\BusPublishPipelineFactory.cs",
-            @"Core\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Kernel\Pipeline\AI\AIRequestPipelineFactory.cs",
+            @"Kernel\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Kernel\Pipeline\Bus\BusPublishPipelineFactory.cs",
+            @"Kernel\Pipeline\Context\ContextBuildPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownNewPipelineViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)

@@ -1,8 +1,9 @@
 using System;
+using RimMind.Contracts;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Runtime;
-using RimMind.Core.Settings;
+using RimMind.Contracts.Settings;
 using Verse;
 using Xunit;
 

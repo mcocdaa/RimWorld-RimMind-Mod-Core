@@ -9,6 +9,7 @@ using RimMind.Contracts.Prompt;
 using RimMind.Contracts.Context;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Flywheel;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Prompt;
 using RimMind.Core;

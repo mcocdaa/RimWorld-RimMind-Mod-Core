@@ -1,5 +1,5 @@
 using RimMind.Contracts.Internal;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 
 namespace RimMind.Kernel.Bus
 {

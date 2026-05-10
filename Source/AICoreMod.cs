@@ -3,6 +3,7 @@ using HarmonyLib;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Settings;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Core.Runtime;
 using RimMind.Kernel.Logging;
 using RimMind.Adapters.UI;

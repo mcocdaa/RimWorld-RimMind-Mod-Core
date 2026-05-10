@@ -19,7 +19,6 @@ using RimMind.Kernel.Context;
 using RimMind.Contracts.Extensions;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Runtime;
-using RimMind.Kernel.Logging;
 using RimMind.Adapters.UI;
 using RimMind.Contracts.UI;
 using RimMind.Kernel.Flywheel;

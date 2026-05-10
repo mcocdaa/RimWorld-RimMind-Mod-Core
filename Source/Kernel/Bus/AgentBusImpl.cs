@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using RimMind.Contracts;
 using RimMind.Contracts.Internal;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Logging;
 using ContractsAgentBusEvent = RimMind.Contracts.AgentBusEvent;
 

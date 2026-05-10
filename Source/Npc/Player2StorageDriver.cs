@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Client;
 using RimMind.Kernel.Logging;

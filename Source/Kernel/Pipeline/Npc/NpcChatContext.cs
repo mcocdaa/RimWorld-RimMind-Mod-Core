@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Threading;
 using RimMind.Contracts.Npc;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Pipeline;
 
 namespace RimMind.Kernel.Pipeline.Npc

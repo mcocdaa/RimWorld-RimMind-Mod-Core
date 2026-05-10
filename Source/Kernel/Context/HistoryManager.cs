@@ -2,8 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 
 namespace RimMind.Kernel.Context
 {

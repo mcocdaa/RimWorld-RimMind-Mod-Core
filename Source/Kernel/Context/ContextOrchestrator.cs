@@ -10,7 +10,7 @@ using RimMind.Contracts.Npc;
 using RimMind.Contracts.Prompt;
 using RimMind.Contracts.Settings;
 using RimMind.Contracts.Runtime;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Prompt;

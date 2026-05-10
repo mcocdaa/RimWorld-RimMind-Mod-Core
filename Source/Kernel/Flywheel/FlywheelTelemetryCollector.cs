@@ -11,7 +11,7 @@ using RimMind.Kernel.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Settings;
 using RimMind.Contracts.Runtime;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Flywheel

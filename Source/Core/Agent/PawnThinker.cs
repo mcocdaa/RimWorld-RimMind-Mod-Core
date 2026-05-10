@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Contracts;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Sensor;
 using RimMind.Core.Runtime;

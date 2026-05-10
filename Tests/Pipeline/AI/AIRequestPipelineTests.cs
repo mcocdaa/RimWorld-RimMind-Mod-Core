@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Contracts.Client;
-using RimMind.Core.Client;
+using RimMind.Adapters.Client;
 using RimMind.Kernel.Pipeline.AI;
 using RimMind.Core.Runtime;
 using RimMind.Kernel.Pipeline;

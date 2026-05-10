@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using RimMind.Contracts.Internal;
-using RimMind.Core.Internal;
-using RimMind.Kernel.Abstractions;
+using RimMind.Core.Registry;
+using RimMind.Contracts.Internal;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Logging;
 using Xunit;
 

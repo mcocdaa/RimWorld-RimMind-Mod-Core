@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Queue;
 

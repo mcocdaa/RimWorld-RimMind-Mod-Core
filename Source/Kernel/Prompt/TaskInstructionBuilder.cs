@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using RimMind.Contracts.Internal;
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Prompt

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace RimMind.Kernel.Context
+namespace RimMind.Contracts.Context
 {
     public interface IContextDiffTracker
     {

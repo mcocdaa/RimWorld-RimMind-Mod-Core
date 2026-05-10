@@ -1,7 +1,9 @@
-﻿﻿﻿using System;
+?using System;
 using System.Collections.Generic;
+using RimMind.Contracts;
 using RimMind.Kernel.Bus;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using Verse;
 
 namespace RimMind.Core.Agent

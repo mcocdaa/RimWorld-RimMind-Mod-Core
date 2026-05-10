@@ -1,4 +1,4 @@
-using RimMind.Core.Client;
+using RimMind.Kernel.Json;
 using Xunit;
 
 namespace RimMind.Core.Tests

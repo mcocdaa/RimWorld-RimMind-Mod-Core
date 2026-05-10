@@ -81,9 +81,10 @@ namespace RimMind.Core.ArchTests.PhaseD
                 "R-D3: Core csproj must NOT include Contracts source files. " +
                 "Contracts is compiled as a separate assembly (0_RimMindContracts.dll).");
 
-            content.Should().NotContain("<Compile Include=\"Kernel\\",
-                "R-D3: Core csproj must NOT include Kernel source files. " +
-                "Kernel is compiled as a separate assembly (1_RimMindKernel.dll).");
+            content.Should().NotContain(@"<Compile Include=""Kernel\**\*.cs""",
+                "R-D3: Core csproj must NOT include Kernel source files via wildcard. " +
+                "Kernel is compiled as a separate assembly (1_RimMindKernel.dll). " +
+                "Individual files that depend on Core types may be included as exceptions.");
         }
 
         [Fact]

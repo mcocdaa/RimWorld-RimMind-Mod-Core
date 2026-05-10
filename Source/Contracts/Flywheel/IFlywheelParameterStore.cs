@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RimMind.Kernel.Flywheel
+namespace RimMind.Contracts.Flywheel
 {
     public interface IFlywheelParameterStore
     {

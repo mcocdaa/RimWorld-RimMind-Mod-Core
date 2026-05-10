@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.Npc;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 
 namespace RimMind.Kernel.Pipeline.Npc

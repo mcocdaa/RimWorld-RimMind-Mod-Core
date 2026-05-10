@@ -1,17 +1,19 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
-using RimMind.Core.Client;
-using RimMind.Kernel.Abstractions;
+using RimMind.Adapters.Client;
+using RimMind.Contracts.Abstractions;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Flywheel;
 using RimMind.Kernel.Flywheel;
-using RimMind.Core.Internal;
-using RimMind.Core.Npc;
-using RimMind.Core.Settings;
+using RimMind.Core.Registry;
+using RimMind.Contracts.Internal;
+using RimMind.Adapters.Verse;
+using RimMind.Contracts.Settings;
 using Verse;
 using Xunit;
 

@@ -1,9 +1,11 @@
 using System;
+using RimMind.Contracts;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Adapters.UI;
 using RimMind.Contracts.UI;
 

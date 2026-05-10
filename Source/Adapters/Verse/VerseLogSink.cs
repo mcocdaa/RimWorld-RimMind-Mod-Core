@@ -1,4 +1,4 @@
-using RimMind.Kernel.Abstractions;
+using RimMind.Contracts.Abstractions;
 
 namespace RimMind.Adapters.Verse
 {

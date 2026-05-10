@@ -1,7 +1,7 @@
 using System;
 using RimMind.Contracts;
 
-namespace RimMind.Kernel.Context
+namespace RimMind.Contracts.Context
 {
     public interface IContextEngine : IDisposable
     {

@@ -1,6 +1,7 @@
-﻿﻿﻿﻿﻿﻿using RimMind.Core.Agent;
+﻿﻿using RimMind.Contracts;
+using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Comps;
+using RimMind.Adapters.Verse;
 using Verse;
 using Verse.AI;
 using Xunit;

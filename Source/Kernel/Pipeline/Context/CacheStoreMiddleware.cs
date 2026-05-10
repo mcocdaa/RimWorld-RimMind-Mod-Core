@@ -1,7 +1,8 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Kernel.Pipeline.Context;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 
 namespace RimMind.Kernel.Pipeline.Context
 {

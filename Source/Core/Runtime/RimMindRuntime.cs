@@ -15,6 +15,7 @@ using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Extensions;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Registry;

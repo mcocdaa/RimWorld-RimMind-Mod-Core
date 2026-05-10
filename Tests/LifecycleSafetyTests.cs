@@ -1,11 +1,12 @@
-﻿﻿﻿﻿﻿﻿using System;
+????using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
-using RimMind.Core.Client;
+using RimMind.Adapters.Client;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Core.Runtime;
 using RimMind.Adapters.Verse;
 using RimMind.Kernel.Flywheel;

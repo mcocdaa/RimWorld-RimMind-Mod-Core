@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Contracts;
 using RimMind.Kernel.Bus;
 using RimMind.Adapters.Verse;
 using RimMind.Contracts.Internal;

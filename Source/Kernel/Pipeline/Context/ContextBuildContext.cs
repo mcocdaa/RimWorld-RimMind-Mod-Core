@@ -1,4 +1,5 @@
-﻿using RimMind.Kernel.Context;
+using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
 using RimMind.Contracts.Pipeline;
 
 namespace RimMind.Kernel.Pipeline.Context

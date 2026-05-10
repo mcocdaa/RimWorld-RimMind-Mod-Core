@@ -2,9 +2,9 @@ using System;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
-using RimMind.Core.Client;
-using RimMind.Core.Npc;
-using RimMind.Core.Settings;
+using RimMind.Adapters.Client;
+using RimMind.Contracts.Settings;
+using RimMind.Core.Registry;
 using Xunit;
 
 namespace RimMind.Core.Tests

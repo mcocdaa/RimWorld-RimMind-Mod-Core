@@ -1,4 +1,4 @@
-namespace RimMind.Kernel.Abstractions
+namespace RimMind.Contracts.Abstractions
 {
     public interface IPathProvider
     {

@@ -4,6 +4,8 @@ using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
 using RimMind.Kernel.Context;
+using RimMind.Contracts.Context;
+using RimMind.Contracts.Flywheel;
 using RimMind.Kernel.Flywheel;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
