@@ -9,6 +9,7 @@ using RimMind.Contracts.Internal;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Kernel.Flywheel;
+using RimMind.Kernel.Registry;
 using Xunit;
 
 namespace RimMind.Core.Tests

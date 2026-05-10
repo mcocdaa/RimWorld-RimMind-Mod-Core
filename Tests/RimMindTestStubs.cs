@@ -69,8 +69,8 @@ namespace RimMind.Core.Runtime
         private RimMindRuntime()
         {
             ProviderRegistry = new ProviderRegistry();
-            ClientManager = new RimMind.Core.Registry.ClientManager();
-            OverlayService = new RimMind.Core.Registry.OverlayService();
+            ClientManager = new RimMind.Core.Runtime.ClientManager();
+            OverlayService = new RimMind.Core.Runtime.OverlayService();
             HistoryManager = new HistoryManager();
             ContextEngine = new ContextEngine(HistoryManager);
             AgentBus = new AgentBusImpl();
@@ -105,7 +105,7 @@ namespace RimMind.Core.Runtime
             Telemetry = new FlywheelTelemetryCollector();
             AgentBus = new AgentBusImpl();
             EventBus = new EventBusAdapter(AgentBus);
-            ClientManager = new RimMind.Core.Registry.ClientManager();
+            ClientManager = new RimMind.Core.Runtime.ClientManager();
             QueueImpl = new AIRequestQueueImpl();
         }
 
@@ -298,7 +298,7 @@ namespace RimMind.Adapters.UI
     }
 }
 
-namespace RimMind.Core.Registry
+namespace RimMind.Core.Runtime
 {
     public class OverlayService : RimMind.Contracts.Internal.IOverlayService
     {

@@ -48,6 +48,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Pipeline\Npc\NpcChatPipelineFactory.cs",
             @"Pipeline\Npc\NpcChatShortCircuitMiddleware.cs",
             @"Llm\ResponseDispatcher.cs",
+            @"Registry\ProviderRegistry.cs",
         };
 
         [Fact]
