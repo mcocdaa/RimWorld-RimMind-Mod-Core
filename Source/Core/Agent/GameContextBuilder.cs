@@ -6,6 +6,7 @@ using RimMind.Contracts.Prompt;
 using RimMind.Contracts.Npc;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
+using RimMind.Kernel.Context;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;

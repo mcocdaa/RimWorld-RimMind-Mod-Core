@@ -48,6 +48,7 @@
     <Compile Remove="../Source/Core/Agent/PerceptionPipeline.cs" />
     <Compile Remove="../Source/Core/Agent/NpcProfileBuilder.cs" />
     <Compile Remove="../Source/Core/Runtime/RimMindRuntime.cs" />
+    <Compile Remove="../Source/Core/Runtime/RuntimeOverrides.cs" />
     <Compile Remove="../Source/Settings/RimMindCoreSettingsUI.cs" />
     <Compile Remove="../Source/Adapters/Client/HttpHelper.cs" />
     <Compile Remove="../Source/Core/Sensor/SensorManager.cs" />

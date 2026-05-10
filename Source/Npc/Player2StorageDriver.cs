@@ -14,7 +14,7 @@ using RimMind.Contracts.Client;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Queue;
 using RimMind.Kernel.Llm;
-using RimMind.Core;
+using RimMind.Core.Agent;
 using Verse;
 
 namespace RimMind.Core.Npc

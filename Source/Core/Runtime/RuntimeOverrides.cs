@@ -24,7 +24,7 @@ namespace RimMind.Core.Runtime
         public IContextEngine? ContextEngine { get; set; }
         public IClientManager? ClientManager { get; set; }
         public IHistoryManager? HistoryManager { get; set; }
-        public IAudioPlayerContract? AudioPlayer { get; set; }
+        public IAudioPlayer? AudioPlayer { get; set; }
 
         public void Apply()
         {
