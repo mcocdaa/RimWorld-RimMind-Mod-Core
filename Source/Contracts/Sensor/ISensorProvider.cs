@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Verse;
 
-namespace RimMind.Core.Sensor
+namespace RimMind.Contracts.Sensor
 {
     public class AgentToolDefinition
     {

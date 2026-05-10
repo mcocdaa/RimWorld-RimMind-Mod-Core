@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using RimMind.Contracts.Client;
 
-namespace RimMind.Contracts.Extensions
+namespace RimMind.Contracts.Extension
 {
     public interface IParameterTuner
     {

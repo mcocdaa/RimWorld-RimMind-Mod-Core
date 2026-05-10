@@ -1,5 +1,6 @@
 using RimMind.Contracts.Npc;
 using RimMind.Core.Sensor;
+using RimMind.Contracts.Sensor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Context;
 using RimMind.Kernel.Context;
-using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Extension;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Runtime;
 using RimMind.Adapters.UI;

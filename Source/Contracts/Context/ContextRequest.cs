@@ -1,4 +1,4 @@
-namespace RimMind.Kernel.Context
+namespace RimMind.Contracts.Context
 {
     public class ContextRequest
     {

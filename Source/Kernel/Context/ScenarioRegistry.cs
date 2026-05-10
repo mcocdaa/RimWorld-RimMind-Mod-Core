@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Abstractions;
+using RimMind.Contracts.Context;
 using RimMind.Kernel.Logging;
 
 namespace RimMind.Kernel.Context
@@ -108,14 +109,5 @@ namespace RimMind.Kernel.Context
             _scenarios.Clear();
             _coreRegistered = false;
         }
-    }
-
-    public static class ScenarioIds
-    {
-        public const string Dialogue = "Dialogue";
-        public const string Decision = "Decision";
-        public const string Personality = "Personality";
-        public const string Storyteller = "Storyteller";
-        public const string Memory = "Memory";
     }
 }

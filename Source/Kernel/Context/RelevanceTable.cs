@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using RimMind.Contracts.Context;
 
 namespace RimMind.Kernel.Context
 {

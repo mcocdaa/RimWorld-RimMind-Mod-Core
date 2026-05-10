@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using RimMind.Contracts.Client;
-using RimMind.Contracts.Context;
 
-namespace RimMind.Kernel.Context
+namespace RimMind.Contracts.Context
 {
     public class ContextSnapshot
     {

@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace RimMind.Kernel.Context
+namespace RimMind.Contracts.Context
 {
     public class EmbeddingSnapshotRecord
     {

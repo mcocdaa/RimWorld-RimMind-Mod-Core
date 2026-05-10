@@ -14,6 +14,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="1_RimMindKernel" />
+    <InternalsVisibleTo Include="RimMindCore" />
+    <InternalsVisibleTo Include="RimMindTest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Krafs.Rimworld.Ref" Version="$(GameVersion).*-*" PrivateAssets="All" />
   </ItemGroup>
 

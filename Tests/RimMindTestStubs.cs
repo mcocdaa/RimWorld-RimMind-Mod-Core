@@ -7,7 +7,6 @@ using RimMind.Contracts;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Extension;
-using RimMind.Contracts.Extensions;
 using RimMind.Contracts.Flywheel;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
@@ -26,8 +25,8 @@ using RimMind.Kernel.Flywheel;
 using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
 
-using IParameterTunerContract = RimMind.Contracts.Extensions.IParameterTuner;
-using IAgentActionBridgeContract = RimMind.Contracts.Extensions.IAgentActionBridge;
+using IParameterTunerContract = RimMind.Contracts.Extension.IParameterTuner;
+using IAgentActionBridgeContract = RimMind.Contracts.Extension.IAgentActionBridge;
 using IStorageDriverKernel = RimMind.Kernel.Context.IStorageDriver;
 
 namespace RimMind.Adapters.Client.Player2

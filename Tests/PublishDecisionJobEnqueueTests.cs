@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using RimMind.Core;
 using RimMind.Contracts.Client;
-using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Extension;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;

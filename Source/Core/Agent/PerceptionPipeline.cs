@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Contracts.Pipeline;
 
 namespace RimMind.Core.Agent
 {
@@ -16,11 +17,6 @@ namespace RimMind.Core.Agent
                 result = filter.Apply(result);
             return result;
         }
-    }
-
-    public interface IPerceptionFilter
-    {
-        List<PerceptionBufferEntry> Apply(List<PerceptionBufferEntry> entries);
     }
 
     public class DedupFilter : IPerceptionFilter

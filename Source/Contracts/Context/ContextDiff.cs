@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace RimMind.Kernel.Context
+namespace RimMind.Contracts.Context
 {
     public class ContextDiff
     {

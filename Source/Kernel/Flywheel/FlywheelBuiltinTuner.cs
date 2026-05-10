@@ -1,4 +1,4 @@
-using RimMind.Contracts.Extensions;
+using RimMind.Contracts.Extension;
 
 namespace RimMind.Kernel.Flywheel
 {

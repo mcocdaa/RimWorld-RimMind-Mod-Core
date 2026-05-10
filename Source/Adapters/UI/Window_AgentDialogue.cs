@@ -125,10 +125,10 @@ namespace RimMind.Adapters.UI
             var npcId = _npcId;
             _agent.ForceThink();
 
-            var request = new RimMind.Kernel.Context.ContextRequest
+            var request = new RimMind.Contracts.Context.ContextRequest
             {
                 NpcId = npcId,
-                Scenario = RimMind.Kernel.Context.ScenarioIds.Dialogue,
+                Scenario = RimMind.Contracts.Context.ScenarioIds.Dialogue,
                 Budget = 0.6f,
                 CurrentQuery = message,
                 MaxTokens = RimMindCoreMod.Settings.maxTokens,
