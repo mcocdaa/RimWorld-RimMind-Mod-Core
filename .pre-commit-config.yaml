@@ -1,3 +1,5 @@
+default_stages: [pre-commit]
+
 repos:
   # - repo: https://github.com/pre-commit/pre-commit-hooks
   - repo: https://gitlab.cern.ch/pre-commit-hook-mirrors/pre-commit/pre-commit-hooks
@@ -13,3 +15,7 @@ repos:
       - id: mixed-line-ending
       - id: requirements-txt-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/mcocdaa/ai-commit.git
+    rev: v1.0.1
+    hooks:
+      - id: ai-commit
