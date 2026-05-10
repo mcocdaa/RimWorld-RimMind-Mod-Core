@@ -1,5 +1,6 @@
 using System;
 using RimMind.Contracts;
+using RimMind.Contracts.Pipeline;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Runtime;

@@ -8,6 +8,7 @@ using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Sensor;
+using RimMind.Contracts.Pipeline;
 using RimMind.Core.Runtime;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Json;

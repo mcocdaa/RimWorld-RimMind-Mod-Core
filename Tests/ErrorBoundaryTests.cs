@@ -4,7 +4,7 @@ using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using RimMind.Adapters.Client;
 using RimMind.Contracts.Settings;
-using RimMind.Core.Registry;
+using RimMind.Core.Runtime;
 using Xunit;
 
 namespace RimMind.Core.Tests

@@ -2,7 +2,7 @@ using System;
 using RimMind.Contracts.Client;
 using RimMind.Adapters.Client;
 
-namespace RimMind.Core.Registry
+namespace RimMind.Core.Runtime
 {
     internal static class TransientExceptionChecker
     {

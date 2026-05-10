@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using RimMind.Contracts.Client;
 
-namespace RimMind.Core.Registry
+namespace RimMind.Core.Runtime
 {
     internal static class AIRequestPool
     {

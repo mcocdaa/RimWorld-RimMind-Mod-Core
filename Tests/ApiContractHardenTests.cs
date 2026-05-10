@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
-using RimMind.Core.Registry;
+using RimMind.Kernel.Registry;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;

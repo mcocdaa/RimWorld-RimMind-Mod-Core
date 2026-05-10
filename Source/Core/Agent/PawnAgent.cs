@@ -4,6 +4,7 @@ using RimMind.Kernel.Bus;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using RimMind.Kernel.Logging;
+using RimMind.Adapters.Patches;
 using Verse;
 using Verse.AI;
 

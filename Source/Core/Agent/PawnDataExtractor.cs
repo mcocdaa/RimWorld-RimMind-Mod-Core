@@ -3,7 +3,7 @@ using System.Linq;
 using RimMind.Contracts.Context;
 using Verse;
 
-namespace RimMind.Core
+namespace RimMind.Core.Agent
 {
     public static class PawnDataExtractor
     {

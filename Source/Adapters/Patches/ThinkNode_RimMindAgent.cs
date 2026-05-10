@@ -2,7 +2,7 @@ using RimMind.Adapters.Verse;
 using Verse;
 using Verse.AI;
 
-namespace RimMind.Core.Agent
+namespace RimMind.Adapters.Patches
 {
     public class ThinkNode_RimMindAgent : ThinkNode
     {

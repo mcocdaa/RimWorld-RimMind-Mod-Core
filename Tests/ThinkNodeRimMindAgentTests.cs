@@ -1,5 +1,6 @@
 ﻿﻿using RimMind.Contracts;
 using RimMind.Core.Agent;
+using RimMind.Adapters.Patches;
 using RimMind.Kernel.Bus;
 using RimMind.Adapters.Verse;
 using Verse;

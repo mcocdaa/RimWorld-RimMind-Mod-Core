@@ -6,6 +6,7 @@ using RimMind.Kernel.Bus;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
 using RimMind.Core.Perception;
+using RimMind.Adapters.Patches;
 using RimWorld;
 using Verse;
 using Verse.AI;

@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using RimMind.Kernel.Bus;
 using RimMind.Adapters.Verse;
 using RimMind.Core.Runtime;
+using RimMind.Core.Agent;
 using Verse;
 using Verse.AI;
 
-namespace RimMind.Core.Agent
+namespace RimMind.Adapters.Patches
 {
     public class JobDriver_RimMindAction : JobDriver
     {

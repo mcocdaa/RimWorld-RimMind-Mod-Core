@@ -9,7 +9,7 @@ using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Logging;
 using Verse;
 
-namespace RimMind.Core.Registry
+namespace RimMind.Core.Runtime
 {
     public class ClientManager : IClientManager
     {

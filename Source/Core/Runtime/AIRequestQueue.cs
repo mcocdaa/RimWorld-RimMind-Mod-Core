@@ -1,6 +1,6 @@
 using RimMind.Contracts.Internal;
 
-namespace RimMind.Core.Registry
+namespace RimMind.Core.Runtime
 {
     public static class AIRequestQueue
     {

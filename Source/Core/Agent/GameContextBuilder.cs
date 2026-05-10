@@ -1,17 +1,17 @@
-﻿﻿﻿﻿using System.Collections.Generic;
+﻿﻿﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Prompt;
 using RimMind.Contracts.Npc;
 using RimMind.Contracts.Internal;
-using RimMind.Core;
+using RimMind.Core.Agent;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core
+namespace RimMind.Core.Agent
 {
     /// <summary>
     /// 构建游戏状态上下文文本，供各模块组装 AI Prompt。

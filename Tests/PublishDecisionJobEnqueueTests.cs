@@ -5,6 +5,7 @@ using RimMind.Contracts.Client;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Internal;
 using RimMind.Core.Agent;
+using RimMind.Adapters.Patches;
 using RimMind.Kernel.Bus;
 using RimMind.Adapters.Client;
 using RimMind.Contracts.Flywheel;

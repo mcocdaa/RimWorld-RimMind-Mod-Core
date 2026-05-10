@@ -28,8 +28,7 @@
     <Compile Include="../Source/Adapters/Client/Player2/*.cs" />
     <Compile Include="../Source/Core/Agent/**/*.cs" />
     <Compile Include="../Source/Core/Perception/**/*.cs" />
-    <Compile Include="../Source/Core/Registry/**/*.cs" />
-    <Compile Include="../Source/Core/Sensor/ISensorProvider.cs" />
+    <Compile Include="../Source/Core/Runtime/**/*.cs" />
     <Compile Include="../Source/Core/Sensor/SensorManager.cs" />
     <Compile Include="../Source/Compilers/**/*.cs" />
     <Compile Include="../Source/Comps/**/*.cs" />
@@ -37,22 +36,24 @@
     <Compile Include="../Source/Adapters/Verse/AgentBusGameComponent.cs" />
     <Compile Include="../Source/Adapters/Verse/CompPawnAgent.cs" />
     <Compile Include="../Source/Adapters/Verse/NpcManager.cs" />
+    <Compile Include="../Source/Adapters/Patches/JobDriver_RimMindAction.cs" />
+    <Compile Include="../Source/Adapters/Patches/ThinkNode_RimMindAgent.cs" />
     <Compile Include="../Source/Settings/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="../Source/Adapters/Client/Player2/Player2Client.cs" />
-    <Compile Remove="../Source/Core/Registry/OverlayService.cs" />
-    <Compile Remove="../Source/Core/Registry/ClientManager.cs" />
+    <Compile Remove="../Source/Core/Runtime/OverlayService.cs" />
+    <Compile Remove="../Source/Core/Runtime/ClientManager.cs" />
     <Compile Remove="../Source/Core/Agent/PerceptionPipeline.cs" />
     <Compile Remove="../Source/Core/Agent/NpcProfileBuilder.cs" />
     <Compile Remove="../Source/Core/Runtime/RimMindRuntime.cs" />
     <Compile Remove="../Source/Settings/RimMindCoreSettingsUI.cs" />
     <Compile Remove="../Source/Adapters/Client/HttpHelper.cs" />
     <Compile Remove="../Source/Core/Sensor/SensorManager.cs" />
-    <Compile Remove="../Source/Core/GameContextBuilder.cs" />
-    <Compile Remove="../Source/Core/PawnDataExtractor.cs" />
-    <Compile Remove="../Source/Core/ThreatClassifier.cs" />
+    <Compile Remove="../Source/Core/Agent/GameContextBuilder.cs" />
+    <Compile Remove="../Source/Core/Agent/PawnDataExtractor.cs" />
+    <Compile Remove="../Source/Kernel/Context/ThreatClassifier.cs" />
   </ItemGroup>
 
 </Project>

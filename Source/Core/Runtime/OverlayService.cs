@@ -3,7 +3,7 @@ using RimMind.Contracts.Internal;
 using System.Collections.Generic;
 using RimMind.Adapters.UI;
 
-namespace RimMind.Core.Registry
+namespace RimMind.Core.Runtime
 {
     public class OverlayService : IOverlayService
     {

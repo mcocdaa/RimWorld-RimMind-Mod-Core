@@ -8,7 +8,7 @@ using RimMind.Kernel.Context;
 using RimMind.Kernel.Prompt;
 using Verse;
 
-namespace RimMind.Core.Registry
+namespace RimMind.Kernel.Registry
 {
     public class ProviderRegistry : IProviderRegistry
     {

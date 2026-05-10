@@ -1,4 +1,4 @@
-namespace RimMind.Core
+namespace RimMind.Kernel.Context
 {
     public static class ThreatClassifier
     {

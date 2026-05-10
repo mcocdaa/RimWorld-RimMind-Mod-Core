@@ -1,6 +1,7 @@
 using System;
 using RimMind.Contracts;
 using RimMind.Core.Agent;
+using RimMind.Adapters.Patches;
 using RimMind.Kernel.Bus;
 using RimMind.Core.Runtime;
 using RimMind.Contracts.Settings;

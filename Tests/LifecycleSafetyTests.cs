@@ -7,6 +7,7 @@ using RimMind.Kernel.Bus;
 using RimMind.Adapters.Client;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
+using RimMind.Contracts.Pipeline;
 using RimMind.Core.Runtime;
 using RimMind.Adapters.Verse;
 using RimMind.Kernel.Flywheel;

@@ -6,8 +6,8 @@ using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
-using RimMind.Adapters.UI;
 using RimMind.Contracts.UI;
+using IAudioPlayerContract = RimMind.Contracts.UI.IAudioPlayer;
 
 namespace RimMind.Core.Runtime
 {
@@ -24,7 +24,7 @@ namespace RimMind.Core.Runtime
         public IContextEngine? ContextEngine { get; set; }
         public IClientManager? ClientManager { get; set; }
         public IHistoryManager? HistoryManager { get; set; }
-        public IAudioPlayer? AudioPlayer { get; set; }
+        public IAudioPlayerContract? AudioPlayer { get; set; }
 
         public void Apply()
         {

@@ -28,7 +28,7 @@ using RimMind.Kernel.Pipeline;
 using RimMind.Kernel.Prompt;
 using RimMind.Kernel.Queue;
 using RimMind.Adapters.Client.Player2;
-using RimMind.Core.Registry;
+using RimMind.Kernel.Registry;
 using Verse;
 
 using RimMind.Contracts.Runtime;
