@@ -2,7 +2,9 @@ using System.Threading.Tasks;
 using RimMind.Contracts.Pipeline;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Pipeline.Npc;
+using RimMind.Kernel.Queue;
 using RimMind.Core.Npc;
 using RimMind.Core.Agent;
 using Verse;
@@ -27,7 +29,9 @@ namespace RimMind.Kernel.Pipeline.Npc
                 if (pawn != null)
                 {
                     var profile = NpcProfileBuilder.BuildPawnNpc(pawn);
-                    await driver.SpawnNpcAsync(profile);
+                    var spawnResult = await driver.SpawnNpcAsync(profile);
+                    if (spawnResult.IsErr)
+                        AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] NpcAliveCheck: SpawnNpc failed: {spawnResult.Error}", isWarning: true);
                     LongEventHandler.ExecuteWhenFinished(() => npcMgr?.SpawnNpc(profile));
                 }
             }

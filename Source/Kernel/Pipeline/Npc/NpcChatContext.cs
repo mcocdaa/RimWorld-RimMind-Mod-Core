@@ -13,7 +13,7 @@ namespace RimMind.Kernel.Pipeline.Npc
         public ContextRequest Request { get; set; } = null!;
         public ContextSnapshot? Snapshot { get; set; }
         public Result<NpcChatResult, RimMindError>? ChatResult { get; set; }
-        public CancellationToken Ct { get; set; }
+        public new CancellationToken Ct { get; set; }
         public bool IsStreaming { get; set; }
         public Action<string>? OnStreamChunk { get; set; }
     }

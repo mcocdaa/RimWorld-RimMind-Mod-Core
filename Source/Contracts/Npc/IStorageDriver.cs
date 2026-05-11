@@ -16,12 +16,12 @@ namespace RimMind.Contracts.Npc
 
         Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null);
         IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
-        Task<bool> SpawnNpcAsync(NpcProfile profile);
-        Task<bool> KillNpcAsync(string npcId);
+        Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile);
+        Task<Result<bool, RimMindError>> KillNpcAsync(string npcId);
         bool IsNpcAlive(string npcId);
-        Task<bool> SaveAllEntriesAsync(string json);
-        Task<string?> LoadAllEntriesAsync();
-        Task<List<string>> QueryMemoriesAsync(string npcId, string query, int limit = 10);
-        Task<bool> PutAsync(string key, string value);
+        Task<Result<bool, RimMindError>> SaveAllEntriesAsync(string json);
+        Task<Result<string?, RimMindError>> LoadAllEntriesAsync();
+        Task<Result<List<string>, RimMindError>> QueryMemoriesAsync(string npcId, string query, int limit = 10);
+        Task<Result<bool, RimMindError>> PutAsync(string key, string value);
     }
 }

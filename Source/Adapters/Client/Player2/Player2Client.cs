@@ -278,7 +278,7 @@ namespace RimMind.Adapters.Client.Player2
                             ? MessageTypeDefOf.PositiveEvent
                             : MessageTypeDefOf.CautionInput);
                 }
-                catch (Exception ex) { Log.Warning($"[RimMind-Core] Failed to show notification: {ex.Message}"); }
+                catch (Exception ex) { RimMindErrors.Warn($"[RimMind-Core] Failed to show notification: {ex.Message}"); }
             });
         }
 
@@ -374,7 +374,7 @@ namespace RimMind.Adapters.Client.Player2
                 }
                 return webRequest.responseCode == 200;
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2 local availability check failed: {ex.Message}"); return false; }
+            catch (Exception ex) { RimMindErrors.Warn($"[RimMind-Core] Player2 local availability check failed: {ex.Message}"); return false; }
         }
 
         public async Task<float> GetJoulesBalanceAsync()
@@ -407,7 +407,7 @@ namespace RimMind.Adapters.Client.Player2
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimMind-Core] GetJoulesBalanceAsync failed: {ex.Message}");
+                RimMindErrors.Warn($"[RimMind-Core] GetJoulesBalanceAsync failed: {ex.Message}");
                 return -1f;
             }
         }

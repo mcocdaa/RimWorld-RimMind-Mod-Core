@@ -9,19 +9,12 @@ namespace RimMind.Kernel.Logging
 {
     public static class RimMindLogger
     {
-        private const string Prefix = "[RimMind-Core]";
         private static readonly int _mainThreadId = Thread.CurrentThread.ManagedThreadId;
         private static readonly ConcurrentQueue<(string level, string message)> _backgroundLogs = new ConcurrentQueue<(string, string)>();
 
         public static IDisposable BeginTraceScope(string traceId) => TraceContext.BeginScope(traceId);
 
         public static string? CurrentTraceId => TraceContext.Current;
-
-        private static string FormatPrefix()
-        {
-            var trace = TraceContext.Current;
-            return trace != null ? $"{Prefix}[trace={trace}]" : Prefix;
-        }
 
         private static ILogSink? GetSink() => RimMindServiceLocator.Get<ILogSink>();
 
@@ -45,29 +38,26 @@ namespace RimMind.Kernel.Logging
 
         public static void Message(string message)
         {
-            string formatted = $"{FormatPrefix()} {message}";
             if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
-                WriteToSink("Message", formatted);
+                WriteToSink("Message", message);
             else
-                _backgroundLogs.Enqueue(("Message", formatted));
+                _backgroundLogs.Enqueue(("Message", message));
         }
 
         public static void Warning(string message)
         {
-            string formatted = $"{FormatPrefix()} {message}";
             if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
-                WriteToSink("Warning", formatted);
+                WriteToSink("Warning", message);
             else
-                _backgroundLogs.Enqueue(("Warning", formatted));
+                _backgroundLogs.Enqueue(("Warning", message));
         }
 
         public static void Error(string message)
         {
-            string formatted = $"{FormatPrefix()} {message}";
             if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
-                WriteToSink("Error", formatted);
+                WriteToSink("Error", message);
             else
-                _backgroundLogs.Enqueue(("Error", formatted));
+                _backgroundLogs.Enqueue(("Error", message));
         }
 
         public static void FlushBackgroundLogs()

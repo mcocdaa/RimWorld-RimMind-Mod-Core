@@ -1,0 +1,112 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using RimMind.Contracts;
+using RimMind.Contracts.Extension;
+using RimMind.Contracts.Mechanisms;
+using RimMind.Contracts.Result;
+using Verse;
+
+namespace RimMind.Kernel.Mechanisms
+{
+    public abstract class GameMechanismBase<TDef> : IGameMechanism
+        where TDef : Def, new()
+    {
+        string IExtension.Id => MechanismId;
+        public abstract string MechanismId { get; }
+        public abstract MechanismScope Scope { get; }
+        public abstract MechanismRisk Risk { get; }
+        public abstract IReadOnlyList<MechanismOperationType> SupportedOperations { get; }
+        public abstract MechanismDocs Docs { get; }
+
+        public virtual Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct)
+            => Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "query")));
+
+        public virtual Task<Result<bool, RimMindError>> ExecuteSetAsync(MechanismWriteArgs args, CancellationToken ct)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "set")));
+
+        public virtual Task<Result<bool, RimMindError>> ExecuteAddAsync(MechanismWriteArgs args, CancellationToken ct)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "add")));
+
+        public virtual Task<Result<bool, RimMindError>> ExecuteRemoveAsync(MechanismWriteArgs args, CancellationToken ct)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "remove")));
+
+        public virtual Task<Result<bool, RimMindError>> ExecuteToggleAsync(MechanismWriteArgs args, CancellationToken ct)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "toggle")));
+
+        public virtual Task<Result<bool, RimMindError>> ExecuteTriggerAsync(MechanismWriteArgs args, CancellationToken ct)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "trigger")));
+
+        public virtual Task<Result<IReadOnlyList<MechanismEnumResult>, RimMindError>> ExecuteListAsync(int? pawnId, CancellationToken ct)
+        {
+            var results = DefDatabase<TDef>.AllDefsListForReading
+                .Select(d => new MechanismEnumResult
+                {
+                    DefName = d.defName,
+                    Label = d.label ?? d.defName,
+                    Description = d.description
+                })
+                .ToList();
+
+            return Task.FromResult(Result<IReadOnlyList<MechanismEnumResult>, RimMindError>.Ok(results.AsReadOnly()));
+        }
+
+        public virtual Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "watch")));
+
+        protected static Pawn? FindPawn(int pawnId)
+        {
+            foreach (var map in Find.Maps)
+            {
+                var pawn = map.mapPawns?.AllPawns.FirstOrDefault(p => p.thingIDNumber == pawnId);
+                if (pawn != null) return pawn;
+            }
+
+            var worldPawn = Find.WorldPawns?.AllPawnsAlive.FirstOrDefault(p => p.thingIDNumber == pawnId);
+            return worldPawn;
+        }
+
+        protected static TDef? FindDef(string defName)
+        {
+            if (string.IsNullOrEmpty(defName)) return null;
+            return DefDatabase<TDef>.GetNamed(defName);
+        }
+
+        protected static Map? ResolveMap(MechanismReadArgs args)
+        {
+            if (args.MapId.HasValue)
+            {
+                foreach (var map in Find.Maps)
+                {
+                    if (map.uniqueID == args.MapId.Value)
+                        return map;
+                }
+                return null;
+            }
+            return Find.AnyPlayerHomeMap;
+        }
+
+        protected static Map? ResolveMap(MechanismWriteArgs args)
+        {
+            if (args.MapId.HasValue)
+            {
+                foreach (var map in Find.Maps)
+                {
+                    if (map.uniqueID == args.MapId.Value)
+                        return map;
+                }
+                return null;
+            }
+            return Find.AnyPlayerHomeMap;
+        }
+
+        protected static Result<T, RimMindError> ValidateMapOrErr<T>(Map? map)
+        {
+            if (map == null)
+                return Result<T, RimMindError>.Err(RimMindErrors.MapNotFound(0));
+            return Result<T, RimMindError>.Ok(default!);
+        }
+    }
+}

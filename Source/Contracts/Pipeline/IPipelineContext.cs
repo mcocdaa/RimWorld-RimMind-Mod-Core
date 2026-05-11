@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace RimMind.Contracts.Pipeline;
 
@@ -10,5 +11,6 @@ public interface IPipelineContext
     bool IsShortCircuited { get; }
     string? ShortCircuitReason { get; }
     IDictionary<string, object?> Items { get; }
+    CancellationToken Ct { get; }
     void ShortCircuit(string reason);
 }

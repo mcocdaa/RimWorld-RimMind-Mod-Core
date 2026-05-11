@@ -4,6 +4,7 @@ using RimMind.Core.Runtime;
 using RimMind.Kernel.Logging;
 using RimMind.Kernel.Flywheel;
 using Verse;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Adapters.Verse
 {
@@ -51,7 +52,7 @@ namespace RimMind.Adapters.Verse
                 {
                     RunPeriodicAnalysis();
                 }
-                catch (Exception ex) { Log.Warning($"[RimMind] Flywheel analysis failed: {ex.Message}"); }
+                catch (Exception ex) { RimMindErrors.Warn($"[RimMind] Flywheel analysis failed: {ex.Message}"); }
             }
         }
 

@@ -3,6 +3,7 @@ using System.Linq;
 using RimMind.Core.Agent;
 using RimMind.Kernel.Bus;
 using RimMind.Contracts.Client;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Flywheel;
@@ -25,7 +26,7 @@ namespace RimMind.Adapters.UI
         {
             if (!RimMindAPI.IsConfigured())
             {
-                Log.Warning("[RimMind-Core] API not configured. Set API Key in mod settings.");
+                RimMindErrors.Warn("[RimMind-Core] API not configured. Set API Key in mod settings.");
                 return;
             }
 
@@ -86,7 +87,7 @@ namespace RimMind.Adapters.UI
         public static void ShowMapContext()
         {
             var map = Find.CurrentMap;
-            if (map == null) { Log.Warning("[RimMind-Core] No map loaded."); return; }
+            if (map == null) { RimMindErrors.Warn("[RimMind-Core] No map loaded."); return; }
             Log.Message("[RimMind-Core] Map Context:\n" + RimMindAPI.BuildMapContext(map));
         }
 
@@ -94,7 +95,7 @@ namespace RimMind.Adapters.UI
         public static void ShowPawnContext()
         {
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
-            if (pawn == null) { Log.Warning("[RimMind-Core] Select a pawn first."); return; }
+            if (pawn == null) { RimMindErrors.Warn("[RimMind-Core] Select a pawn first."); return; }
             var npcId = $"NPC-{pawn.thingIDNumber}";
             var request = new ContextRequest
             {
@@ -121,7 +122,7 @@ namespace RimMind.Adapters.UI
             var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
             if (queue == null)
             {
-                Log.Warning("[RimMind-Core] AIRequestQueue not initialized.");
+                RimMindErrors.Warn("[RimMind-Core] AIRequestQueue not initialized.");
                 return;
             }
 
@@ -182,14 +183,18 @@ namespace RimMind.Adapters.UI
                 sb.AppendLine($"  [{cat}]");
 
                 var staticData = RimMindAPI.GetStaticProviderData(cat);
-                if (staticData != null)
-                    sb.AppendLine($"    Static: {staticData.Length} chars");
+                if (staticData.IsOk && staticData.Value != null)
+                    sb.AppendLine($"    Static: {staticData.Value.Length} chars");
+                else if (staticData.IsErr)
+                    sb.AppendLine($"    Static: ERROR - {staticData.Error.Message}");
 
                 if (firstColonist != null)
                 {
                     var pawnData = RimMindAPI.GetProviderData(cat, firstColonist);
-                    if (pawnData != null)
-                        sb.AppendLine($"    Pawn ({firstColonist.Name?.ToStringShort}): {pawnData.Length} chars");
+                    if (pawnData.IsOk && pawnData.Value != null)
+                        sb.AppendLine($"    Pawn ({firstColonist.Name?.ToStringShort}): {pawnData.Value.Length} chars");
+                    else if (pawnData.IsErr)
+                        sb.AppendLine($"    Pawn: ERROR - {pawnData.Error.Message}");
                 }
             }
 
@@ -223,7 +228,7 @@ namespace RimMind.Adapters.UI
             var store = RimMindServiceLocator.Get<IFlywheelParameterStore>();
             if (store == null)
             {
-                Log.Warning("[RimMind-Core] FlywheelParameterStore not initialized.");
+                RimMindErrors.Warn("[RimMind-Core] FlywheelParameterStore not initialized.");
                 return;
             }
 
@@ -257,14 +262,14 @@ namespace RimMind.Adapters.UI
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null)
             {
-                Log.Warning("[RimMind-Core] Select a pawn first.");
+                RimMindErrors.Warn("[RimMind-Core] Select a pawn first.");
                 return;
             }
 
             var comp = RimMind.Adapters.Verse.CompPawnAgent.GetComp(pawn);
             if (comp == null || comp.Agent == null)
             {
-                Log.Warning($"[RimMind-Core] {pawn.Name?.ToStringShort} has no PawnAgent comp.");
+                RimMindErrors.Warn($"[RimMind-Core] {pawn.Name?.ToStringShort} has no PawnAgent comp.");
                 return;
             }
 
@@ -320,7 +325,7 @@ namespace RimMind.Adapters.UI
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null)
             {
-                Log.Warning("[RimMind-Core] Select a pawn first.");
+                RimMindErrors.Warn("[RimMind-Core] Select a pawn first.");
                 return;
             }
 
@@ -355,7 +360,7 @@ namespace RimMind.Adapters.UI
             var mgr = RimMindServiceLocator.Get<INpcManager>();
             if (mgr == null)
             {
-                Log.Warning("[RimMind-Core] NpcManager not initialized.");
+                RimMindErrors.Warn("[RimMind-Core] NpcManager not initialized.");
                 return;
             }
 
@@ -385,7 +390,7 @@ namespace RimMind.Adapters.UI
             var s = RimMindCoreMod.Settings;
             if (s == null)
             {
-                Log.Warning("[RimMind-Core] Settings not initialized.");
+                RimMindErrors.Warn("[RimMind-Core] Settings not initialized.");
                 return;
             }
 

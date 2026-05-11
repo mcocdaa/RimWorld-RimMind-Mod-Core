@@ -192,12 +192,14 @@ namespace Verse
     {
         public float CurLevelPercentage = 1f;
         public float CurLevel = 1f;
+        public NeedDef? def;
     }
 
     public class Pawn_NeedsTracker
     {
         public Need? mood;
         public Need? food;
+        public List<Need> AllNeeds = new List<Need>();
     }
 
     public class Pawn_HealthTracker
@@ -223,6 +225,7 @@ namespace Verse
         public Pawn_HealthTracker? health;
         public Pawn_MindState? mindState;
         public Pawn_JobTracker? jobs;
+        public Pawn_SkillTracker? skills;
         public string LabelShortCap = "";
         public Name? Name;
         public bool InMentalState;
@@ -266,12 +269,14 @@ namespace Verse
         public List<Pawn> AllPawns = new List<Pawn>();
         public List<Pawn> FreeColonists = new List<Pawn>();
         public List<Pawn> FreeColonistsAndPrisoners = new List<Pawn>();
+        public int FreeColonistsCount => FreeColonists.Count;
     }
 
     public class Map
     {
         public int uniqueID;
         public MapPawns? mapPawns;
+        public WealthWatcher? wealthWatcher;
     }
 
     public class WorldPawns
@@ -287,6 +292,7 @@ namespace Verse
         public static Storyteller? Storyteller;
         public static SignalManager? SignalManager = new SignalManager();
         public static WindowStack WindowStack = new WindowStack();
+        public static Map? AnyPlayerHomeMap => Maps.FirstOrDefault(m => m.mapPawns?.FreeColonistsCount > 0);
     }
 
     public class TickManager
@@ -334,6 +340,8 @@ namespace Verse
     public class Def
     {
         public string defName = "";
+        public string label = "";
+        public string? description;
         public virtual IEnumerable<string> ConfigErrors() { yield break; }
     }
 
@@ -353,6 +361,30 @@ namespace Verse
     }
 
     public class EffecterDef : Def { }
+
+    public class SkillDef : Def { }
+
+    public class NeedDef : Def { }
+
+    public class Pawn_SkillTracker
+    {
+        public List<SkillRecord> skills = new List<SkillRecord>();
+    }
+
+    public class SkillRecord
+    {
+        public SkillDef def = new SkillDef();
+        public int Level = 0;
+        public RimWorld.Passion passion = RimWorld.Passion.None;
+        public void Learn(float xp, bool direct) { }
+    }
+
+    public class WealthWatcher
+    {
+        public float WealthTotal = 0f;
+        public float WealthItems = 0f;
+        public float WealthBuildings = 0f;
+    }
 
     public class Hediff
     {
@@ -612,6 +644,8 @@ namespace Verse.AI
 
 namespace RimWorld
 {
+    public enum Passion { None, Minor, Major }
+
     public class PawnDuty
     {
         public DutyDef? def;

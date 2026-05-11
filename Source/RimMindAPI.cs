@@ -1,6 +1,8 @@
 using RimMind.Contracts.Npc;
 using RimMind.Core.Sensor;
 using RimMind.Contracts.Sensor;
+using RimMind.Contracts.Tools;
+using RimMind.Contracts.Mechanisms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,6 +52,8 @@ namespace RimMind.Core
         internal static IBudgetScheduler? GetContextScheduler() => RimMindRuntime.Instance.ContextEngine.GetScheduler();
         internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => RimMindRuntime.Instance.ContextEngine.GetEmbeddingSnapshotStore();
         public static FlywheelTelemetryCollector Telemetry => RimMindRuntime.Instance.Telemetry;
+        public static IToolRegistry Tools => RimMindRuntime.Instance.ToolRegistry;
+        public static IGameMechanismRegistry Mechanisms => RimMindRuntime.Instance.MechanismRegistry;
 
         public static void RequestImmediate(AIRequest request, Action<Result<AIResponse, RimMindError>> onComplete)
         {
@@ -159,10 +163,10 @@ namespace RimMind.Core
 
         public static bool IsConfigured() => RimMindCoreMod.Settings.IsConfigured();
 
-        public static string? GetProviderData(string category, Pawn pawn)
+        public static Result<string?, RimMindError> GetProviderData(string category, Pawn pawn)
             => RimMindRuntime.Instance.ProviderRegistry.GetProviderData(category, pawn);
 
-        public static string? GetStaticProviderData(string category)
+        public static Result<string?, RimMindError> GetStaticProviderData(string category)
             => RimMindRuntime.Instance.ProviderRegistry.GetStaticProviderData(category);
 
         public static List<string> GetRegisteredCategories()

@@ -1,5 +1,6 @@
 using System;
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Result;
 using RimMind.Core;
 using Verse;
 using RimWorld;
@@ -34,7 +35,7 @@ namespace RimMind.Kernel.Llm
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind-Core] ResponseDispatcher: failed to show mote for pawn {pawn.LabelShort} - {ex.Message}");
+                    RimMindErrors.Warn($"[RimMind-Core] ResponseDispatcher: failed to show mote for pawn {pawn.LabelShort} - {ex.Message}");
                 }
             }
 
@@ -54,14 +55,14 @@ namespace RimMind.Kernel.Llm
                     var actor = pawn;
                     if (actor == null || actor.Dead)
                     {
-                        Log.Warning($"[RimMind-Core] ResponseDispatcher: cannot execute command '{cmd.Name}' - no valid actor pawn");
+                        RimMindErrors.Warn($"[RimMind-Core] ResponseDispatcher: cannot execute command '{cmd.Name}' - no valid actor pawn");
                         continue;
                     }
 
                     var bridge = RimMindAPI.GetAgentActionBridge();
                     if (bridge == null)
                     {
-                        Log.Warning($"[RimMind-Core] ResponseDispatcher: cannot execute command '{cmd.Name}' - no AgentActionBridge registered");
+                        RimMindErrors.Warn($"[RimMind-Core] ResponseDispatcher: cannot execute command '{cmd.Name}' - no AgentActionBridge registered");
                         continue;
                     }
 
@@ -69,7 +70,7 @@ namespace RimMind.Kernel.Llm
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind-Core] ResponseDispatcher: command '{cmd.Name}' threw exception - {ex.Message}");
+                    RimMindErrors.Warn($"[RimMind-Core] ResponseDispatcher: command '{cmd.Name}' threw exception - {ex.Message}");
                 }
             }
         }
@@ -83,7 +84,7 @@ namespace RimMind.Kernel.Llm
             }
             catch (Exception ex)
             {
-                Log.Warning($"[RimMind-Core] ResponseDispatcher: audio playback failed - {ex.Message}");
+                RimMindErrors.Warn($"[RimMind-Core] ResponseDispatcher: audio playback failed - {ex.Message}");
             }
         }
     }

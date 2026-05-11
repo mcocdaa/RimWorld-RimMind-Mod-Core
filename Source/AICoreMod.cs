@@ -2,8 +2,11 @@ using System;
 using HarmonyLib;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Settings;
+
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
+
 using RimMind.Core.Runtime;
 using RimMind.Kernel.Logging;
 using RimMind.Adapters.UI;
@@ -29,7 +32,7 @@ namespace RimMind.Core
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
-                    global::Verse.Log.Warning("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
+                    RimMindErrors.Warn("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
                     Find.WindowStack.Add(new Verse.Dialog_MessageBox(
                         "RimMind.Core.UpgradeWarning".Translate(),
                         "OK".Translate(),
@@ -38,7 +41,7 @@ namespace RimMind.Core
             }
             Settings.SavedModVersion = "2.0.0";
 
-            JsonTagExtractor.OnWarning = Log.Warning;
+            JsonTagExtractor.OnWarning = msg => RimMindErrors.Warn(msg);
             new Harmony("mcocdaa.RimMindCore").PatchAll();
 
             RimMindAPI.Extensions<IToggleBehavior>().Register(new CoreOverlayToggle(Settings));
@@ -84,7 +87,7 @@ namespace RimMind.Core
                 var msg = "[RimMind-Core] FATAL: 0_RimMindContracts.dll not loaded. " +
                           "Check that the dll exists in Assemblies/ folder. " +
                           "If you upgraded from v1.x, please subscribe to the new mod files.";
-                Log.Error(msg);
+                RimMindErrors.Error(msg);
                 throw new System.InvalidOperationException(msg);
             }
 
@@ -92,7 +95,7 @@ namespace RimMind.Core
             {
                 var msg = "[RimMind-Core] FATAL: 1_RimMindKernel.dll not loaded. " +
                           "Check that the dll exists in Assemblies/ folder.";
-                Log.Error(msg);
+                RimMindErrors.Error(msg);
                 throw new System.InvalidOperationException(msg);
             }
 

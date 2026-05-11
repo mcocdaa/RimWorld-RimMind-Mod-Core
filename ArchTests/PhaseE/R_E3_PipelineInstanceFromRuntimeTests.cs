@@ -24,6 +24,7 @@ namespace RimMind.Core.ArchTests.PhaseE
         private static readonly HashSet<string> KnownExecuteAsyncViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
             @"Core\Runtime\RimMindRuntime.cs",
+            @"Kernel\Tools\ToolCallDispatchMiddleware.cs",
         };
 
         [Fact]

@@ -49,6 +49,11 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Pipeline\Npc\NpcChatShortCircuitMiddleware.cs",
             @"Llm\ResponseDispatcher.cs",
             @"Registry\ProviderRegistry.cs",
+            @"Mechanisms\GameMechanismBase.cs",
+            @"Mechanisms\GameMechanismBaseNoDef.cs",
+            @"Mechanisms\Impl\SkillMechanism.cs",
+            @"Mechanisms\Impl\NeedMechanism.cs",
+            @"Mechanisms\Impl\WealthMechanism.cs",
         };
 
         [Fact]

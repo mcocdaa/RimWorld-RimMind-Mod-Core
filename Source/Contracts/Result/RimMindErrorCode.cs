@@ -14,6 +14,11 @@ namespace RimMind.Contracts.Result
         ToolExecutionFailed = 3001,
         ToolPolicyDenied = 3002,
         ToolMaxDepthExceeded = 3003,
+        MechanismOperationNotSupported = 3010,
+        MechanismPawnNotFound = 3011,
+        MechanismInvalidDefName = 3012,
+        MechanismMapNotFound = 3013,
+        MechanismInvalidAction = 3014,
 
         NpcNotFound = 4000,
         StorageDriverFailed = 4001,

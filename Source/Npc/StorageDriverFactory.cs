@@ -1,4 +1,5 @@
 using RimMind.Contracts.Npc;
+using RimMind.Contracts.Result;
 using RimMind.Contracts;
 using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Logging;
@@ -33,7 +34,7 @@ namespace RimMind.Core.Npc
                         _cachedDriver = new HybridStorageDriver(client, historyManager);
                         return _cachedDriver;
                     }
-                    Log.Warning("[RimMind-Core] Player2 client not available, falling back to LocalStorageDriver");
+                    RimMindErrors.Warn("[RimMind-Core] Player2 client not available, falling back to LocalStorageDriver");
                 }
 
                 _cachedDriver = new LocalStorageDriver(historyManager);

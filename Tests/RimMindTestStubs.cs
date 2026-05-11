@@ -67,6 +67,8 @@ namespace RimMind.Core.Runtime
         public AIRequestQueueImpl QueueImpl { get; set; } = null!;
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; set; } = null!;
+        public RimMind.Kernel.Tools.ToolRegistry ToolRegistry { get; set; } = new();
+        public RimMind.Kernel.Mechanisms.GameMechanismRegistry MechanismRegistry { get; set; } = new();
 
         public bool IsShutdown { get; set; }
 
@@ -111,6 +113,8 @@ namespace RimMind.Core.Runtime
             EventBus = new EventBusAdapter(AgentBus);
             ClientManager = new RimMind.Core.Runtime.ClientManager();
             QueueImpl = new AIRequestQueueImpl();
+            ToolRegistry = new RimMind.Kernel.Tools.ToolRegistry();
+            MechanismRegistry = new RimMind.Kernel.Mechanisms.GameMechanismRegistry();
         }
 
         public void Shutdown() { IsShutdown = true; }
@@ -190,6 +194,8 @@ namespace RimMind.Core.Runtime
             private readonly AIRequestQueueImpl _queueImpl;
             private readonly FlywheelTelemetryCollector _telemetry;
             private readonly IAgentBus _agentBus;
+            private readonly RimMind.Kernel.Tools.ToolRegistry _toolRegistry;
+            private readonly RimMind.Kernel.Mechanisms.GameMechanismRegistry _mechanismRegistry;
 
             public RuntimeSnapshot(RimMindRuntime r)
             {
@@ -203,6 +209,8 @@ namespace RimMind.Core.Runtime
                 _queueImpl = r.QueueImpl;
                 _telemetry = r.Telemetry;
                 _agentBus = r.AgentBus;
+                _toolRegistry = r.ToolRegistry;
+                _mechanismRegistry = r.MechanismRegistry;
             }
 
             public void Restore(RimMindRuntime r)
@@ -217,6 +225,8 @@ namespace RimMind.Core.Runtime
                 r.QueueImpl = _queueImpl;
                 r.Telemetry = _telemetry;
                 r.AgentBus = _agentBus;
+                r.ToolRegistry = _toolRegistry;
+                r.MechanismRegistry = _mechanismRegistry;
             }
         }
     }
@@ -340,6 +350,8 @@ namespace RimMind.Core
         public static IEventBus GetEventBus() => RimMind.Core.Runtime.RimMindRuntime.Instance.EventBus;
         public static IHistoryManager GetHistoryManager() => RimMind.Core.Runtime.RimMindRuntime.Instance.HistoryManager;
         public static object? GetPlayer2Client() => RimMind.Core.Runtime.RimMindRuntime.Instance.GetPlayer2Client();
+        public static RimMind.Contracts.Tools.IToolRegistry Tools => RimMind.Core.Runtime.RimMindRuntime.Instance.ToolRegistry;
+        public static RimMind.Contracts.Mechanisms.IGameMechanismRegistry Mechanisms => RimMind.Core.Runtime.RimMindRuntime.Instance.MechanismRegistry;
     }
 }
 
@@ -451,7 +463,8 @@ namespace RimMind.Kernel.Context
         bool SupportsCommands { get; }
         bool SupportsStructuredOutput { get; }
         bool IsNpcAlive(string npcId);
-        Task<object> SpawnNpcAsync(object profile);
+        Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile);
+        Task<Result<bool, RimMindError>> KillNpcAsync(string npcId);
         Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
         Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default);
         IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
@@ -465,7 +478,8 @@ namespace RimMind.Kernel.Context
         public bool SupportsCommands => false;
         public bool SupportsStructuredOutput => false;
         public bool IsNpcAlive(string npcId) => false;
-        public Task<object> SpawnNpcAsync(object profile) => Task.FromResult(new object());
+        public Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
+        public Task<Result<bool, RimMindError>> KillNpcAsync(string npcId) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
         public Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
             => Task.FromResult(Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult()));
         public Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default)

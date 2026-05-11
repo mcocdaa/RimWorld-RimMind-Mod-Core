@@ -1,4 +1,5 @@
 using Verse;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Adapters.Verse
 {
@@ -14,7 +15,7 @@ namespace RimMind.Adapters.Verse
             _impl.CurrentTick = Find.TickManager.TicksGame;
             _impl.LogHandler = (msg, isWarning) =>
             {
-                if (isWarning) Log.Warning(msg);
+                if (isWarning) RimMindErrors.Warn(msg);
                 else Log.Message(msg);
             };
             _impl.FlushBackgroundQueue = () =>

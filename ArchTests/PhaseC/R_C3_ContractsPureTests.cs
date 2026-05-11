@@ -59,6 +59,8 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Settings\ContextSettings.cs",
             @"Settings\RimMindCoreSettings.cs",
             @"Sensor\ISensorProvider.cs",
+            @"AgentBus\ToolCallEvent.cs",
+            @"AgentBus\ToolResultEvent.cs",
         };
 
         [Fact]

@@ -6,7 +6,9 @@ namespace RimMind.Contracts
         Decision,
         Goal,
         Action,
-        Lifecycle
+        Lifecycle,
+        ToolCall,
+        ToolResult
     }
 
     public class AgentBusEvent

@@ -1,12 +1,15 @@
 using System;
 using RimMind.Contracts.Sensor;
+
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Extension;
 using RimMind.Contracts.Internal;
+
 using RimMind.Core.Runtime;
 using Verse;
 
@@ -87,7 +90,7 @@ namespace RimMind.Core.Sensor
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind-Core] Sensor '{sensor.SensorId}' tick error: {ex.Message}");
+                    RimMindErrors.Warn($"[RimMind-Core] Sensor '{sensor.SensorId}' tick error: {ex.Message}");
                 }
             }
         }
@@ -118,7 +121,7 @@ namespace RimMind.Core.Sensor
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimMind-Core] Sensor '{sensor.SensorId}' GetAgentTools error: {ex.Message}");
+                    RimMindErrors.Warn($"[RimMind-Core] Sensor '{sensor.SensorId}' GetAgentTools error: {ex.Message}");
                 }
             }
             return tools;

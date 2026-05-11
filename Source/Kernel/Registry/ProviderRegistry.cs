@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
+using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Kernel.Prompt;
 using Verse;
@@ -55,20 +56,23 @@ namespace RimMind.Kernel.Registry
             ContextKeyRegistry.Register(category, layer, priorityFloat, wrappedProvider, modId);
         }
 
-        public string? GetProviderData(string category, object pawn)
+        public Result<string?, RimMindError> GetProviderData(string category, object pawn)
         {
-            if (!_pawnProviders.TryGetValue(category, out var entry)) return null;
+            if (!_pawnProviders.TryGetValue(category, out var entry))
+                return Result<string?, RimMindError>.Ok(null);
             var typedPawn = pawn as Pawn;
-            if (typedPawn == null) return null;
-            try { return entry.provider(typedPawn); }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] GetProviderData '{category}' error: {ex.Message}"); return null; }
+            if (typedPawn == null)
+                return Result<string?, RimMindError>.Ok(null);
+            try { return Result<string?, RimMindError>.Ok(entry.provider(typedPawn)); }
+            catch (Exception ex) { return Result<string?, RimMindError>.Err(RimMindErrors.Internal($"GetProviderData '{category}' error: {ex.Message}", ex)); }
         }
 
-        public string? GetStaticProviderData(string category)
+        public Result<string?, RimMindError> GetStaticProviderData(string category)
         {
-            if (!_staticProviders.TryGetValue(category, out var entry)) return null;
-            try { return entry.provider(); }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] GetStaticProviderData '{category}' error: {ex.Message}"); return null; }
+            if (!_staticProviders.TryGetValue(category, out var entry))
+                return Result<string?, RimMindError>.Ok(null);
+            try { return Result<string?, RimMindError>.Ok(entry.provider()); }
+            catch (Exception ex) { return Result<string?, RimMindError>.Err(RimMindErrors.Internal($"GetStaticProviderData '{category}' error: {ex.Message}", ex)); }
         }
 
         public List<string> GetRegisteredCategories()

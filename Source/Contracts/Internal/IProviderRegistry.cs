@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Contracts.Internal
 {
@@ -10,8 +11,8 @@ namespace RimMind.Contracts.Internal
         IReadOnlyList<string> GetRegisteredProviderNames();
         void RegisterStaticProvider(string category, string modId, Func<string?> provider, int priority);
         void RegisterPawnProvider(string category, string modId, Func<object, string?> provider, int priority, bool overrideExisting);
-        string? GetProviderData(string category, object pawn);
-        string? GetStaticProviderData(string category);
+        Result<string?, RimMindError> GetProviderData(string category, object pawn);
+        Result<string?, RimMindError> GetStaticProviderData(string category);
         List<string> GetRegisteredCategories();
         void Reset();
     }

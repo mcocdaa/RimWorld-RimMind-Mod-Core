@@ -2,6 +2,7 @@ using RimMind.Core.Agent;
 using RimMind.Adapters.Verse;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
+using RimMind.Contracts.Result;
 using RimMind.Core;
 using UnityEngine;
 using Verse;
@@ -163,7 +164,7 @@ namespace RimMind.Adapters.UI
                 }
                 catch (System.Exception ex)
                 {
-                    Log.Warning($"[RimMind-Core] AgentDialogue chat failed: {ex.Message}");
+                    RimMindErrors.Warn($"[RimMind-Core] AgentDialogue chat failed: {ex.Message}");
                 }
             });
         }

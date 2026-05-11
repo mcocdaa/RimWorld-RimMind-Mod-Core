@@ -41,18 +41,19 @@ namespace RimMind.Core.Npc
                 RimMindErrors.StorageDriverFailed("Local storage does not support chat")));
         }
 
-        public Task<bool> SpawnNpcAsync(NpcProfile profile)
+        public Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile)
         {
-            if (profile == null || string.IsNullOrEmpty(profile.NpcId)) return Task.FromResult(false);
+            if (profile == null || string.IsNullOrEmpty(profile.NpcId))
+                return Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.StorageDriverFailed("Profile or NpcId is null")));
             _npcRegistry[profile.NpcId] = profile;
-            return Task.FromResult(true);
+            return Task.FromResult(Result<bool, RimMindError>.Ok(true));
         }
 
-        public Task<bool> KillNpcAsync(string npcId)
+        public Task<Result<bool, RimMindError>> KillNpcAsync(string npcId)
         {
             _npcRegistry.Remove(npcId);
             _historyManager.ClearHistory(npcId);
-            return Task.FromResult(true);
+            return Task.FromResult(Result<bool, RimMindError>.Ok(true));
         }
 
         public bool IsNpcAlive(string npcId) => _npcRegistry.ContainsKey(npcId);
@@ -142,50 +143,50 @@ namespace RimMind.Core.Npc
                 yield return Result<NpcChatChunk, RimMindError>.Err(result.Error);
         }
 
-        public Task<string> GetHistoryAsync(string npcId, int limit = 50)
+        public Task<Result<string, RimMindError>> GetHistoryAsync(string npcId, int limit = 50)
         {
             var history = _historyManager.GetHistory(npcId, limit);
             if (history == null || history.Count == 0)
-                return Task.FromResult("");
+                return Task.FromResult(Result<string, RimMindError>.Ok(""));
 
             var sb = new System.Text.StringBuilder();
             foreach (var (role, content) in history)
                 sb.AppendLine($"[{role}] {content}");
-            return Task.FromResult(sb.ToString().TrimEnd());
+            return Task.FromResult(Result<string, RimMindError>.Ok(sb.ToString().TrimEnd()));
         }
 
-        public Task<bool> PutAsync(string key, string value) { KvStore[PrefixKey(key)] = value; return Task.FromResult(true); }
-        public Task<string?> GetAsync(string key) { KvStore.TryGetValue(PrefixKey(key), out var v); return Task.FromResult<string?>(v); }
-        public Task<bool> DeleteAsync(string key) { KvStore.TryRemove(PrefixKey(key), out _); return Task.FromResult(true); }
-        public Task<Dictionary<string, string>> GetBatchAsync(IEnumerable<string> keys)
+        public Task<Result<bool, RimMindError>> PutAsync(string key, string value) { KvStore[PrefixKey(key)] = value; return Task.FromResult(Result<bool, RimMindError>.Ok(true)); }
+        public Task<Result<string?, RimMindError>> GetAsync(string key) { KvStore.TryGetValue(PrefixKey(key), out var v); return Task.FromResult(Result<string?, RimMindError>.Ok(v)); }
+        public Task<Result<bool, RimMindError>> DeleteAsync(string key) { KvStore.TryRemove(PrefixKey(key), out _); return Task.FromResult(Result<bool, RimMindError>.Ok(true)); }
+        public Task<Result<Dictionary<string, string>, RimMindError>> GetBatchAsync(IEnumerable<string> keys)
         {
             var result = new Dictionary<string, string>();
             foreach (var k in keys)
                 if (KvStore.TryGetValue(PrefixKey(k), out var v))
                     result[k] = v;
-            return Task.FromResult(result);
+            return Task.FromResult(Result<Dictionary<string, string>, RimMindError>.Ok(result));
         }
 
         private const string AllEntriesKey = "rimmind:all_memory_entries";
 
-        public Task<bool> SaveAllEntriesAsync(string json)
+        public Task<Result<bool, RimMindError>> SaveAllEntriesAsync(string json)
         {
             KvStore[PrefixKey(AllEntriesKey)] = json ?? string.Empty;
-            return Task.FromResult(true);
+            return Task.FromResult(Result<bool, RimMindError>.Ok(true));
         }
 
-        public Task<string?> LoadAllEntriesAsync()
+        public Task<Result<string?, RimMindError>> LoadAllEntriesAsync()
         {
             KvStore.TryGetValue(PrefixKey(AllEntriesKey), out var json);
-            return Task.FromResult<string?>(json);
+            return Task.FromResult(Result<string?, RimMindError>.Ok(json));
         }
 
-        public Task<List<string>> QueryMemoriesAsync(string npcId, string query, int limit = 10)
+        public Task<Result<List<string>, RimMindError>> QueryMemoriesAsync(string npcId, string query, int limit = 10)
         {
             var results = new List<string>();
             var history = _historyManager.GetHistory(npcId, 20);
             if (history == null || history.Count == 0)
-                return Task.FromResult(results);
+                return Task.FromResult(Result<List<string>, RimMindError>.Ok(results));
 
             var queryLower = query?.ToLowerInvariant() ?? "";
             foreach (var (role, content) in history)
@@ -195,7 +196,7 @@ namespace RimMind.Core.Npc
                 if (!string.IsNullOrEmpty(queryLower) && content.ToLowerInvariant().Contains(queryLower))
                     results.Add($"[{role}] {content}");
             }
-            return Task.FromResult(results);
+            return Task.FromResult(Result<List<string>, RimMindError>.Ok(results));
         }
 
          private static string ExtractReplyField(string content)
@@ -210,7 +211,7 @@ namespace RimMind.Core.Npc
                     if (!string.IsNullOrEmpty(extracted)) return extracted;
                 }
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Failed to extract message from JSON: {ex.Message}"); }
+            catch (Exception ex) { RimMindErrors.Warn($"[RimMind-Core] Failed to extract message from JSON: {ex.Message}"); }
             return content;
         }
 

@@ -71,9 +71,9 @@ namespace RimMind.Core.Npc
             }
         }
 
-        public async Task<bool> SpawnNpcAsync(NpcProfile profile)
+        public async Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile)
         {
-            if (profile == null) return false;
+            if (profile == null) return Result<bool, RimMindError>.Err(RimMindErrors.StorageDriverFailed("Profile is null"));
             try
             {
                 var body = new
@@ -94,19 +94,23 @@ namespace RimMind.Core.Npc
                 string json = JsonConvert.SerializeObject(body, Formatting.None,
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 var response = await _client.SendRawAsync("/npcs/spawn", json);
-                return response.IsOk;
+                if (!response.IsOk)
+                    return Result<bool, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("SpawnNpc raw request failed"));
+                return Result<bool, RimMindError>.Ok(true);
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.SpawnNpcAsync failed: {ex.Message}"); return false; }
+            catch (Exception ex) { return Result<bool, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"SpawnNpcAsync failed: {ex.Message}", ex)); }
         }
 
-        public async Task<bool> KillNpcAsync(string npcId)
+        public async Task<Result<bool, RimMindError>> KillNpcAsync(string npcId)
         {
             try
             {
                 var response = await _client.SendRawAsync($"/npcs/{npcId}/kill", "{}");
-                return response.IsOk;
+                if (!response.IsOk)
+                    return Result<bool, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("KillNpc raw request failed"));
+                return Result<bool, RimMindError>.Ok(true);
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.KillNpcAsync failed: {ex.Message}"); return false; }
+            catch (Exception ex) { return Result<bool, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"KillNpcAsync failed: {ex.Message}", ex)); }
         }
 
         public bool IsNpcAlive(string npcId)
@@ -233,17 +237,19 @@ namespace RimMind.Core.Npc
             yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, chatResult.Message ?? "", chatResult.Emotion, isFinal: true));
         }
 
-        public async Task<string> GetHistoryAsync(string npcId, int limit = 50)
+        public async Task<Result<string, RimMindError>> GetHistoryAsync(string npcId, int limit = 50)
         {
             try
             {
                 var response = await _client.GetRawAsync($"/npcs/{npcId}/history?limit={limit}");
-                return response.IsOk ? response.Content ?? "" : "";
+                if (!response.IsOk)
+                    return Result<string, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("GetHistory raw request failed"));
+                return Result<string, RimMindError>.Ok(response.Content ?? "");
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.GetHistoryAsync failed: {ex.Message}"); return ""; }
+            catch (Exception ex) { return Result<string, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"GetHistoryAsync failed: {ex.Message}", ex)); }
         }
 
-        public async Task<bool> PutAsync(string key, string value)
+        public async Task<Result<bool, RimMindError>> PutAsync(string key, string value)
         {
             lock (_indexLock)
             {
@@ -259,62 +265,70 @@ namespace RimMind.Core.Npc
                 var body = new { value = value };
                 string json = JsonConvert.SerializeObject(body);
                 var response = await _client.SendRawAsync($"/games/{_gameId}/data/user/{key}", json);
-                return response.IsOk;
+                if (!response.IsOk)
+                    return Result<bool, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("Put raw request failed"));
+                return Result<bool, RimMindError>.Ok(true);
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.PutAsync failed: {ex.Message}"); return false; }
+            catch (Exception ex) { return Result<bool, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"PutAsync failed: {ex.Message}", ex)); }
         }
 
-        public async Task<string?> GetAsync(string key)
+        public async Task<Result<string?, RimMindError>> GetAsync(string key)
         {
             try
             {
                 var response = await _client.GetRawAsync($"/games/{_gameId}/data/user/{key}");
-                return response.IsOk ? response.Content : null;
+                if (!response.IsOk)
+                    return Result<string?, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("Get raw request failed"));
+                return Result<string?, RimMindError>.Ok(response.Content);
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.GetAsync failed: {ex.Message}"); return null; }
+            catch (Exception ex) { return Result<string?, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"GetAsync failed: {ex.Message}", ex)); }
         }
 
-        public async Task<bool> DeleteAsync(string key)
+        public async Task<Result<bool, RimMindError>> DeleteAsync(string key)
         {
             try
             {
                 var response = await _client.DeleteRawAsync($"/games/{_gameId}/data/user/{key}");
-                return response.IsOk;
+                if (!response.IsOk)
+                    return Result<bool, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("Delete raw request failed"));
+                return Result<bool, RimMindError>.Ok(true);
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.DeleteAsync failed: {ex.Message}"); return false; }
+            catch (Exception ex) { return Result<bool, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"DeleteAsync failed: {ex.Message}", ex)); }
         }
 
-        public async Task<Dictionary<string, string>> GetBatchAsync(IEnumerable<string> keys)
+        public async Task<Result<Dictionary<string, string>, RimMindError>> GetBatchAsync(IEnumerable<string> keys)
         {
             try
             {
                 var body = new { keys = keys };
                 string json = JsonConvert.SerializeObject(body);
                 var response = await _client.SendRawAsync($"/games/{_gameId}/data/user/batch", json);
-                if (!response.IsOk) return new Dictionary<string, string>();
-                return JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content!)
+                if (!response.IsOk)
+                    return Result<Dictionary<string, string>, RimMindError>.Err(response.Error ?? RimMindErrors.StorageDriverFailed("GetBatch raw request failed"));
+                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content!)
                     ?? new Dictionary<string, string>();
+                return Result<Dictionary<string, string>, RimMindError>.Ok(result);
             }
-            catch (Exception ex) { Log.Warning($"[RimMind-Core] Player2StorageDriver.GetBatchAsync failed: {ex.Message}"); return new Dictionary<string, string>(); }
+            catch (Exception ex) { return Result<Dictionary<string, string>, RimMindError>.Err(RimMindErrors.StorageDriverFailed($"GetBatchAsync failed: {ex.Message}", ex)); }
         }
 
-        public Task<bool> SaveAllEntriesAsync(string json)
+        public Task<Result<bool, RimMindError>> SaveAllEntriesAsync(string json)
         {
             return PutAsync("rimmind:all_memory_entries", json ?? string.Empty);
         }
 
-        public Task<string?> LoadAllEntriesAsync()
+        public Task<Result<string?, RimMindError>> LoadAllEntriesAsync()
         {
             return GetAsync("rimmind:all_memory_entries");
         }
 
-        public Task<List<string>> QueryMemoriesAsync(string npcId, string query, int limit = 10)
+        public Task<Result<List<string>, RimMindError>> QueryMemoriesAsync(string npcId, string query, int limit = 10)
         {
             var results = new List<string>();
-            if (string.IsNullOrWhiteSpace(query)) return Task.FromResult(results);
+            if (string.IsNullOrWhiteSpace(query)) return Task.FromResult(Result<List<string>, RimMindError>.Ok(results));
 
             var tokens = query.ToLowerInvariant().Split(new[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            if (tokens.Length == 0) return Task.FromResult(results);
+            if (tokens.Length == 0) return Task.FromResult(Result<List<string>, RimMindError>.Ok(results));
 
             var scored = new List<(string value, int score)>();
 
@@ -341,7 +355,7 @@ namespace RimMind.Core.Npc
                 .Select(s => s.value)
                 .ToList();
 
-            return Task.FromResult(results);
+            return Task.FromResult(Result<List<string>, RimMindError>.Ok(results));
         }
 
         private static List<object> ConvertCommands(List<NpcCommand> commands)

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using RimMind.Contracts.Abstractions;
+using RimMind.Contracts.Internal;
 
 namespace RimMind.Contracts.Result
 {
@@ -64,6 +66,36 @@ namespace RimMind.Contracts.Result
             TraceId = TraceContext.Current,
         };
 
+        public static RimMindError MechanismOperationNotSupported(string mechanismId, string operation) => new(RimMindErrorCode.MechanismOperationNotSupported, $"Mechanism '{mechanismId}' does not support operation '{operation}'")
+        {
+            Details = new Dictionary<string, object?> { ["mechanism_id"] = mechanismId, ["operation"] = operation },
+            TraceId = TraceContext.Current,
+        };
+
+        public static RimMindError PawnNotFound(int pawnId) => new(RimMindErrorCode.MechanismPawnNotFound, $"Pawn with ID {pawnId} not found")
+        {
+            Details = new Dictionary<string, object?> { ["pawn_id"] = pawnId },
+            TraceId = TraceContext.Current,
+        };
+
+        public static RimMindError InvalidDefName(string defName) => new(RimMindErrorCode.MechanismInvalidDefName, $"Invalid def name '{defName}'")
+        {
+            Details = new Dictionary<string, object?> { ["def_name"] = defName },
+            TraceId = TraceContext.Current,
+        };
+
+        public static RimMindError MapNotFound(int mapId) => new(RimMindErrorCode.MechanismMapNotFound, $"Map with ID {mapId} not found")
+        {
+            Details = new Dictionary<string, object?> { ["map_id"] = mapId },
+            TraceId = TraceContext.Current,
+        };
+
+        public static RimMindError InvalidAction(string mechanismId, string action) => new(RimMindErrorCode.MechanismInvalidAction, $"Invalid action '{action}' for mechanism '{mechanismId}'")
+        {
+            Details = new Dictionary<string, object?> { ["mechanism_id"] = mechanismId, ["action"] = action },
+            TraceId = TraceContext.Current,
+        };
+
         public static RimMindError NpcNotFound(string npcId) => new(RimMindErrorCode.NpcNotFound, $"NPC '{npcId}' not found")
         {
             Details = new Dictionary<string, object?> { ["npc_id"] = npcId },
@@ -96,5 +128,35 @@ namespace RimMind.Contracts.Result
         {
             TraceId = TraceContext.Current,
         };
+
+        public static RimMindError Warn(string message, Exception? inner = null)
+        {
+            var error = new RimMindError(RimMindErrorCode.InternalError, message)
+            {
+                InnerException = inner,
+                TraceId = TraceContext.Current,
+            };
+            var sink = RimMindServiceLocator.Get<ILogSink>();
+            if (sink != null)
+                sink.Warning(error.ToString());
+            else
+                System.Diagnostics.Debug.WriteLine($"[WARN] {error}");
+            return error;
+        }
+
+        public static RimMindError Error(string message, Exception? inner = null)
+        {
+            var error = new RimMindError(RimMindErrorCode.InternalError, message)
+            {
+                InnerException = inner,
+                TraceId = TraceContext.Current,
+            };
+            var sink = RimMindServiceLocator.Get<ILogSink>();
+            if (sink != null)
+                sink.Error(error.ToString());
+            else
+                System.Diagnostics.Debug.WriteLine($"[ERROR] {error}");
+            return error;
+        }
     }
 }

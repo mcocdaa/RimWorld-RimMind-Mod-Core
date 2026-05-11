@@ -1,6 +1,11 @@
 using RimMind.Contracts.Npc;
 using RimMind.Core.Sensor;
 using RimMind.Contracts.Sensor;
+using RimMind.Contracts.Tools;
+using RimMind.Contracts.Mechanisms;
+using RimMind.Kernel.Tools;
+using RimMind.Kernel.Mechanisms;
+using RimMind.Kernel.Mechanisms.Impl;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -56,6 +61,9 @@ namespace RimMind.Core.Runtime
         public AIRequestQueueImpl QueueImpl { get; private set; }
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; private set; }
+        public ToolRegistry ToolRegistry { get; private set; } = new();
+        public GameMechanismRegistry MechanismRegistry { get; private set; }
+        public int MaxToolCallDepth { get; set; } = 3;
         public IPipeline<AIRequestContext> AIRequestPipeline { get; private set; }
         public IPipeline<NpcChatContext> NpcChatPipeline { get; private set; }
         public IPipeline<ContextBuildContext> ContextBuildPipeline { get; private set; }
@@ -95,8 +103,12 @@ namespace RimMind.Core.Runtime
             AudioPlayer = new NullAudioPlayer();
             Telemetry = new FlywheelTelemetryCollector();
             QueueImpl = new AIRequestQueueImpl();
+            MechanismRegistry = new GameMechanismRegistry(ToolRegistry);
             AIRequestPipeline = AIRequestPipelineFactory.Build(
-                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
+                ToolRegistry,
+                GetExtensionRegistry<IMiddleware<AIRequestContext>>(),
+                () => MaxToolCallDepth,
+                AgentBus);
             NpcChatPipeline = NpcChatPipelineFactory.Build(
                 GetExtensionRegistry<IMiddleware<NpcChatContext>>());
             ContextBuildPipeline = ContextBuildPipelineFactory.Build(
@@ -128,6 +140,8 @@ namespace RimMind.Core.Runtime
 
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
             RimMindServiceLocator.Register<IRimMindRuntime>(this);
+
+            RegisterDemoMechanisms();
         }
 
         public static void Initialize()
@@ -143,6 +157,7 @@ namespace RimMind.Core.Runtime
         public void Reset()
         {
             RimMindServiceLocator.Reset();
+
             HistoryManager = new HistoryManager();
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
             ContextEngine = new ContextEngine(HistoryManager);
@@ -154,12 +169,18 @@ namespace RimMind.Core.Runtime
             _parameterTuners.Clear();
             _sensorProviders.Clear();
             _registries.Clear();
+            ToolRegistry = new ToolRegistry();
+            MechanismRegistry = new GameMechanismRegistry(ToolRegistry);
+            MaxToolCallDepth = 3;
             AgentBus = new AgentBusImpl();
             EventBus = new SimpleEventBusAdapter(AgentBus);
             ClientManager = new ClientManager();
             QueueImpl = new AIRequestQueueImpl();
             AIRequestPipeline = AIRequestPipelineFactory.Build(
-                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
+                ToolRegistry,
+                GetExtensionRegistry<IMiddleware<AIRequestContext>>(),
+                () => MaxToolCallDepth,
+                AgentBus);
             NpcChatPipeline = NpcChatPipelineFactory.Build(
                 GetExtensionRegistry<IMiddleware<NpcChatContext>>());
             ContextBuildPipeline = ContextBuildPipelineFactory.Build(
@@ -190,6 +211,15 @@ namespace RimMind.Core.Runtime
             });
             _busPipelines.Clear();
             _isShutdown = false;
+
+            RegisterDemoMechanisms();
+        }
+
+        private void RegisterDemoMechanisms()
+        {
+            MechanismRegistry.Register(new Kernel.Mechanisms.Impl.SkillMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Impl.NeedMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Impl.WealthMechanism());
         }
 
         public void Shutdown()

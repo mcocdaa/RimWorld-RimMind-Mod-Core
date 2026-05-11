@@ -4,6 +4,7 @@ using RimMind.Contracts;
 using RimMind.Contracts.Client;
 using RimMind.Contracts.Internal;
 using RimMind.Contracts.Settings;
+using RimMind.Contracts.Result;
 using RimMind.Adapters.Client.OpenAI;
 using RimMind.Adapters.Client.Player2;
 using RimMind.Kernel.Logging;
@@ -47,7 +48,7 @@ namespace RimMind.Core.Runtime
                 }
             }
 
-            Log.Warning($"[RimMind-Core] Unknown AI provider: {s.provider}, no client available");
+            RimMindErrors.Warn($"[RimMind-Core] Unknown AI provider: {s.provider}, no client available");
             return null;
         }
 

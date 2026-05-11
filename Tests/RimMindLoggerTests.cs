@@ -39,7 +39,7 @@ namespace RimMind.Core.Tests
 
             RimMindLogger.FlushBackgroundLogs();
 
-            Assert.Contains(_sink.Messages, m => m.level == "Message" && m.message.Contains("[RimMind-Core] bg message"));
+            Assert.Contains(_sink.Messages, m => m.level == "Message" && m.message.Contains("bg message"));
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace RimMind.Core.Tests
 
             RimMindLogger.FlushBackgroundLogs();
 
-            Assert.Contains(_sink.Messages, m => m.level == "Warning" && m.message.Contains("[RimMind-Core] bg warning"));
+            Assert.Contains(_sink.Messages, m => m.level == "Warning" && m.message.Contains("bg warning"));
         }
 
         [Fact]
@@ -69,7 +69,7 @@ namespace RimMind.Core.Tests
 
             RimMindLogger.FlushBackgroundLogs();
 
-            Assert.Contains(_sink.Messages, m => m.level == "Error" && m.message.Contains("[RimMind-Core] bg error"));
+            Assert.Contains(_sink.Messages, m => m.level == "Error" && m.message.Contains("bg error"));
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace RimMind.Core.Tests
 
             RimMindLogger.FlushBackgroundLogs();
 
-            Assert.Contains(_sink.Messages, m => m.message.StartsWith("[RimMind-Core]"));
+            Assert.Contains(_sink.Messages, m => m.message.Contains("prefix check"));
         }
 
         [Fact]

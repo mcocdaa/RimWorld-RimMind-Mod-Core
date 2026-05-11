@@ -5,6 +5,7 @@ using RimMind.Core.Runtime;
 using RimMind.Core.Agent;
 using Verse;
 using Verse.AI;
+using RimMind.Contracts.Result;
 
 namespace RimMind.Adapters.Patches
 {
@@ -50,7 +51,7 @@ namespace RimMind.Adapters.Patches
                 }
                 catch (System.Exception ex)
                 {
-                    Log.Warning($"[RimMind-Core] JobDriver_RimMindAction bridge error: {ex.Message}");
+                    RimMindErrors.Warn($"[RimMind-Core] JobDriver_RimMindAction bridge error: {ex.Message}");
                 }
 
                 if (!executed)
