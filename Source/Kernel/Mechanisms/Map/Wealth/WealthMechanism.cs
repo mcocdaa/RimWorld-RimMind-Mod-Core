@@ -7,12 +7,12 @@ using RimMind.Contracts.Result;
 using Verse;
 using RimWorld;
 
-namespace RimMind.Kernel.Mechanisms.Impl
+namespace RimMind.Kernel.Mechanisms.Map.Wealth
 {
     public sealed class WealthMechanism : GameMechanismBaseNoDef
     {
-        public override string MechanismId => "colony.wealth";
-        public override MechanismScope Scope => MechanismScope.Colony;
+        public override string MechanismId => "map.wealth";
+        public override MechanismScope Scope => MechanismScope.Map;
         public override MechanismRisk Risk => MechanismRisk.Safe;
         public override IReadOnlyList<MechanismOperationType> SupportedOperations => _supportedOps;
         public override MechanismDocs Docs => _docs;
@@ -28,16 +28,17 @@ namespace RimMind.Kernel.Mechanisms.Impl
 
         public override Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct)
         {
-            var map = Find.AnyPlayerHomeMap;
+            var map = ResolveMap(args);
             if (map == null)
-                return Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.MapNotFound(0)));
+                return Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.MapNotFound(args.MapId ?? 0)));
 
             var wealthInfo = new
             {
                 totalWealth = map.wealthWatcher?.WealthTotal ?? 0f,
                 itemsWealth = map.wealthWatcher?.WealthItems ?? 0f,
                 buildingsWealth = map.wealthWatcher?.WealthBuildings ?? 0f,
-                colonistsCount = map.mapPawns?.FreeColonistsCount ?? 0
+                pawnCount = map.mapPawns?.FreeColonistsCount ?? 0,
+                threatPoints = StorytellerUtility.DefaultThreatPointsNow(map)
             };
 
             return Task.FromResult(Result<string, RimMindError>.Ok(JsonConvert.SerializeObject(wealthInfo)));

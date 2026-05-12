@@ -10,6 +10,7 @@ namespace RimMind.Core.ArchTests.PhaseG
         private static readonly string[] AllowedSubdirs = new[]
         {
             "Agent",
+            "Api",
             "Perception",
             "Runtime",
             "Sensor",

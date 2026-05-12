@@ -3,14 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Adapters.Client.Player2;
 using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
 using RimMind.Contracts.Internal;
 using RimMind.Kernel.Queue;
+using RimMind.Core.Npc;
 
-namespace RimMind.Core.Npc
+namespace RimMind.Adapters.Client.Player2
 {
     public class HybridStorageDriver : IStorageDriver
     {

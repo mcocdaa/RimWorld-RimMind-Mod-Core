@@ -28,6 +28,12 @@ namespace RimMind.Kernel.Mechanisms
                     var handler = new MechanismToolHandler(mechanism, op);
                     _toolRegistry.Register(handler);
                 }
+
+                if (mechanism.SupportedOperations.Contains(MechanismOperationType.List))
+                {
+                    var listHandler = new MechanismListToolHandler(mechanism);
+                    _toolRegistry.Register(listHandler);
+                }
             }
         }
 
@@ -42,6 +48,9 @@ namespace RimMind.Kernel.Mechanisms
                     var toolId = $"{mechanism.MechanismId}.{OperationSuffix(op)}";
                     _toolRegistry.Unregister(toolId);
                 }
+
+                var listToolId = $"{mechanismId}.list";
+                _toolRegistry.Unregister(listToolId);
             }
 
             return true;
@@ -69,5 +78,6 @@ namespace RimMind.Kernel.Mechanisms
                 _ => operation.ToString().ToLowerInvariant()
             };
         }
+
     }
 }

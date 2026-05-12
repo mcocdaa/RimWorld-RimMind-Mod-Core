@@ -55,6 +55,29 @@
     <Compile Remove="../Source/Core/Agent/GameContextBuilder.cs" />
     <Compile Remove="../Source/Core/Agent/PawnDataExtractor.cs" />
     <Compile Remove="../Source/Kernel/Context/ThreatClassifier.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Health/HealthMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Inspiration/InspirationMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Interaction/InteractionMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/MentalState/MentalStateMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Thought/ThoughtMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Work/WorkMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/World/Storyteller/StorytellerMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Job/JobMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Job/JobActionHandlers.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Job/JobDocs.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Draft/DraftMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Equipment/EquipmentMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Recruit/RecruitMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Relations/RelationsMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Need/NeedMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Skill/SkillMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/Map/Wealth/WealthMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/World/Faction/FactionMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Mechanisms/World/ChoiceLetter/ChoiceLetterMechanism.cs" />
+    <Compile Remove="../Source/Kernel/Npc/LocalStorageDriver.cs" />
+    <Compile Remove="../Source/Kernel/Npc/StorageDriverFactory.cs" />
+    <Compile Remove="../Source/Adapters/Client/Player2/Player2StorageDriver.cs" />
+    <Compile Remove="../Source/Adapters/Client/Player2/HybridStorageDriver.cs" />
   </ItemGroup>
 
 </Project>

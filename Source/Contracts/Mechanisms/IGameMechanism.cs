@@ -13,6 +13,8 @@ namespace RimMind.Contracts.Mechanisms
         MechanismRisk Risk { get; }
         IReadOnlyList<MechanismOperationType> SupportedOperations { get; }
         MechanismDocs Docs { get; }
+        IReadOnlyList<MechanismActionInfo>? GetWriteActions();
+        MechanismRisk GetRiskForOperation(MechanismOperationType operation);
 
         [ThreadAffinity(ThreadAffinityKind.MainOnly)]
         Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct);

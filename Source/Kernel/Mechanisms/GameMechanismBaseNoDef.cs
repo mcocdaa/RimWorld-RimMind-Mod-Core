@@ -17,6 +17,8 @@ namespace RimMind.Kernel.Mechanisms
         public abstract MechanismRisk Risk { get; }
         public abstract IReadOnlyList<MechanismOperationType> SupportedOperations { get; }
         public abstract MechanismDocs Docs { get; }
+        public virtual IReadOnlyList<MechanismActionInfo>? GetWriteActions() => null;
+        public virtual MechanismRisk GetRiskForOperation(MechanismOperationType operation) => Risk;
 
         public virtual Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct)
             => Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "query")));
@@ -42,7 +44,7 @@ namespace RimMind.Kernel.Mechanisms
         public virtual Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
             => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "watch")));
 
-        protected static Pawn? FindPawn(int pawnId)
+        protected static Verse.Pawn? FindPawn(int pawnId)
         {
             foreach (var map in Find.Maps)
             {
@@ -54,7 +56,7 @@ namespace RimMind.Kernel.Mechanisms
             return worldPawn;
         }
 
-        protected static Map? ResolveMap(MechanismReadArgs args)
+        protected static Verse.Map? ResolveMap(MechanismReadArgs args)
         {
             if (args.MapId.HasValue)
             {
@@ -68,7 +70,7 @@ namespace RimMind.Kernel.Mechanisms
             return Find.AnyPlayerHomeMap;
         }
 
-        protected static Map? ResolveMap(MechanismWriteArgs args)
+        protected static Verse.Map? ResolveMap(MechanismWriteArgs args)
         {
             if (args.MapId.HasValue)
             {

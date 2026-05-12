@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using RimMind.Adapters.Client.Player2;
 using RimMind.Contracts.Result;
 using RimMind.Kernel.Context;
 using RimMind.Contracts.Context;
@@ -16,9 +15,11 @@ using RimMind.Kernel.Logging;
 using RimMind.Kernel.Queue;
 using RimMind.Kernel.Llm;
 using RimMind.Core.Agent;
+using RimMind.Core.Npc;
+using RimMind.Core;
 using Verse;
 
-namespace RimMind.Core.Npc
+namespace RimMind.Adapters.Client.Player2
 {
     public class Player2StorageDriver : IStorageDriver
     {

@@ -42,6 +42,8 @@
     <Compile Remove="Pipeline\Npc\NpcChatPipelineFactory.cs" />
     <Compile Remove="Pipeline\Npc\NpcChatShortCircuitMiddleware.cs" />
     <Compile Remove="Llm\ResponseDispatcher.cs" />
+    <Compile Remove="Npc\StorageDriverFactory.cs" />
+    <Compile Remove="Npc\LocalStorageDriver.cs" />
   </ItemGroup>
 
 </Project>

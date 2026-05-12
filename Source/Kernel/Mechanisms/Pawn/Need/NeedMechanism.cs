@@ -6,13 +6,12 @@ using Newtonsoft.Json;
 using RimMind.Contracts.Mechanisms;
 using RimMind.Contracts.Result;
 using Verse;
-using RimWorld;
 
-namespace RimMind.Kernel.Mechanisms.Impl
+namespace RimMind.Kernel.Mechanisms.Pawn.Need
 {
-    public sealed class SkillMechanism : GameMechanismBaseNoDef
+    public sealed class NeedMechanism : GameMechanismBaseNoDef
     {
-        public override string MechanismId => "pawn.skill";
+        public override string MechanismId => "pawn.need";
         public override MechanismScope Scope => MechanismScope.Pawn;
         public override MechanismRisk Risk => MechanismRisk.Moderate;
         public override IReadOnlyList<MechanismOperationType> SupportedOperations => _supportedOps;
@@ -23,10 +22,10 @@ namespace RimMind.Kernel.Mechanisms.Impl
 
         private static readonly MechanismDocs _docs = new MechanismDocs
         {
-            Summary = "Query and modify pawn skills",
-            QueryDescription = "Query pawn skill levels and passions. Optionally filter by def_name.",
-            SetDescription = "Modify a pawn skill. Actions: learn_xp (add experience), set_passion (change passion level).",
-            ListDescription = "List all skill definitions available for this pawn."
+            Summary = "Query and modify pawn needs",
+            QueryDescription = "Query pawn need levels. Optionally filter by def_name.",
+            SetDescription = "Modify a pawn need level. Action: set_level (set CurLevel to a float value).",
+            ListDescription = "List all need definitions available for this pawn."
         };
 
         public override Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct)
@@ -37,20 +36,20 @@ namespace RimMind.Kernel.Mechanisms.Impl
 
             if (!string.IsNullOrEmpty(args.DefName))
             {
-                var skill = pawn.skills?.skills?.FirstOrDefault(s => s.def.defName == args.DefName);
-                if (skill == null)
+                var need = pawn.needs?.AllNeeds?.FirstOrDefault(n => n.def.defName == args.DefName);
+                if (need == null)
                     return Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.InvalidDefName(args.DefName)));
 
-                var info = new { def = args.DefName, level = skill.Level, passion = skill.passion.ToString() };
+                var info = new { def = args.DefName, curLevel = need.CurLevel };
                 return Task.FromResult(Result<string, RimMindError>.Ok(JsonConvert.SerializeObject(info)));
             }
 
-            var skills = pawn.skills?.skills?
-                .Select(s => new { def = s.def.defName, level = s.Level, passion = s.passion.ToString() })
+            var needs = pawn.needs?.AllNeeds?
+                .Select(n => new { def = n.def.defName, curLevel = n.CurLevel })
                 .ToList();
 
             return Task.FromResult(Result<string, RimMindError>.Ok(
-                JsonConvert.SerializeObject(skills ?? new object())));
+                JsonConvert.SerializeObject(needs ?? new object())));
         }
 
         public override Task<Result<bool, RimMindError>> ExecuteSetAsync(MechanismWriteArgs args, CancellationToken ct)
@@ -62,20 +61,13 @@ namespace RimMind.Kernel.Mechanisms.Impl
             if (string.IsNullOrEmpty(args.DefName))
                 return Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.InvalidDefName("")));
 
-            var skill = pawn.skills?.skills?.FirstOrDefault(s => s.def.defName == args.DefName);
-            if (skill == null)
+            var need = pawn.needs?.AllNeeds?.FirstOrDefault(n => n.def.defName == args.DefName);
+            if (need == null)
                 return Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.InvalidDefName(args.DefName)));
 
-            if (args.Action == "learn_xp" && float.TryParse(args.ValueJson, out var xp))
+            if (args.Action == "set_level" && float.TryParse(args.ValueJson, out var level))
             {
-                skill.Learn(xp, false);
-                return Task.FromResult(Result<bool, RimMindError>.Ok(true));
-            }
-
-            if (args.Action == "set_passion" && int.TryParse(args.ValueJson, out var passionLevel)
-                && passionLevel >= 0 && passionLevel <= 2)
-            {
-                skill.passion = (Passion)passionLevel;
+                need.CurLevel = level;
                 return Task.FromResult(Result<bool, RimMindError>.Ok(true));
             }
 
@@ -85,12 +77,12 @@ namespace RimMind.Kernel.Mechanisms.Impl
         public override Task<Result<IReadOnlyList<MechanismEnumResult>, RimMindError>> ExecuteListAsync(int? pawnId, CancellationToken ct)
         {
             var pawn = pawnId.HasValue ? FindPawn(pawnId.Value) : null;
-            var results = pawn?.skills?.skills?
-                .Select(s => new MechanismEnumResult
+            var results = pawn?.needs?.AllNeeds?
+                .Select(n => new MechanismEnumResult
                 {
-                    DefName = s.def.defName,
-                    Label = s.def.label ?? s.def.defName,
-                    Description = s.def.description
+                    DefName = n.def.defName,
+                    Label = n.def.label ?? n.def.defName,
+                    Description = n.def.description
                 })
                 .ToList() ?? new List<MechanismEnumResult>();
 

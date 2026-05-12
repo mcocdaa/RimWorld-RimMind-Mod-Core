@@ -5,7 +5,6 @@ using RimMind.Contracts.Tools;
 using RimMind.Contracts.Mechanisms;
 using RimMind.Kernel.Tools;
 using RimMind.Kernel.Mechanisms;
-using RimMind.Kernel.Mechanisms.Impl;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -141,7 +140,7 @@ namespace RimMind.Core.Runtime
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
             RimMindServiceLocator.Register<IRimMindRuntime>(this);
 
-            RegisterDemoMechanisms();
+            RegisterAllMechanisms();
         }
 
         public static void Initialize()
@@ -212,14 +211,28 @@ namespace RimMind.Core.Runtime
             _busPipelines.Clear();
             _isShutdown = false;
 
-            RegisterDemoMechanisms();
+            RegisterAllMechanisms();
         }
 
-        private void RegisterDemoMechanisms()
+        private void RegisterAllMechanisms()
         {
-            MechanismRegistry.Register(new Kernel.Mechanisms.Impl.SkillMechanism());
-            MechanismRegistry.Register(new Kernel.Mechanisms.Impl.NeedMechanism());
-            MechanismRegistry.Register(new Kernel.Mechanisms.Impl.WealthMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Skill.SkillMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Need.NeedMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Map.Wealth.WealthMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Job.JobMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Draft.DraftMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Work.WorkMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Equipment.EquipmentMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Interaction.InteractionMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Recruit.RecruitMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Thought.ThoughtMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Inspiration.InspirationMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.MentalState.MentalStateMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Health.HealthMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.Pawn.Relations.RelationsMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.World.Faction.FactionMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.World.Storyteller.StorytellerMechanism());
+            MechanismRegistry.Register(new Kernel.Mechanisms.World.ChoiceLetter.ChoiceLetterMechanism());
         }
 
         public void Shutdown()

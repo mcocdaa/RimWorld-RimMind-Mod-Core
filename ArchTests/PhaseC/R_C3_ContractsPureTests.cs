@@ -61,6 +61,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Sensor\ISensorProvider.cs",
             @"AgentBus\ToolCallEvent.cs",
             @"AgentBus\ToolResultEvent.cs",
+            @"AgentBus\ChoiceLetterDecidedEvent.cs",
         };
 
         [Fact]

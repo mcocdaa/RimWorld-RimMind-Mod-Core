@@ -59,6 +59,10 @@ namespace RimMind.Core.Tests
 
             public Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
                 => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "watch")));
+
+            public IReadOnlyList<MechanismActionInfo>? GetWriteActions() => null;
+
+            public MechanismRisk GetRiskForOperation(MechanismOperationType operation) => Risk;
         }
 
         [Fact]

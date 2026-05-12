@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -117,10 +118,35 @@ namespace RimMind.Kernel.Mechanisms
                 PawnId = ExtractInt(args.ArgumentsJson, "pawn_id"),
                 MapId = ExtractNullableInt(args.ArgumentsJson, "map_id"),
                 DefName = ExtractString(args.ArgumentsJson, "def_name"),
-                Action = _operation.ToString().ToLowerInvariant(),
+                Action = ExtractString(args.ArgumentsJson, "action") ?? _operation.ToString().ToLowerInvariant(),
                 ValueJson = ExtractString(args.ArgumentsJson, "value") ?? ExtractString(args.ArgumentsJson, "params"),
-                TraceId = args.TraceId
+                TraceId = args.TraceId,
+                Params = ExtractParamsDictionary(args.ArgumentsJson)
             };
+        }
+
+        private static Dictionary<string, string>? ExtractParamsDictionary(string? json)
+        {
+            if (string.IsNullOrEmpty(json)) return null;
+            try
+            {
+                var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
+                var paramsToken = obj["params"];
+                if (paramsToken is Newtonsoft.Json.Linq.JObject paramsObj)
+                {
+                    var dict = new Dictionary<string, string>();
+                    foreach (var prop in paramsObj.Properties())
+                    {
+                        dict[prop.Name] = prop.Value?.ToString() ?? "";
+                    }
+                    return dict.Count > 0 ? dict : null;
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static ToolDefinition BuildDefinition(IGameMechanism mechanism, MechanismOperationType operation)
@@ -153,7 +179,7 @@ namespace RimMind.Kernel.Mechanisms
                 _ => mechanism.Docs.Summary
             };
 
-            if (mechanism.Risk == MechanismRisk.Dangerous)
+            if (mechanism.GetRiskForOperation(operation) == MechanismRisk.Dangerous)
             {
                 desc = $"[DANGEROUS] {desc}";
             }
@@ -207,6 +233,35 @@ namespace RimMind.Kernel.Mechanisms
                 case MechanismOperationType.Watch:
                     properties["def_name"] = new { type = "string", description = "Optional def name to watch" };
                     break;
+            }
+
+            var writeActions = mechanism.GetWriteActions();
+            if (writeActions != null && writeActions.Count > 0
+                && (operation == MechanismOperationType.Set
+                    || operation == MechanismOperationType.Add
+                    || operation == MechanismOperationType.Remove
+                    || operation == MechanismOperationType.Toggle
+                    || operation == MechanismOperationType.Trigger))
+            {
+                properties["action"] = new
+                {
+                    type = "string",
+                    @enum = writeActions.Select(a => a.Action).ToArray(),
+                    description = "Action to perform"
+                };
+                required.Add("action");
+
+                foreach (var wa in writeActions)
+                {
+                    if (wa.RequiredParams == null) continue;
+                    foreach (var p in wa.RequiredParams)
+                    {
+                        if (!properties.ContainsKey(p))
+                        {
+                            properties[p] = new { type = "string", description = $"Parameter for {wa.Action}" };
+                        }
+                    }
+                }
             }
 
             var schema = new
