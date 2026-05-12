@@ -46,7 +46,6 @@
     <Compile Include="Kernel\Pipeline\Npc\NpcAliveCheckMiddleware.cs" />
     <Compile Include="Kernel\Pipeline\Npc\StorageDriverInvokeMiddleware.cs" />
     <Compile Include="Kernel\Pipeline\Npc\NpcChatPipelineFactory.cs" />
-    <Compile Include="Kernel\Pipeline\Npc\NpcChatShortCircuitMiddleware.cs" />
     <Compile Include="Kernel\Llm\ResponseDispatcher.cs" />
     <Compile Include="Kernel\Npc\StorageDriverFactory.cs" />
     <Compile Include="Kernel\Npc\LocalStorageDriver.cs" />
