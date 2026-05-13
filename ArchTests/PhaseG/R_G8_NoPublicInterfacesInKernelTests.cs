@@ -7,21 +7,21 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseG
 {
-    public class R_G8_NoPublicInterfacesInKernelTests
+    public class R_G8_NoPublicInterfacesInApplicationTests
     {
         [Fact]
         [Trait("Phase", "G")]
-        public void R_G8_Kernel_Should_Not_Define_Public_Interfaces()
+        public void R_G8_Application_Should_Not_Define_Public_Interfaces()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
 
-            var kernelDir = Path.Combine(sourceDir, "Kernel");
-            Directory.Exists(kernelDir).Should().BeTrue("Kernel directory must exist");
+            var applicationDir = Path.Combine(sourceDir, "Application");
+            Directory.Exists(applicationDir).Should().BeTrue("Application directory must exist");
 
             var violatingFiles = new List<string>();
 
-            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories))
             {
                 var source = File.ReadAllText(file);
                 if (Regex.IsMatch(source, @"public\s+interface\s+I"))
@@ -32,14 +32,14 @@ namespace RimMind.Core.ArchTests.PhaseG
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-G8: Kernel/ must not define any public interfaces. " +
-                "All public interfaces belong in Contracts/. " +
+                "R-G8: Application/ must not define any public interfaces. " +
+                "All public interfaces belong in Domain/. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         private static string FindSourceDirectory()
         {
-            var dir = Path.GetDirectoryName(typeof(R_G8_NoPublicInterfacesInKernelTests).Assembly.Location);
+            var dir = Path.GetDirectoryName(typeof(R_G8_NoPublicInterfacesInApplicationTests).Assembly.Location);
             while (dir != null)
             {
                 var candidate = Path.Combine(dir, "RimMind-Core", "Source");

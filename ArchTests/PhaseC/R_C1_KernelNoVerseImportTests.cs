@@ -7,7 +7,7 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseC
 {
-    public class KernelNoVerseImportTests
+    public class ApplicationNoVerseImportTests
     {
         private static readonly string[] ForbiddenUsingPatterns = new[]
         {
@@ -79,21 +79,21 @@ namespace RimMind.Core.ArchTests.PhaseC
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C1_Kernel_ShouldNot_Import_Verse_Or_RimWorld()
+        public void R_C1_Application_ShouldNot_Import_Verse_Or_RimWorld()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var kernelDir = Path.Combine(sourceDir, "Kernel");
-            Directory.Exists(kernelDir).Should().BeTrue("Kernel directory must exist");
-            Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories).Should().NotBeEmpty(
-                "Kernel directory must contain at least one .cs file");
+            var applicationDir = Path.Combine(sourceDir, "Application");
+            Directory.Exists(applicationDir).Should().BeTrue("Application directory must exist");
+            Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories).Should().NotBeEmpty(
+                "Application directory must contain at least one .cs file");
 
             var violatingFiles = new List<string>();
 
-            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories))
             {
-                var relativePath = file.Substring(kernelDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var relativePath = file.Substring(applicationDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (CoreCompiledFiles.Contains(relativePath)) continue;
                 var source = File.ReadAllText(file);
 
@@ -102,34 +102,34 @@ namespace RimMind.Core.ArchTests.PhaseC
                     if (Regex.IsMatch(source, pattern, RegexOptions.Multiline))
                     {
                         var match = Regex.Match(source, pattern, RegexOptions.Multiline);
-                        violatingFiles.Add($"Kernel/{relativePath} (found: {match.Value.Trim()})");
+                        violatingFiles.Add($"Application/{relativePath} (found: {match.Value.Trim()})");
                         break;
                     }
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C1: Kernel namespace must not import Verse or RimWorld via 'using' directives. " +
+                "R-C1: Application namespace must not import Verse or RimWorld via 'using' directives. " +
                 "Only Verse.Pawn and Verse.IExposable may be used via fully-qualified names. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C1_Kernel_FullyQualified_VerseUsage_ShouldBeLimited()
+        public void R_C1_Application_FullyQualified_VerseUsage_ShouldBeLimited()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var kernelDir = Path.Combine(sourceDir, "Kernel");
-            if (!Directory.Exists(kernelDir)) return;
+            var applicationDir = Path.Combine(sourceDir, "Application");
+            if (!Directory.Exists(applicationDir)) return;
 
             var disallowedFqUsage = new List<string>();
             var fqPattern = @"Verse\.\w+";
 
-            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories))
             {
-                var relativePath = file.Substring(kernelDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var relativePath = file.Substring(applicationDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (CoreCompiledFiles.Contains(relativePath)) continue;
                 var source = File.ReadAllText(file);
 
@@ -140,51 +140,51 @@ namespace RimMind.Core.ArchTests.PhaseC
                     var matchedType = match.Value;
                     if (!AllowedFullyQualifiedTypes.Contains(matchedType))
                     {
-                        disallowedFqUsage.Add($"Kernel/{relativePath} (found: {matchedType})");
+                        disallowedFqUsage.Add($"Application/{relativePath} (found: {matchedType})");
                     }
                 }
             }
 
             disallowedFqUsage.Should().BeEmpty(
-                "R-C1: Kernel may only use fully-qualified Verse.Pawn, Verse.IExposable, Verse.Game, Verse.Map, Verse.Thing. " +
-                "Other Verse types must go through Kernel abstractions (ILogSink, IPathProvider, etc.). " +
+                "R-C1: Application may only use fully-qualified Verse.Pawn, Verse.IExposable, Verse.Game, Verse.Map, Verse.Thing. " +
+                "Other Verse types must go through Application abstractions (ILogSink, IPathProvider, etc.). " +
                 $"Disallowed usages:\n  {string.Join("\n  ", disallowedFqUsage)}");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C1_Kernel_Namespace_ShouldBe_RimMind_Kernel()
+        public void R_C1_Application_Namespace_ShouldBe_RimMind_Application()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var kernelDir = Path.Combine(sourceDir, "Kernel");
-            if (!Directory.Exists(kernelDir)) return;
+            var applicationDir = Path.Combine(sourceDir, "Application");
+            if (!Directory.Exists(applicationDir)) return;
 
             var violatingFiles = new List<string>();
-            var expectedNsPattern = @"namespace\s+RimMind\.Kernel";
+            var expectedNsPattern = @"namespace\s+RimMind\.Application";
 
-            foreach (var file in Directory.GetFiles(kernelDir, "*.cs", SearchOption.AllDirectories)
+            foreach (var file in Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                          && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
             {
-                var relativePath = file.Substring(kernelDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var relativePath = file.Substring(applicationDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (CoreCompiledFiles.Contains(relativePath)) continue;
                 var source = File.ReadAllText(file);
                 if (!Regex.IsMatch(source, expectedNsPattern))
                 {
-                    violatingFiles.Add($"Kernel/{relativePath}");
+                    violatingFiles.Add($"Application/{relativePath}");
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C1: All files in Kernel/ directory must use RimMind.Kernel.* namespace. " +
+                "R-C1: All files in Application/ directory must use RimMind.Application.* namespace. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         private static string FindSourceDirectory()
         {
-            var dir = Path.GetDirectoryName(typeof(KernelNoVerseImportTests).Assembly.Location);
+            var dir = Path.GetDirectoryName(typeof(ApplicationNoVerseImportTests).Assembly.Location);
             while (dir != null)
             {
                 var candidate = Path.Combine(dir, "RimMind-Core", "Source");

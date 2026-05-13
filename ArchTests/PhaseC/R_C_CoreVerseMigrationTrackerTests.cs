@@ -11,36 +11,36 @@ namespace RimMind.Core.ArchTests.PhaseC
     {
         private static readonly string[] KnownVerseUserFiles = new[]
         {
-            @"Core\Runtime\RimMindRuntime.cs",
-            @"Core\Runtime\RimMindRuntimeGameComponent.cs",
-            @"Core\UI\NullAudioPlayer.cs",
-            @"Core\Sensor\SensorManager.cs",
-            @"Core\Sensor\ISensorProvider.cs",
-            @"Core\Perception\PerceptionBridge.cs",
-            @"Core\Internal\IProviderRegistry.cs",
-            @"Core\Internal\ClientManager.cs",
-            @"Core\Internal\ProviderRegistry.cs",
-            @"Core\Extensions\IAgentActionBridge.cs",
-            @"Core\Agent\ThinkNode_RimMindAgent.cs",
-            @"Core\Agent\StrategyOptimizer.cs",
-            @"Core\Agent\RimMindActionDef.cs",
-            @"Core\Agent\PerceptionBuffer.cs",
-            @"Core\Agent\PawnThinker.cs",
-            @"Core\Agent\IPawnAgent.cs",
-            @"Core\Agent\BehaviorRecord.cs",
-            @"Core\Agent\AgentIdentity.cs",
-            @"Core\Agent\AgentGoalStack.cs",
-            @"Core\Agent\AgentGoal.cs",
-            @"Core\Agent\PawnRecorder.cs",
-            @"Core\Agent\PawnPerceiver.cs",
-            @"Core\Agent\PawnAgent.cs",
-            @"Core\Agent\GoalGenerator.cs",
-            @"Core\Agent\NpcProfileBuilder.cs",
-            @"Core\Agent\PawnActor.cs",
-            @"Core\Agent\JobDriver_RimMindAction.cs",
-            @"Core\AIDebugLog.cs",
-            @"Core\GameContextBuilder.cs",
-            @"Core\PawnDataExtractor.cs",
+            @"Presentation\Runtime\RimMindRuntime.cs",
+            @"Presentation\Runtime\RimMindRuntimeGameComponent.cs",
+            @"Presentation\UI\NullAudioPlayer.cs",
+            @"Presentation\Sensor\SensorManager.cs",
+            @"Presentation\Sensor\ISensorProvider.cs",
+            @"Presentation\Perception\PerceptionBridge.cs",
+            @"Presentation\Internal\IProviderRegistry.cs",
+            @"Presentation\Internal\ClientManager.cs",
+            @"Presentation\Internal\ProviderRegistry.cs",
+            @"Presentation\Extensions\IAgentActionBridge.cs",
+            @"Presentation\Agent\ThinkNode_RimMindAgent.cs",
+            @"Presentation\Agent\StrategyOptimizer.cs",
+            @"Presentation\Agent\RimMindActionDef.cs",
+            @"Presentation\Agent\PerceptionBuffer.cs",
+            @"Presentation\Agent\PawnThinker.cs",
+            @"Presentation\Agent\IPawnAgent.cs",
+            @"Presentation\Agent\BehaviorRecord.cs",
+            @"Presentation\Agent\AgentIdentity.cs",
+            @"Presentation\Agent\AgentGoalStack.cs",
+            @"Presentation\Agent\AgentGoal.cs",
+            @"Presentation\Agent\PawnRecorder.cs",
+            @"Presentation\Agent\PawnPerceiver.cs",
+            @"Presentation\Agent\PawnAgent.cs",
+            @"Presentation\Agent\GoalGenerator.cs",
+            @"Presentation\Agent\NpcProfileBuilder.cs",
+            @"Presentation\Agent\PawnActor.cs",
+            @"Presentation\Agent\JobDriver_RimMindAction.cs",
+            @"Presentation\AIDebugLog.cs",
+            @"Presentation\GameContextBuilder.cs",
+            @"Presentation\PawnDataExtractor.cs",
             @"Npc\NpcManager.cs",
             @"Npc\StorageDriverFactory.cs",
             @"Npc\ResponseDispatcher.cs",
@@ -49,7 +49,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Npc\LocalStorageDriver.cs",
             @"Npc\INpcManager.cs",
             @"Npc\Player2StorageDriver.cs",
-            @"Core\Pipeline\Npc\NpcAliveCheckMiddleware.cs",
+            @"Presentation\Pipeline\Npc\NpcAliveCheckMiddleware.cs",
             @"Comps\CompPawnAgent.cs",
         };
 
@@ -60,7 +60,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var coreDir = Path.Combine(sourceDir, "Core");
+            var coreDir = Path.Combine(sourceDir, "Presentation");
             if (!Directory.Exists(coreDir)) return;
 
             var verseUsingPattern = @"using\s+Verse\s*;";
@@ -105,9 +105,9 @@ namespace RimMind.Core.ArchTests.PhaseC
             }
 
             currentVerseUsers.Count.Should().BeLessOrEqualTo(KnownVerseUserFiles.Length,
-                "R-C-Tracker: Core/Npc/Comps Verse dependency count should not increase beyond known baseline. " +
+                "R-C-Tracker: Presentation/Npc/Comps Verse dependency count should not increase beyond known baseline. " +
                 $"Known: {KnownVerseUserFiles.Length}, Current: {currentVerseUsers.Count}. " +
-                "New files using 'using Verse;' in Core/ must be migrated to Adapters/ or added to KnownVerseUserFiles. " +
+                "New files using 'using Verse;' in Presentation/ must be migrated to Infrastructure/ or added to KnownVerseUserFiles. " +
                 $"Current Verse users:\n  {string.Join("\n  ", currentVerseUsers)}");
         }
 
@@ -118,12 +118,12 @@ namespace RimMind.Core.ArchTests.PhaseC
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var adaptersVerseDir = Path.Combine(sourceDir, "Adapters", "Verse");
+            var adaptersVerseDir = Path.Combine(sourceDir, "Infrastructure", "Verse");
             if (!Directory.Exists(adaptersVerseDir)) return;
 
             var gameComponentFiles = Directory.GetFiles(adaptersVerseDir, "*GameComponent*.cs");
             gameComponentFiles.Length.Should().BeGreaterOrEqualTo(3,
-                "R-C-Tracker: Adapters/Verse should contain at least 3 GameComponent files " +
+                "R-C-Tracker: Infrastructure/Verse should contain at least 3 GameComponent files " +
                 "(AIRequestQueueGameComponent, AgentBusGameComponent, FlywheelGameComponent). " +
                 $"Current count: {gameComponentFiles.Length}");
         }

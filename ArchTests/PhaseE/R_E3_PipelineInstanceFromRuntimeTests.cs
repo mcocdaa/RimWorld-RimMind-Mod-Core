@@ -11,10 +11,10 @@ namespace RimMind.Core.ArchTests.PhaseE
     {
         private static readonly HashSet<string> PipelineFactoryFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Kernel\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Kernel\Pipeline\Npc\NpcChatPipelineFactory.cs",
-            @"Kernel\Pipeline\Bus\BusPublishPipelineFactory.cs",
-            @"Kernel\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Application\Pipeline\AI\AIRequestPipelineFactory.cs",
+            @"Application\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Application\Pipeline\Bus\BusPublishPipelineFactory.cs",
+            @"Application\Pipeline\Context\ContextBuildPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownNewPipelineViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -23,8 +23,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> KnownExecuteAsyncViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Core\Runtime\RimMindRuntime.cs",
-            @"Kernel\Tools\ToolCallDispatchMiddleware.cs",
+            @"Presentation\Runtime\RimMindRuntime.cs",
+            @"Application\Tools\ToolCallDispatchMiddleware.cs",
         };
 
         [Fact]
@@ -81,10 +81,10 @@ namespace RimMind.Core.ArchTests.PhaseE
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
-                if (relativePath.StartsWith("Kernel" + Path.DirectorySeparatorChar + "Pipeline"))
+                if (relativePath.StartsWith("Application" + Path.DirectorySeparatorChar + "Pipeline"))
                     continue;
 
-                if (relativePath.StartsWith("Contracts" + Path.DirectorySeparatorChar))
+                if (relativePath.StartsWith("Domain" + Path.DirectorySeparatorChar))
                     continue;
 
                 if (relativePath.Contains("PipelineFactory"))

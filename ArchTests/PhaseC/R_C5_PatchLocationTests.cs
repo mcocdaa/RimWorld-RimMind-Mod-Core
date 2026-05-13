@@ -11,7 +11,7 @@ namespace RimMind.Core.ArchTests.PhaseC
     {
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C5_PatchClasses_MustBeIn_Adapters_Patches()
+        public void R_C5_PatchClasses_MustBeIn_Infrastructure_Patches()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
@@ -23,7 +23,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-                if (relativePath.StartsWith("Adapters" + Path.DirectorySeparatorChar + "Patches" + Path.DirectorySeparatorChar)) continue;
+                if (relativePath.StartsWith("Infrastructure" + Path.DirectorySeparatorChar + "Patches" + Path.DirectorySeparatorChar)) continue;
 
                 var source = File.ReadAllText(file);
                 if (Regex.IsMatch(source, harmonyPatchPattern))
@@ -33,21 +33,21 @@ namespace RimMind.Core.ArchTests.PhaseC
             }
 
             violatingFiles.Should().BeEmpty(
-                "All HarmonyPatch classes must reside in Source/Adapters/Patches/. " +
-                "This ensures all Harmony transpilers/prefixes/postfixes are isolated in the Adapters layer. " +
+                "All HarmonyPatch classes must reside in Source/Infrastructure/Patches/. " +
+                "This ensures all Harmony transpilers/prefixes/postfixes are isolated in the Infrastructure layer. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C5_Adapters_Patches_Directory_ShouldExist()
+        public void R_C5_Infrastructure_Patches_Directory_ShouldExist()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var patchesDir = Path.Combine(sourceDir, "Adapters", "Patches");
+            var patchesDir = Path.Combine(sourceDir, "Infrastructure", "Patches");
             Directory.Exists(patchesDir).Should().BeTrue(
-                "Adapters/Patches directory must exist as the designated location for all HarmonyPatch classes.");
+                "Infrastructure/Patches directory must exist as the designated location for all HarmonyPatch classes.");
         }
 
         private static string FindSourceDirectory()

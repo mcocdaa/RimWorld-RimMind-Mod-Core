@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentAssertions;
-using RimMind.Contracts.Tools;
+using RimMind.Application.Common.Models.Tools;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseH1

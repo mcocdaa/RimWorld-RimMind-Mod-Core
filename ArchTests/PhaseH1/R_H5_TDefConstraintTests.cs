@@ -1,7 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
-using RimMind.Contracts.Mechanisms;
-using RimMind.Kernel.Mechanisms;
+using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Infrastructure.Mechanisms;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseH1
@@ -10,10 +10,10 @@ namespace RimMind.Core.ArchTests.PhaseH1
     {
         [Fact]
         [Trait("Phase", "H1")]
-        public void GameMechanismBaseNoDef_Should_Exist_In_Kernel_Mechanisms()
+        public void GameMechanismBaseNoDef_Should_Exist_In_Infrastructure_Mechanisms()
         {
-            typeof(GameMechanismBaseNoDef).Namespace.Should().StartWith("RimMind.Kernel.Mechanisms",
-                "GameMechanismBaseNoDef must be in RimMind.Kernel.Mechanisms namespace");
+            typeof(GameMechanismBaseNoDef).Namespace.Should().StartWith("RimMind.Infrastructure.Mechanisms",
+                "GameMechanismBaseNoDef must be in RimMind.Infrastructure.Mechanisms namespace");
         }
 
         [Fact]

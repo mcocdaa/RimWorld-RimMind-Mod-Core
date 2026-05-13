@@ -74,7 +74,7 @@ namespace RimMind.Core.ArchTests
 
             throw new FileNotFoundException(
                 $"R-D: 找不到 {fileName}。搜索路径:\n  {string.Join("\n  ", candidates.Select(Path.GetFullPath))}\n" +
-                "请先构建三个源码项目: dotnet build RimMind-Core/Source/Contracts/RimMindCore.Contracts.csproj 等");
+                "请先构建三个源码项目: dotnet build RimMind-Core/Source/Domain/RimMindCore.Domain.csproj 等");
         }
 
         public static bool TryLocateAssembly(string fileName, out string? path)

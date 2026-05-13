@@ -16,10 +16,10 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Kernel\Pipeline\AI\RetryMiddleware.cs",
-            @"Kernel\Pipeline\Common\CommonRetryMiddleware.cs",
-            @"Kernel\Pipeline\Npc\NpcChatRetryMiddleware.cs",
-            @"Kernel\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Application\Pipeline\AI\RetryMiddleware.cs",
+            @"Application\Pipeline\Common\CommonRetryMiddleware.cs",
+            @"Application\Pipeline\Npc\NpcChatRetryMiddleware.cs",
+            @"Application\Pipeline\Npc\NpcChatPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -117,8 +117,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             var expectedMiddlewareFiles = new[]
             {
-                Path.Combine(sourceDir, "Kernel", "Pipeline", "AI", "RetryMiddleware.cs"),
-                Path.Combine(sourceDir, "Kernel", "Pipeline", "Common", "CommonRetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Pipeline", "AI", "RetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Pipeline", "Common", "CommonRetryMiddleware.cs"),
             };
 
             foreach (var expected in expectedMiddlewareFiles)
@@ -129,7 +129,7 @@ namespace RimMind.Core.ArchTests.PhaseE
             }
         }
 
-        private static readonly string KnownDefinitionLocation = @"Core\Runtime\TransientExceptionChecker.cs";
+        private static readonly string KnownDefinitionLocation = @"Presentation\Runtime\TransientExceptionChecker.cs";
 
         [Fact]
         [Trait("Phase", "E")]
@@ -148,14 +148,14 @@ namespace RimMind.Core.ArchTests.PhaseE
             {
                 var relativePath = definitionFile.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-                var isInKernelOrContracts = relativePath.StartsWith("Kernel") || relativePath.StartsWith("Contracts");
+                var isInApplicationOrDomain = relativePath.StartsWith("Application") || relativePath.StartsWith("Domain");
 
-                if (!isInKernelOrContracts)
+                if (!isInApplicationOrDomain)
                 {
                     relativePath.Should().Be(KnownDefinitionLocation,
-                        $"R-E2: TransientExceptionChecker is currently at {relativePath} (known debt: should be in Kernel/ or Contracts/). " +
+                        $"R-E2: TransientExceptionChecker is currently at {relativePath} (known debt: should be in Application/ or Domain/). " +
                         "If it has been moved to a new location, update KnownDefinitionLocation. " +
-                        "If it has been moved to Kernel/ or Contracts/, this test will auto-pass.");
+                        "If it has been moved to Application/ or Domain/, this test will auto-pass.");
                 }
             }
         }

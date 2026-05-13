@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿using System.Collections.Generic;
+﻿﻿﻿﻿﻿﻿﻿﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -11,10 +11,10 @@ namespace RimMind.Core.ArchTests.PhaseA
     {
         private static readonly (string ns, string dir)[] InternalNamespaces = new[]
         {
-            ("RimMind.Kernel.Bus", "Core\\AgentBus"),
-            ("RimMind.Kernel.Context", "Core\\Context"),
-            ("RimMind.Core.Agent", "Core\\Agent"),
-            ("RimMind.Core.Perception", "Core\\Perception")
+            ("RimMind.Application.Features.Bus", "Presentation\\AgentBus"),
+            ("RimMind.Application.Features.Context", "Presentation\\Context"),
+            ("RimMind.Presentation.Agent", "Presentation\\Agent"),
+            ("RimMind.Presentation.Perception", "Presentation\\Perception")
         };
 
         private static readonly HashSet<string> WhitelistFiles = new()
@@ -64,7 +64,7 @@ namespace RimMind.Core.ArchTests.PhaseA
             var patterns = new[]
             {
                 @"(?<!//.*?)\bRimMindAPI\b",
-                @"using\s+RimMind\.Core\s*;",
+                @"using\s+RimMind\.Presentation\s*;",
             };
 
             foreach (var pattern in patterns)

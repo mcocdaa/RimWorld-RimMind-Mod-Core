@@ -32,7 +32,7 @@ namespace RimMind.Core.ArchTests.PhaseC
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C4_GameComponentClasses_MustBeIn_Adapters_Verse()
+        public void R_C4_GameComponentClasses_MustBeIn_Infrastructure_Verse()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
@@ -46,7 +46,7 @@ namespace RimMind.Core.ArchTests.PhaseC
 
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-                if (relativePath.StartsWith("Adapters" + Path.DirectorySeparatorChar)) continue;
+                if (relativePath.StartsWith("Infrastructure" + Path.DirectorySeparatorChar)) continue;
                 var source = File.ReadAllText(file);
 
                 foreach (var baseClass in ComponentBaseClasses)
@@ -61,8 +61,8 @@ namespace RimMind.Core.ArchTests.PhaseC
             }
 
             violatingFiles.Should().BeEmpty(
-                "All GameComponent/WorldComponent/MapComponent/ThingComp classes must reside in Source/Adapters/Verse/. " +
-                "This ensures Verse-dependent lifecycle hooks are isolated in the Adapters layer. " +
+                "All GameComponent/WorldComponent/MapComponent/ThingComp classes must reside in Source/Infrastructure/Verse/. " +
+                "This ensures Verse-dependent lifecycle hooks are isolated in the Infrastructure layer. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

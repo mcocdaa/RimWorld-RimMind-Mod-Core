@@ -12,17 +12,17 @@ namespace RimMind.Core.ArchTests.PhaseStructure
         [Fact, Trait("Phase", "Structure")]
         public void RimMindAPI_SubFacades_Should_Exist_In_Api_Dir()
         {
-            var apiDir = Path.Combine(SourceRoot, "Core", "Api");
-            Directory.Exists(apiDir).Should().BeTrue("Core/Api/ directory must exist");
+            var apiDir = Path.Combine(SourceRoot, "Presentation", "Api");
+            Directory.Exists(apiDir).Should().BeTrue("Presentation/Api/ directory must exist");
             var files = Directory.GetFiles(apiDir, "RimMindAPI.*.cs");
             files.Length.Should().BeGreaterOrEqualTo(9,
-                "At least 9 sub-facade files should exist in Core/Api/");
+                "At least 9 sub-facade files should exist in Presentation/Api/");
         }
 
         [Fact, Trait("Phase", "Structure")]
         public void RimMindAPI_SubFacades_Should_Be_Partial_Class()
         {
-            var apiDir = Path.Combine(SourceRoot, "Core", "Api");
+            var apiDir = Path.Combine(SourceRoot, "Presentation", "Api");
             var files = Directory.GetFiles(apiDir, "RimMindAPI.*.cs");
             foreach (var f in files)
             {

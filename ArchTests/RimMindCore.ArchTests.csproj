@@ -38,8 +38,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Source\Contracts\RimMindCore.Contracts.csproj" />
-    <ProjectReference Include="..\Source\Kernel\RimMindCore.Kernel.csproj" />
+    <ProjectReference Include="..\Source\Domain\RimMindCore.Domain.csproj" />
+    <ProjectReference Include="..\Source\Application\RimMindCore.Application.csproj" />
     <ProjectReference Include="..\Source\RimMindCore.csproj" />
   </ItemGroup>
 

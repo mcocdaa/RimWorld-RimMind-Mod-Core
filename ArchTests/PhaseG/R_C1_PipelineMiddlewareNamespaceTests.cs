@@ -11,12 +11,12 @@ namespace RimMind.Core.ArchTests.PhaseG
     {
         [Fact]
         [Trait("Phase", "G")]
-        public void All_Pipeline_Middlewares_Should_Be_In_Kernel_Namespace()
+        public void All_Pipeline_Middlewares_Should_Be_In_Application_Namespace()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
 
-            var pipelineDir = Path.Combine(sourceDir, "Kernel", "Pipeline");
+            var pipelineDir = Path.Combine(sourceDir, "Application", "Pipeline");
             if (!Directory.Exists(pipelineDir)) return;
 
             var violatingFiles = new List<string>();
@@ -28,14 +28,14 @@ namespace RimMind.Core.ArchTests.PhaseG
                 var source = File.ReadAllText(file);
                 var relativePath = file.Substring(pipelineDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-                if (!Regex.IsMatch(source, @"namespace\s+RimMind\.Kernel"))
+                if (!Regex.IsMatch(source, @"namespace\s+RimMind\.Application"))
                 {
-                    violatingFiles.Add($"Kernel/Pipeline/{relativePath}");
+                    violatingFiles.Add($"Application/Pipeline/{relativePath}");
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C1 enhanced: All Pipeline middleware files must use RimMind.Kernel.* namespace. " +
+                "R-C1 enhanced: All Pipeline middleware files must use RimMind.Application.* namespace. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

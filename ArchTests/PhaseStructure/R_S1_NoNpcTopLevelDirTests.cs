@@ -13,7 +13,7 @@ namespace RimMind.Core.ArchTests.PhaseStructure
         {
             var npcDir = Path.Combine(SourceRoot, "Npc");
             Directory.Exists(npcDir).Should().BeFalse(
-                "Npc/ 已迁移到 Kernel/Npc/ 和 Adapters/Client/Player2/");
+                "Npc/ 已迁移到 Application/Npc/ 和 Infrastructure/Client/Player2/");
         }
     }
 }

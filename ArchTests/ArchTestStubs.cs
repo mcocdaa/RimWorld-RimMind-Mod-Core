@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using Verse;
 
-namespace RimMind.Contracts.Npc
+namespace RimMind.Application.Common.Models.Npc
 {
-    using RimMind.Contracts.Internal;
-
     public class NpcProfile
     {
         public string NpcId = "";
@@ -60,9 +58,9 @@ namespace RimMind.Contracts.Npc
     }
 }
 
-namespace RimMind.Core.Agent
+namespace RimMind.Presentation.Agent
 {
-    using RimMind.Contracts;
+    using RimMind.Domain.Events;
 
     public class PawnAgent
     {
@@ -75,7 +73,7 @@ namespace RimMind.Core.Agent
     }
 }
 
-namespace RimMind.Contracts
+namespace RimMind.Domain.Events
 {
     public interface IEventBus
     {
@@ -84,7 +82,7 @@ namespace RimMind.Contracts
     }
 }
 
-namespace RimMind.Contracts.Client
+namespace RimMind.Application.Common.Models.Client
 {
     public enum AIRequestPriority { Low, Normal, High, Critical }
 
@@ -118,7 +116,7 @@ namespace RimMind.Contracts.Client
     }
 }
 
-namespace RimMind.Contracts.UI
+namespace RimMind.Application.Common.Models.UI
 {
     public class RequestEntry
     {
@@ -129,12 +127,12 @@ namespace RimMind.Contracts.UI
     }
 }
 
-namespace RimMind.Core.Agent
+namespace RimMind.Presentation.Agent
 {
     public class PerceptionPipeline { }
 }
 
-namespace RimMind.Contracts.UI
+namespace RimMind.Application.Common.Models.UI
 {
     public interface IAudioPlayer
     {
@@ -143,13 +141,13 @@ namespace RimMind.Contracts.UI
     }
 }
 
-namespace RimMind.Contracts.Sensor
+namespace RimMind.Application.Common.Interfaces.Sensor
 {
-    using RimMind.Contracts.Internal;
+    using RimMind.Application.Common.Models.Client;
 
     public interface ISensorManager
     {
-        List<RimMind.Contracts.Client.StructuredTool> BuildAgentTools(Verse.Pawn pawn);
+        List<StructuredTool> BuildAgentTools(Verse.Pawn pawn);
         void RegisterSensorContextKeys();
     }
 
@@ -158,12 +156,12 @@ namespace RimMind.Contracts.Sensor
         public static ISensorManager? Instance => RimMindServiceLocator.Get<ISensorManager>();
         public SensorManager() : base() { }
         public SensorManager(Verse.Game game) : base() { }
-        public List<RimMind.Contracts.Client.StructuredTool> BuildAgentTools(Verse.Pawn pawn) => new();
+        public List<StructuredTool> BuildAgentTools(Verse.Pawn pawn) => new();
         public void RegisterSensorContextKeys() { }
     }
 }
 
-namespace RimMind.Contracts.Internal
+namespace RimMind.Application.Common.Interfaces.Internal
 {
     internal static class RimMindServiceLocator
     {

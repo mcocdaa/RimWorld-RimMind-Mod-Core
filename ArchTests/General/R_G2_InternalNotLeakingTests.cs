@@ -25,8 +25,8 @@ namespace RimMind.Core.ArchTests.General
             var csprojFiles = new[]
             {
                 Path.Combine(sourceDir, "RimMindCore.csproj"),
-                Path.Combine(sourceDir, "Contracts", "RimMindCore.Contracts.csproj"),
-                Path.Combine(sourceDir, "Kernel", "RimMindCore.Kernel.csproj"),
+                Path.Combine(sourceDir, "Domain", "RimMindCore.Domain.csproj"),
+                Path.Combine(sourceDir, "Application", "RimMindCore.Application.csproj"),
             };
 
             var violatingEntries = new List<string>();

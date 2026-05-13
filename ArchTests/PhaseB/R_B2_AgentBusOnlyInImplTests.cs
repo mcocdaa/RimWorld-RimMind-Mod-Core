@@ -16,7 +16,7 @@ namespace RimMind.Core.ArchTests.PhaseB
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var agentBusFile = Path.Combine(sourceDir, "Core", "AgentBus", "AgentBus.cs");
+            var agentBusFile = Path.Combine(sourceDir, "Presentation", "AgentBus", "AgentBus.cs");
             File.Exists(agentBusFile).Should().BeFalse(
                 "The static AgentBus.cs class file must be deleted. " +
                 "All AgentBus functionality should be in AgentBusImpl.cs (instance-based).");
@@ -37,7 +37,7 @@ namespace RimMind.Core.ArchTests.PhaseB
             var violatingFiles = new List<string>();
             var staticCallPattern = @"AgentBus\.(Subscribe|Publish|Unsubscribe|PublishFromBackground|FlushBackgroundQueue|ClearAllSubscribers)";
 
-            var agentBusDir = Path.Combine(sourceDir, "Core", "AgentBus");
+            var agentBusDir = Path.Combine(sourceDir, "Presentation", "AgentBus");
             if (Directory.Exists(agentBusDir))
             {
                 foreach (var file in Directory.GetFiles(agentBusDir, "*.cs", SearchOption.AllDirectories))
@@ -48,7 +48,7 @@ namespace RimMind.Core.ArchTests.PhaseB
                     var source = File.ReadAllText(file);
                     if (Regex.IsMatch(source, staticCallPattern))
                     {
-                        violatingFiles.Add($"Core/AgentBus/{fileName}");
+                        violatingFiles.Add($"Presentation/AgentBus/{fileName}");
                     }
                 }
             }
@@ -66,7 +66,7 @@ namespace RimMind.Core.ArchTests.PhaseB
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var implFile = Path.Combine(sourceDir, "Core", "AgentBus", "AgentBusImpl.cs");
+            var implFile = Path.Combine(sourceDir, "Presentation", "AgentBus", "AgentBusImpl.cs");
             if (!File.Exists(implFile)) return;
 
             var source = File.ReadAllText(implFile);

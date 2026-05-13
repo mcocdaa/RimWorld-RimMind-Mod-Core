@@ -8,14 +8,14 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.General
 {
-    public class PublicTypesInContractsTests
+    public class PublicTypesInDomainTests
     {
         private static readonly string[] ValidNamespacePrefixes = new[]
         {
-            "RimMind.Core",
-            "RimMind.Contracts",
-            "RimMind.Kernel",
-            "RimMind.Adapters",
+            "RimMind.Presentation",
+            "RimMind.Domain",
+            "RimMind.Application",
+            "RimMind.Infrastructure",
         };
 
         private static readonly HashSet<string> WhitelistFiles = new(StringComparer.OrdinalIgnoreCase)
@@ -59,7 +59,7 @@ namespace RimMind.Core.ArchTests.General
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-G1: All public types must reside in RimMind.Core.*, RimMind.Contracts.*, RimMind.Kernel.*, or RimMind.Adapters.* namespaces. " +
+                "R-G1: All public types must reside in RimMind.Presentation.*, RimMind.Domain.*, RimMind.Application.*, or RimMind.Infrastructure.* namespaces. " +
                 "Internal implementation namespaces should not leak public types. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }

@@ -8,14 +8,14 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseC
 {
-    public class ContractsPureTests
+    public class DomainPureTests
     {
         private static readonly string[] ForbiddenUsingPatterns = new[]
         {
-            @"using\s+RimMind\.Kernel\s*;",
-            @"using\s+RimMind\.Kernel\.\w+\s*;",
-            @"using\s+RimMind\.Adapters\s*;",
-            @"using\s+RimMind\.Adapters\.\w+\s*;",
+            @"using\s+RimMind\.Application\s*;",
+            @"using\s+RimMind\.Application\.\w+\s*;",
+            @"using\s+RimMind\.Infrastructure\s*;",
+            @"using\s+RimMind\.Infrastructure\.\w+\s*;",
             @"using\s+Newtonsoft\.Json\s*;",
             @"using\s+HarmonyLib\s*;",
             @"using\s+Verse\s*;",
@@ -66,21 +66,21 @@ namespace RimMind.Core.ArchTests.PhaseC
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C3_Contracts_ShouldNot_Import_Kernel_Or_Adapters()
+        public void R_C3_Domain_ShouldNot_Import_Application_Or_Infrastructure()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var contractsDir = Path.Combine(sourceDir, "Contracts");
-            Directory.Exists(contractsDir).Should().BeTrue("Contracts directory must exist");
-            GetSourceFiles(contractsDir).Should().NotBeEmpty(
-                "Contracts directory must contain at least one .cs file");
+            var domainDir = Path.Combine(sourceDir, "Domain");
+            Directory.Exists(domainDir).Should().BeTrue("Domain directory must exist");
+            GetSourceFiles(domainDir).Should().NotBeEmpty(
+                "Domain directory must contain at least one .cs file");
 
             var violatingFiles = new List<string>();
 
-            foreach (var file in GetSourceFiles(contractsDir))
+            foreach (var file in GetSourceFiles(domainDir))
             {
-                var relativePath = file.Substring(contractsDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var relativePath = file.Substring(domainDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (KnownImportViolations.Contains(relativePath)) continue;
 
                 var source = File.ReadAllText(file);
@@ -90,81 +90,81 @@ namespace RimMind.Core.ArchTests.PhaseC
                     if (Regex.IsMatch(source, pattern, RegexOptions.Multiline))
                     {
                         var match = Regex.Match(source, pattern, RegexOptions.Multiline);
-                        violatingFiles.Add($"Contracts/{relativePath} (found: {match.Value.Trim()})");
+                        violatingFiles.Add($"Domain/{relativePath} (found: {match.Value.Trim()})");
                         break;
                     }
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C3: Contracts namespace must be pure — no dependencies on Kernel, Adapters, Verse, RimWorld, Newtonsoft.Json, or HarmonyLib. " +
-                "Contracts define interfaces and data types only. " +
+                "R-C3: Domain namespace must be pure — no dependencies on Application, Infrastructure, Verse, RimWorld, Newtonsoft.Json, or HarmonyLib. " +
+                "Domain defines interfaces and data types only. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C3_Contracts_Namespace_ShouldBe_RimMind_Contracts()
+        public void R_C3_Domain_Namespace_ShouldBe_RimMind_Domain()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var contractsDir = Path.Combine(sourceDir, "Contracts");
-            if (!Directory.Exists(contractsDir)) return;
+            var domainDir = Path.Combine(sourceDir, "Domain");
+            if (!Directory.Exists(domainDir)) return;
 
             var violatingFiles = new List<string>();
-            var expectedNsPattern = @"namespace\s+RimMind\.Contracts";
+            var expectedNsPattern = @"namespace\s+RimMind\.Domain";
 
-            foreach (var file in GetSourceFiles(contractsDir))
+            foreach (var file in GetSourceFiles(domainDir))
             {
                 var source = File.ReadAllText(file);
                 if (!Regex.IsMatch(source, expectedNsPattern))
                 {
-                    var relativePath = file.Substring(contractsDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                    violatingFiles.Add($"Contracts/{relativePath}");
+                    var relativePath = file.Substring(domainDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    violatingFiles.Add($"Domain/{relativePath}");
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C3: All files in Contracts/ directory must use RimMind.Contracts.* namespace. " +
+                "R-C3: All files in Domain/ directory must use RimMind.Domain.* namespace. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C3_Contracts_ShouldContain_OnlyInterfaces_And_Enums()
+        public void R_C3_Domain_ShouldContain_OnlyInterfaces_And_Enums()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var contractsDir = Path.Combine(sourceDir, "Contracts");
-            if (!Directory.Exists(contractsDir)) return;
+            var domainDir = Path.Combine(sourceDir, "Domain");
+            if (!Directory.Exists(domainDir)) return;
 
             var violatingFiles = new List<string>();
             var classPattern = @"(?:public|internal)\s+(?!abstract\s+)(?:sealed\s+)?class\s+";
             var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*\{|class\s+\w+Dto\s*\{|class\s+\w+Data\s*\{|class\s+\w+Result\s*\{|class\s+\w+Request\s*\{|class\s+\w+Response\s*\{|class\s+\w+Tool\s*\{|class\s+\w+Context\s*\{|class\s+\w+Entry\s*\{|class\s+\w+Profile\s*\{|class\s+\w+Command\s*\{|class\s+\w+Message\s*\{";
 
-            foreach (var file in GetSourceFiles(contractsDir))
+            foreach (var file in GetSourceFiles(domainDir))
             {
-                var relPath = file.Substring(contractsDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var relPath = file.Substring(domainDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (KnownClassViolations.Contains(relPath)) continue;
 
                 var source = File.ReadAllText(file);
                 if (Regex.IsMatch(source, classPattern) && !Regex.IsMatch(source, allowedClassPattern))
                 {
-                    violatingFiles.Add($"Contracts/{relPath}");
+                    violatingFiles.Add($"Domain/{relPath}");
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C3: Contracts should contain only interfaces, enums, records, attributes, and pure data DTOs — no behavioral class implementations. " +
-                "Move implementation classes to Kernel or Adapters. " +
+                "R-C3: Domain should contain only interfaces, enums, records, attributes, and pure data DTOs — no behavioral class implementations. " +
+                "Move implementation classes to Application or Infrastructure. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         private static string FindSourceDirectory()
         {
-            var dir = Path.GetDirectoryName(typeof(ContractsPureTests).Assembly.Location);
+            var dir = Path.GetDirectoryName(typeof(DomainPureTests).Assembly.Location);
             while (dir != null)
             {
                 var candidate = Path.Combine(dir, "RimMind-Core", "Source");

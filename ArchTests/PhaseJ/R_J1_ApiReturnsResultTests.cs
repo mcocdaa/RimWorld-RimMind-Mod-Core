@@ -2,9 +2,11 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Npc;
-using RimMind.Contracts.Result;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Npc;
+using RimMind.Domain.ValueObjects;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseJ

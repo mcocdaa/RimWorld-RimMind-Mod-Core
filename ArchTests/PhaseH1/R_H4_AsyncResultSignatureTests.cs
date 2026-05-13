@@ -1,9 +1,9 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
-using RimMind.Contracts.Mechanisms;
-using RimMind.Contracts.Result;
-using RimMind.Contracts.Tools;
+using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Domain.ValueObjects;
+using RimMind.Application.Common.Interfaces.Tools;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseH1

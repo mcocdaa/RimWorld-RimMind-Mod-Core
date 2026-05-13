@@ -5,89 +5,73 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseD
 {
-    public class ContractsNoJsonTests
+    public class DomainNoJsonTests
     {
-        private static string GetContractsCsprojPath()
+        private static string GetDomainCsprojPath()
         {
             var sourceDir = ArchTestExtensions.FindSourceDirectory();
-            return Path.Combine(sourceDir, "Contracts", "RimMindCore.Contracts.csproj");
+            return Path.Combine(sourceDir, "Domain", "RimMindCore.Domain.csproj");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D1_Csproj_Contracts_ShouldNot_Reference_Newtonsoft_Or_Harmony()
+        public void R_D1_Csproj_Domain_ShouldNot_Reference_Newtonsoft_Or_Harmony()
         {
-            var csprojPath = GetContractsCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Contracts csproj must exist at {csprojPath}");
+            var csprojPath = GetDomainCsprojPath();
+            File.Exists(csprojPath).Should().BeTrue($"Domain csproj must exist at {csprojPath}");
 
             var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
 
             analysis.HasPackageRef("Newtonsoft.Json").Should().BeFalse(
-                "R-D1: 0_RimMindContracts.dll must NOT reference Newtonsoft.Json. " +
-                "Contracts is the purest layer — only interfaces, enums, and DTOs. " +
-                "JSON serialization belongs in Kernel or Adapters.");
+                "R-D1: 0_RimMindDomain.dll must NOT reference Newtonsoft.Json. " +
+                "Domain is the purest layer — only value objects, enums, events, and exceptions. " +
+                "JSON serialization belongs in Application or Infrastructure.");
 
             analysis.HasPackageRef("Lib.Harmony.Ref").Should().BeFalse(
-                "R-D1: 0_RimMindContracts.dll must NOT reference 0Harmony (Lib.Harmony.Ref). " +
-                "Contracts must be Harmony-free. Patching logic belongs in Adapters/Patches.");
+                "R-D1: 0_RimMindDomain.dll must NOT reference 0Harmony (Lib.Harmony.Ref). " +
+                "Domain must be Harmony-free. Patching logic belongs in Infrastructure/Patches.");
 
             analysis.HasPackageRef("0Harmony").Should().BeFalse(
-                "R-D1: 0_RimMindContracts.dll must NOT reference 0Harmony.");
+                "R-D1: 0_RimMindDomain.dll must NOT reference 0Harmony.");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D1_Csproj_Contracts_AssemblyName_ShouldBe_Prefixed()
+        public void R_D1_Csproj_Domain_AssemblyName_ShouldBe_Prefixed()
         {
-            var csprojPath = GetContractsCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Contracts csproj must exist at {csprojPath}");
+            var csprojPath = GetDomainCsprojPath();
+            File.Exists(csprojPath).Should().BeTrue($"Domain csproj must exist at {csprojPath}");
 
             var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
 
-            analysis.AssemblyName.Should().Be("0_RimMindContracts",
-                "R-D1: Contracts assembly name must be '0_RimMindContracts' to ensure " +
+            analysis.AssemblyName.Should().Be("0_RimMindDomain",
+                "R-D1: Domain assembly name must be '0_RimMindDomain' to ensure " +
                 "it loads first in RimWorld's alphabetical assembly loading order.");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D1_Csproj_Contracts_ShouldOnly_Reference_KrafsRimworldRef()
+        public void R_D1_Csproj_Domain_ShouldNot_Have_ProjectReferences_Or_PackageReferences()
         {
-            var csprojPath = GetContractsCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Contracts csproj must exist at {csprojPath}");
-
-            var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
-
-            var allowedPackageRefs = new[] { "Krafs.Rimworld.Ref" };
-            var forbiddenPackageRefs = analysis.PackageReferences
-                .Select(pr => pr.Include)
-                .Where(name => !allowedPackageRefs.Contains(name))
-                .ToList();
-
-            forbiddenPackageRefs.Should().BeEmpty(
-                "R-D1: Contracts may only reference Krafs.Rimworld.Ref (for Pawn etc.). " +
-                "Forbidden package references found: " + string.Join(", ", forbiddenPackageRefs));
-        }
-
-        [Fact]
-        [Trait("Phase", "D")]
-        public void R_D1_Csproj_Contracts_ShouldNot_Have_ProjectReferences()
-        {
-            var csprojPath = GetContractsCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Contracts csproj must exist at {csprojPath}");
+            var csprojPath = GetDomainCsprojPath();
+            File.Exists(csprojPath).Should().BeTrue($"Domain csproj must exist at {csprojPath}");
 
             var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
 
             analysis.ProjectReferences.Should().BeEmpty(
-                "R-D1: Contracts is the bottom layer — it must not have any ProjectReference. " +
-                "Other layers reference Contracts, not the other way around.");
+                "R-D1: Domain is the bottom layer — it must not have any ProjectReference. " +
+                "Other layers reference Domain, not the other way around.");
+
+            analysis.PackageReferences.Should().BeEmpty(
+                "R-D1: Domain must have zero package dependencies. " +
+                "It contains only pure domain types with no external dependencies.");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D1_Dll_Contracts_ShouldNot_Reference_Newtonsoft_Or_Harmony()
+        public void R_D1_Dll_Domain_ShouldNot_Reference_Newtonsoft_Or_Harmony()
         {
-            if (!ArchTestExtensions.TryLocateAssembly("0_RimMindContracts.dll", out var dllPath))
+            if (!ArchTestExtensions.TryLocateAssembly("0_RimMindDomain.dll", out var dllPath))
             {
                 return;
             }
@@ -95,11 +79,11 @@ namespace RimMind.Core.ArchTests.PhaseD
             var refs = ArchTestExtensions.GetAssemblyReferences(dllPath!);
 
             refs.Should().NotContain("Newtonsoft.Json",
-                "R-D1 (DLL): 0_RimMindContracts.dll must NOT reference Newtonsoft.Json. " +
+                "R-D1 (DLL): 0_RimMindDomain.dll must NOT reference Newtonsoft.Json. " +
                 $"Actual references: {string.Join(", ", refs.OrderBy(r => r))}");
 
             refs.Should().NotContain("0Harmony",
-                "R-D1 (DLL): 0_RimMindContracts.dll must NOT reference 0Harmony. " +
+                "R-D1 (DLL): 0_RimMindDomain.dll must NOT reference 0Harmony. " +
                 $"Actual references: {string.Join(", ", refs.OrderBy(r => r))}");
         }
     }

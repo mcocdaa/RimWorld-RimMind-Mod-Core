@@ -7,34 +7,34 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseC
 {
-    public class AdaptersAllowVerseTests
+    public class InfrastructureAllowVerseTests
     {
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C2_Adapters_VerseLayer_ShouldExist()
+        public void R_C2_Infrastructure_VerseLayer_ShouldExist()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var adaptersVerseDir = Path.Combine(sourceDir, "Adapters", "Verse");
-            Directory.Exists(adaptersVerseDir).Should().BeTrue(
-                "Adapters/Verse directory must exist as the designated layer for Verse/RimWorld interactions.");
+            var infrastructureVerseDir = Path.Combine(sourceDir, "Infrastructure", "Verse");
+            Directory.Exists(infrastructureVerseDir).Should().BeTrue(
+                "Infrastructure/Verse directory must exist as the designated layer for Verse/RimWorld interactions.");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C2_Adapters_VerseFiles_ShouldUse_VerseNamespace()
+        public void R_C2_Infrastructure_VerseFiles_ShouldUse_VerseNamespace()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var adaptersVerseDir = Path.Combine(sourceDir, "Adapters", "Verse");
-            if (!Directory.Exists(adaptersVerseDir)) return;
+            var infrastructureVerseDir = Path.Combine(sourceDir, "Infrastructure", "Verse");
+            if (!Directory.Exists(infrastructureVerseDir)) return;
 
             var filesWithVerse = new List<string>();
             var verseUsingPattern = @"using\s+Verse\s*;";
 
-            foreach (var file in Directory.GetFiles(adaptersVerseDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(infrastructureVerseDir, "*.cs", SearchOption.AllDirectories))
             {
                 var source = File.ReadAllText(file);
                 if (Regex.IsMatch(source, verseUsingPattern))
@@ -44,41 +44,41 @@ namespace RimMind.Core.ArchTests.PhaseC
             }
 
             filesWithVerse.Should().NotBeEmpty(
-                "Adapters/Verse is the designated layer for Verse interactions. " +
+                "Infrastructure/Verse is the designated layer for Verse interactions. " +
                 "At least one file should use 'using Verse;' to demonstrate this is the correct location.");
         }
 
         [Fact]
         [Trait("Phase", "C")]
-        public void R_C2_Adapters_Namespace_ShouldBe_RimMind_Adapters()
+        public void R_C2_Infrastructure_Namespace_ShouldBe_RimMind_Infrastructure()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist for analysis");
 
-            var adaptersDir = Path.Combine(sourceDir, "Adapters");
-            if (!Directory.Exists(adaptersDir)) return;
+            var infrastructureDir = Path.Combine(sourceDir, "Infrastructure");
+            if (!Directory.Exists(infrastructureDir)) return;
 
             var violatingFiles = new List<string>();
-            var expectedNsPattern = @"namespace\s+RimMind\.Adapters";
+            var expectedNsPattern = @"namespace\s+RimMind\.Infrastructure";
 
-            foreach (var file in Directory.GetFiles(adaptersDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(infrastructureDir, "*.cs", SearchOption.AllDirectories))
             {
                 var source = File.ReadAllText(file);
                 if (!Regex.IsMatch(source, expectedNsPattern))
                 {
-                    var relativePath = file.Substring(adaptersDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                    violatingFiles.Add($"Adapters/{relativePath}");
+                    var relativePath = file.Substring(infrastructureDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    violatingFiles.Add($"Infrastructure/{relativePath}");
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "All files in Adapters/ must use RimMind.Adapters.* namespace. " +
+                "All files in Infrastructure/ must use RimMind.Infrastructure.* namespace. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
         private static string FindSourceDirectory()
         {
-            var dir = Path.GetDirectoryName(typeof(AdaptersAllowVerseTests).Assembly.Location);
+            var dir = Path.GetDirectoryName(typeof(InfrastructureAllowVerseTests).Assembly.Location);
             while (dir != null)
             {
                 var candidate = Path.Combine(dir, "RimMind-Core", "Source");

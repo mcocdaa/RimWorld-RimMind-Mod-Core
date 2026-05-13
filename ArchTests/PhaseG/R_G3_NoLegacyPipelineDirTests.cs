@@ -8,14 +8,14 @@ namespace RimMind.Core.ArchTests.PhaseG
     {
         [Fact]
         [Trait("Phase", "G")]
-        public void R_G3_Core_Pipeline_Directory_Should_Not_Exist()
+        public void R_G3_Presentation_Pipeline_Directory_Should_Not_Exist()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
 
-            var corePipelineDir = Path.Combine(sourceDir, "Core", "Pipeline");
-            Directory.Exists(corePipelineDir).Should().BeFalse(
-                "R-G3: Source/Core/Pipeline/ must not exist. Pipeline middleware belongs in Kernel/Pipeline/.");
+            var presentationPipelineDir = Path.Combine(sourceDir, "Presentation", "Pipeline");
+            Directory.Exists(presentationPipelineDir).Should().BeFalse(
+                "R-G3: Source/Presentation/Pipeline/ must not exist. Pipeline middleware belongs in Application/Pipeline/.");
         }
 
         private static string FindSourceDirectory()

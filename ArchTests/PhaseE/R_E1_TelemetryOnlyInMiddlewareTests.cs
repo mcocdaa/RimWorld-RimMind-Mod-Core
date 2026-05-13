@@ -17,13 +17,13 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Kernel\Pipeline\AI\TelemetryMiddleware.cs",
-            @"Kernel\Pipeline\Common\CommonTelemetryMiddleware.cs",
-            @"Kernel\Pipeline\Bus\BusPublishTelemetryMiddleware.cs",
-            @"Kernel\Pipeline\Context\ContextBuildTelemetryMiddleware.cs",
-            @"Kernel\Pipeline\Npc\NpcChatTelemetryMiddleware.cs",
-            @"Kernel\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Kernel\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Application\Pipeline\AI\TelemetryMiddleware.cs",
+            @"Application\Pipeline\Common\CommonTelemetryMiddleware.cs",
+            @"Application\Pipeline\Bus\BusPublishTelemetryMiddleware.cs",
+            @"Application\Pipeline\Context\ContextBuildTelemetryMiddleware.cs",
+            @"Application\Pipeline\Npc\NpcChatTelemetryMiddleware.cs",
+            @"Application\Pipeline\AI\AIRequestPipelineFactory.cs",
+            @"Application\Pipeline\Npc\NpcChatPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -125,8 +125,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             var expectedMiddlewareFiles = new[]
             {
-                Path.Combine(sourceDir, "Kernel", "Pipeline", "AI", "TelemetryMiddleware.cs"),
-                Path.Combine(sourceDir, "Kernel", "Pipeline", "Common", "CommonTelemetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Pipeline", "AI", "TelemetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Pipeline", "Common", "CommonTelemetryMiddleware.cs"),
             };
 
             foreach (var expected in expectedMiddlewareFiles)

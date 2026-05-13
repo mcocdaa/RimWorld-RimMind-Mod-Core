@@ -5,82 +5,68 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseD
 {
-    public class KernelNoHarmonyTests
+    public class ApplicationNoHarmonyTests
     {
-        private static string GetKernelCsprojPath()
+        private static string GetApplicationCsprojPath()
         {
             var sourceDir = ArchTestExtensions.FindSourceDirectory();
-            return Path.Combine(sourceDir, "Kernel", "RimMindCore.Kernel.csproj");
+            return Path.Combine(sourceDir, "Application", "RimMindCore.Application.csproj");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D2_Csproj_Kernel_ShouldNot_Reference_Harmony()
+        public void R_D2_Csproj_Application_ShouldNot_Reference_Harmony()
         {
-            var csprojPath = GetKernelCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Kernel csproj must exist at {csprojPath}");
+            var csprojPath = GetApplicationCsprojPath();
+            File.Exists(csprojPath).Should().BeTrue($"Application csproj must exist at {csprojPath}");
 
             var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
 
             analysis.HasPackageRef("Lib.Harmony.Ref").Should().BeFalse(
-                "R-D2: 1_RimMindKernel.dll must NOT reference 0Harmony (Lib.Harmony.Ref). " +
-                "Kernel is the business logic layer — Harmony patching belongs exclusively in Adapters/Patches.");
+                "R-D2: 1_RimMindApplication.dll must NOT reference 0Harmony (Lib.Harmony.Ref). " +
+                "Application is the use-case layer — Harmony patching belongs exclusively in Infrastructure/Patches.");
 
             analysis.HasPackageRef("0Harmony").Should().BeFalse(
-                "R-D2: 1_RimMindKernel.dll must NOT reference 0Harmony.");
+                "R-D2: 1_RimMindApplication.dll must NOT reference 0Harmony.");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D2_Csproj_Kernel_AssemblyName_ShouldBe_Prefixed()
+        public void R_D2_Csproj_Application_AssemblyName_ShouldBe_Prefixed()
         {
-            var csprojPath = GetKernelCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Kernel csproj must exist at {csprojPath}");
+            var csprojPath = GetApplicationCsprojPath();
+            File.Exists(csprojPath).Should().BeTrue($"Application csproj must exist at {csprojPath}");
 
             var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
 
-            analysis.AssemblyName.Should().Be("1_RimMindKernel",
-                "R-D2: Kernel assembly name must be '1_RimMindKernel' to ensure " +
-                "it loads second (after Contracts) in RimWorld's alphabetical assembly loading order.");
+            analysis.AssemblyName.Should().Be("1_RimMindApplication",
+                "R-D2: Application assembly name must be '1_RimMindApplication' to ensure " +
+                "it loads second (after Domain) in RimWorld's alphabetical assembly loading order.");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D2_Csproj_Kernel_Should_Reference_Contracts_And_Newtonsoft()
+        public void R_D2_Csproj_Application_Should_Reference_Domain_And_Newtonsoft()
         {
-            var csprojPath = GetKernelCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Kernel csproj must exist at {csprojPath}");
+            var csprojPath = GetApplicationCsprojPath();
+            File.Exists(csprojPath).Should().BeTrue($"Application csproj must exist at {csprojPath}");
 
             var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
 
-            analysis.HasProjectRef("RimMindCore.Contracts").Should().BeTrue(
-                "R-D2: Kernel must reference Contracts via ProjectReference. " +
-                "Kernel uses interface types defined in Contracts.");
+            analysis.HasProjectRef("RimMindCore.Domain").Should().BeTrue(
+                "R-D2: Application must reference Domain via ProjectReference. " +
+                "Application uses domain types defined in Domain.");
 
             analysis.HasPackageRef("Newtonsoft.Json").Should().BeTrue(
-                "R-D2: Kernel must reference Newtonsoft.Json for JSON serialization. " +
-                "Kernel handles serialization of context data and prompts.");
+                "R-D2: Application must reference Newtonsoft.Json for JSON serialization. " +
+                "Application handles serialization of context data and prompts.");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D2_Csproj_Kernel_Should_Reference_KrafsRimworldRef()
+        public void R_D2_Dll_Application_ShouldNot_Reference_Harmony()
         {
-            var csprojPath = GetKernelCsprojPath();
-            File.Exists(csprojPath).Should().BeTrue($"Kernel csproj must exist at {csprojPath}");
-
-            var analysis = ArchTestExtensions.AnalyzeCsproj(csprojPath);
-
-            analysis.HasPackageRef("Krafs.Rimworld.Ref").Should().BeTrue(
-                "R-D2: Kernel must reference Krafs.Rimworld.Ref for Verse type access " +
-                "(Pawn, Map, etc.) via Kernel abstractions.");
-        }
-
-        [Fact]
-        [Trait("Phase", "D")]
-        public void R_D2_Dll_Kernel_ShouldNot_Reference_Harmony()
-        {
-            if (!ArchTestExtensions.TryLocateAssembly("1_RimMindKernel.dll", out var dllPath))
+            if (!ArchTestExtensions.TryLocateAssembly("1_RimMindApplication.dll", out var dllPath))
             {
                 return;
             }
@@ -88,23 +74,23 @@ namespace RimMind.Core.ArchTests.PhaseD
             var refs = ArchTestExtensions.GetAssemblyReferences(dllPath!);
 
             refs.Should().NotContain("0Harmony",
-                "R-D2 (DLL): 1_RimMindKernel.dll must NOT reference 0Harmony. " +
+                "R-D2 (DLL): 1_RimMindApplication.dll must NOT reference 0Harmony. " +
                 $"Actual references: {string.Join(", ", refs.OrderBy(r => r))}");
         }
 
         [Fact]
         [Trait("Phase", "D")]
-        public void R_D2_Dll_Kernel_Should_Reference_Contracts()
+        public void R_D2_Dll_Application_Should_Reference_Domain()
         {
-            if (!ArchTestExtensions.TryLocateAssembly("1_RimMindKernel.dll", out var dllPath))
+            if (!ArchTestExtensions.TryLocateAssembly("1_RimMindApplication.dll", out var dllPath))
             {
                 return;
             }
 
             var refs = ArchTestExtensions.GetAssemblyReferences(dllPath!);
 
-            refs.Should().Contain("0_RimMindContracts",
-                "R-D2 (DLL): 1_RimMindKernel.dll must reference 0_RimMindContracts. " +
+            refs.Should().Contain("0_RimMindDomain",
+                "R-D2 (DLL): 1_RimMindApplication.dll must reference 0_RimMindDomain. " +
                 $"Actual references: {string.Join(", ", refs.OrderBy(r => r))}");
         }
     }

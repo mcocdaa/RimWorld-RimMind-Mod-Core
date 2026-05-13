@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using FluentAssertions;
-using RimMind.Contracts.Client;
+using RimMind.Application.Common.Models.Client;
 using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseJ

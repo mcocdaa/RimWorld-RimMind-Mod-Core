@@ -5,7 +5,7 @@ using Xunit;
 
 namespace RimMind.Core.ArchTests.PhaseG
 {
-    public class R_G6_CoreSubdirsAllowlistTests
+    public class R_G6_PresentationSubdirsAllowlistTests
     {
         private static readonly string[] AllowedSubdirs = new[]
         {
@@ -18,29 +18,29 @@ namespace RimMind.Core.ArchTests.PhaseG
 
         [Fact]
         [Trait("Phase", "G")]
-        public void R_G6_Core_Subdirectories_Should_Match_Allowlist()
+        public void R_G6_Presentation_Subdirectories_Should_Match_Allowlist()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
 
-            var coreDir = Path.Combine(sourceDir, "Core");
-            Directory.Exists(coreDir).Should().BeTrue("Core directory must exist");
+            var presentationDir = Path.Combine(sourceDir, "Presentation");
+            Directory.Exists(presentationDir).Should().BeTrue("Presentation directory must exist");
 
-            var actualSubdirs = Directory.GetDirectories(coreDir)
+            var actualSubdirs = Directory.GetDirectories(presentationDir)
                 .Select(d => Path.GetFileName(d))
                 .ToList();
 
             var unexpected = actualSubdirs.Where(d => !AllowedSubdirs.Contains(d)).ToList();
 
             unexpected.Should().BeEmpty(
-                "R-G6: Source/Core/ should only contain allowed subdirectories: " +
+                "R-G6: Source/Presentation/ should only contain allowed subdirectories: " +
                 $"{string.Join(", ", AllowedSubdirs)}. " +
                 $"Unexpected: {string.Join(", ", unexpected)}");
         }
 
         private static string FindSourceDirectory()
         {
-            var dir = Path.GetDirectoryName(typeof(R_G6_CoreSubdirsAllowlistTests).Assembly.Location);
+            var dir = Path.GetDirectoryName(typeof(R_G6_PresentationSubdirsAllowlistTests).Assembly.Location);
             while (dir != null)
             {
                 var candidate = Path.Combine(dir, "RimMind-Core", "Source");
