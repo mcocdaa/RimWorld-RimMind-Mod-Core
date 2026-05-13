@@ -17,13 +17,13 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Application\Pipeline\AI\TelemetryMiddleware.cs",
-            @"Application\Pipeline\Common\CommonTelemetryMiddleware.cs",
-            @"Application\Pipeline\Bus\BusPublishTelemetryMiddleware.cs",
-            @"Application\Pipeline\Context\ContextBuildTelemetryMiddleware.cs",
-            @"Application\Pipeline\Npc\NpcChatTelemetryMiddleware.cs",
-            @"Application\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Application\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Application\Common\Behaviours\CommonTelemetryMiddleware.cs",
+            @"Application\Features\Pipeline\Bus\BusPublishTelemetryMiddleware.cs",
+            @"Application\Features\Pipeline\Context\ContextBuildTelemetryMiddleware.cs",
+            @"Presentation\Pipeline\AI\AIRequestPipelineFactory.cs",
+            @"Presentation\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Presentation\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Application\Features\Pipeline\Bus\BusPublishPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -41,7 +41,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -86,7 +87,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -125,8 +127,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             var expectedMiddlewareFiles = new[]
             {
-                Path.Combine(sourceDir, "Application", "Pipeline", "AI", "TelemetryMiddleware.cs"),
-                Path.Combine(sourceDir, "Application", "Pipeline", "Common", "CommonTelemetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Common", "Behaviours", "CommonTelemetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Features", "Pipeline", "Bus", "BusPublishTelemetryMiddleware.cs"),
             };
 
             foreach (var expected in expectedMiddlewareFiles)

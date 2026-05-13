@@ -16,26 +16,34 @@ namespace RimMind.Core.ArchTests.PhaseG
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
 
-            var pipelineDir = Path.Combine(sourceDir, "Application", "Pipeline");
-            if (!Directory.Exists(pipelineDir)) return;
+            var pipelineDirs = new[]
+            {
+                Path.Combine(sourceDir, "Application", "Features", "Pipeline"),
+                Path.Combine(sourceDir, "Application", "Common", "Behaviours"),
+            };
 
             var violatingFiles = new List<string>();
 
-            foreach (var file in Directory.GetFiles(pipelineDir, "*.cs", SearchOption.AllDirectories)
-                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+            foreach (var pipelineDir in pipelineDirs)
             {
-                var source = File.ReadAllText(file);
-                var relativePath = file.Substring(pipelineDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (!Directory.Exists(pipelineDir)) continue;
 
-                if (!Regex.IsMatch(source, @"namespace\s+RimMind\.Application"))
+                foreach (var file in Directory.GetFiles(pipelineDir, "*.cs", SearchOption.AllDirectories)
+                    .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                             && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
                 {
-                    violatingFiles.Add($"Application/Pipeline/{relativePath}");
+                    var source = File.ReadAllText(file);
+                    var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                    if (!Regex.IsMatch(source, @"namespace\s+RimMind\.Application"))
+                    {
+                        violatingFiles.Add(relativePath);
+                    }
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C1 enhanced: All Pipeline middleware files must use RimMind.Application.* namespace. " +
+                "R-C1 enhanced: All Pipeline middleware files in Application/ must use RimMind.Application.* namespace. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

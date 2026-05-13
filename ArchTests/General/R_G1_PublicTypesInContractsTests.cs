@@ -21,7 +21,9 @@ namespace RimMind.Core.ArchTests.General
         private static readonly HashSet<string> WhitelistFiles = new(StringComparer.OrdinalIgnoreCase)
         {
             "RimMindCoreMod.cs",
+            "RimMindAPI.cs",
             "VerseStubs.cs",
+            "NetStandardCompat.cs",
         };
 
         [Fact]
@@ -37,7 +39,8 @@ namespace RimMind.Core.ArchTests.General
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var fileName = Path.GetFileName(file);
                 if (WhitelistFiles.Contains(fileName)) continue;

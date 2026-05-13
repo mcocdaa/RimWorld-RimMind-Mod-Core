@@ -11,10 +11,10 @@ namespace RimMind.Core.ArchTests.PhaseE
     {
         private static readonly HashSet<string> PipelineFactoryFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Application\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Application\Pipeline\Npc\NpcChatPipelineFactory.cs",
-            @"Application\Pipeline\Bus\BusPublishPipelineFactory.cs",
-            @"Application\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Application\Features\Pipeline\Bus\BusPublishPipelineFactory.cs",
+            @"Presentation\Pipeline\AI\AIRequestPipelineFactory.cs",
+            @"Presentation\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Presentation\Pipeline\Context\ContextBuildPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownNewPipelineViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -24,7 +24,7 @@ namespace RimMind.Core.ArchTests.PhaseE
         private static readonly HashSet<string> KnownExecuteAsyncViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
             @"Presentation\Runtime\RimMindRuntime.cs",
-            @"Application\Tools\ToolCallDispatchMiddleware.cs",
+            @"Application\Features\Tools\ToolCallDispatchMiddleware.cs",
         };
 
         [Fact]
@@ -39,7 +39,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
@@ -77,11 +78,15 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
-                if (relativePath.StartsWith("Application" + Path.DirectorySeparatorChar + "Pipeline"))
+                if (relativePath.StartsWith("Application" + Path.DirectorySeparatorChar + "Features" + Path.DirectorySeparatorChar + "Pipeline"))
+                    continue;
+
+                if (relativePath.StartsWith("Application" + Path.DirectorySeparatorChar + "Common" + Path.DirectorySeparatorChar + "Behaviours"))
                     continue;
 
                 if (relativePath.StartsWith("Domain" + Path.DirectorySeparatorChar))
@@ -132,7 +137,7 @@ namespace RimMind.Core.ArchTests.PhaseE
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
 
             var runtimeFile = Directory.GetFiles(sourceDir, "RimMindRuntime.cs", SearchOption.AllDirectories)
-                .FirstOrDefault();
+                .FirstOrDefault(f => !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar));
 
             runtimeFile.Should().NotBeNull("RimMindRuntime.cs must exist in the source tree");
 

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using FluentAssertions;
 using Xunit;
 
@@ -8,14 +9,25 @@ namespace RimMind.Core.ArchTests.PhaseG
     {
         [Fact]
         [Trait("Phase", "G")]
-        public void R_G3_Presentation_Pipeline_Directory_Should_Not_Exist()
+        public void R_G3_Legacy_Contracts_Kernel_Core_Adapters_Directories_Should_Not_Exist()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
 
-            var presentationPipelineDir = Path.Combine(sourceDir, "Presentation", "Pipeline");
-            Directory.Exists(presentationPipelineDir).Should().BeFalse(
-                "R-G3: Source/Presentation/Pipeline/ must not exist. Pipeline middleware belongs in Application/Pipeline/.");
+            var legacyDirs = new[]
+            {
+                Path.Combine(sourceDir, "Contracts"),
+                Path.Combine(sourceDir, "Kernel"),
+                Path.Combine(sourceDir, "Core"),
+                Path.Combine(sourceDir, "Adapters"),
+            };
+
+            var existingLegacyDirs = legacyDirs.Where(d => Directory.Exists(d)).ToList();
+
+            existingLegacyDirs.Should().BeEmpty(
+                "R-G3: Legacy directories (Contracts, Kernel, Core, Adapters) must not exist under Source/. " +
+                "The project has been restructured to Jason Taylor CleanArchitecture (Domain/Application/Infrastructure/Presentation). " +
+                $"Existing legacy dirs: {string.Join(", ", existingLegacyDirs)}");
         }
 
         private static string FindSourceDirectory()

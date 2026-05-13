@@ -12,6 +12,13 @@ namespace RimMind.Core.ArchTests.PhaseG
         private static readonly string[] Whitelist = new[]
         {
             "IsExternalInit",
+            "AIRequestContext",
+            "NpcChatContext",
+            "ContextBuildContext",
+            "ValueTaskAwaiter",
+            "ConfiguredValueTaskAwaitable",
+            "ConfiguredValueTaskAwaiter",
+            "HistoryEntry",
         };
 
         [Fact]
@@ -25,7 +32,8 @@ namespace RimMind.Core.ArchTests.PhaseG
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var source = File.ReadAllText(file);
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);

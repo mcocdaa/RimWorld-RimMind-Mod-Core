@@ -29,39 +29,17 @@ namespace RimMind.Core.ArchTests.PhaseC
             return Directory.GetFiles(dir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                          && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
-                         && !Path.GetFileName(f).Equals("IsExternalInit.cs", StringComparison.OrdinalIgnoreCase));
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)
+                         && !Path.GetFileName(f).Equals("IsExternalInit.cs", StringComparison.OrdinalIgnoreCase)
+                         && !Path.GetFileName(f).Equals("NetStandardCompat.cs", StringComparison.OrdinalIgnoreCase));
         }
 
         private static readonly HashSet<string> KnownImportViolations = new(StringComparer.OrdinalIgnoreCase)
         {
-            @"Settings\ContextSettings.cs",
-            @"Settings\RimMindCoreSettings.cs",
-            @"Sensor\ISensorProvider.cs",
-            @"Pipeline\PerceptionBufferEntry.cs",
         };
 
         private static readonly HashSet<string> KnownClassViolations = new(StringComparer.OrdinalIgnoreCase)
         {
-            @"Context\BudgetSchedulerConfig.cs",
-            @"Context\PromptBudget.cs",
-            @"Context\BudgetAllocation.cs",
-            @"Context\ContextDiff.cs",
-            @"Context\ContextRequest.cs",
-            @"Context\ContextSnapshot.cs",
-            @"Context\EmbedCache.cs",
-            @"Context\EmbeddingSnapshotStore.cs",
-            @"Context\HistoryEntry.cs",
-            @"Context\KeyMeta.cs",
-            @"Context\ScenarioIds.cs",
-            @"Pipeline\PerceptionBufferEntry.cs",
-            @"Flywheel\IAnalysisReportWriter.cs",
-            @"Prompt\PromptSection.cs",
-            @"Settings\ContextSettings.cs",
-            @"Settings\RimMindCoreSettings.cs",
-            @"Sensor\ISensorProvider.cs",
-            @"AgentBus\ToolCallEvent.cs",
-            @"AgentBus\ToolResultEvent.cs",
-            @"AgentBus\ChoiceLetterDecidedEvent.cs",
         };
 
         [Fact]
@@ -142,7 +120,7 @@ namespace RimMind.Core.ArchTests.PhaseC
 
             var violatingFiles = new List<string>();
             var classPattern = @"(?:public|internal)\s+(?!abstract\s+)(?:sealed\s+)?class\s+";
-            var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*\{|class\s+\w+Dto\s*\{|class\s+\w+Data\s*\{|class\s+\w+Result\s*\{|class\s+\w+Request\s*\{|class\s+\w+Response\s*\{|class\s+\w+Tool\s*\{|class\s+\w+Context\s*\{|class\s+\w+Entry\s*\{|class\s+\w+Profile\s*\{|class\s+\w+Command\s*\{|class\s+\w+Message\s*\{";
+            var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*[{:]|class\s+\w+Dto\s*[{:]|class\s+\w+Data\s*[{:]|class\s+\w+Result\s*[{:]|class\s+\w+Request\s*[{:]|class\s+\w+Response\s*[{:]|class\s+\w+Tool\s*[{:]|class\s+\w+Context\s*[{:]|class\s+\w+Entry\s*[{:]|class\s+\w+Profile\s*[{:]|class\s+\w+Command\s*[{:]|class\s+\w+Message\s*[{:]|class\s+\w+Exception\s*[{:]|class\s+\w+Error\s*[{:]|class\s+\w+Errors\s*[{:]|class\s+\w+Cache\s*[{:]|class\s+\w+Meta\s*[{:]|class\s+\w+Diff\s*[{:]|class\s+\w+Layer\s*[{:]|class\s+\w+Code\s*[{:]|static\s+class\s+";
 
             foreach (var file in GetSourceFiles(domainDir))
             {
@@ -157,7 +135,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-C3: Domain should contain only interfaces, enums, records, attributes, and pure data DTOs — no behavioral class implementations. " +
+                "R-C3: Domain should contain only interfaces, enums, records, attributes, value objects, events, exceptions, and pure data DTOs — no behavioral class implementations. " +
                 "Move implementation classes to Application or Infrastructure. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }

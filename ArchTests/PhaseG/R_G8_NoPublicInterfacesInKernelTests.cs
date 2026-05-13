@@ -11,7 +11,7 @@ namespace RimMind.Core.ArchTests.PhaseG
     {
         [Fact]
         [Trait("Phase", "G")]
-        public void R_G8_Application_Should_Not_Define_Public_Interfaces()
+        public void R_G8_Application_Public_Interfaces_Should_Be_In_Common_Interfaces_Only()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNull("Source directory must exist");
@@ -20,20 +20,29 @@ namespace RimMind.Core.ArchTests.PhaseG
             Directory.Exists(applicationDir).Should().BeTrue("Application directory must exist");
 
             var violatingFiles = new List<string>();
+            var commonInterfacesDir = Path.Combine("Application", "Common", "Interfaces");
 
-            foreach (var file in Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(applicationDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
             {
+                var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                if (relativePath.StartsWith(commonInterfacesDir + Path.DirectorySeparatorChar) ||
+                    relativePath.StartsWith(commonInterfacesDir + Path.AltDirectorySeparatorChar))
+                    continue;
+
                 var source = File.ReadAllText(file);
                 if (Regex.IsMatch(source, @"public\s+interface\s+I"))
                 {
-                    var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                     violatingFiles.Add(relativePath);
                 }
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-G8: Application/ must not define any public interfaces. " +
-                "All public interfaces belong in Domain/. " +
+                "R-G8: Application/ public interfaces must reside in Application/Common/Interfaces/ only. " +
+                "Per Jason Taylor Clean Architecture, Application/Common/Interfaces/ is the correct location for port/adapter interfaces. " +
+                "Other Application subdirectories should not define public interfaces. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

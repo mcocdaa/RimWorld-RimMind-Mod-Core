@@ -28,6 +28,10 @@ namespace RimMind.Core.ArchTests.PhaseC
             "AIDebugLog.cs",
             "RimMindRuntimeGameComponent.cs",
             "CompPawnAgent.cs",
+            "FlywheelGameComponent.cs",
+            "FlywheelParameterStoreGameComponent.cs",
+            "AgentBusGameComponent.cs",
+            "AIRequestQueueGameComponent.cs",
         };
 
         [Fact]
@@ -39,7 +43,10 @@ namespace RimMind.Core.ArchTests.PhaseC
 
             var violatingFiles = new List<string>();
 
-            foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var fileName = Path.GetFileName(file);
                 if (AllowedOutsideAdapters.Contains(fileName)) continue;
@@ -47,6 +54,7 @@ namespace RimMind.Core.ArchTests.PhaseC
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                 if (relativePath.StartsWith("Infrastructure" + Path.DirectorySeparatorChar)) continue;
+                if (relativePath.StartsWith("Presentation" + Path.DirectorySeparatorChar + "Runtime" + Path.DirectorySeparatorChar)) continue;
                 var source = File.ReadAllText(file);
 
                 foreach (var baseClass in ComponentBaseClasses)

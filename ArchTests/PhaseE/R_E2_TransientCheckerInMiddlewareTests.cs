@@ -16,10 +16,13 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Application\Pipeline\AI\RetryMiddleware.cs",
-            @"Application\Pipeline\Common\CommonRetryMiddleware.cs",
-            @"Application\Pipeline\Npc\NpcChatRetryMiddleware.cs",
-            @"Application\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Application\Features\Pipeline\AI\RetryMiddleware.cs",
+            @"Application\Common\Behaviours\CommonRetryMiddleware.cs",
+            @"Application\Features\Pipeline\Npc\NpcChatRetryMiddleware.cs",
+            @"Presentation\Pipeline\Npc\NpcChatPipelineFactory.cs",
+            @"Presentation\Pipeline\AI\AIRequestPipelineFactory.cs",
+            @"Presentation\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Application\Features\Pipeline\Bus\BusPublishPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -37,7 +40,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -78,7 +82,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -117,8 +122,8 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             var expectedMiddlewareFiles = new[]
             {
-                Path.Combine(sourceDir, "Application", "Pipeline", "AI", "RetryMiddleware.cs"),
-                Path.Combine(sourceDir, "Application", "Pipeline", "Common", "CommonRetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Features", "Pipeline", "AI", "RetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Common", "Behaviours", "CommonRetryMiddleware.cs"),
             };
 
             foreach (var expected in expectedMiddlewareFiles)
@@ -139,7 +144,7 @@ namespace RimMind.Core.ArchTests.PhaseE
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
 
             var definitionFile = Directory.GetFiles(sourceDir, "TransientExceptionChecker.cs", SearchOption.AllDirectories)
-                .FirstOrDefault();
+                .FirstOrDefault(f => !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar));
 
             definitionFile.Should().NotBeNull(
                 "R-E2: TransientExceptionChecker.cs definition file must exist in the source tree");
