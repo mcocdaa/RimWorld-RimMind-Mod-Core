@@ -1,11 +1,11 @@
-﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
-using RimMind.Kernel.Bus;
-using RimMind.Core.Perception;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Presentation.Perception;
 using Verse;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PerceptionBridgeTests
     {

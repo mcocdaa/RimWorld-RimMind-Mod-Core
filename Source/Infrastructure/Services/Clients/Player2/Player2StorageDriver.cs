@@ -384,7 +384,13 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (!AutoDispatch) return;
             try
             {
-                ResponseDispatcher.Dispatch(result);
+                var dispatcher = new RimMind.Presentation.Llm.ResponseDispatcher(
+                    RimMind.Presentation.Runtime.RimMindRuntime.Instance.EventBus);
+                var response = new AIResponse { RequestId = System.Guid.NewGuid().ToString() };
+                var context = new RimMind.Presentation.Pipeline.Npc.NpcChatContext
+                {
+                };
+                dispatcher.Dispatch(context, response);
             }
             catch (System.Exception ex)
             {

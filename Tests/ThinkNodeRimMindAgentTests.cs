@@ -1,13 +1,13 @@
-﻿﻿﻿﻿using RimMind.Contracts;
-using RimMind.Core.Agent;
-using RimMind.Adapters.Patches;
-using RimMind.Kernel.Bus;
-using RimMind.Adapters.Verse;
+﻿﻿﻿using RimMind.Domain.Events;
+using RimMind.Presentation.Agent;
+using RimMind.Infrastructure.Patches;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Infrastructure.Verse;
 using Verse;
 using Verse.AI;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PawnAgentPendingJobTests
     {

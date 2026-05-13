@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace RimMind.Application.Features.Prompt
 {
-    internal static class PromptSanitizer
+    public static class PromptSanitizer
     {
         private static readonly Regex ControlCharRegex = new Regex(
             @"[\x00-\x08\x0B\x0C\x0E-\x1F]",
@@ -17,6 +17,11 @@ namespace RimMind.Application.Features.Prompt
             var result = ControlCharRegex.Replace(input, "");
             result = result.Trim();
             return result;
+        }
+
+        public static string SanitizeUserInput(string input)
+        {
+            return Sanitize(input);
         }
 
         public static string Truncate(string input, int maxLength)

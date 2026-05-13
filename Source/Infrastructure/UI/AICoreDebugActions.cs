@@ -3,6 +3,8 @@ using System.Linq;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
@@ -10,8 +12,10 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Features.Logging;
 using RimMind.Presentation;
+using RimMind.Presentation.Context;
 using LudeonTK;
 using RimWorld;
 using Verse;
@@ -371,7 +375,7 @@ namespace RimMind.Infrastructure.UI
 
             foreach (var npc in npcs)
             {
-                sb.AppendLine($"  [{npc.NpcId}] Name={npc.Name} Type={npc.Type} Commands={npc.Commands.Count}");
+                sb.AppendLine($"  [{npc.NpcId}] Name={npc.Name} Commands={npc.Commands.Count}");
                 if (!string.IsNullOrEmpty(npc.CharacterDescription))
                 {
                     string desc = npc.CharacterDescription.Length > 80

@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
-using RimMind.Core.Agent;
-using RimMind.Kernel.Bus;
-using RimMind.Core.Runtime;
+using RimMind.Presentation.Agent;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Presentation.Runtime;
 using Verse;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class AgentGoalStackTests
     {

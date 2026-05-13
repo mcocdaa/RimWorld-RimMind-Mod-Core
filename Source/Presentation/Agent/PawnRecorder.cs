@@ -28,7 +28,7 @@ namespace RimMind.Presentation.Agent
                 _history.RemoveAt(0);
             RimMindRuntime.Instance.EventBus.Publish(new ActionEvent(
                 _agent.Identity.NpcId, _agent.Pawn?.thingIDNumber ?? 0,
-                record.Action, record.Reason, record.Success));
+                record.Action, record.Success, record.Reason, Guid.NewGuid().ToString()));
         }
 
         public void RecordAction(string action, string reason, bool success, float goalProgressDelta = 0f)

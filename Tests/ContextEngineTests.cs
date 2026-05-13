@@ -1,27 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Context;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Npc;
-using RimMind.Adapters.Client;
-using RimMind.Contracts.Abstractions;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Flywheel;
-using RimMind.Kernel.Flywheel;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Adapters.Verse;
-using RimMind.Contracts.Settings;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Context;
+using RimMind.Domain.Events.Internal;
+using RimMind.Domain.Events.Npc;
+using RimMind.Infrastructure.Client;
+using RimMind.Domain.Events.Abstractions;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Events.Flywheel;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Infrastructure.Verse;
+using RimMind.Presentation.Settings;
 using Verse;
 using Xunit;
 
-using INpcManager = RimMind.Contracts.Npc.INpcManager;
+using INpcManager = RimMind.Domain.Events.Npc.INpcManager;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class ContextEngineTests : IDisposable
     {

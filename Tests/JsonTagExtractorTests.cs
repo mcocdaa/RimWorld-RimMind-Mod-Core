@@ -1,11 +1,11 @@
 using System;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Kernel.Json;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Application.Features.Json;
 using Xunit;
 
 // 测试纯逻辑层，不依赖 RimWorld
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class JsonTagExtractorTests
     {

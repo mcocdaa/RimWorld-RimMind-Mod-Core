@@ -1,24 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models.Prompt;
+using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Prompt;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Context;
 using RimMind.Presentation.Settings;
+using Verse;
 
 namespace RimMind.Presentation.Context
 {
     public class ContextOrchestrator : IContextEngine
     {
         private bool _needsFullRebuild = true;
-        private bool _disposed = false;
+        private bool _disposed;
 
         private readonly IHistoryManager _historyManager;
         private readonly INpcManager _npcManager;
@@ -45,6 +50,7 @@ namespace RimMind.Presentation.Context
 
         public ContextSnapshot? BuildSnapshot(ContextRequest request)
         {
+            if (_disposed) return null;
             string scenario = request.Scenario ?? ScenarioIds.Dialogue;
             string l0CacheKey = $"{request.NpcId}_{scenario}";
             _cacheManager.TouchCache(l0CacheKey);
@@ -86,8 +92,8 @@ namespace RimMind.Presentation.Context
                 ? request.Budget
                 : (scenarioMeta?.DefaultBudget > 0
                     ? scenarioMeta.DefaultBudget
-                    : (RimMindModAccessor.Settings?.Context?.ContextBudget > 0
-                        ? RimMindModAccessor.Settings.Context.ContextBudget
+                    : (RimMindCoreMod.Settings?.Context?.ContextBudget > 0
+                        ? RimMindCoreMod.Settings.Context.ContextBudget
                         : 0.6f));
             var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
 
@@ -234,37 +240,15 @@ namespace RimMind.Presentation.Context
             return snapshot;
         }
 
-        public int GetL0CacheCount() => _cacheManager?.GetL0CacheCount() ?? 0;
-        public int GetL1BlockCacheCount() => _cacheManager?.GetL1BlockCacheCount() ?? 0;
-        public int GetDiffStoreCount() => _diffTracker?.GetDiffStoreCount() ?? 0;
-        public int GetEmbedCacheCount() => _cacheManager?.GetEmbedCacheCount() ?? 0;
-        public void ResetCaches() { _cacheManager?.ResetCaches(); _needsFullRebuild = true; }
-        public void TouchCache(string cacheKey) => _cacheManager?.TouchCache(cacheKey);
-        public void RemoveL0CacheForNpc(string npcId) => _cacheManager?.RemoveL0CacheForNpc(npcId);
-        public void InvalidateLayer(string npcId, ContextLayer layer) => _diffTracker?.InvalidateLayer(npcId, layer);
-        public void InvalidateKey(string npcId, string key) => _diffTracker?.InvalidateKey(npcId, key);
-        public void UpdateBaseline(string npcId) => _diffTracker?.UpdateBaseline(npcId);
-        public void InvalidateNpc(string npcId) { _diffTracker?.ClearNpcDiffs(npcId); _cacheManager?.RemoveL0CacheForNpc(npcId); _needsFullRebuild = true; }
-        public IBudgetScheduler? GetScheduler() => _scheduler;
-        public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => null;
-
-        public void Dispose()
-        {
-            if (!_disposed)
-            {
-                _disposed = true;
-            }
-        }
-
         private void ApplyBudgetTrim(ContextSnapshot snapshot)
         {
             if (snapshot.Messages == null || snapshot.Messages.Count == 0) return;
 
             int totalBudget = RimMindServiceLocator.Get<IFlywheelParameterStore>()?.TotalBudget ?? 4000;
-            int reserveForOutput = RimMindModAccessor.Settings?.maxTokens > 0
-                ? RimMindModAccessor.Settings.maxTokens
+            int reserveForOutput = RimMindCoreMod.Settings?.maxTokens > 0
+                ? RimMindCoreMod.Settings.maxTokens
                 : 800;
-            float budgetRatio = RimMindModAccessor.Settings?.Context?.ContextBudget ?? 0.6f;
+            float budgetRatio = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;
 
@@ -301,7 +285,7 @@ namespace RimMind.Presentation.Context
             {
                 snapshot.AddMessage(new ChatMessage
                 {
-                    Role = sec.Tag,
+                    Role = sec.Name,
                     Content = sec.Content,
                     LayerTag = sec.LayerTag
                 });
@@ -309,9 +293,10 @@ namespace RimMind.Presentation.Context
             snapshot.EstimatedTokens = trimmed.Sum(s => s.EstimatedTokens);
             snapshot.Meta.TotalTokens = snapshot.EstimatedTokens;
 
-            if (RimMindModAccessor.Settings?.debugLogging == true)
+            if (RimMindCoreMod.Settings?.debugLogging == true)
             {
-                RimMindLogger.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
+                var log = RimMindServiceLocator.Get<ILogSink>();
+                log?.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
             }
         }
 
@@ -319,7 +304,7 @@ namespace RimMind.Presentation.Context
         {
             if (string.IsNullOrEmpty(content)) return content;
             const int briefLimitFallback = 200;
-            int briefLimit = RimMindModAccessor.Settings?.Context?.contextBriefLimit ?? briefLimitFallback;
+            int briefLimit = RimMindCoreMod.Settings?.Context?.contextBriefLimit ?? briefLimitFallback;
             if (content.Length <= briefLimit) return content;
             int cut = briefLimit;
             if (char.IsHighSurrogate(content[cut - 1])) cut--;
@@ -337,5 +322,20 @@ namespace RimMind.Presentation.Context
             }
             return (int)(other / 4.0 + cjk / 1.5 + 0.5);
         }
+
+        public int GetL0CacheCount() => _cacheManager.GetL0CacheCount();
+        public int GetL1BlockCacheCount() => _cacheManager.GetL1BlockCacheCount();
+        public int GetDiffStoreCount() => _diffTracker.GetDiffStoreCount();
+        public int GetEmbedCacheCount() => _cacheManager.GetEmbedCacheCount();
+        public void ResetCaches() { _cacheManager.Reset(); _diffTracker.Reset(); _needsFullRebuild = true; }
+        public void TouchCache(string cacheKey) => _cacheManager.TouchCache(cacheKey);
+        public void RemoveL0CacheForNpc(string npcId) => _cacheManager.RemoveL0CacheForNpc(npcId);
+        public void InvalidateLayer(string npcId, ContextLayer layer) => _cacheManager.InvalidateLayer(npcId, layer);
+        public void InvalidateKey(string npcId, string key) => _cacheManager.InvalidateKey(npcId, key);
+        public void UpdateBaseline(string npcId) { _cacheManager.UpdateBaseline(npcId); if (_diffTracker.TryGetDiffStore(npcId, out var diffs)) diffs.Clear(); }
+        public void InvalidateNpc(string npcId) { _cacheManager.InvalidateNpc(npcId); _diffTracker.ClearNpcDiffs(npcId); _diffTracker.RemoveNpcKeyLastValues(npcId); _historyManager.ClearHistory(npcId); _needsFullRebuild = true; }
+        public IBudgetScheduler? GetScheduler() => _scheduler;
+        public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => null;
+        public void Dispose() { _disposed = true; }
     }
 }

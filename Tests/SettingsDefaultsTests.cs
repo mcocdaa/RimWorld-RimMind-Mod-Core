@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class SettingsDefaultsTests
     {

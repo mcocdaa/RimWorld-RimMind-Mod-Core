@@ -9,6 +9,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation;
 using RimMind.Presentation.Settings;

@@ -2,24 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Npc;
-using RimMind.Adapters.Client;
-using RimMind.Contracts.Abstractions;
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Registry;
-using RimMind.Contracts.Context;
-using RimMind.Kernel.Flywheel;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Settings;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Internal;
+using RimMind.Domain.Events.Npc;
+using RimMind.Infrastructure.Client;
+using RimMind.Domain.Events.Abstractions;
+using RimMind.Presentation.Runtime;
+using RimMind.Application.Features.Registry;
+using RimMind.Domain.Events.Context;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Presentation.Settings;
 using Verse;
 using Xunit;
 
-using INpcManager = RimMind.Contracts.Npc.INpcManager;
+using INpcManager = RimMind.Domain.Events.Npc.INpcManager;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class RimMindServiceLocatorTests
     {

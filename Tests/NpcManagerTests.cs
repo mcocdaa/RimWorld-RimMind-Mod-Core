@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Contracts.Internal;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Npc;
-using RimMind.Adapters.Verse;
+using RimMind.Domain.Events.Internal;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Domain.Events.Npc;
+using RimMind.Infrastructure.Verse;
 using Verse;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class NpcManagerTests
     {

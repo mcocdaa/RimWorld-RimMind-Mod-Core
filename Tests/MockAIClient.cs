@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RimMind.Contracts;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Result;
+using RimMind.Domain.Events;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Result;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class MockAIClient : IAIClient
     {

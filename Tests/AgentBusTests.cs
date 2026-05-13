@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using RimMind.Contracts;
-using RimMind.Kernel.Bus;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Context;
+using RimMind.Domain.Events;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Events.Context;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class AgentBusTests
     {

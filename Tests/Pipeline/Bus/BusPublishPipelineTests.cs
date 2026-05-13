@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RimMind.Contracts;
-using RimMind.Contracts.Pipeline;
-using RimMind.Contracts.Result;
-using RimMind.Kernel.Pipeline.Bus;
-using RimMind.Kernel.Pipeline;
+using RimMind.Domain.Events;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Events.Result;
+using RimMind.Application.Features.Pipeline.Bus;
+using RimMind.Application.Features.Pipeline;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline.Bus

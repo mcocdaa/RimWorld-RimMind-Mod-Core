@@ -17,10 +17,14 @@ namespace RimMind.Presentation.Agent
     public class PawnAgent : IPawnAgent
     {
         public Pawn Pawn { get; }
-        public AgentState State { get; private set; } = AgentState.Dormant;
-        public AgentIdentity Identity { get; }
-        public AgentGoalStack GoalStack { get; } = new AgentGoalStack();
-        public StrategyOptimizer StrategyOptimizer { get; } = new StrategyOptimizer();
+        private AgentState _state = AgentState.Dormant;
+        public AgentState State { get => _state; private set => _state = value; }
+        private AgentIdentity _identity = null!;
+        public AgentIdentity Identity { get => _identity; private set => _identity = value; }
+        private AgentGoalStack _goalStack = new AgentGoalStack();
+        public AgentGoalStack GoalStack { get => _goalStack; private set => _goalStack = value; }
+        private StrategyOptimizer _strategyOptimizer = new StrategyOptimizer();
+        public StrategyOptimizer StrategyOptimizer { get => _strategyOptimizer; private set => _strategyOptimizer = value; }
         public PerceptionBuffer PerceptionBuffer { get; } = new PerceptionBuffer();
         public bool IsActive => State == AgentState.Active;
 
@@ -125,10 +129,10 @@ namespace RimMind.Presentation.Agent
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref State, "agentState", AgentState.Dormant);
-            Scribe_Deep.Look(ref Identity, "identity");
-            Scribe_Deep.Look(ref GoalStack, "goalStack");
-            Scribe_Deep.Look(ref StrategyOptimizer, "strategyOptimizer");
+            Scribe_Values.Look(ref _state, "agentState", AgentState.Dormant);
+            Scribe_Deep.Look(ref _identity, "identity");
+            Scribe_Deep.Look(ref _goalStack, "goalStack");
+            Scribe_Deep.Look(ref _strategyOptimizer, "strategyOptimizer");
         }
     }
 }

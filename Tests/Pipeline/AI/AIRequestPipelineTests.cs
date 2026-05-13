@@ -1,12 +1,12 @@
 using System;
 using System.Threading.Tasks;
-using RimMind.Contracts.Pipeline;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Result;
-using RimMind.Adapters.Client;
-using RimMind.Kernel.Pipeline.AI;
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Pipeline;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Result;
+using RimMind.Infrastructure.Client;
+using RimMind.Application.Features.Pipeline.AI;
+using RimMind.Presentation.Runtime;
+using RimMind.Application.Features.Pipeline;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline.AI

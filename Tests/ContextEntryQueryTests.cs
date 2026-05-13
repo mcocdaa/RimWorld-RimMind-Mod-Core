@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using RimMind.Contracts.Context;
-using RimMind.Kernel.Context;
+using RimMind.Domain.Events.Context;
+using RimMind.Application.Features.Context;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class ContextEntryQueryTests
     {

@@ -3,36 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Contracts;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Context;
-using RimMind.Contracts.Extension;
-using RimMind.Contracts.Flywheel;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Npc;
-using RimMind.Contracts.Prompt;
-using RimMind.Contracts.Sensor;
-using RimMind.Contracts.Pipeline;
-using RimMind.Contracts.Settings;
-using RimMind.Contracts.UI;
-using RimMind.Core.Agent;
-using RimMind.Adapters.Client.Player2;
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Registry;
-using RimMind.Core.Sensor;
-using RimMind.Kernel.Bus;
-using RimMind.Kernel.Context;
-using RimMind.Kernel.Flywheel;
-using RimMind.Kernel.Prompt;
-using RimMind.Kernel.Queue;
+using RimMind.Domain.ValueObjects;
+using RimMind.Domain.Events;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Sensor;
+using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Interfaces.Runtime;
+using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models.Npc;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Common.Models.Prompt;
+using RimMind.Application.Common.Models.UI;
+using RimMind.Presentation.Agent;
+using RimMind.Infrastructure.Services.Clients.Player2;
+using RimMind.Presentation.Runtime;
+using RimMind.Application.Features.Registry;
+using RimMind.Presentation.Sensor;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Features.Context;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Features.Prompt;
+using RimMind.Application.Features.Queue;
+using RimMind.Presentation.Settings;
 
-using IParameterTunerContract = RimMind.Contracts.Extension.IParameterTuner;
-using IAgentActionBridgeContract = RimMind.Contracts.Extension.IAgentActionBridge;
-using IStorageDriverKernel = RimMind.Kernel.Context.IStorageDriver;
+using IParameterTunerContract = RimMind.Application.Common.Interfaces.Extension.IParameterTuner;
+using IAgentActionBridgeContract = RimMind.Application.Common.Interfaces.Extension.IAgentActionBridge;
+using IStorageDriverApp = RimMind.Application.Common.Interfaces.Npc.IStorageDriver;
 
-using RimMind.Contracts.Result;
-
-namespace RimMind.Adapters.Client.Player2
+namespace RimMind.Infrastructure.Services.Clients.Player2
 {
     public class Player2Client : IAIClient
     {
@@ -46,9 +53,9 @@ namespace RimMind.Adapters.Client.Player2
     }
 }
 
-namespace RimMind.Core.Runtime
+namespace RimMind.Presentation.Runtime
 {
-    internal sealed class RimMindRuntime : IDisposable, Contracts.Runtime.IRimMindRuntime
+    internal sealed class RimMindRuntime : IDisposable, IRimMindRuntime
     {
         private static RimMindRuntime? _instance;
         private static readonly object _initLock = new object();
@@ -61,32 +68,32 @@ namespace RimMind.Core.Runtime
         public IContextEngine ContextEngine { get; set; } = null!;
         public IHistoryManager HistoryManager { get; set; } = null!;
         public IClientManager ClientManager { get; set; } = null!;
-        public RimMind.Adapters.UI.IAudioPlayer AudioPlayer { get; set; } = null!;
+        public RimMind.Infrastructure.UI.IAudioPlayer AudioPlayer { get; set; } = null!;
         public IProviderRegistry ProviderRegistry { get; set; } = null!;
-        public RimMind.Contracts.Internal.IOverlayService OverlayService { get; set; } = null!;
+        public IOverlayService OverlayService { get; set; } = null!;
         public AIRequestQueueImpl QueueImpl { get; set; } = null!;
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; set; } = null!;
-        public RimMind.Kernel.Tools.ToolRegistry ToolRegistry { get; set; } = new();
-        public RimMind.Kernel.Mechanisms.GameMechanismRegistry MechanismRegistry { get; set; } = new();
+        public RimMind.Application.Features.Tools.ToolRegistry ToolRegistry { get; set; } = new();
+        public RimMind.Infrastructure.Mechanisms.GameMechanismRegistry MechanismRegistry { get; set; } = new();
 
         public bool IsShutdown { get; set; }
 
         private RimMindRuntime()
         {
             ProviderRegistry = new ProviderRegistry();
-            ClientManager = new RimMind.Core.Runtime.ClientManager();
-            OverlayService = new RimMind.Core.Runtime.OverlayService();
+            ClientManager = new RimMind.Presentation.Runtime.ClientManager();
+            OverlayService = new RimMind.Presentation.Runtime.OverlayService();
             HistoryManager = new HistoryManager();
             ContextEngine = new ContextEngine(HistoryManager);
             AgentBus = new AgentBusImpl();
             EventBus = new EventBusAdapter(AgentBus);
-            AudioPlayer = new RimMind.Adapters.UI.NullAudioPlayer();
+            AudioPlayer = new RimMind.Infrastructure.UI.NullAudioPlayer();
             Telemetry = new FlywheelTelemetryCollector();
             QueueImpl = new AIRequestQueueImpl();
             IsShutdown = false;
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
-            RimMindServiceLocator.Register<Contracts.Runtime.IRimMindRuntime>(this);
+            RimMindServiceLocator.Register<IRimMindRuntime>(this);
         }
 
         public static void Initialize()
@@ -107,14 +114,14 @@ namespace RimMind.Core.Runtime
             RimMindServiceLocator.Register<IHistoryManager>(HistoryManager);
             ContextEngine = new ContextEngine(HistoryManager);
             ProviderRegistry.Reset();
-            AudioPlayer = new RimMind.Adapters.UI.NullAudioPlayer();
+            AudioPlayer = new RimMind.Infrastructure.UI.NullAudioPlayer();
             Telemetry = new FlywheelTelemetryCollector();
             AgentBus = new AgentBusImpl();
             EventBus = new EventBusAdapter(AgentBus);
-            ClientManager = new RimMind.Core.Runtime.ClientManager();
+            ClientManager = new RimMind.Presentation.Runtime.ClientManager();
             QueueImpl = new AIRequestQueueImpl();
-            ToolRegistry = new RimMind.Kernel.Tools.ToolRegistry();
-            MechanismRegistry = new RimMind.Kernel.Mechanisms.GameMechanismRegistry();
+            ToolRegistry = new RimMind.Application.Features.Tools.ToolRegistry();
+            MechanismRegistry = new RimMind.Infrastructure.Mechanisms.GameMechanismRegistry();
         }
 
         public void Shutdown() { IsShutdown = true; }
@@ -133,11 +140,11 @@ namespace RimMind.Core.Runtime
         }
 
         public IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension
-            => new RimMind.Kernel.Registry.ExtensionRegistry<T>();
+            => new ExtensionRegistry<T>();
 
-        void Contracts.Runtime.IRimMindRuntime.RegisterParameterTuner(Contracts.Flywheel.IKernelParameterTuner tuner) { }
-        IReadOnlyList<Contracts.Flywheel.IKernelParameterTuner> Contracts.Runtime.IRimMindRuntime.ParameterTunersList => new List<Contracts.Flywheel.IKernelParameterTuner>();
-        Contracts.Extension.IExtensionRegistry<T> Contracts.Runtime.IRimMindRuntime.GetExtensionRegistry<T>() => new RimMind.Kernel.Registry.ExtensionRegistry<T>();
+        void IRimMindRuntime.RegisterParameterTuner(IKernelParameterTuner tuner) { }
+        IReadOnlyList<IKernelParameterTuner> IRimMindRuntime.ParameterTunersList => new List<IKernelParameterTuner>();
+        IExtensionRegistry<T> IRimMindRuntime.GetExtensionRegistry<T>() => new ExtensionRegistry<T>();
 
         public void RegisterAgentIdentityProvider(Func<Verse.Pawn, AgentIdentity?> provider) { }
         public AgentIdentity? GetAgentIdentity(Verse.Pawn pawn) => null;
@@ -188,14 +195,14 @@ namespace RimMind.Core.Runtime
             private readonly IContextEngine _contextEngine;
             private readonly IHistoryManager _historyManager;
             private readonly IClientManager _clientManager;
-            private readonly RimMind.Adapters.UI.IAudioPlayer _audioPlayer;
+            private readonly RimMind.Infrastructure.UI.IAudioPlayer _audioPlayer;
             private readonly IProviderRegistry _providerRegistry;
-            private readonly RimMind.Contracts.Internal.IOverlayService _overlayService;
+            private readonly IOverlayService _overlayService;
             private readonly AIRequestQueueImpl _queueImpl;
             private readonly FlywheelTelemetryCollector _telemetry;
             private readonly IAgentBus _agentBus;
-            private readonly RimMind.Kernel.Tools.ToolRegistry _toolRegistry;
-            private readonly RimMind.Kernel.Mechanisms.GameMechanismRegistry _mechanismRegistry;
+            private readonly RimMind.Application.Features.Tools.ToolRegistry _toolRegistry;
+            private readonly RimMind.Infrastructure.Mechanisms.GameMechanismRegistry _mechanismRegistry;
 
             public RuntimeSnapshot(RimMindRuntime r)
             {
@@ -232,18 +239,18 @@ namespace RimMind.Core.Runtime
     }
 }
 
-namespace RimMind.Core.Runtime
+namespace RimMind.Presentation.Runtime
 {
     public sealed class EventBusAdapter : IEventBus
     {
         private readonly IAgentBus _bus;
         public EventBusAdapter(IAgentBus bus) => _bus = bus;
-        public void Subscribe<T>(string key, Action<T> handler) where T : Contracts.AgentBusEvent => _bus.Subscribe(key, handler);
-        public string Subscribe<T>(Action<T> handler) where T : Contracts.AgentBusEvent => _bus.Subscribe(handler);
-        public void Unsubscribe<T>(string key) where T : Contracts.AgentBusEvent => _bus.Unsubscribe<T>(key);
-        public void Unsubscribe<T>(Action<T> handler) where T : Contracts.AgentBusEvent => _bus.Unsubscribe(handler);
-        public void Publish<T>(T evt) where T : Contracts.AgentBusEvent => _bus.Publish(evt);
-        public void PublishFromBackground<T>(T evt) where T : Contracts.AgentBusEvent => _bus.PublishFromBackground(evt);
+        public void Subscribe<T>(string key, Action<T> handler) where T : AgentBusEvent => _bus.Subscribe(key, handler);
+        public string Subscribe<T>(Action<T> handler) where T : AgentBusEvent => _bus.Subscribe(handler);
+        public void Unsubscribe<T>(string key) where T : AgentBusEvent => _bus.Unsubscribe<T>(key);
+        public void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent => _bus.Unsubscribe(handler);
+        public void Publish<T>(T evt) where T : AgentBusEvent => _bus.Publish(evt);
+        public void PublishFromBackground<T>(T evt) where T : AgentBusEvent => _bus.PublishFromBackground(evt);
         public void FlushBackgroundQueue() => _bus.FlushBackgroundQueue();
         public void ClearAllSubscribers() => _bus.ClearAllSubscribers();
         public int GetHandlerCount() => 0;
@@ -251,15 +258,15 @@ namespace RimMind.Core.Runtime
     }
 }
 
-namespace RimMind.Core.Tests
+namespace RimMind.Tests
 {
-    internal sealed class VerseTickProvider : RimMind.Contracts.Abstractions.ITickProvider
+    internal sealed class VerseTickProvider : RimMind.Application.Common.Interfaces.Abstractions.ITickProvider
     {
         public int TicksGame => Verse.Find.TickManager?.TicksGame ?? 0;
     }
 }
 
-namespace RimMind.Core.Sensor
+namespace RimMind.Presentation.Sensor
 {
     public class SensorManager : Verse.GameComponent, ISensorManager
     {
@@ -271,9 +278,9 @@ namespace RimMind.Core.Sensor
     }
 }
 
-namespace RimMind.Core.Agent
+namespace RimMind.Presentation.Agent
 {
-    using RimMind.Adapters.Client;
+    using RimMind.Infrastructure.Services.Clients;
 
     public class PerceptionPipeline
     {
@@ -288,7 +295,7 @@ namespace RimMind.Core.Agent
     public class CooldownFilter { }
 }
 
-namespace RimMind.Adapters.UI
+namespace RimMind.Infrastructure.UI
 {
     public class RequestEntry
     {
@@ -312,13 +319,13 @@ namespace RimMind.Adapters.UI
     }
 }
 
-namespace RimMind.Core.Runtime
+namespace RimMind.Presentation.Runtime
 {
-    public class OverlayService : RimMind.Contracts.Internal.IOverlayService
+    public class OverlayService : IOverlayService
     {
-        private readonly List<RimMind.Contracts.UI.RequestEntry> _entries = new List<RimMind.Contracts.UI.RequestEntry>();
-        public void RegisterPendingRequest(RimMind.Contracts.UI.RequestEntry entry) { _entries.Add(entry); }
-        public IReadOnlyList<RimMind.Contracts.UI.RequestEntry> GetPendingRequests() => _entries.AsReadOnly();
+        private readonly List<RimMind.Application.Common.Models.UI.RequestEntry> _entries = new List<RimMind.Application.Common.Models.UI.RequestEntry>();
+        public void RegisterPendingRequest(RimMind.Application.Common.Models.UI.RequestEntry entry) { _entries.Add(entry); }
+        public IReadOnlyList<RimMind.Application.Common.Models.UI.RequestEntry> GetPendingRequests() => _entries.AsReadOnly();
     }
 
     public class ClientManager : IClientManager
@@ -329,9 +336,9 @@ namespace RimMind.Core.Runtime
     }
 }
 
-namespace RimMind.Core
+namespace RimMind.Presentation
 {
-    using RimMind.Contracts.Settings;
+    using RimMind.Presentation.Settings;
 
     public class RimMindCoreMod : Verse.Mod
     {
@@ -347,18 +354,18 @@ namespace RimMind.Core
         public static void RegisterParameterTuner(IParameterTunerContract tuner) { }
         public static void RegisterSensorProvider(ISensorProvider provider) { }
         public static void UnregisterSensorProvider(string sensorId) { }
-        public static IEventBus GetEventBus() => RimMind.Core.Runtime.RimMindRuntime.Instance.EventBus;
-        public static IHistoryManager GetHistoryManager() => RimMind.Core.Runtime.RimMindRuntime.Instance.HistoryManager;
-        public static object? GetPlayer2Client() => RimMind.Core.Runtime.RimMindRuntime.Instance.GetPlayer2Client();
-        public static RimMind.Contracts.Tools.IToolRegistry Tools => RimMind.Core.Runtime.RimMindRuntime.Instance.ToolRegistry;
-        public static RimMind.Contracts.Mechanisms.IGameMechanismRegistry Mechanisms => RimMind.Core.Runtime.RimMindRuntime.Instance.MechanismRegistry;
+        public static IEventBus GetEventBus() => RimMind.Presentation.Runtime.RimMindRuntime.Instance.EventBus;
+        public static IHistoryManager GetHistoryManager() => RimMind.Presentation.Runtime.RimMindRuntime.Instance.HistoryManager;
+        public static object? GetPlayer2Client() => RimMind.Presentation.Runtime.RimMindRuntime.Instance.GetPlayer2Client();
+        public static RimMind.Application.Common.Interfaces.Tools.IToolRegistry Tools => RimMind.Presentation.Runtime.RimMindRuntime.Instance.ToolRegistry;
+        public static RimMind.Application.Common.Interfaces.Mechanisms.IGameMechanismRegistry Mechanisms => RimMind.Presentation.Runtime.RimMindRuntime.Instance.MechanismRegistry;
     }
 }
 
-namespace RimMind.Core.Npc
+namespace RimMind.Infrastructure.Verse
 {
-    using RimMind.Adapters.Client;
-    public class NpcManager : Verse.GameComponent, RimMind.Contracts.Npc.INpcManager
+    using RimMind.Infrastructure.Services.Clients;
+    public class NpcManager : Verse.GameComponent, INpcManager
     {
         private readonly System.Collections.Concurrent.ConcurrentDictionary<int, Verse.Pawn> _pawnIndex = new();
         public static INpcManager? Instance => RimMindServiceLocator.Get<INpcManager>();
@@ -414,11 +421,11 @@ namespace RimMind.Core.Npc
         public string GetMapNpcId(Verse.Map map) => "";
         public void ClearPawnIndex() { _pawnIndex.Clear(); }
 
-        string RimMind.Contracts.Npc.INpcManager.GetNpcForMap(object map) => GetNpcForMap((Verse.Map)map!);
-        object? RimMind.Contracts.Npc.INpcManager.FindPawnByNpcId(string npcId) => FindPawnByNpcId(npcId);
-        object? RimMind.Contracts.Npc.INpcManager.FindProxyPawnForMap(object map) => FindProxyPawnForMap((Verse.Map)map!);
-        void RimMind.Contracts.Npc.INpcManager.IndexPawn(object pawn) => IndexPawn((Verse.Pawn)pawn!);
-        string RimMind.Contracts.Npc.INpcManager.GetMapNpcId(object map) => GetMapNpcId((Verse.Map)map!);
+        string INpcManager.GetNpcForMap(object map) => GetNpcForMap((Verse.Map)map!);
+        object? INpcManager.FindPawnByNpcId(string npcId) => FindPawnByNpcId(npcId);
+        object? INpcManager.FindProxyPawnForMap(object map) => FindProxyPawnForMap((Verse.Map)map!);
+        void INpcManager.IndexPawn(object pawn) => IndexPawn((Verse.Pawn)pawn!);
+        string INpcManager.GetMapNpcId(object map) => GetMapNpcId((Verse.Map)map!);
     }
 
     internal static class TransientExceptionChecker
@@ -438,13 +445,13 @@ namespace RimMind.Core.Npc
 
     public static class StorageDriverFactory
     {
-        private static IStorageDriverKernel _driver = new StubStorageDriver();
-        public static IStorageDriverKernel GetDriver() => _driver;
+        private static IStorageDriverApp _driver = new StubStorageDriver();
+        public static IStorageDriverApp GetDriver() => _driver;
         public static void InvalidateCache() { }
     }
 }
 
-namespace RimMind.Adapters.Verse
+namespace RimMind.Infrastructure.Verse
 {
     public class FlywheelGameComponent : global::Verse.GameComponent
     {
@@ -453,24 +460,9 @@ namespace RimMind.Adapters.Verse
     }
 }
 
-namespace RimMind.Kernel.Context
+namespace RimMind.Application.Features.Context
 {
-    public interface IStorageDriver
-    {
-        bool IsRemote { get; }
-        bool SupportsStreaming { get; }
-        bool SupportsTts { get; }
-        bool SupportsCommands { get; }
-        bool SupportsStructuredOutput { get; }
-        bool IsNpcAlive(string npcId);
-        Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile);
-        Task<Result<bool, RimMindError>> KillNpcAsync(string npcId);
-        Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default);
-        Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default);
-        IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
-    }
-
-    internal sealed class StubStorageDriver : IStorageDriver
+    internal sealed class StubStorageDriver : IStorageDriverApp
     {
         public bool IsRemote => false;
         public bool SupportsStreaming => false;
@@ -480,15 +472,24 @@ namespace RimMind.Kernel.Context
         public bool IsNpcAlive(string npcId) => false;
         public Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
         public Task<Result<bool, RimMindError>> KillNpcAsync(string npcId) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
-        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot? snapshot, CancellationToken ct = default)
+        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
             => Task.FromResult(Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult()));
-        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string query, string ctx, CancellationToken ct = default)
+        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null, CancellationToken ct = default)
             => Task.FromResult(Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult()));
-        public async IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string speakerName, string query, Action<string>? onChunk, string? gameStateInfo = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+        public Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default)
+            => Task.FromResult(Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult()));
+        public async IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string senderName, string query, Action<string>? onChunk, string? gameStateInfo = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
         {
             yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, "", isFinal: true));
             await Task.CompletedTask;
         }
+        public Task<Result<bool, RimMindError>> PutAsync(string key, string value) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
+        public Task<Result<string?, RimMindError>> GetAsync(string key) => Task.FromResult(Result<string?, RimMindError>.Ok((string?)null));
+        public Task<Result<bool, RimMindError>> DeleteAsync(string key) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
+        public Task<Result<Dictionary<string, string>, RimMindError>> GetBatchAsync(IEnumerable<string> keys) => Task.FromResult(Result<Dictionary<string, string>, RimMindError>.Ok(new Dictionary<string, string>()));
+        public Task<Result<bool, RimMindError>> SaveAllEntriesAsync(string json) => Task.FromResult(Result<bool, RimMindError>.Ok(true));
+        public Task<Result<string?, RimMindError>> LoadAllEntriesAsync() => Task.FromResult(Result<string?, RimMindError>.Ok((string?)null));
+        public Task<Result<List<string>, RimMindError>> QueryMemoriesAsync(string npcId, string query, int limit = 10) => Task.FromResult(Result<List<string>, RimMindError>.Ok(new List<string>()));
     }
 
     public static class PawnDataExtractor
@@ -506,7 +507,7 @@ namespace RimMind.Kernel.Context
     }
 }
 
-namespace RimMind.Kernel.Flywheel
+namespace RimMind.Application.Features.Flywheel
 {
     internal class FlywheelBuiltinTuner : IParameterTunerContract
     {
@@ -523,7 +524,7 @@ namespace RimMind.Kernel.Flywheel
     }
 }
 
-namespace RimMind.Adapters.Client
+namespace RimMind.Infrastructure.Services.Clients
 {
     public static class HttpHelper
     {
@@ -544,7 +545,7 @@ namespace RimMind.Adapters.Client
     }
 }
 
-namespace RimMind.Core
+namespace RimMind.Presentation.Agent
 {
     public static class GameContextBuilder
     {
@@ -576,17 +577,17 @@ namespace RimMind.Core
     }
 }
 
-namespace RimMind.Kernel.Prompt
+namespace RimMind.Application.Features.Prompt
 {
     public static class GoalGenerator
     {
-        public static List<RimMind.Core.Agent.AgentGoal> GenerateFromIdentity(Verse.Pawn pawn) => new();
-        public static List<RimMind.Core.Agent.AgentGoal> GenerateFromState(Verse.Pawn pawn) => new();
-        public static List<RimMind.Core.Agent.AgentGoal> GenerateFromEvent(string perceptionType, string content) => new();
+        public static List<RimMind.Presentation.Agent.AgentGoal> GenerateFromIdentity(Verse.Pawn pawn) => new();
+        public static List<RimMind.Presentation.Agent.AgentGoal> GenerateFromState(Verse.Pawn pawn) => new();
+        public static List<RimMind.Presentation.Agent.AgentGoal> GenerateFromEvent(string perceptionType, string content) => new();
     }
 }
 
-namespace RimMind.Core.Agent
+namespace RimMind.Presentation.Agent
 {
     public static class Context
     {

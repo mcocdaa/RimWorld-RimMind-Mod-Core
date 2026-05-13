@@ -1,8 +1,8 @@
 using System;
-using RimMind.Kernel.Prompt;
+using RimMind.Application.Features.Prompt;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PromptSanitizerTests
     {

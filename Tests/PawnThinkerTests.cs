@@ -1,14 +1,14 @@
 using System;
-using RimMind.Contracts;
-using RimMind.Contracts.Pipeline;
-using RimMind.Core.Agent;
-using RimMind.Kernel.Bus;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Settings;
+using RimMind.Domain.Events;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Presentation.Agent;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Settings;
 using Verse;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PawnThinkerTests : IDisposable
     {

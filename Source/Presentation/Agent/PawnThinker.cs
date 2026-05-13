@@ -60,7 +60,7 @@ namespace RimMind.Presentation.Agent
                 RimMindAPI.Request.RequestStructuredAsync(request, null, response =>
                 {
                     _thinking = false;
-                    if (response.IsSuccess)
+                    if (response.IsOk)
                         ProcessResponse(response.Value);
                 });
             }

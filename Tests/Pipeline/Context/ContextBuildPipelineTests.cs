@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Pipeline;
-using RimMind.Kernel.Pipeline.Context;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Context;
-using RimMind.Kernel.Flywheel;
-using RimMind.Kernel.Pipeline;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Features.Pipeline.Context;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Events.Context;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Features.Pipeline;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline.Context

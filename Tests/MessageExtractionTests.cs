@@ -1,7 +1,7 @@
-using RimMind.Kernel.Json;
+using RimMind.Application.Features.Json;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class MessageExtractionTests
     {

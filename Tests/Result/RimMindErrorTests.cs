@@ -1,8 +1,8 @@
 using System;
-using RimMind.Contracts.Result;
+using RimMind.Domain.Events.Result;
 using Xunit;
 
-namespace RimMind.Core.Tests.Result
+namespace RimMind.Presentation.Tests.Result
 {
     public class RimMindErrorTests
     {

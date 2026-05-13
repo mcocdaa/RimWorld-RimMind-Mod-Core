@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RimMind.Contracts.Extension;
-using RimMind.Contracts.Pipeline;
-using RimMind.Kernel.Pipeline.Common;
-using RimMind.Kernel.Pipeline;
+using RimMind.Domain.Events.Extension;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Features.Pipeline.Common;
+using RimMind.Application.Features.Pipeline;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline

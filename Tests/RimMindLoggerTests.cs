@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using RimMind.Contracts.Internal;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Abstractions;
-using RimMind.Kernel.Logging;
+using RimMind.Domain.Events.Internal;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Domain.Events.Abstractions;
+using RimMind.Application.Features.Logging;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     internal class TestLogSink : ILogSink
     {

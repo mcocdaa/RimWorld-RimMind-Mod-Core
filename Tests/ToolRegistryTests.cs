@@ -1,12 +1,12 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Contracts.Result;
-using RimMind.Contracts.Tools;
-using RimMind.Kernel.Tools;
+using RimMind.Domain.Events.Result;
+using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Features.Tools;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class ToolRegistryTests
     {

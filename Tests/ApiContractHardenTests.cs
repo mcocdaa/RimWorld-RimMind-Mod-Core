@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Internal;
-using RimMind.Core.Agent;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Context;
-using RimMind.Kernel.Flywheel;
-using RimMind.Kernel.Registry;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Internal;
+using RimMind.Presentation.Agent;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Events.Context;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Features.Registry;
 using Xunit;
 
-using RimMind.Contracts.Result;
+using RimMind.Domain.Events.Result;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class AIResponseInitSetterTests
     {

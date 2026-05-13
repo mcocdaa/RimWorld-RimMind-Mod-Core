@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Pipeline;
-using RimMind.Contracts.Result;
-using RimMind.Contracts.Tools;
-using RimMind.Kernel.Pipeline.AI;
-using RimMind.Kernel.Tools;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Events.Result;
+using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Features.Pipeline.AI;
+using RimMind.Application.Features.Tools;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class ToolCallDispatchMiddlewareTests
     {

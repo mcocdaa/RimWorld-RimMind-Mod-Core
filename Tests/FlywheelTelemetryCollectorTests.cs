@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using RimMind.Contracts.Runtime;
-using RimMind.Kernel.Flywheel;
+using RimMind.Domain.Events.Runtime;
+using RimMind.Application.Features.Flywheel;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class FlywheelTelemetryCollectorTests : IDisposable
     {
@@ -18,7 +18,7 @@ namespace RimMind.Core.Tests
             _tempDir = Path.Combine(Path.GetTempPath(), $"RimMindTest_{Guid.NewGuid():N}");
             Directory.CreateDirectory(_tempDir);
             RimMindCoreMod.Settings = new AICoreSettings { telemetryDataPath = _tempDir };
-            RimMindModAccessor.Settings = new RimMind.Contracts.Settings.RimMindCoreSettings { telemetryDataPath = _tempDir };
+            RimMindModAccessor.Settings = new RimMind.Presentation.Settings.RimMindCoreSettings { telemetryDataPath = _tempDir };
             _collector = new FlywheelTelemetryCollector();
         }
 

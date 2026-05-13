@@ -2,6 +2,7 @@ using RimMind.Presentation.Agent;
 using RimMind.Infrastructure.Verse;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation;
 using UnityEngine;
@@ -126,10 +127,10 @@ namespace RimMind.Infrastructure.UI
             var npcId = _npcId;
             _agent.ForceThink();
 
-            var request = new RimMind.Contracts.Context.ContextRequest
+            var request = new ContextRequest
             {
-                NpcId = npcId,
-                Scenario = RimMind.Contracts.Context.ScenarioIds.Dialogue,
+                NpcId = _agent?.Identity?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
+                Scenario = ScenarioIds.Dialogue,
                 Budget = 0.6f,
                 CurrentQuery = message,
                 MaxTokens = RimMindCoreMod.Settings.maxTokens,

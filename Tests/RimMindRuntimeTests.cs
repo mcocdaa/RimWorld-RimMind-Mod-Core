@@ -1,9 +1,9 @@
 using System;
-using RimMind.Kernel.Bus;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Context;
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Flywheel;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Events.Context;
+using RimMind.Presentation.Runtime;
+using RimMind.Application.Features.Flywheel;
 using Verse;
 using Xunit;
 

@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RimMind.Contracts.Client;
-using RimMind.Core.Agent;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Presentation.Agent;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class StrategyOptimizerTests
     {

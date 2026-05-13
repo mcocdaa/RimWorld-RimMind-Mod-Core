@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>RimMind.Core.Tests</RootNamespace>
+    <RootNamespace>RimMind.Tests</RootNamespace>
     <AssemblyName>RimMindCore.Tests</AssemblyName>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
@@ -21,63 +21,75 @@
     <Compile Include="VerseStubs.cs" />
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="**\*.cs" Exclude="VerseStubs.cs;RimMindTestStubs.cs;obj\**\*.cs" />
-    <Compile Include="../Source/Contracts/**/*.cs" Exclude="../Source/Contracts/**/obj/**;../Source/Contracts/Compilers/IsExternalInit.cs" />
-    <Compile Include="../Source/Kernel/**/*.cs" Exclude="../Source/Kernel/**/obj/**;../Source/Kernel/Flywheel/FlywheelBuiltinTuner.cs;../Source/Kernel/Llm/ResponseDispatcher.cs" />
-    <Compile Include="../Source/Adapters/Client/HttpHelper.cs" />
-    <Compile Include="../Source/Adapters/Client/OpenAI/*.cs" />
-    <Compile Include="../Source/Adapters/Client/Player2/*.cs" />
-    <Compile Include="../Source/Core/Agent/**/*.cs" />
-    <Compile Include="../Source/Core/Perception/**/*.cs" />
-    <Compile Include="../Source/Core/Runtime/**/*.cs" />
-    <Compile Include="../Source/Core/Sensor/SensorManager.cs" />
-    <Compile Include="../Source/Compilers/**/*.cs" />
+    <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**" />
+    <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/HttpHelper.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/*.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/Player2/*.cs" />
+    <Compile Include="../Source/Presentation/Agent/**/*.cs" />
+    <Compile Include="../Source/Presentation/Perception/**/*.cs" />
+    <Compile Include="../Source/Presentation/Runtime/**/*.cs" />
+    <Compile Include="../Source/Presentation/Sensor/SensorManager.cs" />
+    <Compile Include="../Source/Presentation/Settings/**/*.cs" />
+    <Compile Include="../Source/Presentation/Context/**/*.cs" />
+    <Compile Include="../Source/Presentation/Llm/**/*.cs" />
+    <Compile Include="../Source/Presentation/Pipeline/**/*.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/AIRequestQueueGameComponent.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/AgentBusGameComponent.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/NpcManager.cs" />
+    <Compile Include="../Source/Infrastructure/Patches/JobDriver_RimMindAction.cs" />
+    <Compile Include="../Source/Infrastructure/Patches/ThinkNode_RimMindAgent.cs" />
+    <Compile Include="../Source/Infrastructure/Persistence/*.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/GameMechanismBase.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/GameMechanismBaseNoDef.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/GameMechanismRegistry.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/MechanismListToolHandler.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHandler.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/Map/**/*.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/Pawn/**/*.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/World/**/*.cs" />
+    <Compile Include="../Source/Infrastructure/UI/*.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Verse/*.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/*.cs" />
     <Compile Include="../Source/Comps/**/*.cs" />
-    <Compile Include="../Source/Adapters/Verse/AIRequestQueueGameComponent.cs" />
-    <Compile Include="../Source/Adapters/Verse/AgentBusGameComponent.cs" />
-    <Compile Include="../Source/Adapters/Verse/CompPawnAgent.cs" />
-    <Compile Include="../Source/Adapters/Verse/NpcManager.cs" />
-    <Compile Include="../Source/Adapters/Patches/JobDriver_RimMindAction.cs" />
-    <Compile Include="../Source/Adapters/Patches/ThinkNode_RimMindAgent.cs" />
-    <Compile Include="../Source/Settings/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="../Source/Adapters/Client/Player2/Player2Client.cs" />
-    <Compile Remove="../Source/Core/Runtime/OverlayService.cs" />
-    <Compile Remove="../Source/Core/Runtime/ClientManager.cs" />
-    <Compile Remove="../Source/Core/Agent/PerceptionPipeline.cs" />
-    <Compile Remove="../Source/Core/Agent/NpcProfileBuilder.cs" />
-    <Compile Remove="../Source/Core/Runtime/RimMindRuntime.cs" />
-    <Compile Remove="../Source/Core/Runtime/RuntimeOverrides.cs" />
-    <Compile Remove="../Source/Settings/RimMindCoreSettingsUI.cs" />
-    <Compile Remove="../Source/Adapters/Client/HttpHelper.cs" />
-    <Compile Remove="../Source/Core/Sensor/SensorManager.cs" />
-    <Compile Remove="../Source/Core/Agent/GameContextBuilder.cs" />
-    <Compile Remove="../Source/Core/Agent/PawnDataExtractor.cs" />
-    <Compile Remove="../Source/Kernel/Context/ThreatClassifier.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Health/HealthMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Inspiration/InspirationMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Interaction/InteractionMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/MentalState/MentalStateMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Thought/ThoughtMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Work/WorkMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/World/Storyteller/StorytellerMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Job/JobMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Job/JobActionHandlers.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Job/JobDocs.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Draft/DraftMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Equipment/EquipmentMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Recruit/RecruitMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Relations/RelationsMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Need/NeedMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Pawn/Skill/SkillMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/Map/Wealth/WealthMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/World/Faction/FactionMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Mechanisms/World/ChoiceLetter/ChoiceLetterMechanism.cs" />
-    <Compile Remove="../Source/Kernel/Npc/LocalStorageDriver.cs" />
-    <Compile Remove="../Source/Kernel/Npc/StorageDriverFactory.cs" />
-    <Compile Remove="../Source/Adapters/Client/Player2/Player2StorageDriver.cs" />
-    <Compile Remove="../Source/Adapters/Client/Player2/HybridStorageDriver.cs" />
+    <Compile Remove="../Source/Infrastructure/Services/Clients/Player2/Player2Client.cs" />
+    <Compile Remove="../Source/Presentation/Runtime/OverlayService.cs" />
+    <Compile Remove="../Source/Presentation/Runtime/ClientManager.cs" />
+    <Compile Remove="../Source/Presentation/Agent/PerceptionPipeline.cs" />
+    <Compile Remove="../Source/Presentation/Agent/NpcProfileBuilder.cs" />
+    <Compile Remove="../Source/Presentation/Runtime/RimMindRuntime.cs" />
+    <Compile Remove="../Source/Presentation/Runtime/RuntimeOverrides.cs" />
+    <Compile Remove="../Source/Presentation/Agent/GameContextBuilder.cs" />
+    <Compile Remove="../Source/Presentation/Agent/PawnDataExtractor.cs" />
+    <Compile Remove="../Source/Infrastructure/Services/Clients/HttpHelper.cs" />
+    <Compile Remove="../Source/Presentation/Sensor/SensorManager.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Health/HealthMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Inspiration/InspirationMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Interaction/InteractionMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/MentalState/MentalStateMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Thought/ThoughtMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Work/WorkMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/World/Storyteller/StorytellerMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Job/JobMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Job/JobActionHandlers.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Job/JobDocs.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Draft/DraftMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Equipment/EquipmentMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Recruit/RecruitMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Relations/RelationsMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Need/NeedMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Pawn/Skill/SkillMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/Map/Wealth/WealthMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/World/Faction/FactionMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Mechanisms/World/ChoiceLetter/ChoiceLetterMechanism.cs" />
+    <Compile Remove="../Source/Infrastructure/Persistence/LocalStorageDriver.cs" />
+    <Compile Remove="../Source/Infrastructure/Persistence/StorageDriverFactory.cs" />
+    <Compile Remove="../Source/Infrastructure/Services/Clients/Player2/Player2StorageDriver.cs" />
+    <Compile Remove="../Source/Infrastructure/Services/Clients/Player2/HybridStorageDriver.cs" />
   </ItemGroup>
 
 </Project>

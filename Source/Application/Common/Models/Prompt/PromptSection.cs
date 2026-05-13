@@ -4,12 +4,28 @@ namespace RimMind.Application.Common.Models.Prompt
 {
     public class PromptSection
     {
+        public const int PriorityCore = 0;
+        public const int PriorityKeyState = 10;
+        public const int PriorityCurrentInput = 20;
+        public const int PriorityAuxiliary = 30;
+
         public string Name { get; set; } = "";
         public string Content { get; set; } = "";
         public int Priority { get; set; }
         public int EstimatedTokens { get; set; }
         public bool IsCompressible { get; set; }
         public Func<string, string>? Compress { get; set; }
+        public string? LayerTag { get; set; }
+
+        public PromptSection() { }
+
+        public PromptSection(string name, string content, int priority = PriorityAuxiliary)
+        {
+            Name = name;
+            Content = content;
+            Priority = priority;
+            EstimatedTokens = EstimateTokens(content);
+        }
 
         public PromptSection Clone()
         {
@@ -20,7 +36,8 @@ namespace RimMind.Application.Common.Models.Prompt
                 Priority = Priority,
                 EstimatedTokens = EstimatedTokens,
                 IsCompressible = IsCompressible,
-                Compress = Compress
+                Compress = Compress,
+                LayerTag = LayerTag
             };
         }
 

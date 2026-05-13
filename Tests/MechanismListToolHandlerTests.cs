@@ -4,14 +4,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RimMind.Contracts.Extension;
-using RimMind.Contracts.Mechanisms;
-using RimMind.Contracts.Result;
-using RimMind.Contracts.Tools;
-using RimMind.Kernel.Mechanisms;
+using RimMind.Domain.Events.Extension;
+using RimMind.Domain.Events.Mechanisms;
+using RimMind.Domain.Events.Result;
+using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Infrastructure.Mechanisms;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class MechanismListToolHandlerTests
     {

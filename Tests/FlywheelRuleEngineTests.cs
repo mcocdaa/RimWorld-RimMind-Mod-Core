@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using RimMind.Kernel.Flywheel;
+using RimMind.Application.Features.Flywheel;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class FlywheelRuleEngineTests
     {

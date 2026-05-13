@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using RimMind.Kernel.Logging;
+using RimMind.Application.Features.Logging;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline

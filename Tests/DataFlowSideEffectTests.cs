@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Context;
-using RimMind.Kernel.Context;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Context;
+using RimMind.Application.Features.Context;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class DataFlowSideEffectTests
     {

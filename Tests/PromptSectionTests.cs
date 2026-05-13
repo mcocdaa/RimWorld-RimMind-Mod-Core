@@ -1,7 +1,7 @@
-using RimMind.Contracts.Prompt;
+using RimMind.Domain.Events.Prompt;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PromptSectionTests
     {

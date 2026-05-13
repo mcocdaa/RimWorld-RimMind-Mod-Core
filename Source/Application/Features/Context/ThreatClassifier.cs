@@ -4,7 +4,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 
 namespace RimMind.Application.Features.Context
 {
-    internal static class ThreatClassifier
+    public static class ThreatClassifier
     {
         private static readonly HashSet<string> ThreatKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -33,6 +33,15 @@ namespace RimMind.Application.Features.Context
                     count++;
             }
             return Math.Min(1f, count / 3f);
+        }
+
+        public static string ClassifyThreatTier(float wealth, float high, float medium, float low, float threatScale = 1f)
+        {
+            float adjusted = wealth * threatScale;
+            if (adjusted >= high) return "Extreme";
+            if (adjusted >= medium) return "High";
+            if (adjusted >= low) return "Medium";
+            return "Low";
         }
     }
 }

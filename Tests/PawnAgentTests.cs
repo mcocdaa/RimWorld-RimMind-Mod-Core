@@ -1,24 +1,24 @@
-﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿using System;
 using System.Collections.Generic;
-using RimMind.Contracts;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Internal;
-using RimMind.Core.Agent;
-using RimMind.Kernel.Bus;
-using RimMind.Adapters.Client;
-using RimMind.Contracts.Flywheel;
-using RimMind.Kernel.Flywheel;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Npc;
-using RimMind.Adapters.Verse;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Settings;
+using RimMind.Domain.Events;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Events.Internal;
+using RimMind.Presentation.Agent;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Infrastructure.Client;
+using RimMind.Domain.Events.Flywheel;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Domain.Events.Npc;
+using RimMind.Infrastructure.Verse;
+using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Settings;
 using Verse;
 using Verse.AI;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PawnAgentTests : IDisposable
     {

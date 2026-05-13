@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Contracts.Pipeline;
-using RimMind.Contracts.Npc;
-using RimMind.Contracts.Internal;
-using RimMind.Kernel.Pipeline.Npc;
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Context;
-using RimMind.Kernel.Pipeline;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Events.Npc;
+using RimMind.Domain.Events.Internal;
+using RimMind.Application.Features.Pipeline.Npc;
+using RimMind.Presentation.Runtime;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Events.Context;
+using RimMind.Application.Features.Pipeline;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline.Npc

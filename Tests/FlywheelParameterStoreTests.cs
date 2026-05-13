@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using RimMind.Kernel.Flywheel;
+using RimMind.Application.Features.Flywheel;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class FlywheelParameterStoreTests
     {

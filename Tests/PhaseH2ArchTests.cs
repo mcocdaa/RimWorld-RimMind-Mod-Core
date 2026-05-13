@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Xunit;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class PhaseH2ArchTests
     {

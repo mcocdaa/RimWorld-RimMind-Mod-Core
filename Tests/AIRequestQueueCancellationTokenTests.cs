@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Contracts.Client;
-using RimMind.Adapters.Client;
-using RimMind.Core.Runtime;
-using RimMind.Contracts.Internal;
-using RimMind.Kernel.Queue;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Infrastructure.Client;
+using RimMind.Presentation.Runtime;
+using RimMind.Domain.Events.Internal;
+using RimMind.Application.Features.Queue;
 using Verse;
 using Xunit;
 
-using RimMind.Contracts.Result;
+using RimMind.Domain.Events.Result;
 
-namespace RimMind.Core.Tests
+namespace RimMind.Presentation.Tests
 {
     public class AIRequestQueueCancellationTokenTests
     {
