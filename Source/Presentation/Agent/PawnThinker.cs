@@ -62,7 +62,7 @@ namespace RimMind.Presentation.Agent
                     _thinking = false;
                     if (response.IsSuccess)
                         ProcessResponse(response.Value);
-                }, client: null);
+                });
             }
             catch
             {

@@ -2,7 +2,7 @@ using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Presentation.Runtime;
 
-namespace RimMind.Presentation.Api
+namespace RimMind.Presentation
 {
     public static partial class RimMindAPI
     {

@@ -1,8 +1,9 @@
-using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Domain.Enums;
+using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Services.Clients.Player2;
-using RimMind.Application.Features.Logging;
+using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Persistence

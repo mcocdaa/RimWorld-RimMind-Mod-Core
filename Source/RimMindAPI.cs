@@ -5,11 +5,12 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Application.Common.Models.Sensor;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Features.Flywheel;
@@ -37,7 +38,7 @@ namespace RimMind.Presentation
             RimMindRuntime.Instance.Queue?.CancelAllRequests();
         }
 
-        internal static void ResetForNewGame() => RimMindRuntime.Instance.Reset();
+        internal static void ResetForNewGame() => RimMindRuntime.ResetInstance();
 
         public static void RequestImmediate(AIRequest request, Action<Result<AIResponse, RimMindError>> onComplete)
             => Request.RequestImmediate(request, onComplete);

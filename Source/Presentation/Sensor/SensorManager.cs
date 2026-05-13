@@ -45,10 +45,10 @@ namespace RimMind.Presentation.Sensor
                     {
                         buffer.Add(new Application.Common.Models.Pipeline.PerceptionBufferEntry
                         {
-                            PerceptionType = provider.SensorId,
+                            Source = provider.SensorId,
                             Content = result,
-                            Importance = provider.Priority,
-                            Tick = now
+                            Priority = provider.Priority,
+                            TimestampTicks = now
                         });
                     }
                     _lastSenseTick[provider.SensorId.GetHashCode() ^ pawn.thingIDNumber] = now;
@@ -65,7 +65,18 @@ namespace RimMind.Presentation.Sensor
                 try
                 {
                     var providerTools = provider.GetAgentTools(pawn);
-                    if (providerTools != null) tools.AddRange(providerTools);
+                    if (providerTools != null)
+                    {
+                        foreach (var pt in providerTools)
+                        {
+                            tools.Add(new Application.Common.Models.Client.StructuredTool
+                            {
+                                Name = pt.Name,
+                                Description = pt.Description,
+                                Parameters = pt.Parameters
+                            });
+                        }
+                    }
                 }
                 catch { }
             }

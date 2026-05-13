@@ -20,6 +20,7 @@ using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Queue;
+using RimMind.Application.Features.Registry;
 using RimMind.Application.Features.Tools;
 using RimMind.Infrastructure.Mechanisms;
 using RimMind.Infrastructure.Services.Clients.Player2;
@@ -98,7 +99,7 @@ namespace RimMind.Presentation.Runtime
             NpcChatPipeline = NpcChatPipelineFactory.Build(
                 GetExtensionRegistry<IMiddleware<NpcChatContext>>());
             ContextBuildPipeline = ContextBuildPipelineFactory.Build(
-                ((ContextEngine)ContextEngine).Orchestrator,
+                (ContextOrchestrator)((ContextEngine)ContextEngine).Orchestrator!,
                 GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
         }
 

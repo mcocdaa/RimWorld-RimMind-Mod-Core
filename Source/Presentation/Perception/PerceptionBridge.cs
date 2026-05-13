@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Events;
 using RimMind.Presentation.Runtime;
 
 namespace RimMind.Presentation.Perception

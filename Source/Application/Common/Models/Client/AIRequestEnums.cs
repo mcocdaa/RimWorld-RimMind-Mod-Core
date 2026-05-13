@@ -5,7 +5,8 @@ namespace RimMind.Application.Common.Models.Client
         Low,
         Normal,
         High,
-        Critical
+        Critical,
+        Immediate
     }
 
     public enum AIRequestState

@@ -45,7 +45,7 @@ namespace RimMind.Presentation.Pipeline.Context
             while (estimatedTokens > maxTokens && snapshot.Messages.Count > 1)
             {
                 int removed = (snapshot.Messages[1].Content?.Length ?? 0) / 4;
-                snapshot.Messages.RemoveAt(1);
+                snapshot.RemoveMessageAt(1);
                 estimatedTokens -= removed;
             }
         }

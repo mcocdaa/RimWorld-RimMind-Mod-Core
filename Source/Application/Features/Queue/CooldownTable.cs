@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 
 namespace RimMind.Application.Features.Queue
@@ -34,5 +35,32 @@ namespace RimMind.Application.Features.Queue
 
         public void Clear(string modId) => _table.TryRemove(modId, out _);
         public void ClearAll() => _table.Clear();
+
+        public IReadOnlyDictionary<string, int> GetSnapshot()
+        {
+            return new Dictionary<string, int>(_table);
+        }
+
+        public int GetModCooldownTicks(string modId)
+        {
+            return Get(modId);
+        }
+
+        public bool IsOnCooldown(string modId, int currentTick)
+        {
+            if (!_table.TryGetValue(modId, out var nextAllowed)) return false;
+            return currentTick < nextAllowed;
+        }
+
+        public int GetCooldownTicksLeft(string modId, int currentTick)
+        {
+            if (!_table.TryGetValue(modId, out var nextAllowed)) return 0;
+            return Math.Max(0, nextAllowed - currentTick);
+        }
+
+        public IReadOnlyDictionary<string, int> GetAll()
+        {
+            return new Dictionary<string, int>(_table);
+        }
     }
 }

@@ -63,6 +63,12 @@ namespace RimMind.Application.Features.Flywheel
             while (_records.TryDequeue(out _)) { }
         }
 
+        public void Flush()
+        {
+        }
+
+        public List<TelemetryRecord> GetRecentRecords(int count = 100) => GetRecent(count);
+
         public void Dispose()
         {
             Clear();

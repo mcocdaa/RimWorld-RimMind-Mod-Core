@@ -18,7 +18,7 @@ namespace RimMind.Application.Features.Tools
         public void Register(IToolHandler handler)
         {
             if (handler == null) return;
-            _handlers[handler.Definition.Name] = handler;
+            _handlers[handler.Definition.Id] = handler;
         }
 
         public bool Unregister(string toolId)

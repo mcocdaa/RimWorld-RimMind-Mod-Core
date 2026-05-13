@@ -76,5 +76,31 @@ namespace RimMind.Application.Features.Flywheel
             foreach (var kvp in _defaults)
                 _parameters[kvp.Key] = kvp.Value;
         }
+
+        public (List<string> keys, List<float> values) GetSaveSnapshot()
+        {
+            var keys = new List<string>();
+            var values = new List<float>();
+            foreach (var kvp in _parameters)
+            {
+                keys.Add(kvp.Key);
+                values.Add(kvp.Value);
+            }
+            return (keys, values);
+        }
+
+        public void LoadFromSnapshot(List<string> keys, List<float> values)
+        {
+            _parameters.Clear();
+            if (keys != null && values != null)
+            {
+                for (int i = 0; i < System.Math.Min(keys.Count, values.Count); i++)
+                    _parameters[keys[i]] = values[i];
+            }
+        }
+
+        public void FinalizeInit()
+        {
+        }
     }
 }

@@ -2,6 +2,8 @@ using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
+using RimMind.Domain.Events;
+using RimMind.Presentation.Pipeline.Npc;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
 
@@ -20,30 +22,21 @@ namespace RimMind.Presentation.Llm
         {
             if (context == null || response == null) return;
 
-            if (context.Pawn != null)
+            var npcId = context.Request?.NpcId;
+            if (!string.IsNullOrEmpty(npcId))
             {
+                int pawnId = 0;
+                var idSpan = npcId.AsSpan();
+                if (idSpan.StartsWith("NPC-") && int.TryParse(idSpan.Slice(4), out var pid))
+                    pawnId = pid;
                 _eventBus.Publish(new ActionEvent(
-                    $"NPC-{context.Pawn.thingIDNumber}",
-                    context.Pawn.thingIDNumber,
+                    npcId,
+                    pawnId,
                     "chat_response",
+                    true,
                     "",
-                    true));
+                    response.RequestId));
             }
-        }
-
-        public Result<NpcChatResult, RimMindError> ToResult(AIResponse response)
-        {
-            if (response == null)
-                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.Internal("Null response"));
-
-            var result = new NpcChatResult
-            {
-                Content = response.Content ?? "",
-                FinishReason = response.FinishReason ?? "",
-                TokenUsage = response.Usage?.TotalTokens ?? 0,
-            };
-
-            return Result<NpcChatResult, RimMindError>.Ok(result);
         }
     }
 }

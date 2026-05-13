@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Domain.Events;
 using RimMind.Presentation.Runtime;
 using Verse;
 

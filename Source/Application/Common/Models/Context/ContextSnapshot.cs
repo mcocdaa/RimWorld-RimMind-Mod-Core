@@ -35,6 +35,7 @@ namespace RimMind.Application.Common.Models.Context
         public void InsertMessage(int index, ChatMessage msg) => _messages.Insert(index, msg);
         public void SetMessages(List<ChatMessage> messages) => _messages = messages;
         public void ClearMessages() => _messages.Clear();
+        public void RemoveMessageAt(int index) => _messages.RemoveAt(index);
         public void AddEntry(ContextEntry entry) => _allEntries.Add(entry);
         public void AddEntries(IEnumerable<ContextEntry> entries) => _allEntries.AddRange(entries);
         public void SetCacheHitEvent(string key, bool value) => _cacheHitEvents[key] = value;

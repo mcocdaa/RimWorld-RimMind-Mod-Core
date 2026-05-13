@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="$(GameVersion).*-*" PrivateAssets="All" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.*" />
   </ItemGroup>
 

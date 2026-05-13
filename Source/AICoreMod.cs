@@ -1,15 +1,15 @@
 using System;
 using HarmonyLib;
 using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Context;
 using RimMind.Presentation.Settings;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Context;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Features.Logging;
-using RimMind.Infrastructure.UI;
-using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Json;
+using RimMind.Application.Features.Flywheel;
 using UnityEngine;
 using Verse;
 
@@ -25,6 +25,7 @@ namespace RimMind.Presentation
 
             RimMindRuntime.Initialize();
             Settings = GetSettings<RimMindCoreSettings>();
+            RimMindServiceLocator.Register<ISettingsProvider>(new SettingsProvider(Settings));
 
             if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
             {

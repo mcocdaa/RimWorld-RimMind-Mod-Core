@@ -1,62 +1,77 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace RimMind.Application.Features.Json
 {
-    internal static class JsonTagExtractor
+    public static class JsonTagExtractor
     {
-        private static readonly Regex XmlTagRegex = new Regex(
-            @"<(\w+)[^>]*>(.*?)</\1>",
-            RegexOptions.Compiled | RegexOptions.Singleline);
+        public static Action<string>? OnWarning;
 
-        private static readonly Regex SelfClosingTagRegex = new Regex(
-            @"<(\w+)[^>]*/>",
-            RegexOptions.Compiled);
-
-        public static Dictionary<string, string> ExtractTags(string input)
+        private static void Warn(string message)
         {
-            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            if (string.IsNullOrEmpty(input)) return result;
+            OnWarning?.Invoke(message);
+        }
 
-            foreach (Match match in XmlTagRegex.Matches(input))
+        public static T? Extract<T>(string text, string tagName) where T : class
+        {
+            string? raw = ExtractRaw(text, tagName);
+            if (raw == null) return null;
+
+            try
             {
-                if (match.Groups.Count >= 3)
-                {
-                    string tagName = match.Groups[1].Value;
-                    string content = match.Groups[2].Value.Trim();
-                    result[tagName] = content;
-                }
+                return JsonConvert.DeserializeObject<T>(raw);
             }
+            catch (Exception ex)
+            {
+                Warn($"[RimMind-Core] JsonTagExtractor.Extract deserialization failed: {ex.Message}");
+                return null;
+            }
+        }
 
+        public static List<T> ExtractAll<T>(string text, string tagName) where T : class
+        {
+            var result = new List<T>();
+            foreach (var raw in ExtractAllRaw(text, tagName))
+            {
+                try
+                {
+                    var item = JsonConvert.DeserializeObject<T>(raw);
+                    if (item != null) result.Add(item);
+                }
+                catch (Exception ex) { Warn($"[RimMind-Core] JsonTagExtractor.ExtractAll deserialization failed: {ex.Message}"); }
+            }
             return result;
         }
 
-        public static string? ExtractTag(string input, string tagName)
+        public static string? ExtractRaw(string text, string tagName)
         {
-            if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(tagName)) return null;
-            var pattern = $@"<{tagName}[^>]*>(.*?)</{tagName}>";
-            var match = Regex.Match(input, pattern, RegexOptions.Singleline);
-            return match.Success ? match.Groups[1].Value.Trim() : null;
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(tagName))
+                return null;
+
+            var pattern = $@"<{Regex.Escape(tagName)}>([\s\S]*?)</{Regex.Escape(tagName)}>";
+            var match = Regex.Match(text, pattern, RegexOptions.Singleline);
+            if (!match.Success) return null;
+
+            string content = match.Groups[1].Value.Trim();
+            return string.IsNullOrEmpty(content) ? null : content;
         }
 
-        public static List<string> ExtractSelfClosingTags(string input)
+        public static List<string> ExtractAllRaw(string text, string tagName)
         {
             var result = new List<string>();
-            if (string.IsNullOrEmpty(input)) return result;
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(tagName))
+                return result;
 
-            foreach (Match match in SelfClosingTagRegex.Matches(input))
+            var pattern = $@"<{Regex.Escape(tagName)}>([\s\S]*?)</{Regex.Escape(tagName)}>";
+            foreach (Match match in Regex.Matches(text, pattern, RegexOptions.Singleline))
             {
-                result.Add(match.Groups[1].Value);
+                string content = match.Groups[1].Value.Trim();
+                if (!string.IsNullOrEmpty(content))
+                    result.Add(content);
             }
             return result;
-        }
-
-        public static string StripAllTags(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-            return Regex.Replace(input, @"<[^>]+>", "").Trim();
         }
     }
 }

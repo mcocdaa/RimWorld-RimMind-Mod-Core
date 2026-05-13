@@ -17,14 +17,14 @@ namespace RimMind.Presentation.Runtime
         private int _lastTick;
         private bool _initialized;
 
-        public RimMindRuntimeGameComponent(Game game) : base(game) { }
+        public RimMindRuntimeGameComponent(Game game) : base() { }
 
         public override void GameComponentTick()
         {
             base.GameComponentTick();
             if (!_initialized)
             {
-                RimMindRuntime.Instance.Initialize();
+                RimMindRuntime.Initialize();
                 _initialized = true;
             }
 

@@ -11,7 +11,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RimMind.Presentation.Api
+namespace RimMind.Presentation
 {
     public static partial class RimMindAPI
     {

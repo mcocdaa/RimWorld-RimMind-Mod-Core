@@ -1,4 +1,7 @@
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
 using System;
 using System.Collections.Concurrent;
@@ -6,11 +9,12 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
-using RimMind.Application.Features.Logging;
+using RimMind.Presentation;
+using RimMind.Presentation.Settings;
 using Verse;
 
 namespace RimMind.Infrastructure.Persistence

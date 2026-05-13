@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Domain.Events;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Agent;

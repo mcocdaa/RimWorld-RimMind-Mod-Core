@@ -17,6 +17,10 @@ namespace RimMind.Application.Features.Flywheel
             _log = log;
         }
 
+        public static void Analyze(List<TelemetryRecord> records)
+        {
+        }
+
         public List<ParameterRecommendation> Evaluate(Dictionary<string, float> metrics)
         {
             var recommendations = new List<ParameterRecommendation>();

@@ -80,7 +80,7 @@ namespace RimMind.Presentation.Runtime
             {
                 _activeCount--;
                 _activeRequests.RemoveAll(r => r.RequestId == item.Request.RequestId);
-                if (t.IsCompletedSuccessfully && t.Result != null && t.Result.IsOk)
+                if (t.IsCompletedSuccessfully && t.Result.IsOk && t.Result.Value != null)
                     item.OnComplete(t.Result.Value);
                 else
                     item.OnComplete(AIResponse.Ok(item.Request.RequestId, "", 0));

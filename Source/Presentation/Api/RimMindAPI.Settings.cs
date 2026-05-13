@@ -4,7 +4,7 @@ using RimMind.Application.Features.Flywheel;
 using RimMind.Presentation;
 using RimMind.Presentation.Runtime;
 
-namespace RimMind.Presentation.Api
+namespace RimMind.Presentation
 {
     public static partial class RimMindAPI
     {

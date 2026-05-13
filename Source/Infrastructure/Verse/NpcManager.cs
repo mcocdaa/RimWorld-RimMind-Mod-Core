@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Domain.Events;
 using RimMind.Presentation;
 using Verse;
 

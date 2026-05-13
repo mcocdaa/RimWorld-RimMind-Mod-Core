@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Presentation.Pipeline.AI;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Presentation.Runtime

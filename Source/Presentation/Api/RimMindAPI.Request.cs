@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Verse;
 
-namespace RimMind.Presentation.Api
+namespace RimMind.Presentation
 {
     public static partial class RimMindAPI
     {

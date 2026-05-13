@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Presentation;
 using System.Collections.Generic;

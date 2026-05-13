@@ -78,5 +78,32 @@ namespace RimMind.Application.Features.Json
         {
             return obj.TryGetValue(key, out var token) ? token.Value<bool>() : defaultValue;
         }
+
+        public static string? ExtractString(string json, string propertyName)
+        {
+            try
+            {
+                var obj = JObject.Parse(json);
+                return obj.TryGetValue(propertyName, out var token) ? token.Value<string>() : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static int? ExtractNullableInt(string json, string propertyName)
+        {
+            try
+            {
+                var obj = JObject.Parse(json);
+                if (!obj.TryGetValue(propertyName, out var token)) return null;
+                return token.Value<int>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

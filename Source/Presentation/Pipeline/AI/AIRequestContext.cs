@@ -19,6 +19,11 @@ namespace RimMind.Presentation.Pipeline.AI
 
         public AIRequestContext() : base() { }
 
+        public AIRequestContext(IAIClient client) : base()
+        {
+            Client = client;
+        }
+
         public void Reset(IAIClient client)
         {
             Request = null!;

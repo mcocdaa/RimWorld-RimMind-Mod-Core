@@ -48,6 +48,10 @@ namespace RimMind.Presentation.Agent
             _maxBehaviorHistory = RimMindCoreMod.Settings?.behaviorHistoryMax ?? 100;
         }
 
+        public PawnAgent(Pawn pawn, IEventBus eventBus) : this(pawn)
+        {
+        }
+
         public void Tick()
         {
             if (State != AgentState.Active) return;
