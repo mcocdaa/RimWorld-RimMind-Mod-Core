@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Threading;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Runtime;
-using RimMind.Domain.Events.Internal;
-using RimMind.Domain.Events.Abstractions;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Features.Logging;
 using Xunit;
 

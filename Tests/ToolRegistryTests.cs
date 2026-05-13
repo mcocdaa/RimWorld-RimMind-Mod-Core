@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Features.Tools;
 using Xunit;

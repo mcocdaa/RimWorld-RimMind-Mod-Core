@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Features.Pipeline.AI;
 using RimMind.Application.Features.Tools;

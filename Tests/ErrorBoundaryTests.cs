@@ -1,13 +1,13 @@
 using System;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Events.Internal;
-using RimMind.Domain.Events.Npc;
-using RimMind.Infrastructure.Client;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Infrastructure.Services.Clients;
 using RimMind.Presentation.Settings;
 using RimMind.Presentation.Runtime;
 using Xunit;
 
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Presentation.Tests
 {

@@ -2,17 +2,17 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Runtime;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Context;
-using RimMind.Domain.Events.Context;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Registry;
 using Xunit;
 
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Presentation.Tests
 {

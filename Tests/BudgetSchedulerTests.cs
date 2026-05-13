@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using RimMind.Domain.Events.Context;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Features.Context;
 using Xunit;
 

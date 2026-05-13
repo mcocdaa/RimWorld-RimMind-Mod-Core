@@ -1,7 +1,7 @@
 using System;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Features.Context;
-using RimMind.Domain.Events.Context;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Features.Flywheel;
 using Verse;

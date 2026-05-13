@@ -1,6 +1,6 @@
 using System;
 using RimMind.Presentation.Runtime;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Json;
 using Xunit;
 

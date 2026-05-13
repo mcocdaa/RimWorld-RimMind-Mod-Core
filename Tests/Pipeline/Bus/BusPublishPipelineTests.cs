@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Domain.Events;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Pipeline;
 using Xunit;

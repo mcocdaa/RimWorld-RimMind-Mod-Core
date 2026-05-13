@@ -4,11 +4,7 @@ using System.Linq;
 
 namespace UnityEngine
 {
-    public struct Rect
-    {
-        public float x, y, width, height;
-        public Rect(float x, float y, float width, float height) { this.x = x; this.y = y; this.width = width; this.height = height; }
-    }
+
 
     public struct Vector2
     {
@@ -431,6 +427,7 @@ namespace Verse
     public class Window
     {
         public virtual UnityEngine.Vector2 InitialSize => new UnityEngine.Vector2(500f, 400f);
+        public virtual void DoWindowContents(UnityEngine.Rect canvas) { }
     }
 
     public class Dialog_MessageBox : Window
@@ -678,5 +675,34 @@ namespace RimWorld
     public static class EffecterDefOf
     {
         public static Verse.Def? Construction;
+    }
+
+    public class InspirationDef : Verse.Def { }
+    public class IncidentDef : Verse.Def { }
+    public class InteractionDef : Verse.Def { }
+    public class MentalStateDef : Verse.Def { }
+    public class WorkTypeDef : Verse.Def { }
+    public class ThoughtDef : Verse.Def { }
+
+    public enum DebugActionType { Action, ToolMap, ToolWorld }
+
+    [System.AttributeUsage(System.AttributeTargets.Method)]
+    public class DebugActionAttribute : System.Attribute
+    {
+        public string Name;
+        public DebugActionType ActionType;
+        public DebugActionAttribute(string name, DebugActionType actionType = DebugActionType.Action) { Name = name; ActionType = actionType; }
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Method | System.AttributeTargets.Class)]
+    public class StaticConstructorOnStartupAttribute : System.Attribute { }
+}
+
+namespace HarmonyLib
+{
+    public class Harmony
+    {
+        public Harmony(string id) { }
+        public void PatchAll() { }
     }
 }

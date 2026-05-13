@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using RimMind.Domain.Events.Extension;
+using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Application.Features.Pipeline.Common;
+using RimMind.Application.Common.Behaviours;
 using RimMind.Application.Features.Pipeline;
 using Xunit;
 

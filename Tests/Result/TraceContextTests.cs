@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 using Xunit;
 
 namespace RimMind.Presentation.Tests.Result

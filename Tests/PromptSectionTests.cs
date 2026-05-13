@@ -1,4 +1,4 @@
-using RimMind.Domain.Events.Prompt;
+using RimMind.Application.Common.Models.Prompt;
 using Xunit;
 
 namespace RimMind.Presentation.Tests

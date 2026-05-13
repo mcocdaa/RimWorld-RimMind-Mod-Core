@@ -1,5 +1,5 @@
 using RimMind.Application.Features.Context;
-using RimMind.Domain.Events.Context;
+using RimMind.Application.Common.Interfaces.Context;
 using Xunit;
 
 namespace RimMind.Presentation.Tests

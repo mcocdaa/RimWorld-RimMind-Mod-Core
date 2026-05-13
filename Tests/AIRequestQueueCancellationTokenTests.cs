@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Infrastructure.Client;
+using RimMind.Infrastructure.Services.Clients;
 using RimMind.Presentation.Runtime;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Queue;
 using Verse;
 using Xunit;
 
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Presentation.Tests
 {

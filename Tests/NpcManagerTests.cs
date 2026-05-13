@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Runtime;
-using RimMind.Domain.Events.Internal;
-using RimMind.Domain.Events.Npc;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Infrastructure.Verse;
 using Verse;
 using Xunit;

@@ -5,7 +5,7 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Abstractions;
-using RimMind.Domain.ValueObjects;
+using NpcHistoryEntry = RimMind.Application.Common.Models.Npc.HistoryEntry;
 
 namespace RimMind.Presentation.Context
 {
@@ -21,8 +21,8 @@ namespace RimMind.Presentation.Context
             }
         }
 
-        private readonly ConcurrentDictionary<string, List<HistoryEntry>> _histories =
-            new ConcurrentDictionary<string, List<HistoryEntry>>();
+        private readonly ConcurrentDictionary<string, List<NpcHistoryEntry>> _histories =
+            new ConcurrentDictionary<string, List<NpcHistoryEntry>>();
         private readonly object _listLock = new object();
 
         private const int MaxEntriesPerNpc = 200;

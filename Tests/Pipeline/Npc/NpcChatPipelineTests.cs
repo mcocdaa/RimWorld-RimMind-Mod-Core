@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Domain.Events.Npc;
-using RimMind.Domain.Events.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Pipeline.Npc;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Features.Context;
-using RimMind.Domain.Events.Context;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Features.Pipeline;
 using Xunit;
 

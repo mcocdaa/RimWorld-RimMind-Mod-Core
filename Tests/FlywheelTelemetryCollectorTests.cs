@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using RimMind.Domain.Events.Runtime;
+using RimMind.Application.Common.Interfaces.Runtime;
 using RimMind.Application.Features.Flywheel;
 using Xunit;
 

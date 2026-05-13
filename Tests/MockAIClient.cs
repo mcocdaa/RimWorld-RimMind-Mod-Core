@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Domain.Events;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Events.Result;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Presentation.Tests
 {
