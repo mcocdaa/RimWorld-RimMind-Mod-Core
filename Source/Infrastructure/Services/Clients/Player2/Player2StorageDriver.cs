@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,9 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Queue;
 using RimMind.Application.Features.Pipeline.AI;
+using RimMind.Core.Agent;
 using RimMind.Presentation.Agent;
+using RimMind.Presentation.Llm;
 using RimMind.Infrastructure.Persistence;
 using RimMind.Presentation;
 using Verse;

@@ -34,7 +34,7 @@ using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
-    internal sealed class RimMindRuntime : IRimMindRuntime
+    public sealed class RimMindRuntime : IRimMindRuntime
     {
         private static RimMindRuntime? _instance;
         private static readonly object _initLock = new object();

@@ -5,7 +5,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 
 namespace RimMind.Application.Features.Registry
 {
-    internal sealed class ExtensionRegistry<T> : IExtensionRegistry<T>
+    public sealed class ExtensionRegistry<T> : IExtensionRegistry<T>
         where T : class, IExtension
     {
         private readonly ConcurrentDictionary<string, T> _extensions

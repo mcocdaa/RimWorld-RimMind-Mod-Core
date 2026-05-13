@@ -7,11 +7,13 @@ using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Sensor;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Features.Flywheel;
+using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Runtime;
@@ -21,6 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ClientTrackedRequest = RimMind.Application.Common.Models.Client.TrackedRequest;
+using UIRequestEntry = RimMind.Application.Common.Models.UI.RequestEntry;
 
 namespace RimMind.Presentation
 {
@@ -44,8 +48,8 @@ namespace RimMind.Presentation
         public static void PauseQueue() => Request.PauseQueue();
         public static void ResumeQueue() => Request.ResumeQueue();
         public static int ActiveRequestCount => Request.ActiveRequestCount;
-        public static IReadOnlyList<TrackedRequest> GetActiveRequests() => Request.GetActiveRequests();
-        public static IReadOnlyList<TrackedRequest> GetAllQueuedRequests() => Request.GetAllQueuedRequests();
+        public static IReadOnlyList<ClientTrackedRequest> GetActiveRequests() => Request.GetActiveRequests();
+        public static IReadOnlyList<ClientTrackedRequest> GetAllQueuedRequests() => Request.GetAllQueuedRequests();
         public static int TotalQueuedCount => Request.TotalQueuedCount;
         public static void ClearModCooldown(string modId) => Request.ClearModCooldown(modId);
 
@@ -92,8 +96,8 @@ namespace RimMind.Presentation
 
         public static IEventBus GetEventBus() => Bus.GetEventBus();
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f) => Bus.PublishPerception(pawnId, type, content, importance);
-        public static void RegisterPendingRequest(RequestEntry entry) => Bus.RegisterPendingRequest(entry);
-        public static IReadOnlyList<RequestEntry> GetPendingRequests() => Bus.GetPendingRequests();
+        public static void RegisterPendingRequest(UIRequestEntry entry) => Bus.RegisterPendingRequest(entry);
+        public static IReadOnlyList<UIRequestEntry> GetPendingRequests() => Bus.GetPendingRequests();
         internal static IAIClient? GetClient() => Bus.GetClient();
         public static void InvalidateClientCache() => Bus.InvalidateClientCache();
         public static Player2Client? GetPlayer2Client() => Bus.GetPlayer2Client();

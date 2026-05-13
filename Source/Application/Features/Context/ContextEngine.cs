@@ -8,7 +8,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class ContextEngine : IContextEngine
+    public sealed class ContextEngine : IContextEngine
     {
         private readonly IContextCacheManager _cache;
         private readonly IContextDiffTracker _diff;
@@ -19,6 +19,8 @@ namespace RimMind.Application.Features.Context
         private readonly EmbeddingSnapshotStore _embeddingStore;
         private readonly ILogSink? _log;
         private bool _disposed;
+
+        public object? Orchestrator { get; set; }
 
         public ContextEngine(
             IContextCacheManager cache,
@@ -38,6 +40,18 @@ namespace RimMind.Application.Features.Context
             _scheduler = scheduler;
             _embeddingStore = embeddingStore;
             _log = log;
+        }
+
+        public ContextEngine(IHistoryManager historyManager)
+        {
+            _historyManager = historyManager;
+            _cache = new DefaultContextCacheManager();
+            _diff = new DefaultContextDiffTracker();
+            _layerBuilder = new DefaultContextLayerBuilder();
+            _keyProvider = new DefaultContextKeyProvider();
+            _scheduler = new DefaultBudgetScheduler();
+            _embeddingStore = new EmbeddingSnapshotStore();
+            _log = null;
         }
 
         public ContextSnapshot? BuildSnapshot(ContextRequest request)
@@ -77,5 +91,61 @@ namespace RimMind.Application.Features.Context
                 _disposed = true;
             }
         }
+    }
+
+    internal sealed class DefaultContextCacheManager : IContextCacheManager
+    {
+        public int GetL0CacheCount() => 0;
+        public int GetL1BlockCacheCount() => 0;
+        public int GetEmbedCacheCount() => 0;
+        public void Reset() { }
+        public void TouchCache(string cacheKey) { }
+        public void RemoveL0CacheForNpc(string npcId) { }
+        public void InvalidateLayer(string npcId, ContextLayer layer) { }
+        public void InvalidateKey(string npcId, string key) { }
+        public void UpdateBaseline(string npcId) { }
+        public void InvalidateNpc(string npcId) { }
+    }
+
+    internal sealed class DefaultContextDiffTracker : IContextDiffTracker
+    {
+        public int GetDiffStoreCount() => 0;
+        public void Reset() { }
+    }
+
+    internal sealed class DefaultContextLayerBuilder : IContextLayerBuilder
+    {
+    }
+
+    internal sealed class DefaultContextKeyProvider : IContextKeyProvider
+    {
+        public List<ContextEntry> BuildMapContextEntries(object map) => new List<ContextEntry>();
+        public string ExtractPawnBaseInfo(object pawn) => "";
+        public string ExtractFixedRelations(object pawn) => "";
+        public string ExtractIdeology(object pawn) => "";
+        public string ExtractSkillsSummary(object pawn) => "";
+        public string ExtractCurrentArea(object pawn) => "";
+        public string ExtractWeather(object pawn) => "";
+        public string ExtractTimeOfDay(object pawn) => "";
+        public string ExtractNearbyPawns(object pawn) => "";
+        public string ExtractSeason(object pawn) => "";
+        public string ExtractColonyStatus(object pawn) => "";
+        public string ExtractHealth(object pawn) => "";
+        public string ExtractMood(object pawn) => "";
+        public string ExtractCurrentJob(object pawn) => "";
+        public string ExtractCombatStatus(object pawn) => "";
+        public string ExtractTargetInfo(object pawn) => "";
+        public string ExtractTaskProgress(object pawn) => "";
+    }
+
+    internal sealed class DefaultBudgetScheduler : IBudgetScheduler
+    {
+        public BudgetAllocation Schedule(List<KeyMeta> keys, string scenarioId, float budget, string? currentQuery)
+            => new BudgetAllocation();
+        public void OnKeyUpdated(KeyMeta key) { }
+        public void Calibrate(List<KeyMeta> keys) { }
+        public void SetRelevanceProvider(IRelevanceProvider provider) { }
+        public void SetConfig(BudgetSchedulerConfig? config) { }
+        public BudgetSchedulerConfig GetConfig() => new BudgetSchedulerConfig();
     }
 }

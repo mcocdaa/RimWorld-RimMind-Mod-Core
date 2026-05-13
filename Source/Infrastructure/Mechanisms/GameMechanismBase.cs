@@ -10,6 +10,8 @@ using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using Verse;
+using VersePawn = Verse.Pawn;
+using VerseMap = Verse.Map;
 
 namespace RimMind.Infrastructure.Mechanisms
 {
@@ -60,7 +62,7 @@ namespace RimMind.Infrastructure.Mechanisms
         public virtual Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
             => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "watch")));
 
-        protected static Pawn? FindPawn(int pawnId)
+        protected static VersePawn? FindPawn(int pawnId)
         {
             foreach (var map in Find.Maps)
             {
@@ -78,7 +80,7 @@ namespace RimMind.Infrastructure.Mechanisms
             return DefDatabase<TDef>.GetNamed(defName);
         }
 
-        protected static Map? ResolveMap(MechanismReadArgs args)
+        protected static VerseMap? ResolveMap(MechanismReadArgs args)
         {
             if (args.MapId.HasValue)
             {
@@ -92,7 +94,7 @@ namespace RimMind.Infrastructure.Mechanisms
             return Find.AnyPlayerHomeMap;
         }
 
-        protected static Map? ResolveMap(MechanismWriteArgs args)
+        protected static VerseMap? ResolveMap(MechanismWriteArgs args)
         {
             if (args.MapId.HasValue)
             {
@@ -106,7 +108,7 @@ namespace RimMind.Infrastructure.Mechanisms
             return Find.AnyPlayerHomeMap;
         }
 
-        protected static Result<T, RimMindError> ValidateMapOrErr<T>(Map? map)
+        protected static Result<T, RimMindError> ValidateMapOrErr<T>(VerseMap? map)
         {
             if (map == null)
                 return Result<T, RimMindError>.Err(RimMindErrors.MapNotFound(0));

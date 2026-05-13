@@ -9,7 +9,7 @@ using RimMind.Application.Common.Models.Client;
 
 namespace RimMind.Application.Features.Queue
 {
-    internal sealed class AIRequestQueueImpl : IAIRequestQueue
+    public sealed class AIRequestQueueImpl : IAIRequestQueue
     {
         private readonly ConcurrentQueue<TrackedRequest> _queue = new ConcurrentQueue<TrackedRequest>();
         private readonly ConcurrentDictionary<string, TrackedRequest> _active = new ConcurrentDictionary<string, TrackedRequest>();
@@ -113,6 +113,18 @@ namespace RimMind.Application.Features.Queue
         {
             if (isWarning) _log?.Warning(msg);
             else _log?.Message(msg);
+        }
+
+        public static void LogFromBackground(string msg, bool isWarning = false)
+        {
+            try
+            {
+                if (isWarning)
+                    Verse.Log.Warning($"[RimMind-Core] {msg}");
+                else
+                    Verse.Log.Message($"[RimMind-Core] {msg}");
+            }
+            catch { }
         }
 
         private TrackedRequest CreateTrackedRequest(AIRequest request, Action<AIResponse> callback, IAIClient client)

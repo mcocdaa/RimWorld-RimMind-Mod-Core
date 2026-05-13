@@ -6,7 +6,7 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 
 namespace RimMind.Application.Features.Flywheel
 {
-    internal sealed class FlywheelTelemetryCollector
+    public sealed class FlywheelTelemetryCollector : IDisposable
     {
         private readonly ConcurrentQueue<TelemetryRecord> _records
             = new ConcurrentQueue<TelemetryRecord>();
@@ -61,6 +61,11 @@ namespace RimMind.Application.Features.Flywheel
         public void Clear()
         {
             while (_records.TryDequeue(out _)) { }
+        }
+
+        public void Dispose()
+        {
+            Clear();
         }
     }
 

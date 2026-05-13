@@ -7,7 +7,7 @@ using RimMind.Application.Common.Models.Tools;
 
 namespace RimMind.Application.Features.Tools
 {
-    internal sealed class ToolRegistry : IToolRegistry
+    public sealed class ToolRegistry : IToolRegistry
     {
         private readonly ConcurrentDictionary<string, IToolHandler> _handlers
             = new ConcurrentDictionary<string, IToolHandler>();

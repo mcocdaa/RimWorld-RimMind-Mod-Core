@@ -5,7 +5,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace RimMind.Application.Features.Json
 {
-    internal static class JsonHelpers
+    public static class JsonHelpers
     {
         private static readonly JsonSerializerSettings DefaultSettings = new JsonSerializerSettings
         {

@@ -1,4 +1,5 @@
-﻿using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Npc;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse

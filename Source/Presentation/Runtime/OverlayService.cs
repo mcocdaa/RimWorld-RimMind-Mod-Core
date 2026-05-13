@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.UI;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
-    public class OverlayService
+    public class OverlayService : IOverlayService
     {
         private readonly List<RequestEntry> _pendingRequests = new List<RequestEntry>();
         private const int MaxEntries = 50;
@@ -35,15 +36,5 @@ namespace RimMind.Presentation.Runtime
                 _pendingRequests.RemoveAll(e => e.ExpireAtTicks > 0 && now > e.ExpireAtTicks);
             }
         }
-    }
-
-    public class RequestEntry
-    {
-        public string RequestId = "";
-        public string ModId = "";
-        public AIRequestPriority Priority;
-        public int EnqueuedTick;
-        public int ExpireAtTicks;
-        public string Status = "Pending";
     }
 }

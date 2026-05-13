@@ -76,12 +76,12 @@ namespace RimMind.Presentation.Runtime
         private void ProcessRequest(QueuedRequest item)
         {
             _activeRequests.Add(new TrackedRequest(item.Request.RequestId, item.Request.ModId, item.Request.Priority, "Active"));
-            item.Client.SendAsync(item.Request, CancellationToken.None).ContinueWith(t =>
+            item.Client.SendAsync(item.Request).ContinueWith(t =>
             {
                 _activeCount--;
                 _activeRequests.RemoveAll(r => r.RequestId == item.Request.RequestId);
-                if (t.IsCompletedSuccessfully && t.Result != null)
-                    item.OnComplete(t.Result);
+                if (t.IsCompletedSuccessfully && t.Result != null && t.Result.IsOk)
+                    item.OnComplete(t.Result.Value);
                 else
                     item.OnComplete(AIResponse.Ok(item.Request.RequestId, "", 0));
             });
@@ -99,22 +99,6 @@ namespace RimMind.Presentation.Runtime
                 OnComplete = onComplete;
                 Client = client;
             }
-        }
-    }
-
-    public class TrackedRequest
-    {
-        public string RequestId;
-        public string ModId;
-        public AIRequestPriority Priority;
-        public string Status;
-
-        public TrackedRequest(string requestId, string modId, AIRequestPriority priority, string status)
-        {
-            RequestId = requestId;
-            ModId = modId;
-            Priority = priority;
-            Status = status;
         }
     }
 }

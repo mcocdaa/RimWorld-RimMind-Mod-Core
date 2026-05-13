@@ -1,4 +1,6 @@
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Npc;
 using System;
 using System.Collections.Generic;
 using System.Threading;

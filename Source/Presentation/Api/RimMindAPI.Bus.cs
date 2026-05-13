@@ -1,6 +1,7 @@
 using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Models.UI;
 using RimMind.Presentation.Perception;
 using RimMind.Presentation.Runtime;
 using System.Collections.Generic;
@@ -15,6 +16,12 @@ namespace RimMind.Presentation.Api
 
             public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
                 => PerceptionBridge.PublishPerception(pawnId, type, content, importance, GetEventBus());
+
+            public static void RegisterPendingRequest(RequestEntry entry)
+                => RimMindRuntime.Instance.OverlayService.RegisterPendingRequest(entry);
+
+            public static IReadOnlyList<RequestEntry> GetPendingRequests()
+                => RimMindRuntime.Instance.OverlayService.GetPendingRequests();
 
             internal static IAIClient? GetClient()
                 => RimMindRuntime.Instance.GetClient();

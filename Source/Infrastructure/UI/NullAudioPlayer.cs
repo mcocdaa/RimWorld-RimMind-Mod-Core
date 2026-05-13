@@ -1,9 +1,9 @@
-﻿using RimMind.Application.Common.Interfaces.UI;
+using RimMind.Application.Common.Interfaces.UI;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    internal sealed class NullAudioPlayer : IAudioPlayer
+    public sealed class NullAudioPlayer : IAudioPlayer
     {
         public void PlayAudio(string audioUrl)
         {

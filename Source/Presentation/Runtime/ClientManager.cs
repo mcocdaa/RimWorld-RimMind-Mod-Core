@@ -1,5 +1,6 @@
 using System;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.Services.Clients.Player2;
@@ -7,7 +8,7 @@ using RimMind.Presentation.Settings;
 
 namespace RimMind.Presentation.Runtime
 {
-    public class ClientManager
+    public class ClientManager : IClientManager
     {
         private IAIClient? _client;
         private Player2Client? _player2Client;
@@ -43,11 +44,20 @@ namespace RimMind.Presentation.Runtime
             if (s.provider != AIProvider.Player2) return null;
 
             if (_player2Client != null) return _player2Client;
-            _player2Client = new Player2Client(s.player2RemoteUrl);
+            try
+            {
+                _player2Client = Player2Client.CreateAsync(s).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                RimMind.Application.Features.Queue.AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
+            }
             return _player2Client;
         }
 
-        public void Invalidate()
+        object? IClientManager.GetPlayer2Client() => GetPlayer2Client();
+
+        public void InvalidateCache()
         {
             _client = null;
             _player2Client = null;

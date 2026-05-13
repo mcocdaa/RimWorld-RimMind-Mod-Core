@@ -1,6 +1,7 @@
 using System;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Common;
 
 namespace RimMind.Application.Common.Models.Client
 {
@@ -16,5 +17,20 @@ namespace RimMind.Application.Common.Models.Client
         public int StartedProcessingAtTick;
         public int AttemptCount;
         public int MaxAttempts;
+
+        public string RequestId;
+        public string ModId;
+        public AIRequestPriority Priority;
+        public string Status;
+
+        public TrackedRequest() { }
+
+        public TrackedRequest(string requestId, string modId, AIRequestPriority priority, string status)
+        {
+            RequestId = requestId;
+            ModId = modId;
+            Priority = priority;
+            Status = status;
+        }
     }
 }

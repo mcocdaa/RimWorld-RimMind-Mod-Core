@@ -6,7 +6,7 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 
 namespace RimMind.Application.Features.Flywheel
 {
-    internal sealed class FlywheelParameterStore : IFlywheelParameterStore
+    public sealed class FlywheelParameterStore : IFlywheelParameterStore
     {
         private readonly ConcurrentDictionary<string, float> _parameters
             = new ConcurrentDictionary<string, float>();

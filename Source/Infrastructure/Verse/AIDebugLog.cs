@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.Client;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Presentation;
 using Verse;
 

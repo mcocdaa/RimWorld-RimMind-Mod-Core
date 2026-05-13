@@ -93,6 +93,9 @@ namespace RimMind.Presentation.Api
             public static void PauseQueue() => RimMindRuntime.Instance.Queue?.PauseQueue();
             public static void ResumeQueue() => RimMindRuntime.Instance.Queue?.ResumeQueue();
             public static int ActiveRequestCount => RimMindRuntime.Instance.Queue?.ActiveRequestCount ?? 0;
+            public static IReadOnlyList<TrackedRequest> GetActiveRequests() => RimMindRuntime.Instance.Queue?.GetActiveRequests() ?? new List<TrackedRequest>();
+            public static IReadOnlyList<TrackedRequest> GetAllQueuedRequests() => RimMindRuntime.Instance.Queue?.GetAllQueuedRequests() ?? new List<TrackedRequest>();
+            public static int TotalQueuedCount => RimMindRuntime.Instance.Queue?.TotalQueuedCount ?? 0;
 
             public static void ClearModCooldown(string modId) => RimMindRuntime.Instance.Queue?.ClearCooldown(modId);
         }
