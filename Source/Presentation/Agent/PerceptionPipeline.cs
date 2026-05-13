@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Application.Common.Interfaces.Perception;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 

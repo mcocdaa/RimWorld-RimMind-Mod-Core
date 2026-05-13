@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using RimMind.Application.Common.Models.Pipeline;
 
 namespace RimMind.Presentation.Agent

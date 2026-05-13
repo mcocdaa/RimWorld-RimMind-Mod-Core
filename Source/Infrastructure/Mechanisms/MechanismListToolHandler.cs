@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Models.Mechanisms;
+using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Features.Json;

@@ -1,5 +1,5 @@
-﻿using RimMind.Application.Common.Interfaces.UI;
-using RimMind.Core;
+using RimMind.Application.Common.Interfaces.UI;
+using RimMind.Presentation;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;

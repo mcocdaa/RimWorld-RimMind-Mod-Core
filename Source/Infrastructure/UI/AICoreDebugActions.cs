@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Linq;
-using RimMind.Core.Agent;
+using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Domain.ValueObjects;
@@ -11,7 +11,7 @@ using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Features.Logging;
-using RimMind.Core;
+using RimMind.Presentation;
 using LudeonTK;
 using RimWorld;
 using Verse;
@@ -266,7 +266,7 @@ namespace RimMind.Infrastructure.UI
                 return;
             }
 
-            var comp = RimMind.Adapters.Verse.CompPawnAgent.GetComp(pawn);
+            var comp = RimMind.Infrastructure.Verse.CompPawnAgent.GetComp(pawn);
             if (comp == null || comp.Agent == null)
             {
                 RimMindErrors.Warn($"[RimMind-Core] {pawn.Name?.ToStringShort} has no PawnAgent comp.");

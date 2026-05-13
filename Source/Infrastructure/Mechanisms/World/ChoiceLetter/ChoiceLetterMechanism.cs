@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Models.Mechanisms;
+using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using Verse;
 using RimWorld;

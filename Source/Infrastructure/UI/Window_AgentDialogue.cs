@@ -1,9 +1,9 @@
-using RimMind.Core.Agent;
+using RimMind.Presentation.Agent;
 using RimMind.Infrastructure.Verse;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.ValueObjects;
-using RimMind.Core;
+using RimMind.Presentation;
 using UnityEngine;
 using Verse;
 

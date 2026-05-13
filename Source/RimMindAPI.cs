@@ -1,26 +1,28 @@
-using RimMind.Contracts;
-using RimMind.Contracts.Client;
-using RimMind.Contracts.Context;
-using RimMind.Contracts.Extension;
-using RimMind.Contracts.Internal;
-using RimMind.Contracts.Mechanisms;
-using RimMind.Contracts.Npc;
-using RimMind.Contracts.Result;
-using RimMind.Contracts.Sensor;
-using RimMind.Contracts.Tools;
-using RimMind.Contracts.UI;
-using RimMind.Adapters.Client.Player2;
-using RimMind.Core.Agent;
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Context;
-using RimMind.Kernel.Flywheel;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Common.Models.Sensor;
+using RimMind.Application.Common.Models.Tools;
+using RimMind.Application.Common.Models.UI;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Infrastructure.Services.Clients.Player2;
+using RimMind.Presentation.Agent;
+using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Settings;
 using Verse;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RimMind.Core
+namespace RimMind.Presentation
 {
     public static partial class RimMindAPI
     {

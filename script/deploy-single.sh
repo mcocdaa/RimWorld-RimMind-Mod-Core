@@ -115,7 +115,7 @@ fi
 # 部署
 echo "=== Deploying $MOD_NAME -> $RIMWORLD_MODS/$MOD_NAME ==="
 if ! rsync -a --delete \
-	--exclude='Sources/' \
+	--exclude='Source/' \
 	--exclude='Tests/' \
 	--exclude='*.csproj' \
 	--exclude='*.user' \

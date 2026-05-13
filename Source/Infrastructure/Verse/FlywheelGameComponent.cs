@@ -1,6 +1,6 @@
-﻿using System;
-using RimMind.Core;
-using RimMind.Core.Runtime;
+using System;
+using RimMind.Presentation;
+using RimMind.Presentation.Runtime;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Flywheel;
 using Verse;

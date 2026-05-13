@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Core;
+using RimMind.Presentation;
 using RimMind.Infrastructure.Services.Clients.OpenAI;
 using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Application.Common.Interfaces.Internal;

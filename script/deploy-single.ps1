@@ -111,8 +111,18 @@ if ($ModName -eq "RimMind-Core") {
 $DestDir = Join-Path $RimWorldMods $ModName
 Write-Host "=== Deploying $ModName -> $DestDir ===" -ForegroundColor Cyan
 
-$Exclude = @('Sources', 'Tests', '*.csproj', '*.user', 'obj', '.git', '.gitignore', 'script')
-$SourceItems = Get-ChildItem -Path $ModDir -Exclude $Exclude
+$ExcludeDirs = @('Source', 'Tests', 'obj', '.git', 'script')
+$ExcludeFiles = @('*.csproj', '*.user', '.gitignore')
+$SourceItems = Get-ChildItem -Path $ModDir | Where-Object {
+    $item = $_
+    if ($item.PSIsContainer -and $ExcludeDirs -contains $item.Name) { return $false }
+    if (-not $item.PSIsContainer) {
+        foreach ($pattern in $ExcludeFiles) {
+            if ($item.Name -like $pattern) { return $false }
+        }
+    }
+    return $true
+}
 
 if (Test-Path $DestDir) {
     Get-ChildItem -Path $DestDir | Remove-Item -Recurse -Force

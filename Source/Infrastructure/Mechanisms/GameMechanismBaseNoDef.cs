@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Models.Mechanisms;
+using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using Verse;
 
@@ -44,7 +46,7 @@ namespace RimMind.Infrastructure.Mechanisms
         public virtual Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
             => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "watch")));
 
-        protected static Verse.Pawn? FindPawn(int pawnId)
+        protected static Pawn? FindPawn(int pawnId)
         {
             foreach (var map in Find.Maps)
             {
@@ -56,7 +58,7 @@ namespace RimMind.Infrastructure.Mechanisms
             return worldPawn;
         }
 
-        protected static Verse.Map? ResolveMap(MechanismReadArgs args)
+        protected static Map? ResolveMap(MechanismReadArgs args)
         {
             if (args.MapId.HasValue)
             {
@@ -70,7 +72,7 @@ namespace RimMind.Infrastructure.Mechanisms
             return Find.AnyPlayerHomeMap;
         }
 
-        protected static Verse.Map? ResolveMap(MechanismWriteArgs args)
+        protected static Map? ResolveMap(MechanismWriteArgs args)
         {
             if (args.MapId.HasValue)
             {

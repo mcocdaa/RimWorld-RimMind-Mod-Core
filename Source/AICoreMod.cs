@@ -1,21 +1,19 @@
 using System;
 using HarmonyLib;
-using RimMind.Contracts.Extension;
-using RimMind.Contracts.Settings;
-
-using RimMind.Contracts.Result;
-using RimMind.Kernel.Context;
-using RimMind.Contracts.Context;
-
-using RimMind.Core.Runtime;
-using RimMind.Kernel.Logging;
-using RimMind.Adapters.UI;
-using RimMind.Kernel.Flywheel;
-using RimMind.Kernel.Json;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Presentation.Settings;
+using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Context;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Presentation.Runtime;
+using RimMind.Application.Features.Logging;
+using RimMind.Infrastructure.UI;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Features.Json;
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Core
+namespace RimMind.Presentation
 {
     public class RimMindCoreMod : Mod
     {
@@ -79,29 +77,29 @@ namespace RimMind.Core
         public static void AssertAssembliesLoaded()
         {
             var loaded = AppDomain.CurrentDomain.GetAssemblies();
-            var contracts = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "0_RimMindContracts");
-            var kernel = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "1_RimMindKernel");
+            var domain = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "0_RimMindDomain");
+            var application = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "1_RimMindApplication");
 
-            if (contracts == null)
+            if (domain == null)
             {
-                var msg = "[RimMind-Core] FATAL: 0_RimMindContracts.dll not loaded. " +
+                var msg = "[RimMind-Core] FATAL: 0_RimMindDomain.dll not loaded. " +
                           "Check that the dll exists in Assemblies/ folder. " +
                           "If you upgraded from v1.x, please subscribe to the new mod files.";
                 RimMindErrors.Error(msg);
                 throw new System.InvalidOperationException(msg);
             }
 
-            if (kernel == null)
+            if (application == null)
             {
-                var msg = "[RimMind-Core] FATAL: 1_RimMindKernel.dll not loaded. " +
+                var msg = "[RimMind-Core] FATAL: 1_RimMindApplication.dll not loaded. " +
                           "Check that the dll exists in Assemblies/ folder.";
                 RimMindErrors.Error(msg);
                 throw new System.InvalidOperationException(msg);
             }
 
             Log.Message($"[RimMind-Core] Assemblies loaded: " +
-                        $"Contracts={contracts.GetName().Version} " +
-                        $"Kernel={kernel.GetName().Version} " +
+                        $"Domain={domain.GetName().Version} " +
+                        $"Application={application.GetName().Version} " +
                         $"Core={typeof(RimMindCoreMod).Assembly.GetName().Version}");
         }
     }

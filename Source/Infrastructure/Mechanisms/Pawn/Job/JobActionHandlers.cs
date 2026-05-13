@@ -1,15 +1,17 @@
-﻿using System.Linq;
+using System.Linq;
 using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.ValueObjects;
 using Verse;
 using Verse.AI;
 using RimWorld;
+using VersePawn = Verse.Pawn;
 
 namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
 {
     public static class JobActionHandlers
     {
-        public static Result<bool, RimMindError> HandleAssignWork(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleAssignWork(VersePawn pawn, MechanismWriteArgs args)
         {
             var workType = ExtractParam(args, "work_type");
             if (string.IsNullOrEmpty(workType))
@@ -28,7 +30,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleMoveTo(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleMoveTo(VersePawn pawn, MechanismWriteArgs args)
         {
             var cellX = ExtractIntParam(args, "cell_x");
             var cellZ = ExtractIntParam(args, "cell_z");
@@ -44,7 +46,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleEatFood(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleEatFood(VersePawn pawn, MechanismWriteArgs args)
         {
             var food = pawn.inventory?.innerContainer?.FirstOrDefault(t => t.def.IsNutritionGivingIngestible);
             if (food == null)
@@ -68,7 +70,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleForceRest(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleForceRest(VersePawn pawn, MechanismWriteArgs args)
         {
             var bed = RestUtility.FindBedFor(pawn);
             var job = bed != null ? JobMaker.MakeJob(JobDefOf.LayDown, new LocalTargetInfo(bed)) : JobMaker.MakeJob(JobDefOf.LayDown, pawn);
@@ -76,7 +78,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleTendPawn(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleTendPawn(VersePawn pawn, MechanismWriteArgs args)
         {
             var targetPawnId = ExtractIntParam(args, "target_pawn_id");
             var targetPawn = FindPawnById(targetPawnId);
@@ -88,7 +90,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleRescuePawn(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleRescuePawn(VersePawn pawn, MechanismWriteArgs args)
         {
             var targetPawnId = ExtractIntParam(args, "target_pawn_id");
             var targetPawn = FindPawnById(targetPawnId);
@@ -100,7 +102,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleArrestPawn(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleArrestPawn(VersePawn pawn, MechanismWriteArgs args)
         {
             var targetPawnId = ExtractIntParam(args, "target_pawn_id");
             var targetPawn = FindPawnById(targetPawnId);
@@ -112,7 +114,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return Result<bool, RimMindError>.Ok(true);
         }
 
-        public static Result<bool, RimMindError> HandleCancelJob(Verse.Pawn pawn, MechanismWriteArgs args)
+        public static Result<bool, RimMindError> HandleCancelJob(VersePawn pawn, MechanismWriteArgs args)
         {
             if (pawn.jobs.curJob != null)
             {
@@ -134,7 +136,7 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
             return int.TryParse(str, out var val) ? val : 0;
         }
 
-        private static Verse.Pawn? FindPawnById(int pawnId)
+        private static VersePawn? FindPawnById(int pawnId)
         {
             foreach (var map in Find.Maps)
             {

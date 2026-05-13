@@ -1,4 +1,5 @@
-﻿using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Application.Common.Models.Mechanisms;
 
 namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
 {

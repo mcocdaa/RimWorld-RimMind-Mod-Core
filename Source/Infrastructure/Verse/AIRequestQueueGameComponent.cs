@@ -1,16 +1,18 @@
-﻿using Verse;
+using Verse;
 using RimMind.Domain.ValueObjects;
+using RimMind.Application.Features.Queue;
+using RimMind.Presentation.Runtime;
 
 namespace RimMind.Infrastructure.Verse
 {
     public class AIRequestQueueGameComponent : GameComponent
     {
-        private readonly RimMind.Kernel.Queue.AIRequestQueueImpl _impl;
+        private readonly AIRequestQueueImpl _impl;
 
         public AIRequestQueueGameComponent() : base()
         {
-            _impl = RimMind.Core.Runtime.RimMindRuntime.Instance?.Queue
-                as RimMind.Kernel.Queue.AIRequestQueueImpl
+            _impl = RimMindRuntime.Instance?.Queue
+                as AIRequestQueueImpl
                 ?? throw new System.InvalidOperationException("AIRequestQueueImpl not available.");
             _impl.CurrentTick = Find.TickManager.TicksGame;
             _impl.LogHandler = (msg, isWarning) =>
@@ -19,7 +21,7 @@ namespace RimMind.Infrastructure.Verse
                 else Log.Message(msg);
             };
             _impl.FlushBackgroundQueue = () =>
-                RimMind.Core.Runtime.RimMindRuntime.Instance?.EventBus.FlushBackgroundQueue();
+                RimMindRuntime.Instance?.EventBus.FlushBackgroundQueue();
         }
 
         public override void GameComponentTick()

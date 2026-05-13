@@ -1,10 +1,10 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Internal;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Core;
+using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse

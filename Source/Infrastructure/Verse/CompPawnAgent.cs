@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using RimMind.Core.Agent;
+using System.Collections.Generic;
+using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Infrastructure.UI;
-using RimMind.Core;
+using RimMind.Presentation;
 using RimWorld;
 using UnityEngine;
 using Verse;

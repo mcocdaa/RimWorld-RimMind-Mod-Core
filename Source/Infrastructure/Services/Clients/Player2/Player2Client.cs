@@ -9,7 +9,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
-using RimMind.Core;
+using RimMind.Presentation;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Queue;
 using Newtonsoft.Json;

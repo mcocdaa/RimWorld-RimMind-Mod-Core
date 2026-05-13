@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Infrastructure.Verse;
-using RimMind.Core.Runtime;
-using RimMind.Core.Agent;
+using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Agent;
 using Verse;
 using Verse.AI;
 using RimMind.Domain.ValueObjects;

@@ -1,10 +1,11 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models.Npc;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Core;
+using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
