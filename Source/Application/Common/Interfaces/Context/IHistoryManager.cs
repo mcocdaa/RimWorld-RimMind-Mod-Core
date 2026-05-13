@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using RimMind.Application.Common.Models.Npc;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Common.Interfaces.Context
 {

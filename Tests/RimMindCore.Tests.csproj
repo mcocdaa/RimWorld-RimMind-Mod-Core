@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>RimMind.Tests</RootNamespace>
     <AssemblyName>RimMindCore.Tests</AssemblyName>
     <LangVersion>10.0</LangVersion>
@@ -22,16 +22,15 @@
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="GlobalUsings.cs" />
     <Compile Include="MockAIClient.cs" />
-    <Compile Include="**\*.cs" Exclude="VerseStubs.cs;RimMindTestStubs.cs;GlobalUsings.cs;MockAIClient.cs;obj\**\*.cs" />
+    <Compile Include="Result\*.cs" />
+    <Compile Include="RelevanceTableTests.cs" />
+    <Compile Include="ScenarioRegistryTests.cs" />
+    <Compile Include="ThreadSafetyTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**" />
+    <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**;../Source/Domain/Common/NetStandardCompat.cs" />
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
-    <Compile Include="../Source/Infrastructure/**/*.cs" Exclude="../Source/Infrastructure/**/obj/**;../Source/Infrastructure/DependencyInjection.cs;../Source/Infrastructure/UI/AICoreDebugActions.cs" />
-    <Compile Include="../Source/Presentation/**/*.cs" Exclude="../Source/Presentation/**/obj/**;../Source/Presentation/Agent/GameContextBuilder.cs" />
-    <Compile Include="../Source/AICoreMod.cs" />
-    <Compile Include="../Source/RimMindAPI.cs" />
   </ItemGroup>
 
 </Project>

@@ -8,6 +8,7 @@ using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using Verse;
+using RimWorld;
 
 namespace RimMind.Infrastructure.Mechanisms.Pawn.Health
 {

@@ -17,7 +17,7 @@ using RimMind.Presentation.Settings;
 using Verse;
 using Xunit;
 
-using INpcManager = RimMind.Domain.Events.Npc.INpcManager;
+using INpcManager = RimMind.Application.Common.Interfaces.Npc.INpcManager;
 
 namespace RimMind.Presentation.Tests
 {

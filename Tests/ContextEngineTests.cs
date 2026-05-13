@@ -14,10 +14,11 @@ using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Settings;
+using RimMind.Presentation.Context;
 using Verse;
 using Xunit;
 
-using INpcManager = RimMind.Domain.Events.Npc.INpcManager;
+using INpcManager = RimMind.Application.Common.Interfaces.Npc.INpcManager;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
