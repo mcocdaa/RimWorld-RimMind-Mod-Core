@@ -1,0 +1,137 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Domain.Common;
+using RimMind.Domain.Events;
+
+namespace RimMind.Application.Features.AgentBus
+{
+    internal sealed class AgentBusImpl : IAgentBus, IEventBus
+    {
+        private readonly ConcurrentDictionary<Type, List<HandlerEntry>> _handlers
+            = new ConcurrentDictionary<Type, List<HandlerEntry>>();
+        private readonly ConcurrentQueue<DeferredPublish> _backgroundQueue
+            = new ConcurrentQueue<DeferredPublish>();
+        private readonly ILogSink? _log;
+        private readonly IThreadChecker? _threadChecker;
+        private int _handlerIdCounter;
+
+        public AgentBusImpl(ILogSink? log = null, IThreadChecker? threadChecker = null)
+        {
+            _log = log;
+            _threadChecker = threadChecker;
+        }
+
+        public string Subscribe<T>(Action<T> handler) where T : AgentBusEvent
+        {
+            var key = $"auto_{Interlocked.Increment(ref _handlerIdCounter)}";
+            Subscribe(key, handler);
+            return key;
+        }
+
+        public void Subscribe<T>(string key, Action<T> handler) where T : AgentBusEvent
+        {
+            var entry = new HandlerEntry(key, h => handler((T)h));
+            _handlers.AddOrUpdate(
+                typeof(T),
+                _ => new List<HandlerEntry> { entry },
+                (_, list) => { lock (list) { list.Add(entry); } return list; });
+        }
+
+        public void Unsubscribe<T>(string key) where T : AgentBusEvent
+        {
+            if (_handlers.TryGetValue(typeof(T), out var list))
+            {
+                lock (list)
+                {
+                    list.RemoveAll(e => e.Key == key);
+                }
+            }
+        }
+
+        public void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent
+        {
+            if (_handlers.TryGetValue(typeof(T), out var list))
+            {
+                lock (list)
+                {
+                    list.RemoveAll(e => e.Action.Target == handler.Target && e.Action.Method == handler.Method);
+                }
+            }
+        }
+
+        [ThreadAffinity(ThreadAffinityKind.MainOnly)]
+        public void Publish<T>(T evt) where T : AgentBusEvent
+        {
+            if (evt == null) return;
+            if (_handlers.TryGetValue(typeof(T), out var list))
+            {
+                HandlerEntry[] snapshot;
+                lock (list) { snapshot = list.ToArray(); }
+                foreach (var entry in snapshot)
+                {
+                    try { entry.Action(evt); }
+                    catch (Exception ex) { _log?.Error($"AgentBus handler error: {ex.Message}"); }
+                }
+            }
+        }
+
+        [ThreadAffinity(ThreadAffinityKind.Any)]
+        public void PublishFromBackground<T>(T evt) where T : AgentBusEvent
+        {
+            _backgroundQueue.Enqueue(new DeferredPublish(typeof(T), evt));
+        }
+
+        [ThreadAffinity(ThreadAffinityKind.MainOnly)]
+        public void FlushBackgroundQueue()
+        {
+            while (_backgroundQueue.TryDequeue(out var deferred))
+            {
+                if (_handlers.TryGetValue(deferred.EventType, out var list))
+                {
+                    HandlerEntry[] snapshot;
+                    lock (list) { snapshot = list.ToArray(); }
+                    foreach (var entry in snapshot)
+                    {
+                        try { entry.Action(deferred.Event); }
+                        catch (Exception ex) { _log?.Error($"AgentBus deferred handler error: {ex.Message}"); }
+                    }
+                }
+            }
+        }
+
+        public void ClearAllSubscribers()
+        {
+            _handlers.Clear();
+        }
+
+        public int GetHandlerCount()
+        {
+            int count = 0;
+            foreach (var kvp in _handlers)
+            {
+                lock (kvp.Value) { count += kvp.Value.Count; }
+            }
+            return count;
+        }
+
+        public int GetBackgroundQueueCount() => _backgroundQueue.Count;
+
+        private sealed class HandlerEntry
+        {
+            public string Key;
+            public Action<object> Action;
+            public HandlerEntry(string key, Action<object> action) { Key = key; Action = action; }
+        }
+
+        private sealed class DeferredPublish
+        {
+            public Type EventType;
+            public object Event;
+            public DeferredPublish(Type type, object evt) { EventType = type; Event = evt; }
+        }
+    }
+}

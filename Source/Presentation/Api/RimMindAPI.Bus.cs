@@ -1,0 +1,29 @@
+using RimMind.Infrastructure.Services.Clients.Player2;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Presentation.Perception;
+using RimMind.Presentation.Runtime;
+using System.Collections.Generic;
+
+namespace RimMind.Presentation.Api
+{
+    public static partial class RimMindAPI
+    {
+        public static class Bus
+        {
+            public static IEventBus GetEventBus() => RimMindRuntime.Instance.EventBus;
+
+            public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
+                => PerceptionBridge.PublishPerception(pawnId, type, content, importance, GetEventBus());
+
+            internal static IAIClient? GetClient()
+                => RimMindRuntime.Instance.GetClient();
+
+            public static void InvalidateClientCache()
+                => RimMindRuntime.Instance.InvalidateClientCache();
+
+            public static Player2Client? GetPlayer2Client()
+                => RimMindRuntime.Instance.GetPlayer2Client();
+        }
+    }
+}
