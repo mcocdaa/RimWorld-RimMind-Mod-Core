@@ -26,14 +26,14 @@ namespace RimMind.Infrastructure.Verse
             Scribe_Values.Look(ref characterDescription, "characterDescription");
             Scribe_Values.Look(ref systemPrompt, "systemPrompt");
 
-            profile.NpcId = npcId;
+            profile.NpcId = npcId ?? string.Empty;
             profile.PawnId = pawnId;
-            profile.Name = name;
-            profile.ShortName = shortName;
-            profile.DisplayName = displayName;
-            profile.Backstory = backstory;
-            profile.CharacterDescription = characterDescription;
-            profile.SystemPrompt = systemPrompt;
+            profile.Name = name ?? string.Empty;
+            profile.ShortName = shortName ?? string.Empty;
+            profile.DisplayName = displayName ?? string.Empty;
+            profile.Backstory = backstory ?? string.Empty;
+            profile.CharacterDescription = characterDescription ?? string.Empty;
+            profile.SystemPrompt = systemPrompt ?? string.Empty;
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using Verse;
+
+#pragma warning disable CS0618
 
 namespace RimMind.Infrastructure.Verse
 {
@@ -11,3 +13,5 @@ namespace RimMind.Infrastructure.Verse
         public string Translate(string key, object arg0, object arg1, object arg2) => key.Translate(arg0, arg1, arg2);
     }
 }
+
+#pragma warning restore CS0618

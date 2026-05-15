@@ -18,10 +18,10 @@ namespace RimMind.Application.Common.Models.Client
         public int AttemptCount;
         public int MaxAttempts;
 
-        public string RequestId;
-        public string ModId;
+        public string RequestId = string.Empty;
+        public string ModId = string.Empty;
         public AIRequestPriority Priority;
-        public string Status;
+        public string Status = string.Empty;
 
         public TrackedRequest() { }
 

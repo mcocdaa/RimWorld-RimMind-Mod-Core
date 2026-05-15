@@ -33,7 +33,9 @@ namespace RimMind.Presentation.Agent
         private readonly PawnActor _actor;
         private readonly PawnRecorder _recorder;
         private readonly List<BehaviorRecord> _behaviorHistory = new List<BehaviorRecord>();
+#pragma warning disable CS0169
         private Verse.AI.Job? _pendingJob;
+#pragma warning restore CS0169
         private int _lastTick;
         private int _tickInterval;
         private int _maxBehaviorHistory;

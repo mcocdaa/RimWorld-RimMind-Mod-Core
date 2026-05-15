@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
+#pragma warning disable CS0649
+
 namespace RimMind.Infrastructure.Services.Clients.OpenAI
 {
     internal class OpenAIRequestDto

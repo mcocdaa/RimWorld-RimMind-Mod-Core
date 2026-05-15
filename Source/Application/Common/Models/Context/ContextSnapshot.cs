@@ -29,7 +29,7 @@ namespace RimMind.Application.Common.Models.Context
         private List<ContextEntry> _allEntries = new List<ContextEntry>();
         public IReadOnlyList<ContextEntry> AllEntries => _allEntries;
 
-        internal CommitPayload? _commitPayload;
+        internal CommitPayload? _commitPayload = null;
 
         public void AddMessage(ChatMessage msg) => _messages.Add(msg);
         public void InsertMessage(int index, ChatMessage msg) => _messages.Insert(index, msg);
@@ -43,9 +43,9 @@ namespace RimMind.Application.Common.Models.Context
 
     internal class CommitPayload
     {
-        public List<KeyMeta>? FilteredKeys;
-        public BudgetAllocation? Schedule;
-        public object? Pawn;
+        public List<KeyMeta>? FilteredKeys = null;
+        public BudgetAllocation? Schedule = null;
+        public object? Pawn = null;
     }
 
     public class ContextLayerMeta

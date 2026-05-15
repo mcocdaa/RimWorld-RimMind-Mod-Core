@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Context;
@@ -20,7 +19,6 @@ namespace RimMind.Application.Common.Interfaces.Npc
         Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null);
         Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default);
         Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string sender, string message, string? gameStateInfo = null, CancellationToken ct = default);
-        IAsyncEnumerable<Result<NpcChatChunk, RimMindError>> ChatStreamingAsync(string npcId, string sender, string message, Action<string>? onChunk, string? gameStateInfo = null, CancellationToken ct = default);
         Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile);
         Task<Result<bool, RimMindError>> KillNpcAsync(string npcId);
         bool IsNpcAlive(string npcId);
