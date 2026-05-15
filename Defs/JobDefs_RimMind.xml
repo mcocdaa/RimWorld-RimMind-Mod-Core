@@ -2,7 +2,7 @@
 <Defs>
   <JobDef>
     <defName>RimMind_GenericAction</defName>
-    <driverClass>RimMind.Core.Agent.JobDriver_RimMindAction</driverClass>
+    <driverClass>RimMind.Infrastructure.Patches.JobDriver_RimMindAction</driverClass>
     <reportString>Executing AI decision</reportString>
     <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
   </JobDef>

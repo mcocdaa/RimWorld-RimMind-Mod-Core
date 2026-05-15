@@ -78,7 +78,7 @@ namespace RimMind.Infrastructure.UI
                 var resizeRect = new Rect(inRect.width - ResizeHandleSize, inRect.height - ResizeHandleSize,
                     ResizeHandleSize, ResizeHandleSize);
                 GUI.DrawTexture(resizeRect, TexUI.WinExpandWidget);
-                TooltipHandler.TipRegion(resizeRect, "RimMind.Core.UI.RequestOverlay.DragResize".Translate());
+                TooltipHandler.TipRegion(resizeRect, "RimMind.Infrastructure.UI.RequestOverlay.DragResize".Translate());
             }
 
             GUI.EndGroup();
@@ -98,7 +98,7 @@ namespace RimMind.Infrastructure.UI
             {
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(contentRect, "RimMind.Core.UI.RequestOverlay.Empty".Translate());
+                Widgets.Label(contentRect, "RimMind.Infrastructure.UI.RequestOverlay.Empty".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
@@ -129,7 +129,7 @@ namespace RimMind.Infrastructure.UI
                 Widgets.DrawBoxSolid(entryRect, new Color(0.12f, 0.12f, 0.16f, 0.7f));
 
                 string header = entry.systemBlocked
-                    ? "RimMind.Core.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
+                    ? "RimMind.Infrastructure.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
                     : entry.pawn is Pawn p
                         ? $"[{p.Name.ToStringShort}] {entry.title}"
                         : entry.title;
@@ -180,7 +180,7 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
             GUI.color = new Color(0.7f, 0.8f, 1f);
-            Widgets.Label(titleRect, "RimMind.Core.UI.RequestOverlay.Title".Translate());
+            Widgets.Label(titleRect, "RimMind.Infrastructure.UI.RequestOverlay.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -191,7 +191,7 @@ namespace RimMind.Infrastructure.UI
             {
                 _temporarilyClosed = true;
             }
-            if (Widgets.ButtonText(openBtnRect, "RimMind.Core.UI.RequestOverlay.Details".Translate()))
+            if (Widgets.ButtonText(openBtnRect, "RimMind.Infrastructure.UI.RequestOverlay.Details".Translate()))
             {
                 Find.WindowStack.Add(new Window_RequestLog());
             }

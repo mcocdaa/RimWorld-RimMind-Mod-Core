@@ -64,15 +64,15 @@ namespace RimMind.Infrastructure.Verse
         {
             if (Agent == null) yield break;
 
-            string stateLabel = $"RimMind.Core.Agent.State.{Agent.State}".Translate();
+            string stateLabel = $"RimMind.Presentation.Agent.State.{Agent.State}".Translate();
             string toggleLabel = Agent.IsActive
-                ? "RimMind.Core.Agent.Gizmo.Deactivate".Translate()
-                : "RimMind.Core.Agent.Gizmo.Activate".Translate();
+                ? "RimMind.Presentation.Agent.Gizmo.Deactivate".Translate()
+                : "RimMind.Presentation.Agent.Gizmo.Activate".Translate();
 
             yield return new Command_Action
             {
-                defaultLabel = "RimMind.Core.Agent.Gizmo.AgentState".Translate(stateLabel),
-                defaultDesc = "RimMind.Core.Agent.Gizmo.ToggleDesc".Translate(),
+                defaultLabel = "RimMind.Presentation.Agent.Gizmo.AgentState".Translate(stateLabel),
+                defaultDesc = "RimMind.Presentation.Agent.Gizmo.ToggleDesc".Translate(),
                 icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
                 action = () =>
                 {
@@ -87,8 +87,8 @@ namespace RimMind.Infrastructure.Verse
             {
                 yield return new Command_Action
                 {
-                    defaultLabel = "RimMind.Core.Agent.Gizmo.Dialogue".Translate(),
-                    defaultDesc = "RimMind.Core.Agent.Gizmo.DialogueDesc".Translate(),
+                    defaultLabel = "RimMind.Presentation.Agent.Gizmo.Dialogue".Translate(),
+                    defaultDesc = "RimMind.Presentation.Agent.Gizmo.DialogueDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
                     action = () =>
                     {
@@ -101,8 +101,8 @@ namespace RimMind.Infrastructure.Verse
             {
                 yield return new Command_Action
                 {
-                    defaultLabel = "RimMind.Core.Agent.Gizmo.DevView".Translate(),
-                    defaultDesc = "RimMind.Core.Agent.Gizmo.DevViewDesc".Translate(),
+                    defaultLabel = "RimMind.Presentation.Agent.Gizmo.DevView".Translate(),
+                    defaultDesc = "RimMind.Presentation.Agent.Gizmo.DevViewDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
                     action = () =>
                     {

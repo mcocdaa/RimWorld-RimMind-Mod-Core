@@ -49,12 +49,12 @@ namespace RimMind.Infrastructure.UI
             RimMindAPI.RequestImmediate(request, result =>
             {
                 if (result.IsOk && result.Value.State == AIRequestState.Completed)
-                    Messages.Message("RimMind.Core.Debug.ConnectionSuccess".Translate(result.Value.Content), MessageTypeDefOf.PositiveEvent, false);
+                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionSuccess".Translate(result.Value.Content), MessageTypeDefOf.PositiveEvent, false);
                 else
-                    Messages.Message("RimMind.Core.Debug.ConnectionFailed".Translate(result.IsErr ? result.Error.ToString() : result.Value.State.ToString()), MessageTypeDefOf.NegativeEvent, false);
+                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate(result.IsErr ? result.Error.ToString() : result.Value.State.ToString()), MessageTypeDefOf.NegativeEvent, false);
             });
 
-            Messages.Message("RimMind.Core.Debug.RequestSent".Translate(), MessageTypeDefOf.NeutralEvent, false);
+            Messages.Message("RimMind.Infrastructure.Debug.RequestSent".Translate(), MessageTypeDefOf.NeutralEvent, false);
         }
 
         [DebugAction("RimMind", "Show Last Prompt", actionType = DebugActionType.Action)]

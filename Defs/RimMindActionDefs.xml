@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Defs>
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Rest</defName>
     <label>Force Rest</label>
     <actionId>force_rest</actionId>

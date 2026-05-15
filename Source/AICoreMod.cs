@@ -34,7 +34,7 @@ namespace RimMind.Presentation
                 {
                     RimMindErrors.Warn("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
                     Find.WindowStack.Add(new Verse.Dialog_MessageBox(
-                        "RimMind.Core.UpgradeWarning".Translate(),
+                        "RimMind.UpgradeWarning".Translate(),
                         "OK".Translate(),
                         null));
                 });

@@ -35,7 +35,7 @@ namespace RimMind.Infrastructure.UI
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            string title = $"{_pawn.LabelShortCap} - {"RimMind.Core.UI.AgentDialogue.Title".Translate()}";
+            string title = $"{_pawn.LabelShortCap} - {"RimMind.Infrastructure.UI.AgentDialogue.Title".Translate()}";
             Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), title);
             Text.Font = GameFont.Small;
 
@@ -52,7 +52,7 @@ namespace RimMind.Infrastructure.UI
             _inputText = Widgets.TextField(inputRect, _inputText);
             bool inputFocused = GUI.GetNameOfFocusedControl() == "AgentDialogueInput";
 
-            if (Widgets.ButtonText(sendRect, "RimMind.Core.UI.AgentDialogue.Send".Translate()))
+            if (Widgets.ButtonText(sendRect, "RimMind.Infrastructure.UI.AgentDialogue.Send".Translate()))
             {
                 SendMessage();
             }
@@ -89,10 +89,10 @@ namespace RimMind.Infrastructure.UI
                 foreach (var (role, content) in history)
                 {
                     string prefix = role == "user"
-                        ? "RimMind.Core.UI.AgentDialogue.PlayerLabel".Translate() + ": "
-                        : "RimMind.Core.UI.AgentDialogue.AgentLabel".Translate() + ": ";
+                        ? "RimMind.Infrastructure.UI.AgentDialogue.PlayerLabel".Translate() + ": "
+                        : "RimMind.Infrastructure.UI.AgentDialogue.AgentLabel".Translate() + ": ";
                     string displayContent = content;
-                    if (role == "assistant" && content == "RimMind.Core.UI.AgentDialogue.Thinking".Translate())
+                    if (role == "assistant" && content == "RimMind.Infrastructure.UI.AgentDialogue.Thinking".Translate())
                         displayContent = content;
                     string line = prefix + displayContent;
                     float height = Text.CalcHeight(line, contentRect.width - 10f) + 4f;
@@ -121,7 +121,7 @@ namespace RimMind.Infrastructure.UI
             string message = _inputText.Trim();
             _inputText = "";
 
-            string thinkingText = "RimMind.Core.UI.AgentDialogue.Thinking".Translate();
+            string thinkingText = "RimMind.Infrastructure.UI.AgentDialogue.Thinking".Translate();
             RimMindAPI.GetHistoryManager().AddTurn(_npcId, message, thinkingText, "Dialogue");
 
             var npcId = _npcId;

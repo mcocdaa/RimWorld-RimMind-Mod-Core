@@ -114,11 +114,11 @@ namespace RimMind.Presentation.Context
                     var profile = RimMindServiceLocator.Get<INpcManager>()?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
-                    sb.AppendLine(T("RimMind.Core.Prompt.Identity.Name", profile.Name) ?? "");
+                    sb.AppendLine(T("RimMind.Presentation.Prompt.Identity.Name", profile.Name) ?? "");
                     if (!string.IsNullOrEmpty(profile.ShortName))
-                        sb.AppendLine(T("RimMind.Core.Prompt.Identity.ShortName", profile.ShortName) ?? "");
+                        sb.AppendLine(T("RimMind.Presentation.Prompt.Identity.ShortName", profile.ShortName) ?? "");
                     if (!string.IsNullOrEmpty(profile.CharacterDescription))
-                        sb.AppendLine(T("RimMind.Core.Prompt.Identity.Description", profile.CharacterDescription) ?? "");
+                        sb.AppendLine(T("RimMind.Presentation.Prompt.Identity.Description", profile.CharacterDescription) ?? "");
                     return WrapEntry(sb.ToString().TrimEnd());
                 }, "Core");
             Register("npc_commands", ContextLayer.L0_Static, 1.0f,
@@ -131,9 +131,9 @@ namespace RimMind.Presentation.Context
                     var profile = RimMindServiceLocator.Get<INpcManager>()?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null || profile.Commands.Count == 0) return WrapEntry("");
                     var sb = new System.Text.StringBuilder();
-                    sb.AppendLine(T("RimMind.Core.Prompt.Commands.Available") ?? "");
+                    sb.AppendLine(T("RimMind.Presentation.Prompt.Commands.Available") ?? "");
                     foreach (var cmd in profile.Commands)
-                        sb.AppendLine(T("RimMind.Core.Prompt.Commands.Entry", cmd.Name, cmd.Description) ?? "");
+                        sb.AppendLine(T("RimMind.Presentation.Prompt.Commands.Entry", cmd.Name, cmd.Description) ?? "");
                     return WrapEntry(sb.ToString().TrimEnd());
                 }, "Core");
             Register("world_rules", ContextLayer.L0_Static, 1.0f,
@@ -151,12 +151,12 @@ namespace RimMind.Presentation.Context
                         return WrapEntry(sb.ToString().TrimEnd());
                     }
                     var sb2 = new System.Text.StringBuilder();
-                    sb2.AppendLine(T("RimMind.Core.Prompt.WorldRules.Header") ?? "");
-                    sb2.AppendLine(T("RimMind.Core.Prompt.WorldRules.Survival") ?? "");
-                    sb2.AppendLine(T("RimMind.Core.Prompt.WorldRules.Combat") ?? "");
-                    sb2.AppendLine(T("RimMind.Core.Prompt.WorldRules.Relationships") ?? "");
-                    sb2.AppendLine(T("RimMind.Core.Prompt.WorldRules.Weather") ?? "");
-                    sb2.AppendLine(T("RimMind.Core.Prompt.WorldRules.Medical") ?? "");
+                    sb2.AppendLine(T("RimMind.Presentation.Prompt.WorldRules.Header") ?? "");
+                    sb2.AppendLine(T("RimMind.Presentation.Prompt.WorldRules.Survival") ?? "");
+                    sb2.AppendLine(T("RimMind.Presentation.Prompt.WorldRules.Combat") ?? "");
+                    sb2.AppendLine(T("RimMind.Presentation.Prompt.WorldRules.Relationships") ?? "");
+                    sb2.AppendLine(T("RimMind.Presentation.Prompt.WorldRules.Weather") ?? "");
+                    sb2.AppendLine(T("RimMind.Presentation.Prompt.WorldRules.Medical") ?? "");
                     return WrapEntry(sb2.ToString().TrimEnd());
                 }, "Core");
             Register("npc_task_instruction", ContextLayer.L0_Static, 1.0f,
@@ -165,10 +165,10 @@ namespace RimMind.Presentation.Context
                     if (CurrentScenario == ScenarioIds.Storyteller)
                         return WrapEntry("Select the most fitting incident for the colony's current state. Return structured JSON with defName, reason, and optional params.");
                     if (CurrentScenario == ScenarioIds.Decision)
-                        return WrapEntry(T("RimMind.Core.Prompt.TaskInstruction.WorldOnly") ?? "");
+                        return WrapEntry(T("RimMind.Presentation.Prompt.TaskInstruction.WorldOnly") ?? "");
                     if (CurrentScenario == ScenarioIds.Dialogue)
-                        return WrapEntry(T("RimMind.Core.Prompt.TaskInstruction.WorldOnly") ?? "");
-                    return WrapEntry(T("RimMind.Core.Prompt.TaskInstruction.Base") ?? "");
+                        return WrapEntry(T("RimMind.Presentation.Prompt.TaskInstruction.WorldOnly") ?? "");
+                    return WrapEntry(T("RimMind.Presentation.Prompt.TaskInstruction.Base") ?? "");
                 }, "Core");
 
             if (ctx == null) return;

@@ -2,7 +2,7 @@
 <Defs>
   <DutyDef>
     <defName>RimMind_AgentDecision</defName>
-    <thinkNode Class="RimMind.Core.Agent.ThinkNode_RimMindAgent">
+    <thinkNode Class="RimMind.Infrastructure.Patches.ThinkNode_RimMindAgent">
       <priority>5</priority>
     </thinkNode>
     <hook>HighPriority</hook>

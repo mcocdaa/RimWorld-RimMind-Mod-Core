@@ -80,21 +80,21 @@ namespace RimMind.Application.Features.Context
         {
             if (_coreRegistered) return;
             _coreRegistered = true;
-            Register(ScenarioIds.Dialogue, 10, T("RimMind.Core.Scenario.Dialogue") ?? "RimMind.Core.Scenario.Dialogue",
+            Register(ScenarioIds.Dialogue, 10, T("RimMind.Application.Scenario.Dialogue") ?? "RimMind.Application.Scenario.Dialogue",
                 defaultBudget: 0.6f, l4Mode: L4Mode.BudgetControlled,
                 defaultExcludeKeys: new[] { "combat_status", "task_progress" });
-            Register(ScenarioIds.Decision, 0, T("RimMind.Core.Scenario.Decision") ?? "RimMind.Core.Scenario.Decision",
+            Register(ScenarioIds.Decision, 0, T("RimMind.Application.Scenario.Decision") ?? "RimMind.Application.Scenario.Decision",
                 defaultBudget: 0.5f, l4Mode: L4Mode.None,
                 defaultExcludeKeys: new string[0]);
-            Register(ScenarioIds.Personality, 3, T("RimMind.Core.Scenario.Personality") ?? "RimMind.Core.Scenario.Personality",
+            Register(ScenarioIds.Personality, 3, T("RimMind.Application.Scenario.Personality") ?? "RimMind.Application.Scenario.Personality",
                 defaultBudget: 0.4f, l4Mode: L4Mode.MemoryOnly,
                 defaultExcludeKeys: new[] { "combat_status" });
-            Register(ScenarioIds.Storyteller, 8, T("RimMind.Core.Scenario.Storyteller") ?? "RimMind.Core.Scenario.Storyteller",
+            Register(ScenarioIds.Storyteller, 8, T("RimMind.Application.Scenario.Storyteller") ?? "RimMind.Application.Scenario.Storyteller",
                 defaultBudget: 0.7f, l4Mode: L4Mode.NarrativeMemory,
                 defaultExcludeKeys: new[] { "npc_identity", "pawn_base_info", "fixed_relations",
                     "ideology", "skills_summary", "health", "mood", "current_job",
                     "combat_status", "target_info", "task_progress", "npc_commands" });
-            Register(ScenarioIds.Memory, 0, T("RimMind.Core.Scenario.Memory") ?? "RimMind.Core.Scenario.Memory",
+            Register(ScenarioIds.Memory, 0, T("RimMind.Application.Scenario.Memory") ?? "RimMind.Application.Scenario.Memory",
                 defaultBudget: 0.4f, l4Mode: L4Mode.None,
                 defaultExcludeKeys: new[] { "combat_status", "current_job", "mood",
                     "task_progress", "npc_commands", "target_info" });

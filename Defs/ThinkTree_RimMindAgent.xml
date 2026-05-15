@@ -4,7 +4,7 @@
     <defName>RimMindAgent</defName>
     <insertTag>Humanlike_Main</insertTag>
     <insertPriority>5</insertPriority>
-    <thinkRoot Class="RimMind.Core.Agent.ThinkNode_RimMindAgent">
+    <thinkRoot Class="RimMind.Infrastructure.Patches.ThinkNode_RimMindAgent">
       <priority>5</priority>
     </thinkRoot>
   </ThinkTreeDef>

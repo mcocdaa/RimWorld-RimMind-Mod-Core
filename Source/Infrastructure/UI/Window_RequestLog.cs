@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -37,7 +37,7 @@ namespace RimMind.Infrastructure.UI
 
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;
-            Widgets.Label(headerRect, "RimMind.Core.UI.RequestLog.Title".Translate());
+            Widgets.Label(headerRect, "RimMind.Infrastructure.UI.RequestLog.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
@@ -52,7 +52,7 @@ namespace RimMind.Infrastructure.UI
             {
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.Core.UI.RequestOverlay.Empty".Translate());
+                Widgets.Label(rect, "RimMind.Infrastructure.UI.RequestOverlay.Empty".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
@@ -84,7 +84,7 @@ namespace RimMind.Infrastructure.UI
                 Widgets.DrawBoxSolid(entryRect, new Color(0.12f, 0.12f, 0.16f, 0.7f));
 
                 string header = entry.systemBlocked
-                    ? "RimMind.Core.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
+                    ? "RimMind.Infrastructure.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
                     : entry.pawn is Pawn p
                         ? $"[{p.Name.ToStringShort}] {entry.title}"
                         : entry.title;
@@ -128,7 +128,7 @@ namespace RimMind.Infrastructure.UI
         private void DrawBottomBar(Rect rect)
         {
             var clearRect = new Rect(rect.xMax - 100f, rect.y, 96f, rect.height - 4f);
-            if (Widgets.ButtonText(clearRect, "RimMind.Core.UI.RequestLog.ClearAll".Translate()))
+            if (Widgets.ButtonText(clearRect, "RimMind.Infrastructure.UI.RequestLog.ClearAll".Translate()))
             {
                 var pending = RequestOverlay.Pending.ToList();
                 foreach (var entry in pending)
@@ -138,7 +138,7 @@ namespace RimMind.Infrastructure.UI
             var countRect = new Rect(rect.x, rect.y, 200f, rect.height);
             GUI.color = Color.grey;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(countRect, "RimMind.Core.UI.RequestLog.Count".Translate(RequestOverlay.Pending.Count));
+            Widgets.Label(countRect, "RimMind.Infrastructure.UI.RequestLog.Count".Translate(RequestOverlay.Pending.Count));
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
         }

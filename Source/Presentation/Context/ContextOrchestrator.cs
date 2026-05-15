@@ -206,7 +206,7 @@ namespace RimMind.Presentation.Context
             {
                 var translationService = RimMindServiceLocator.Get<ITranslationService>();
                 string queryContent = !string.IsNullOrEmpty(request.SpeakerName)
-                    ? translationService?.Translate("RimMind.Core.Prompt.Dialogue.SpeakerSays", request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
+                    ? translationService?.Translate("RimMind.Presentation.Prompt.Dialogue.SpeakerSays", request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
                         ?? $"[{request.SpeakerName}]: {PromptSanitizer.SanitizeUserInput(request.CurrentQuery!)}"
                     : PromptSanitizer.SanitizeUserInput(request.CurrentQuery!);
                 messages.Add(new ChatMessage { Role = "user", Content = queryContent, LayerTag = "L4" });
@@ -218,7 +218,7 @@ namespace RimMind.Presentation.Context
                 string scenarioLabel = !string.IsNullOrEmpty(request.Scenario)
                     ? request.Scenario! : "general";
                 var translationService = RimMindServiceLocator.Get<ITranslationService>();
-                string autoAwaitContent = translationService?.Translate("RimMind.Core.Prompt.AutoAwait", scenarioLabel)
+                string autoAwaitContent = translationService?.Translate("RimMind.Presentation.Prompt.AutoAwait", scenarioLabel)
                     ?? $"[AutoAwait: {scenarioLabel}]";
                 messages.Add(new ChatMessage { Role = "user", Content = autoAwaitContent });
             }

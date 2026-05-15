@@ -67,7 +67,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 if (!string.IsNullOrEmpty(localKey))
                 {
                     AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Player2 local app detected.");
-                    ShowNotification("RimMind.Core.Player2.LocalDetected");
+                    ShowNotification("RimMind.Infrastructure.Player2.LocalDetected");
                     return new Player2Client(localKey!, isLocal: true, settings);
                 }
 
@@ -77,7 +77,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     return new Player2Client(settings.apiKey, isLocal: false, settings);
                 }
 
-                ShowNotification("RimMind.Core.Player2.LocalNotFound");
+                ShowNotification("RimMind.Infrastructure.Player2.LocalNotFound");
                 return new Player2Client(string.Empty, isLocal: false, settings);
             }
             catch (Exception ex)
@@ -355,8 +355,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 {
                     Messages.Message(
                         isAvailable
-                            ? "RimMind.Core.Player2.LocalDetected".Translate()
-                            : "RimMind.Core.Player2.LocalNotFound".Translate(),
+                            ? "RimMind.Infrastructure.Player2.LocalDetected".Translate()
+                            : "RimMind.Infrastructure.Player2.LocalNotFound".Translate(),
                         isAvailable ? MessageTypeDefOf.PositiveEvent : MessageTypeDefOf.CautionInput);
                 });
             });
