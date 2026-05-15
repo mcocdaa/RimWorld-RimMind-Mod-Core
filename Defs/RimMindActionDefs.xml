@@ -7,81 +7,81 @@
     <riskLevel>Low</riskLevel>
     <goalProgressDelta>0.15</goalProgressDelta>
     <needUrgencyWeight>1.5</needUrgencyWeight>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Work</defName>
     <label>Assign Work</label>
     <actionId>assign_work</actionId>
     <riskLevel>Low</riskLevel>
     <goalProgressDelta>0.2</goalProgressDelta>
     <needUrgencyWeight>0.5</needUrgencyWeight>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Move</defName>
     <label>Move To</label>
     <actionId>move_to</actionId>
     <riskLevel>Low</riskLevel>
     <goalProgressDelta>0.05</goalProgressDelta>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Tend</defName>
     <label>Tend Pawn</label>
     <actionId>tend_pawn</actionId>
     <riskLevel>Medium</riskLevel>
     <goalProgressDelta>0.2</goalProgressDelta>
     <requiresTarget>true</requiresTarget>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Rescue</defName>
     <label>Rescue Pawn</label>
     <actionId>rescue_pawn</actionId>
     <riskLevel>High</riskLevel>
     <goalProgressDelta>0.25</goalProgressDelta>
     <requiresTarget>true</requiresTarget>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Draft</defName>
     <label>Draft/Undraft</label>
     <actionId>draft</actionId>
     <riskLevel>Medium</riskLevel>
     <goalProgressDelta>0.1</goalProgressDelta>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindActionDef>
+  <RimMind.Presentation.Agent.RimMindActionDef>
     <defName>RimMind_Action_Eat</defName>
     <label>Eat Food</label>
     <actionId>eat_food</actionId>
     <riskLevel>Low</riskLevel>
     <goalProgressDelta>0.15</goalProgressDelta>
     <needUrgencyWeight>1.5</needUrgencyWeight>
-  </RimMind.Core.Agent.RimMindActionDef>
+  </RimMind.Presentation.Agent.RimMindActionDef>
 
-  <RimMind.Core.Agent.RimMindGoalCategoryDef>
+  <RimMind.Presentation.Agent.RimMindGoalCategoryDef>
     <defName>RimMind_Goal_Survival</defName>
     <label>Survival</label>
     <defaultPriority>2.0</defaultPriority>
     <decayRate>0.0005</decayRate>
     <expiryTicks>120000</expiryTicks>
-  </RimMind.Core.Agent.RimMindGoalCategoryDef>
+  </RimMind.Presentation.Agent.RimMindGoalCategoryDef>
 
-  <RimMind.Core.Agent.RimMindGoalCategoryDef>
+  <RimMind.Presentation.Agent.RimMindGoalCategoryDef>
     <defName>RimMind_Goal_Social</defName>
     <label>Social</label>
     <defaultPriority>1.0</defaultPriority>
     <decayRate>0.001</decayRate>
     <expiryTicks>60000</expiryTicks>
-  </RimMind.Core.Agent.RimMindGoalCategoryDef>
+  </RimMind.Presentation.Agent.RimMindGoalCategoryDef>
 
-  <RimMind.Core.Agent.RimMindGoalCategoryDef>
+  <RimMind.Presentation.Agent.RimMindGoalCategoryDef>
     <defName>RimMind_Goal_Work</defName>
     <label>Work</label>
     <defaultPriority>1.5</defaultPriority>
     <decayRate>0.0008</decayRate>
     <expiryTicks>90000</expiryTicks>
-  </RimMind.Core.Agent.RimMindGoalCategoryDef>
+  </RimMind.Presentation.Agent.RimMindGoalCategoryDef>
 </Defs>

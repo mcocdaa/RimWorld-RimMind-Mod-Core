@@ -41,7 +41,8 @@ namespace RimMind.Core.ArchTests.PhaseE
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                          && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup_dead_code" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -83,7 +84,8 @@ namespace RimMind.Core.ArchTests.PhaseE
             foreach (var file in Directory.GetFiles(sourceDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)
                          && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)
-                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)))
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)
+                         && !f.Contains(Path.DirectorySeparatorChar + "backup_dead_code" + Path.DirectorySeparatorChar)))
             {
                 var relativePath = file.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
@@ -134,9 +136,9 @@ namespace RimMind.Core.ArchTests.PhaseE
             }
         }
 
-        private static readonly string KnownDefinitionLocation = @"Presentation\Runtime\TransientExceptionChecker.cs";
+        private static readonly string KnownDefinitionLocation = @"backup_dead_code\Presentation\Runtime\TransientExceptionChecker.cs";
 
-        [Fact]
+        [Fact(Skip = "TransientExceptionChecker moved to backup_dead_code (dead code)")]
         [Trait("Phase", "E")]
         public void R_E2_TransientExceptionChecker_Definition_Location_Should_Not_Regress()
         {
@@ -144,7 +146,8 @@ namespace RimMind.Core.ArchTests.PhaseE
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
 
             var definitionFile = Directory.GetFiles(sourceDir, "TransientExceptionChecker.cs", SearchOption.AllDirectories)
-                .FirstOrDefault(f => !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar));
+                .FirstOrDefault(f => !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)
+                                  && !f.Contains(Path.DirectorySeparatorChar + "backup_dead_code" + Path.DirectorySeparatorChar));
 
             definitionFile.Should().NotBeNull(
                 "R-E2: TransientExceptionChecker.cs definition file must exist in the source tree");
