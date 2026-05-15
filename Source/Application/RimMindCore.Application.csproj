@@ -24,6 +24,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="2_RimMindCore" />
     <InternalsVisibleTo Include="RimMindTest" />
+    <InternalsVisibleTo Include="RimMindCore.Integration.Tests" />
   </ItemGroup>
 
 </Project>

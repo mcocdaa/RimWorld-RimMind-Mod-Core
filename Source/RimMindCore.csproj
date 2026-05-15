@@ -31,6 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>RimMindCore.Integration.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="AICoreMod.cs" />
     <Compile Include="RimMindAPI.cs" />
     <Compile Include="Infrastructure\**\*.cs" />
