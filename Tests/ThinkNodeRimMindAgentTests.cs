@@ -1,4 +1,4 @@
-﻿﻿using RimMind.Domain.Events;
+?using RimMind.Domain.Events;
 using RimMind.Presentation.Agent;
 using RimMind.Infrastructure.Patches;
 using RimMind.Application.Features.AgentBus;

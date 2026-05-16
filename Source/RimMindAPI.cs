@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Sensor;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Client;
@@ -15,10 +16,8 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Domain.ValueObjects;
-using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
 using Verse;
 using System;
 using System.Collections.Generic;
@@ -101,6 +100,6 @@ namespace RimMind.Presentation
         public static IReadOnlyList<UIRequestEntry> GetPendingRequests() => Bus.GetPendingRequests();
         internal static IAIClient? GetClient() => Bus.GetClient();
         public static void InvalidateClientCache() => Bus.InvalidateClientCache();
-        public static Player2Client? GetPlayer2Client() => Bus.GetPlayer2Client();
+        public static IAIClient? GetPlayer2Client() => Bus.GetPlayer2Client();
     }
 }

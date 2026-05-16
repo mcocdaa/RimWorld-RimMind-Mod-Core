@@ -5,11 +5,14 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class SchemaRegistry
+    public sealed class SchemaRegistry
     {
         private readonly ConcurrentDictionary<string, string> _schemas
             = new ConcurrentDictionary<string, string>();
         private readonly ILogSink? _log;
+
+        private static SchemaRegistry? _instance;
+        public static SchemaRegistry Instance => _instance ??= new SchemaRegistry();
 
         public SchemaRegistry(ILogSink? log = null) { _log = log; }
 
@@ -17,5 +20,9 @@ namespace RimMind.Application.Features.Context
         public string? Find(string key) => _schemas.TryGetValue(key, out var s) ? s : null;
         public IReadOnlyDictionary<string, string> All => _schemas;
         public void Reset() => _schemas.Clear();
+
+        public static string PersonalityOutput => Instance.Find("PersonalityOutput") ?? "";
+        public static string IncidentOutput => Instance.Find("IncidentOutput") ?? "";
+        public static string DarkMemoryOutput => Instance.Find("DarkMemoryOutput") ?? "";
     }
 }

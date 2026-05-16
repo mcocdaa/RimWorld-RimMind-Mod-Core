@@ -294,29 +294,29 @@ namespace RimMind.Application.Features.Queue
 
         private sealed class DefaultSettingsProvider : ISettingsProvider
         {
-            public int QueueProcessInterval => 60;
-            public int MaxConcurrentRequests => 4;
-            public int RequestTimeoutMs => 30000;
-            public int MaxRetryCount => 2;
-            public int RequestExpireTicks => 30000;
+            public int QueueProcessInterval { get => 60; set { } }
+            public int MaxConcurrentRequests { get => 4; set { } }
+            public int RequestTimeoutMs { get => 30000; set { } }
+            public int MaxRetryCount { get => 2; set { } }
+            public int RequestExpireTicks { get => 30000; set { } }
             public int AgentTickInterval => 150;
-            public int BehaviorHistoryMax => 100;
+            public int BehaviorHistoryMax { get => 100; set { } }
             public int ThinkCooldownTicks => 30000;
             public int MaxToolCallDepth => 3;
-            public int DefaultModCooldownTicks => 3600;
-            public int MaxTokens => 800;
-            public float DefaultTemperature => 0.7f;
-            public bool ForceJsonMode => true;
-            public string ModelName => "";
-            public string Provider => Domain.Common.AIProviders.OpenAI;
-            public string ApiKey => "";
-            public string ApiEndpoint => "";
-            public string Player2RemoteUrl => "";
-            public bool DebugLogging => false;
+            public int DefaultModCooldownTicks { get => 3600; set { } }
+            public int MaxTokens { get => 800; set { } }
+            public float DefaultTemperature { get => 0.7f; set { } }
+            public bool ForceJsonMode { get => true; set { } }
+            public string ModelName { get => ""; set { } }
+            public string Provider { get => Domain.Common.AIProviders.OpenAI; set { } }
+            public string ApiKey { get => ""; set { } }
+            public string ApiEndpoint { get => ""; set { } }
+            public string Player2RemoteUrl { get => ""; set { } }
+            public bool DebugLogging { get => false; set { } }
             public int CircuitBreakerFailureThreshold => 5;
             public int CircuitBreakerOpenDurationSec => 60;
-            public int ContextCalibrateInterval => 10000;
-            public int ContextDiffLifetimeTicks => 36000;
+            public int ContextCalibrateInterval { get => 10000; set { } }
+            public int ContextDiffLifetimeTicks { get => 36000; set { } }
             public bool IsConfigured => false;
             public IContextSettings Context => new DefaultContextSettings();
             public bool RequestOverlayEnabled { get => true; set { } }
@@ -324,11 +324,16 @@ namespace RimMind.Application.Features.Queue
             public float RequestOverlayY { get => 20f; set { } }
             public float RequestOverlayW { get => 300f; set { } }
             public float RequestOverlayH { get => 200f; set { } }
+            public string CustomPawnPrompt { get => ""; set { } }
+            public string CustomMapPrompt { get => ""; set { } }
+            public Domain.Enums.FlywheelAutoApplyMode AutoApplyMode { get => Domain.Enums.FlywheelAutoApplyMode.Off; set { } }
+            public float AutoApplyConfidenceThreshold { get => 0.8f; set { } }
+            public bool IsOpenAIConfigured() => false;
         }
 
         private sealed class DefaultContextSettings : IContextSettings
         {
-            public float ContextBudget => 0.6f;
+            public float ContextBudget { get => 0.6f; set { } }
             public int ContextBriefLimit => 200;
             public int EnvironmentScanRadius => 5;
             public int EnvironmentMaxItems => 8;
@@ -338,35 +343,39 @@ namespace RimMind.Application.Features.Queue
             public int MaxCacheEntries => 100;
             public float MoodDiffThreshold => 5f;
             public float TemperatureDiffThreshold => 5f;
-            public bool IncludeRace => true;
-            public bool IncludeAge => true;
-            public bool IncludeGender => true;
-            public bool IncludeBackstory => true;
-            public bool IncludeIdeology => false;
-            public bool IncludeTraits => true;
-            public bool IncludeSkills => true;
-            public int MinSkillLevel => 4;
-            public bool IncludeHealth => true;
-            public bool IncludeCapacities => true;
-            public bool IncludeMood => true;
-            public bool IncludeMoodThoughts => false;
-            public bool IncludeCurrentJob => true;
-            public bool IncludeWorkPriorities => true;
-            public bool IncludeEquipment => true;
-            public bool IncludeInventory => false;
-            public bool IncludeLocation => false;
-            public bool IncludeRelations => true;
-            public bool IncludeGenes => true;
-            public bool IncludeSurroundings => false;
-            public bool IncludeCombatStatus => true;
-            public bool IncludeGameTime => true;
-            public bool IncludeColonistCount => true;
-            public bool IncludeColonistNames => true;
-            public bool IncludeWealth => false;
-            public bool IncludeFood => true;
-            public bool IncludeSeason => true;
-            public bool IncludeWeather => true;
-            public bool IncludeThreats => true;
+            public bool IncludeRace { get => true; set { } }
+            public bool IncludeAge { get => true; set { } }
+            public bool IncludeGender { get => true; set { } }
+            public bool IncludeBackstory { get => true; set { } }
+            public bool IncludeIdeology { get => false; set { } }
+            public bool IncludeTraits { get => true; set { } }
+            public bool IncludeSkills { get => true; set { } }
+            public int MinSkillLevel { get => 4; set { } }
+            public bool IncludeHealth { get => true; set { } }
+            public bool IncludeCapacities { get => true; set { } }
+            public bool IncludeMood { get => true; set { } }
+            public bool IncludeMoodThoughts { get => false; set { } }
+            public bool IncludeCurrentJob { get => true; set { } }
+            public bool IncludeWorkPriorities { get => true; set { } }
+            public bool IncludeEquipment { get => true; set { } }
+            public bool IncludeInventory { get => false; set { } }
+            public bool IncludeLocation { get => false; set { } }
+            public bool IncludeRelations { get => true; set { } }
+            public bool IncludeGenes { get => true; set { } }
+            public bool IncludeSurroundings { get => false; set { } }
+            public bool IncludeCombatStatus { get => true; set { } }
+            public bool IncludeGameTime { get => true; set { } }
+            public bool IncludeColonistCount { get => true; set { } }
+            public bool IncludeColonistNames { get => true; set { } }
+            public bool IncludeWealth { get => false; set { } }
+            public bool IncludeFood { get => true; set { } }
+            public bool IncludeSeason { get => true; set { } }
+            public bool IncludeWeather { get => true; set { } }
+            public bool IncludeThreats { get => true; set { } }
+            public float BudgetW1 { get => 0.4f; set { } }
+            public float BudgetW2 { get => 0.6f; set { } }
+            public void ApplyPreset(Domain.Enums.ContextPreset preset) { }
+            public void ResetToDefault() { }
         }
     }
 }

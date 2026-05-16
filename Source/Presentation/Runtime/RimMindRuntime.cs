@@ -7,7 +7,6 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
-using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -26,6 +25,7 @@ using RimMind.Application.Features.Tools;
 using RimMind.Infrastructure.Mechanisms;
 using RimMind.Infrastructure.Services.Clients.OpenAI;
 using RimMind.Infrastructure.Services.Clients.Player2;
+using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.Llm;
@@ -33,7 +33,6 @@ using RimMind.Presentation.Pipeline.AI;
 using RimMind.Presentation.Pipeline.Context;
 using RimMind.Presentation.Pipeline.Npc;
 using RimMind.Presentation.Sensor;
-using RimMind.Presentation.Settings;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
@@ -66,7 +65,6 @@ namespace RimMind.Presentation.Runtime
 
         private readonly ConcurrentDictionary<Type, object> _registries = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners = new ConcurrentDictionary<string, IParameterTuner>();
-        private readonly ConcurrentDictionary<string, IKernelParameterTuner> _kernelParameterTuners = new ConcurrentDictionary<string, IKernelParameterTuner>();
         private readonly ConcurrentDictionary<string, ISensorProvider> _sensorProviders = new ConcurrentDictionary<string, ISensorProvider>();
 
         private volatile Func<Pawn, AgentIdentity?>? _agentIdentityProvider;
@@ -99,6 +97,8 @@ namespace RimMind.Presentation.Runtime
 
             var overlayService = new OverlayService();
             RimMindServiceLocator.Register<IOverlayService>(overlayService);
+
+            RimMindServiceLocator.Register<IWindowService>(new WindowService());
 
             AgentBus = RimMindServiceLocator.Get<IAgentBus>()!;
             ProviderRegistry = RimMindServiceLocator.Get<IProviderRegistry>()!;
@@ -199,12 +199,6 @@ namespace RimMind.Presentation.Runtime
         public void RegisterParameterTuner(IParameterTuner tuner)
             => _parameterTuners[tuner.TunerId] = tuner;
 
-        void IRimMindRuntime.RegisterParameterTuner(IKernelParameterTuner tuner)
-            => _kernelParameterTuners[tuner.TunerId] = tuner;
-
-        IReadOnlyList<IKernelParameterTuner> IRimMindRuntime.ParameterTunersList
-            => _kernelParameterTuners.Values.ToList();
-
         public void RegisterSensorProvider(ISensorProvider provider)
             => _sensorProviders[provider.SensorId] = provider;
 
@@ -216,7 +210,7 @@ namespace RimMind.Presentation.Runtime
 
         public IAIClient? GetClient() => ClientManager.GetClient();
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
-        public Player2Client? GetPlayer2Client() => ClientManager.GetPlayer2Client() as Player2Client;
+        public IAIClient? GetPlayer2Client() => ClientManager.GetPlayer2Client();
     }
 
     internal sealed class SimpleEventBusAdapter : IEventBus

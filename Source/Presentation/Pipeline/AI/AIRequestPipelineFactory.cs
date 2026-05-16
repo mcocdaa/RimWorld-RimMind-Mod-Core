@@ -9,7 +9,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Extension;
 
 namespace RimMind.Presentation.Pipeline.AI
 {

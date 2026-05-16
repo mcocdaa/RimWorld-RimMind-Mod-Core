@@ -15,14 +15,20 @@ namespace RimMind.Infrastructure.Mechanisms
 {
     public sealed class MechanismToolHandler : IToolHandler
     {
-        private readonly IGameMechanism _mechanism;
+        private readonly IMechanismReader _reader;
+        private readonly IMechanismWriter _writer;
+        private readonly IMechanismTrigger _trigger;
+        private readonly IMechanismMetadata _metadata;
         private readonly MechanismOperationType _operation;
 
-        public MechanismToolHandler(IGameMechanism mechanism, MechanismOperationType operation)
+        public MechanismToolHandler(IMechanismReader reader, IMechanismWriter writer, IMechanismTrigger trigger, IMechanismMetadata metadata, MechanismOperationType operation)
         {
-            _mechanism = mechanism;
+            _reader = reader;
+            _writer = writer;
+            _trigger = trigger;
+            _metadata = metadata;
             _operation = operation;
-            Definition = BuildDefinition(mechanism, operation);
+            Definition = BuildDefinition(metadata, operation);
         }
 
         public string Id => Definition.Id;
@@ -61,7 +67,7 @@ namespace RimMind.Infrastructure.Mechanisms
                 case MechanismOperationType.Query:
                 {
                     var readArgs = BuildReadArgs(args);
-                    var r = await _mechanism.ExecuteQueryAsync(readArgs, ct).ConfigureAwait(false);
+                    var r = await _reader.ExecuteQueryAsync(readArgs, ct).ConfigureAwait(false);
                     return r.IsOk
                         ? Result<object?, RimMindError>.Ok(r.Value)
                         : Result<object?, RimMindError>.Err(r.Error);
@@ -76,13 +82,13 @@ namespace RimMind.Infrastructure.Mechanisms
                     var writeArgs = BuildWriteArgs(args);
                     var r = _operation switch
                     {
-                        MechanismOperationType.Set => await _mechanism.ExecuteSetAsync(writeArgs, ct).ConfigureAwait(false),
-                        MechanismOperationType.Add => await _mechanism.ExecuteAddAsync(writeArgs, ct).ConfigureAwait(false),
-                        MechanismOperationType.Remove => await _mechanism.ExecuteRemoveAsync(writeArgs, ct).ConfigureAwait(false),
-                        MechanismOperationType.Toggle => await _mechanism.ExecuteToggleAsync(writeArgs, ct).ConfigureAwait(false),
-                        MechanismOperationType.Trigger => await _mechanism.ExecuteTriggerAsync(writeArgs, ct).ConfigureAwait(false),
-                        MechanismOperationType.Watch => await _mechanism.ExecuteWatchAsync(writeArgs, ct).ConfigureAwait(false),
-                        _ => Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(_mechanism.MechanismId, _operation.ToString().ToLowerInvariant()))
+                        MechanismOperationType.Set => await _writer.ExecuteSetAsync(writeArgs, ct).ConfigureAwait(false),
+                        MechanismOperationType.Add => await _writer.ExecuteAddAsync(writeArgs, ct).ConfigureAwait(false),
+                        MechanismOperationType.Remove => await _writer.ExecuteRemoveAsync(writeArgs, ct).ConfigureAwait(false),
+                        MechanismOperationType.Toggle => await _trigger.ExecuteToggleAsync(writeArgs, ct).ConfigureAwait(false),
+                        MechanismOperationType.Trigger => await _trigger.ExecuteTriggerAsync(writeArgs, ct).ConfigureAwait(false),
+                        MechanismOperationType.Watch => await _trigger.ExecuteWatchAsync(writeArgs, ct).ConfigureAwait(false),
+                        _ => Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(_metadata.MechanismId, _operation.ToString().ToLowerInvariant()))
                     };
                     return r.IsOk
                         ? Result<object?, RimMindError>.Ok(r.Value)
@@ -91,13 +97,13 @@ namespace RimMind.Infrastructure.Mechanisms
                 case MechanismOperationType.List:
                 {
                     var pawnId = ExtractInt(args.ArgumentsJson, "pawn_id");
-                    var r = await _mechanism.ExecuteListAsync(pawnId, ct).ConfigureAwait(false);
+                    var r = await _reader.ExecuteListAsync(pawnId, ct).ConfigureAwait(false);
                     return r.IsOk
                         ? Result<object?, RimMindError>.Ok(r.Value)
                         : Result<object?, RimMindError>.Err(r.Error);
                 }
                 default:
-                    return Result<object?, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(_mechanism.MechanismId, _operation.ToString().ToLowerInvariant()));
+                    return Result<object?, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(_metadata.MechanismId, _operation.ToString().ToLowerInvariant()));
             }
         }
 
@@ -105,7 +111,7 @@ namespace RimMind.Infrastructure.Mechanisms
         {
             return new MechanismReadArgs
             {
-                MechanismId = _mechanism.MechanismId,
+                MechanismId = _metadata.MechanismId,
                 PawnId = ExtractInt(args.ArgumentsJson, "pawn_id"),
                 MapId = ExtractNullableInt(args.ArgumentsJson, "map_id"),
                 DefName = ExtractString(args.ArgumentsJson, "filter_def_name") ?? ExtractString(args.ArgumentsJson, "def_name"),
@@ -117,7 +123,7 @@ namespace RimMind.Infrastructure.Mechanisms
         {
             return new MechanismWriteArgs
             {
-                MechanismId = _mechanism.MechanismId,
+                MechanismId = _metadata.MechanismId,
                 PawnId = ExtractInt(args.ArgumentsJson, "pawn_id"),
                 MapId = ExtractNullableInt(args.ArgumentsJson, "map_id"),
                 DefName = ExtractString(args.ArgumentsJson, "def_name"),
@@ -152,37 +158,37 @@ namespace RimMind.Infrastructure.Mechanisms
             }
         }
 
-        private static ToolDefinition BuildDefinition(IGameMechanism mechanism, MechanismOperationType operation)
+        private static ToolDefinition BuildDefinition(IMechanismMetadata metadata, MechanismOperationType operation)
         {
-            var toolId = $"{mechanism.MechanismId}.{OperationSuffix(operation)}";
-            var description = BuildDescription(mechanism, operation);
-            var schema = BuildParameterSchema(mechanism, operation);
+            var toolId = $"{metadata.MechanismId}.{OperationSuffix(operation)}";
+            var description = BuildDescription(metadata, operation);
+            var schema = BuildParameterSchema(metadata, operation);
 
             return new ToolDefinition
             {
                 Id = toolId,
                 Description = description,
                 ParametersSchema = schema,
-                Category = mechanism.Scope.ToString().ToLowerInvariant()
+                Category = metadata.Scope.ToString().ToLowerInvariant()
             };
         }
 
-        private static string BuildDescription(IGameMechanism mechanism, MechanismOperationType operation)
+        private static string BuildDescription(IMechanismMetadata metadata, MechanismOperationType operation)
         {
             var desc = operation switch
             {
-                MechanismOperationType.Query => mechanism.Docs.QueryDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.Set => mechanism.Docs.SetDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.Add => mechanism.Docs.AddDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.Remove => mechanism.Docs.RemoveDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.Toggle => mechanism.Docs.ToggleDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.Trigger => mechanism.Docs.TriggerDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.List => mechanism.Docs.ListDescription ?? mechanism.Docs.Summary,
-                MechanismOperationType.Watch => mechanism.Docs.WatchDescription ?? mechanism.Docs.Summary,
-                _ => mechanism.Docs.Summary
+                MechanismOperationType.Query => metadata.Docs.QueryDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.Set => metadata.Docs.SetDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.Add => metadata.Docs.AddDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.Remove => metadata.Docs.RemoveDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.Toggle => metadata.Docs.ToggleDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.Trigger => metadata.Docs.TriggerDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.List => metadata.Docs.ListDescription ?? metadata.Docs.Summary,
+                MechanismOperationType.Watch => metadata.Docs.WatchDescription ?? metadata.Docs.Summary,
+                _ => metadata.Docs.Summary
             };
 
-            if (mechanism.GetRiskForOperation(operation) == MechanismRisk.Dangerous)
+            if (metadata.GetRiskForOperation(operation) == MechanismRisk.Dangerous)
             {
                 desc = $"[DANGEROUS] {desc}";
             }
@@ -190,18 +196,18 @@ namespace RimMind.Infrastructure.Mechanisms
             return desc;
         }
 
-        private static string BuildParameterSchema(IGameMechanism mechanism, MechanismOperationType operation)
+        private static string BuildParameterSchema(IMechanismMetadata metadata, MechanismOperationType operation)
         {
             var properties = new Dictionary<string, object>();
             var required = new List<string>();
 
-            if (mechanism.Scope == MechanismScope.Pawn)
+            if (metadata.Scope == MechanismScope.Pawn)
             {
                 properties["pawn_id"] = new { type = "integer", description = "Pawn thing ID" };
                 required.Add("pawn_id");
                 properties["map_id"] = new { type = "integer", description = "Optional map ID for multi-map scenarios" };
             }
-            else if (mechanism.Scope == MechanismScope.Map || mechanism.Scope == MechanismScope.Colony)
+            else if (metadata.Scope == MechanismScope.Map || metadata.Scope == MechanismScope.Colony)
             {
                 properties["pawn_id"] = new { type = "integer", description = "Pawn thing ID (optional)" };
                 properties["map_id"] = new { type = "integer", description = "Optional map ID; defaults to current map" };
@@ -238,7 +244,7 @@ namespace RimMind.Infrastructure.Mechanisms
                     break;
             }
 
-            var writeActions = mechanism.GetWriteActions();
+            var writeActions = metadata.GetWriteActions();
             if (writeActions != null && writeActions.Count > 0
                 && (operation == MechanismOperationType.Set
                     || operation == MechanismOperationType.Add

@@ -30,10 +30,10 @@ namespace RimMind.Core.ArchTests.PhaseH1
 
         [Fact]
         [Trait("Phase", "H1")]
-        public void IGameMechanism_ExecuteQueryAsync_Should_Return_Task_Result()
+        public void IMechanismReader_ExecuteQueryAsync_Should_Return_Task_Result()
         {
-            var m = typeof(IGameMechanism).GetMethod("ExecuteQueryAsync");
-            m.Should().NotBeNull("IGameMechanism must define ExecuteQueryAsync");
+            var m = typeof(IMechanismReader).GetMethod("ExecuteQueryAsync");
+            m.Should().NotBeNull("IMechanismReader must define ExecuteQueryAsync");
 
             var ret = m!.ReturnType;
             ret.IsGenericType.Should().BeTrue("ExecuteQueryAsync must return a generic Task<>");
@@ -48,10 +48,10 @@ namespace RimMind.Core.ArchTests.PhaseH1
 
         [Fact]
         [Trait("Phase", "H1")]
-        public void IGameMechanism_ExecuteSetAsync_Should_Return_Task_Result()
+        public void IMechanismWriter_ExecuteSetAsync_Should_Return_Task_Result()
         {
-            var m = typeof(IGameMechanism).GetMethod("ExecuteSetAsync");
-            m.Should().NotBeNull("IGameMechanism must define ExecuteSetAsync");
+            var m = typeof(IMechanismWriter).GetMethod("ExecuteSetAsync");
+            m.Should().NotBeNull("IMechanismWriter must define ExecuteSetAsync");
 
             var ret = m!.ReturnType;
             ret.IsGenericType.Should().BeTrue("ExecuteSetAsync must return a generic Task<>");

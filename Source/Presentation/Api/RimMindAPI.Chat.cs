@@ -5,7 +5,7 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Pipeline.Npc;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using System;
 using System.Threading;

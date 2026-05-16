@@ -11,7 +11,6 @@ namespace RimMind.Application.Features.Context
     internal sealed class BudgetScheduler : IBudgetScheduler
     {
         private BudgetSchedulerConfig _config = new BudgetSchedulerConfig();
-        private IRelevanceProvider? _relevance;
 
         public BudgetAllocation Schedule(List<KeyMeta> keys, string scenarioId, float budget, string? currentQuery)
         {
@@ -46,18 +45,12 @@ namespace RimMind.Application.Features.Context
 
         public void OnKeyUpdated(KeyMeta key) { }
         public void Calibrate(List<KeyMeta> keys) { }
-        public void SetRelevanceProvider(IRelevanceProvider provider) => _relevance = provider;
         public void SetConfig(BudgetSchedulerConfig? config) { if (config != null) _config = config; }
         public BudgetSchedulerConfig GetConfig() => _config;
 
         private float ComputeScore(KeyMeta key, string scenarioId, string? query)
         {
             float baseScore = key.Priority * _config.W1 + key.AdaptivePriority * _config.W2;
-            if (_relevance != null)
-            {
-                float relevance = _relevance.ComputeRelevance(scenarioId, key.OwnerMod ?? "", key);
-                baseScore = baseScore * (1 - _config.Alpha) + relevance * _config.Alpha;
-            }
             return Math.Max(0, baseScore);
         }
 

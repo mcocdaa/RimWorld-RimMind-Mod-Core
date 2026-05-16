@@ -1,4 +1,3 @@
-using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.UI;
@@ -29,7 +28,7 @@ namespace RimMind.Presentation
             public static void InvalidateClientCache()
                 => RimMindRuntime.Instance.InvalidateClientCache();
 
-            public static Player2Client? GetPlayer2Client()
+            public static IAIClient? GetPlayer2Client()
                 => RimMindRuntime.Instance.GetPlayer2Client();
         }
     }

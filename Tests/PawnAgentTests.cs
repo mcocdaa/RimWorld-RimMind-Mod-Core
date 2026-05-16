@@ -1,4 +1,4 @@
-﻿﻿using System;
+?using System;
 using System.Collections.Generic;
 using RimMind.Domain.Events;
 using RimMind.Application.Common.Models.Client;
@@ -13,7 +13,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using Verse.AI;
 using Xunit;

@@ -1,7 +1,7 @@
 using RimMind.Application.Common.Interfaces.Extension;
 using UnityEngine;
 
-namespace RimMind.Presentation.Settings;
+namespace RimMind.Application.Common.Interfaces.Extension;
 
 public interface ISettingsTab : IExtension
 {

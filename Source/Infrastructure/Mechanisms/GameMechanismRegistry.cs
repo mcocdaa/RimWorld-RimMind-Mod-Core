@@ -26,13 +26,13 @@ namespace RimMind.Infrastructure.Mechanisms
             {
                 foreach (var op in mechanism.SupportedOperations)
                 {
-                    var handler = new MechanismToolHandler(mechanism, op);
+                    var handler = new MechanismToolHandler(mechanism, mechanism, mechanism, mechanism, op);
                     _toolRegistry.Register(handler);
                 }
 
                 if (mechanism.SupportedOperations.Contains(MechanismOperationType.List))
                 {
-                    var listHandler = new MechanismListToolHandler(mechanism);
+                    var listHandler = new MechanismListToolHandler(mechanism, mechanism);
                     _toolRegistry.Register(listHandler);
                 }
             }

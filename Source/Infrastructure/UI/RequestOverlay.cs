@@ -193,7 +193,7 @@ namespace RimMind.Infrastructure.UI
             }
             if (Widgets.ButtonText(openBtnRect, "RimMind.Infrastructure.UI.RequestOverlay.Details".Translate()))
             {
-                Find.WindowStack.Add(new Window_RequestLog());
+                RimMindServiceLocator.Get<IWindowService>()?.OpenRequestLog();
             }
         }
 

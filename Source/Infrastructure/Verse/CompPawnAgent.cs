@@ -7,7 +7,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Infrastructure.UI;
+using RimMind.Application.Common.Interfaces.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -103,7 +103,7 @@ namespace RimMind.Infrastructure.Verse
                     icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
                     action = () =>
                     {
-                        Find.WindowStack.Add(new Window_AgentDialogue(Pawn));
+                        RimMindServiceLocator.Get<IWindowService>()?.OpenAgentDialogue(Pawn);
                     },
                 };
             }

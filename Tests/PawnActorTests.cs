@@ -4,7 +4,7 @@ using RimMind.Presentation.Agent;
 using RimMind.Infrastructure.Patches;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using Xunit;
 

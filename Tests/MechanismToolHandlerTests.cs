@@ -83,7 +83,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_Query_GeneratesThreeSegmentId()
         {
             var mech = new StubMechanism("pawn.skill");
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             Assert.Equal("pawn.skill.query", handler.Definition.Id);
         }
 
@@ -91,7 +91,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_Set_GeneratesThreeSegmentId()
         {
             var mech = new StubMechanism("pawn.need");
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Set);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Set);
             Assert.Equal("pawn.need.set", handler.Definition.Id);
         }
 
@@ -99,7 +99,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_List_GeneratesThreeSegmentId()
         {
             var mech = new StubMechanism("colony.wealth", scope: MechanismScope.Colony);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.List);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.List);
             Assert.Equal("colony.wealth.list", handler.Definition.Id);
         }
 
@@ -107,7 +107,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_Category_Is_Scope_Lowercased()
         {
             var mech = new StubMechanism(scope: MechanismScope.Colony);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             Assert.Equal("colony", handler.Definition.Category);
         }
 
@@ -115,7 +115,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_Query_Schema_Has_PawnId_Required()
         {
             var mech = new StubMechanism(scope: MechanismScope.Pawn);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             var schema = JObject.Parse(handler.Definition.ParametersSchema);
             Assert.NotNull(schema["properties"]!["pawn_id"]);
             Assert.Contains("pawn_id", schema["required"]!.Values<string>());
@@ -125,7 +125,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_Query_Schema_HasNo_Operation_Field()
         {
             var mech = new StubMechanism();
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             var schema = JObject.Parse(handler.Definition.ParametersSchema);
             Assert.Null(schema["properties"]!["operation"]);
         }
@@ -134,7 +134,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_DangerousRisk_Description_HasPrefix()
         {
             var mech = new StubMechanism(risk: MechanismRisk.Dangerous);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             Assert.StartsWith("[DANGEROUS]", handler.Definition.Description);
         }
 
@@ -142,7 +142,7 @@ namespace RimMind.Presentation.Tests
         public async Task ExecuteAsync_Query_ReturnsQueryResult()
         {
             var mech = new StubMechanism(queryResult: "{\"level\":10}");
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.query",
@@ -160,7 +160,7 @@ namespace RimMind.Presentation.Tests
         public async Task ExecuteAsync_Set_ReturnsSetResult()
         {
             var mech = new StubMechanism();
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Set);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Set);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.set",
@@ -183,7 +183,7 @@ namespace RimMind.Presentation.Tests
                 new() { DefName = "Skill_Melee", Label = "Melee" }
             };
             var mech = new StubMechanism(listResult: entries);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.List);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.List);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.list",
@@ -203,7 +203,7 @@ namespace RimMind.Presentation.Tests
         public async Task ExecuteAsync_UnsupportedOperation_ReturnsErrorInToolResult()
         {
             var mech = new StubMechanism(ops: new List<MechanismOperationType> { MechanismOperationType.Query }.AsReadOnly());
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Set);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Set);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.set",
@@ -222,7 +222,7 @@ namespace RimMind.Presentation.Tests
         {
             var docs = new MechanismDocs { Summary = "fallback", QueryDescription = "custom query desc" };
             var mech = new StubMechanism(docs: docs);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.Query);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.Query);
             Assert.Equal("custom query desc", handler.Definition.Description);
         }
 
@@ -231,7 +231,7 @@ namespace RimMind.Presentation.Tests
         {
             var docs = new MechanismDocs { Summary = "fallback only" };
             var mech = new StubMechanism(docs: docs);
-            var handler = new MechanismToolHandler(mech, MechanismOperationType.List);
+            var handler = new MechanismToolHandler(mech, mech, mech, mech, MechanismOperationType.List);
             Assert.Equal("fallback only", handler.Definition.Description);
         }
     }

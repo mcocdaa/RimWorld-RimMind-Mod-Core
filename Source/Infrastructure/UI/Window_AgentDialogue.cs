@@ -6,7 +6,7 @@ using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Agent;
+using RimMind.Application.Common.Interfaces.Agent;
 using UnityEngine;
 using Verse;
 

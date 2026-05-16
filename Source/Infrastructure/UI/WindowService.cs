@@ -1,0 +1,17 @@
+using RimMind.Application.Common.Interfaces.UI;
+using Verse;
+
+namespace RimMind.Infrastructure.UI;
+
+public class WindowService : IWindowService
+{
+    public void OpenAgentDialogue(object pawn)
+    {
+        Find.WindowStack.Add(new Window_AgentDialogue(pawn as Pawn));
+    }
+
+    public void OpenRequestLog()
+    {
+        Find.WindowStack.Add(new Window_RequestLog());
+    }
+}

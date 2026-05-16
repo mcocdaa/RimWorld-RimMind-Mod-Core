@@ -14,12 +14,14 @@ namespace RimMind.Infrastructure.Mechanisms
 {
     public sealed class MechanismListToolHandler : IToolHandler
     {
-        private readonly IGameMechanism _mechanism;
+        private readonly IMechanismReader _reader;
+        private readonly IMechanismMetadata _metadata;
 
-        public MechanismListToolHandler(IGameMechanism mechanism)
+        public MechanismListToolHandler(IMechanismReader reader, IMechanismMetadata metadata)
         {
-            _mechanism = mechanism;
-            Definition = BuildDefinition(mechanism);
+            _reader = reader;
+            _metadata = metadata;
+            Definition = BuildDefinition(metadata);
         }
 
         public string Id => Definition.Id;
@@ -30,7 +32,7 @@ namespace RimMind.Infrastructure.Mechanisms
             var pawnId = ExtractNullableInt(args.ArgumentsJson, "pawn_id");
             var category = ExtractString(args.ArgumentsJson, "category");
 
-            var result = await _mechanism.ExecuteListAsync(pawnId, ct).ConfigureAwait(false);
+            var result = await _reader.ExecuteListAsync(pawnId, ct).ConfigureAwait(false);
 
             if (result.IsErr)
             {
@@ -70,13 +72,13 @@ namespace RimMind.Infrastructure.Mechanisms
             return filtered.AsReadOnly();
         }
 
-        private static ToolDefinition BuildDefinition(IGameMechanism mechanism)
+        private static ToolDefinition BuildDefinition(IMechanismMetadata metadata)
         {
-            var toolId = $"{mechanism.MechanismId}.list";
-            var description = mechanism.Docs.ListDescription ?? mechanism.Docs.Summary;
+            var toolId = $"{metadata.MechanismId}.list";
+            var description = metadata.Docs.ListDescription ?? metadata.Docs.Summary;
 
             var properties = new Dictionary<string, object>();
-            if (mechanism.Scope == MechanismScope.Pawn)
+            if (metadata.Scope == MechanismScope.Pawn)
             {
                 properties["pawn_id"] = new { type = "integer", description = "Pawn thing ID (optional)" };
             }
@@ -94,7 +96,7 @@ namespace RimMind.Infrastructure.Mechanisms
                 Id = toolId,
                 Description = description,
                 ParametersSchema = JsonConvert.SerializeObject(schema),
-                Category = mechanism.Scope.ToString().ToLowerInvariant()
+                Category = metadata.Scope.ToString().ToLowerInvariant()
             };
         }
 

@@ -193,7 +193,6 @@ namespace RimMind.Application.Features.Context
             => new BudgetAllocation();
         public void OnKeyUpdated(KeyMeta key) { }
         public void Calibrate(List<KeyMeta> keys) { }
-        public void SetRelevanceProvider(IRelevanceProvider provider) { }
         public void SetConfig(BudgetSchedulerConfig? config) { }
         public BudgetSchedulerConfig GetConfig() => new BudgetSchedulerConfig();
     }

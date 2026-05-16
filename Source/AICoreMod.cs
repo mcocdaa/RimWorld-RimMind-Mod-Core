@@ -5,11 +5,11 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Context;
-using RimMind.Presentation.Settings;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Context;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Settings;
 using RimMind.Application.Features.Json;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Infrastructure.UI;
@@ -64,7 +64,7 @@ namespace RimMind.Presentation
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
-            RimMindCoreSettingsUI.Draw(inRect);
+            RimMindCoreSettingsUI.Draw(inRect, RimMindServiceLocator.Get<ISettingsProvider>()!);
         }
     }
 

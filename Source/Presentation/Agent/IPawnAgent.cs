@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using RimMind.Domain.Enums;
+using RimMind.Presentation.Agent;
 using Verse;
 
-namespace RimMind.Presentation.Agent
+namespace RimMind.Application.Common.Interfaces.Agent
 {
     public interface IPawnAgent : IExposable
     {

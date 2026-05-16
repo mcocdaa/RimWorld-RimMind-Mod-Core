@@ -4,17 +4,17 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Features.Queue;
-using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Domain.Enums;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Presentation.Agent;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
     public class RimMindRuntimeGameComponent : GameComponent
     {
-        private readonly Dictionary<int, PawnAgent> _agents = new Dictionary<int, PawnAgent>();
+        private readonly Dictionary<int, IPawnAgent> _agents = new Dictionary<int, IPawnAgent>();
         private int _lastTick;
         private bool _initialized;
 
@@ -37,7 +37,7 @@ namespace RimMind.Presentation.Runtime
                 agent.Tick();
         }
 
-        public PawnAgent GetOrCreateAgent(Pawn pawn)
+        public IPawnAgent GetOrCreateAgent(Pawn pawn)
         {
             if (pawn == null) throw new System.ArgumentNullException(nameof(pawn));
             if (!_agents.TryGetValue(pawn.thingIDNumber, out var agent))
@@ -49,7 +49,7 @@ namespace RimMind.Presentation.Runtime
             return agent;
         }
 
-        public PawnAgent? GetAgent(int pawnId)
+        public IPawnAgent? GetAgent(int pawnId)
         {
             _agents.TryGetValue(pawnId, out var agent);
             return agent;
@@ -69,7 +69,10 @@ namespace RimMind.Presentation.Runtime
         public override void ExposeData()
         {
             base.ExposeData();
-            var agentList = new List<PawnAgent>(_agents.Values);
+            var agentList = new List<PawnAgent>(_agents.Values.Count);
+            foreach (var a in _agents.Values)
+                if (a is PawnAgent pa)
+                    agentList.Add(pa);
             Scribe_Collections.Look(ref agentList, "agents", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {

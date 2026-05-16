@@ -56,7 +56,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_GeneratesCorrectToolId()
         {
             var mech = new ListStubMechanism { MechanismId = "pawn.thought" };
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             Assert.Equal("pawn.thought.list", handler.Definition.Id);
         }
 
@@ -64,7 +64,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_PawnScope_SchemaHasOptionalPawnId()
         {
             var mech = new ListStubMechanism { Scope = MechanismScope.Pawn };
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var schema = JObject.Parse(handler.Definition.ParametersSchema);
             Assert.NotNull(schema["properties"]!["pawn_id"]);
             Assert.DoesNotContain("pawn_id", schema["required"]?.Values<string>() ?? Enumerable.Empty<string>());
@@ -74,7 +74,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_WorldScope_SchemaHasNoPawnId()
         {
             var mech = new ListStubMechanism { MechanismId = "world.faction", Scope = MechanismScope.World };
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var schema = JObject.Parse(handler.Definition.ParametersSchema);
             Assert.Null(schema["properties"]!["pawn_id"]);
         }
@@ -83,7 +83,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_SchemaHasCategoryFilter()
         {
             var mech = new ListStubMechanism();
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var schema = JObject.Parse(handler.Definition.ParametersSchema);
             Assert.NotNull(schema["properties"]!["category"]);
         }
@@ -98,7 +98,7 @@ namespace RimMind.Presentation.Tests
                 new() { DefName = "Skill_Social", Label = "Social" },
             };
             var mech = new ListStubMechanism(entries);
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.list",
@@ -124,7 +124,7 @@ namespace RimMind.Presentation.Tests
                 new() { DefName = "Thought_Memory", Label = "Memory" },
             };
             var mech = new ListStubMechanism(entries);
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.list",
@@ -150,7 +150,7 @@ namespace RimMind.Presentation.Tests
                 new() { DefName = "Thought_SkyHigh", Label = "Sky high" },
             };
             var mech = new ListStubMechanism(entries);
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.list",
@@ -170,7 +170,7 @@ namespace RimMind.Presentation.Tests
         public async Task ExecuteAsync_EmptyResult_ReturnsEmptyArray()
         {
             var mech = new ListStubMechanism(new List<MechanismEnumResult>());
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             var args = new ToolCallArgs
             {
                 ToolId = "pawn.test.list",
@@ -187,7 +187,7 @@ namespace RimMind.Presentation.Tests
         public void Constructor_Category_IsScopeLowercased()
         {
             var mech = new ListStubMechanism { Scope = MechanismScope.World };
-            var handler = new MechanismListToolHandler(mech);
+            var handler = new MechanismListToolHandler(mech, mech);
             Assert.Equal("world", handler.Definition.Category);
         }
     }

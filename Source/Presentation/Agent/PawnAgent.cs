@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;

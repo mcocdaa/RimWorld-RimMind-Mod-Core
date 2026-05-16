@@ -56,7 +56,11 @@ namespace RimMind.Presentation.Settings
         public float threatThresholdMedium = 100000f;
         public float threatThresholdLow = 50000f;
 
-        float IContextSettings.ContextBudget => ContextBudget;
+        float IContextSettings.ContextBudget
+        {
+            get => ContextBudget;
+            set => ContextBudget = value;
+        }
         int IContextSettings.ContextBriefLimit => contextBriefLimit;
         int IContextSettings.EnvironmentScanRadius => environmentScanRadius;
         int IContextSettings.EnvironmentMaxItems => environmentMaxItems;
@@ -67,35 +71,164 @@ namespace RimMind.Presentation.Settings
         float IContextSettings.MoodDiffThreshold => moodDiffThreshold;
         float IContextSettings.TemperatureDiffThreshold => temperatureDiffThreshold;
 
-        bool IContextSettings.IncludeRace => IncludeRace;
-        bool IContextSettings.IncludeAge => IncludeAge;
-        bool IContextSettings.IncludeGender => IncludeGender;
-        bool IContextSettings.IncludeBackstory => IncludeBackstory;
-        bool IContextSettings.IncludeIdeology => IncludeIdeology;
-        bool IContextSettings.IncludeTraits => IncludeTraits;
-        bool IContextSettings.IncludeSkills => IncludeSkills;
-        int IContextSettings.MinSkillLevel => MinSkillLevel;
-        bool IContextSettings.IncludeHealth => IncludeHealth;
-        bool IContextSettings.IncludeCapacities => IncludeCapacities;
-        bool IContextSettings.IncludeMood => IncludeMood;
-        bool IContextSettings.IncludeMoodThoughts => IncludeMoodThoughts;
-        bool IContextSettings.IncludeCurrentJob => IncludeCurrentJob;
-        bool IContextSettings.IncludeWorkPriorities => IncludeWorkPriorities;
-        bool IContextSettings.IncludeEquipment => IncludeEquipment;
-        bool IContextSettings.IncludeInventory => IncludeInventory;
-        bool IContextSettings.IncludeLocation => IncludeLocation;
-        bool IContextSettings.IncludeRelations => IncludeRelations;
-        bool IContextSettings.IncludeGenes => IncludeGenes;
-        bool IContextSettings.IncludeSurroundings => IncludeSurroundings;
-        bool IContextSettings.IncludeCombatStatus => IncludeCombatStatus;
-        bool IContextSettings.IncludeGameTime => IncludeGameTime;
-        bool IContextSettings.IncludeColonistCount => IncludeColonistCount;
-        bool IContextSettings.IncludeColonistNames => IncludeColonistNames;
-        bool IContextSettings.IncludeWealth => IncludeWealth;
-        bool IContextSettings.IncludeFood => IncludeFood;
-        bool IContextSettings.IncludeSeason => IncludeSeason;
-        bool IContextSettings.IncludeWeather => IncludeWeather;
-        bool IContextSettings.IncludeThreats => IncludeThreats;
+        bool IContextSettings.IncludeRace
+        {
+            get => IncludeRace;
+            set => IncludeRace = value;
+        }
+        bool IContextSettings.IncludeAge
+        {
+            get => IncludeAge;
+            set => IncludeAge = value;
+        }
+        bool IContextSettings.IncludeGender
+        {
+            get => IncludeGender;
+            set => IncludeGender = value;
+        }
+        bool IContextSettings.IncludeBackstory
+        {
+            get => IncludeBackstory;
+            set => IncludeBackstory = value;
+        }
+        bool IContextSettings.IncludeIdeology
+        {
+            get => IncludeIdeology;
+            set => IncludeIdeology = value;
+        }
+        bool IContextSettings.IncludeTraits
+        {
+            get => IncludeTraits;
+            set => IncludeTraits = value;
+        }
+        bool IContextSettings.IncludeSkills
+        {
+            get => IncludeSkills;
+            set => IncludeSkills = value;
+        }
+        int IContextSettings.MinSkillLevel
+        {
+            get => MinSkillLevel;
+            set => MinSkillLevel = value;
+        }
+        bool IContextSettings.IncludeHealth
+        {
+            get => IncludeHealth;
+            set => IncludeHealth = value;
+        }
+        bool IContextSettings.IncludeCapacities
+        {
+            get => IncludeCapacities;
+            set => IncludeCapacities = value;
+        }
+        bool IContextSettings.IncludeMood
+        {
+            get => IncludeMood;
+            set => IncludeMood = value;
+        }
+        bool IContextSettings.IncludeMoodThoughts
+        {
+            get => IncludeMoodThoughts;
+            set => IncludeMoodThoughts = value;
+        }
+        bool IContextSettings.IncludeCurrentJob
+        {
+            get => IncludeCurrentJob;
+            set => IncludeCurrentJob = value;
+        }
+        bool IContextSettings.IncludeWorkPriorities
+        {
+            get => IncludeWorkPriorities;
+            set => IncludeWorkPriorities = value;
+        }
+        bool IContextSettings.IncludeEquipment
+        {
+            get => IncludeEquipment;
+            set => IncludeEquipment = value;
+        }
+        bool IContextSettings.IncludeInventory
+        {
+            get => IncludeInventory;
+            set => IncludeInventory = value;
+        }
+        bool IContextSettings.IncludeLocation
+        {
+            get => IncludeLocation;
+            set => IncludeLocation = value;
+        }
+        bool IContextSettings.IncludeRelations
+        {
+            get => IncludeRelations;
+            set => IncludeRelations = value;
+        }
+        bool IContextSettings.IncludeGenes
+        {
+            get => IncludeGenes;
+            set => IncludeGenes = value;
+        }
+        bool IContextSettings.IncludeSurroundings
+        {
+            get => IncludeSurroundings;
+            set => IncludeSurroundings = value;
+        }
+        bool IContextSettings.IncludeCombatStatus
+        {
+            get => IncludeCombatStatus;
+            set => IncludeCombatStatus = value;
+        }
+        bool IContextSettings.IncludeGameTime
+        {
+            get => IncludeGameTime;
+            set => IncludeGameTime = value;
+        }
+        bool IContextSettings.IncludeColonistCount
+        {
+            get => IncludeColonistCount;
+            set => IncludeColonistCount = value;
+        }
+        bool IContextSettings.IncludeColonistNames
+        {
+            get => IncludeColonistNames;
+            set => IncludeColonistNames = value;
+        }
+        bool IContextSettings.IncludeWealth
+        {
+            get => IncludeWealth;
+            set => IncludeWealth = value;
+        }
+        bool IContextSettings.IncludeFood
+        {
+            get => IncludeFood;
+            set => IncludeFood = value;
+        }
+        bool IContextSettings.IncludeSeason
+        {
+            get => IncludeSeason;
+            set => IncludeSeason = value;
+        }
+        bool IContextSettings.IncludeWeather
+        {
+            get => IncludeWeather;
+            set => IncludeWeather = value;
+        }
+        bool IContextSettings.IncludeThreats
+        {
+            get => IncludeThreats;
+            set => IncludeThreats = value;
+        }
+
+#pragma warning disable CS0618
+        float IContextSettings.BudgetW1
+        {
+            get => BudgetW1;
+            set => BudgetW1 = value;
+        }
+        float IContextSettings.BudgetW2
+        {
+            get => BudgetW2;
+            set => BudgetW2 = value;
+        }
+#pragma warning restore CS0618
 
         public void ExposeData()
         {
@@ -193,6 +326,25 @@ namespace RimMind.Presentation.Settings
                 case ContextPreset.Custom:
                     break;
             }
+        }
+
+        public void ResetToDefault()
+        {
+            IncludeRace = true; IncludeAge = true; IncludeGender = true;
+            IncludeBackstory = true; IncludeIdeology = true;
+            IncludeTraits = true; IncludeSkills = true; MinSkillLevel = 4;
+            IncludeHealth = true; IncludeCapacities = true; IncludeMood = true; IncludeMoodThoughts = true;
+            IncludeCurrentJob = true; IncludeWorkPriorities = true;
+            IncludeEquipment = true; IncludeInventory = true; IncludeLocation = true;
+            IncludeRelations = true; IncludeGenes = true;
+            IncludeSurroundings = true; IncludeCombatStatus = true;
+            IncludeGameTime = true; IncludeColonistCount = true; IncludeColonistNames = true;
+            IncludeWealth = true; IncludeFood = true; IncludeSeason = true;
+            IncludeWeather = true; IncludeThreats = true;
+            ContextBudget = 0.6f;
+#pragma warning disable CS0618
+            BudgetW1 = 0.4f; BudgetW2 = 0.6f;
+#pragma warning restore CS0618
         }
     }
 }

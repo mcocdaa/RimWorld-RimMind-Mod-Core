@@ -24,31 +24,31 @@ namespace RimMind.Core.ArchTests.PhaseH1
 
         [Fact]
         [Trait("Phase", "H1")]
-        public void IGameMechanism_ExecuteQueryAsync_Should_Be_MainOnly()
+        public void IMechanismReader_ExecuteQueryAsync_Should_Be_MainOnly()
         {
-            var m = typeof(IGameMechanism).GetMethod("ExecuteQueryAsync");
+            var m = typeof(IMechanismReader).GetMethod("ExecuteQueryAsync");
             m.Should().NotBeNull();
 
             var attr = m!.GetCustomAttribute<ThreadAffinityAttribute>();
             if (attr != null)
             {
                 attr.Kind.Should().Be(ThreadAffinityKind.MainOnly,
-                    "IGameMechanism.ExecuteQueryAsync reads Verse data, must be MainOnly");
+                    "IMechanismReader.ExecuteQueryAsync reads Verse data, must be MainOnly");
             }
         }
 
         [Fact]
         [Trait("Phase", "H1")]
-        public void IGameMechanism_ExecuteSetAsync_Should_Be_MainOnly()
+        public void IMechanismWriter_ExecuteSetAsync_Should_Be_MainOnly()
         {
-            var m = typeof(IGameMechanism).GetMethod("ExecuteSetAsync");
+            var m = typeof(IMechanismWriter).GetMethod("ExecuteSetAsync");
             m.Should().NotBeNull();
 
             var attr = m!.GetCustomAttribute<ThreadAffinityAttribute>();
             if (attr != null)
             {
                 attr.Kind.Should().Be(ThreadAffinityKind.MainOnly,
-                    "IGameMechanism.ExecuteSetAsync writes Verse data, must be MainOnly");
+                    "IMechanismWriter.ExecuteSetAsync writes Verse data, must be MainOnly");
             }
         }
     }

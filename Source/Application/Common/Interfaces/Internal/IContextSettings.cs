@@ -1,8 +1,10 @@
+using RimMind.Domain.Enums;
+
 namespace RimMind.Application.Common.Interfaces.Internal
 {
     public interface IContextSettings
     {
-        float ContextBudget { get; }
+        float ContextBudget { get; set; }
         int ContextBriefLimit { get; }
         int EnvironmentScanRadius { get; }
         int EnvironmentMaxItems { get; }
@@ -13,34 +15,40 @@ namespace RimMind.Application.Common.Interfaces.Internal
         float MoodDiffThreshold { get; }
         float TemperatureDiffThreshold { get; }
 
-        bool IncludeRace { get; }
-        bool IncludeAge { get; }
-        bool IncludeGender { get; }
-        bool IncludeBackstory { get; }
-        bool IncludeIdeology { get; }
-        bool IncludeTraits { get; }
-        bool IncludeSkills { get; }
-        int MinSkillLevel { get; }
-        bool IncludeHealth { get; }
-        bool IncludeCapacities { get; }
-        bool IncludeMood { get; }
-        bool IncludeMoodThoughts { get; }
-        bool IncludeCurrentJob { get; }
-        bool IncludeWorkPriorities { get; }
-        bool IncludeEquipment { get; }
-        bool IncludeInventory { get; }
-        bool IncludeLocation { get; }
-        bool IncludeRelations { get; }
-        bool IncludeGenes { get; }
-        bool IncludeSurroundings { get; }
-        bool IncludeCombatStatus { get; }
-        bool IncludeGameTime { get; }
-        bool IncludeColonistCount { get; }
-        bool IncludeColonistNames { get; }
-        bool IncludeWealth { get; }
-        bool IncludeFood { get; }
-        bool IncludeSeason { get; }
-        bool IncludeWeather { get; }
-        bool IncludeThreats { get; }
+        bool IncludeRace { get; set; }
+        bool IncludeAge { get; set; }
+        bool IncludeGender { get; set; }
+        bool IncludeBackstory { get; set; }
+        bool IncludeIdeology { get; set; }
+        bool IncludeTraits { get; set; }
+        bool IncludeSkills { get; set; }
+        int MinSkillLevel { get; set; }
+        bool IncludeHealth { get; set; }
+        bool IncludeCapacities { get; set; }
+        bool IncludeMood { get; set; }
+        bool IncludeMoodThoughts { get; set; }
+        bool IncludeCurrentJob { get; set; }
+        bool IncludeWorkPriorities { get; set; }
+        bool IncludeEquipment { get; set; }
+        bool IncludeInventory { get; set; }
+        bool IncludeLocation { get; set; }
+        bool IncludeRelations { get; set; }
+        bool IncludeGenes { get; set; }
+        bool IncludeSurroundings { get; set; }
+        bool IncludeCombatStatus { get; set; }
+        bool IncludeGameTime { get; set; }
+        bool IncludeColonistCount { get; set; }
+        bool IncludeColonistNames { get; set; }
+        bool IncludeWealth { get; set; }
+        bool IncludeFood { get; set; }
+        bool IncludeSeason { get; set; }
+        bool IncludeWeather { get; set; }
+        bool IncludeThreats { get; set; }
+
+        float BudgetW1 { get; set; }
+        float BudgetW2 { get; set; }
+
+        void ApplyPreset(ContextPreset preset);
+        void ResetToDefault();
     }
 }

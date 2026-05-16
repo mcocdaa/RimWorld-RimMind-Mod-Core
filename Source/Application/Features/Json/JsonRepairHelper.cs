@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace RimMind.Application.Features.Json
 {
-    internal static class JsonRepairHelper
+    public static class JsonRepairHelper
     {
         private static readonly Regex TrailingCommaRegex = new Regex(
             @",\s*([}\]])",
@@ -26,6 +26,8 @@ namespace RimMind.Application.Features.Json
                 return Repair(input);
             }
         }
+
+        public static string? TryRepairTruncatedJson(string input) => TryRepair(input);
 
         public static string Repair(string input)
         {

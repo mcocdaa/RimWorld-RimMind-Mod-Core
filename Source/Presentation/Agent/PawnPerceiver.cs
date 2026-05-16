@@ -1,9 +1,10 @@
 using System;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 
 namespace RimMind.Presentation.Agent

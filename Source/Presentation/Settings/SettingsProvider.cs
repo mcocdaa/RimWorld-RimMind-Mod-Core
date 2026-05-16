@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Domain.Enums;
 
 namespace RimMind.Presentation.Settings
 {
@@ -11,35 +12,107 @@ namespace RimMind.Presentation.Settings
             _settings = settings;
         }
 
-        public int QueueProcessInterval => _settings.queueProcessInterval;
-        public int MaxConcurrentRequests => _settings.maxConcurrentRequests;
-        public int RequestTimeoutMs => _settings.requestTimeoutMs;
-        public int MaxRetryCount => _settings.maxRetryCount;
-        public int RequestExpireTicks => _settings.requestExpireTicks;
+        public int QueueProcessInterval
+        {
+            get => _settings.queueProcessInterval;
+            set => _settings.queueProcessInterval = value;
+        }
+        public int MaxConcurrentRequests
+        {
+            get => _settings.maxConcurrentRequests;
+            set => _settings.maxConcurrentRequests = value;
+        }
+        public int RequestTimeoutMs
+        {
+            get => _settings.requestTimeoutMs;
+            set => _settings.requestTimeoutMs = value;
+        }
+        public int MaxRetryCount
+        {
+            get => _settings.maxRetryCount;
+            set => _settings.maxRetryCount = value;
+        }
+        public int RequestExpireTicks
+        {
+            get => _settings.requestExpireTicks;
+            set => _settings.requestExpireTicks = value;
+        }
 
         public int AgentTickInterval => _settings.agentTickInterval;
-        public int BehaviorHistoryMax => _settings.behaviorHistoryMax;
+        public int BehaviorHistoryMax
+        {
+            get => _settings.behaviorHistoryMax;
+            set => _settings.behaviorHistoryMax = value;
+        }
         public int ThinkCooldownTicks => _settings.thinkCooldownTicks;
         public int MaxToolCallDepth => _settings.maxToolCallDepth;
-        public int DefaultModCooldownTicks => _settings.defaultModCooldownTicks;
+        public int DefaultModCooldownTicks
+        {
+            get => _settings.defaultModCooldownTicks;
+            set => _settings.defaultModCooldownTicks = value;
+        }
 
-        public int MaxTokens => _settings.maxTokens;
-        public float DefaultTemperature => _settings.defaultTemperature;
-        public bool ForceJsonMode => _settings.forceJsonMode;
-        public string ModelName => _settings.modelName ?? string.Empty;
+        public int MaxTokens
+        {
+            get => _settings.maxTokens;
+            set => _settings.maxTokens = value;
+        }
+        public float DefaultTemperature
+        {
+            get => _settings.defaultTemperature;
+            set => _settings.defaultTemperature = value;
+        }
+        public bool ForceJsonMode
+        {
+            get => _settings.forceJsonMode;
+            set => _settings.forceJsonMode = value;
+        }
+        public string ModelName
+        {
+            get => _settings.modelName ?? string.Empty;
+            set => _settings.modelName = value;
+        }
 
-        public string Provider => _settings.provider ?? string.Empty;
-        public string ApiKey => _settings.apiKey ?? string.Empty;
-        public string ApiEndpoint => _settings.apiEndpoint ?? string.Empty;
-        public string Player2RemoteUrl => _settings.player2RemoteUrl ?? string.Empty;
+        public string Provider
+        {
+            get => _settings.provider ?? string.Empty;
+            set => _settings.provider = value;
+        }
+        public string ApiKey
+        {
+            get => _settings.apiKey ?? string.Empty;
+            set => _settings.apiKey = value;
+        }
+        public string ApiEndpoint
+        {
+            get => _settings.apiEndpoint ?? string.Empty;
+            set => _settings.apiEndpoint = value;
+        }
+        public string Player2RemoteUrl
+        {
+            get => _settings.player2RemoteUrl ?? string.Empty;
+            set => _settings.player2RemoteUrl = value;
+        }
 
-        public bool DebugLogging => _settings.debugLogging;
+        public bool DebugLogging
+        {
+            get => _settings.debugLogging;
+            set => _settings.debugLogging = value;
+        }
 
         public int CircuitBreakerFailureThreshold => _settings.circuitBreakerFailureThreshold;
         public int CircuitBreakerOpenDurationSec => _settings.circuitBreakerOpenDurationSec;
 
-        public int ContextCalibrateInterval => _settings.contextCalibrateInterval;
-        public int ContextDiffLifetimeTicks => _settings.contextDiffLifetimeTicks;
+        public int ContextCalibrateInterval
+        {
+            get => _settings.contextCalibrateInterval;
+            set => _settings.contextCalibrateInterval = value;
+        }
+        public int ContextDiffLifetimeTicks
+        {
+            get => _settings.contextDiffLifetimeTicks;
+            set => _settings.contextDiffLifetimeTicks = value;
+        }
 
         public bool IsConfigured => _settings.IsConfigured();
 
@@ -70,5 +143,29 @@ namespace RimMind.Presentation.Settings
             get => _settings.requestOverlayH;
             set => _settings.requestOverlayH = value;
         }
+
+        public string CustomPawnPrompt
+        {
+            get => _settings.customPawnPrompt ?? string.Empty;
+            set => _settings.customPawnPrompt = value;
+        }
+        public string CustomMapPrompt
+        {
+            get => _settings.customMapPrompt ?? string.Empty;
+            set => _settings.customMapPrompt = value;
+        }
+
+        public FlywheelAutoApplyMode AutoApplyMode
+        {
+            get => _settings.autoApplyMode;
+            set => _settings.autoApplyMode = value;
+        }
+        public float AutoApplyConfidenceThreshold
+        {
+            get => _settings.autoApplyConfidenceThreshold;
+            set => _settings.autoApplyConfidenceThreshold = value;
+        }
+
+        public bool IsOpenAIConfigured() => _settings.IsOpenAIConfigured();
     }
 }

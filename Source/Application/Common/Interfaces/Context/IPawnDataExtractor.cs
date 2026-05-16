@@ -1,13 +1,7 @@
 using System.Collections.Generic;
-using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Common.Interfaces.Context
 {
-    public interface IPawnDataExtractor
-    {
-        PawnExtractedData Extract(object pawn);
-    }
-
     public class PawnExtractedData
     {
         public string? MoodString;

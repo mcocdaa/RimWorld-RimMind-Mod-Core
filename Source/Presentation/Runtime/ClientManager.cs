@@ -5,14 +5,13 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.Common;
-using RimMind.Infrastructure.Services.Clients.Player2;
 
 namespace RimMind.Presentation.Runtime
 {
     public class ClientManager : IClientManager
     {
         private IAIClient? _client;
-        private Player2Client? _player2Client;
+        private IAIClient? _player2Client;
         private string _lastProvider = "";
         private string _lastApiKey = "";
         private string _lastEndpoint = "";
@@ -38,25 +37,16 @@ namespace RimMind.Presentation.Runtime
             return _client;
         }
 
-        public Player2Client? GetPlayer2Client()
+        public IAIClient? GetPlayer2Client()
         {
             var s = RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null) return null;
             if (s.Provider != AIProviders.Player2) return null;
 
             if (_player2Client != null) return _player2Client;
-            try
-            {
-                _player2Client = Player2Client.CreateAsync(s).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                RimMind.Application.Features.Queue.AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
-            }
+            _player2Client = CreateClient(s);
             return _player2Client;
         }
-
-        object? IClientManager.GetPlayer2Client() => GetPlayer2Client();
 
         public void InvalidateCache()
         {
