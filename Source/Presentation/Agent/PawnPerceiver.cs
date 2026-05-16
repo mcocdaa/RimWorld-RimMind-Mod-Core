@@ -1,6 +1,7 @@
 using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Enums;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
 using Verse;

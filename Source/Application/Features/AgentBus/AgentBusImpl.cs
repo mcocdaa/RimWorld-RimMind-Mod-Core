@@ -67,21 +67,21 @@ namespace RimMind.Application.Features.AgentBus
         public void Publish<T>(T evt) where T : AgentBusEvent
         {
             if (evt == null) return;
-            if (_handlers.TryGetValue(typeof(T), out var list))
+            if (!_handlers.TryGetValue(typeof(T), out var list) || list.Count == 0) return;
+            HandlerEntry[] snapshot;
+            lock (list) { snapshot = list.ToArray(); }
+            foreach (var entry in snapshot)
             {
-                HandlerEntry[] snapshot;
-                lock (list) { snapshot = list.ToArray(); }
-                foreach (var entry in snapshot)
-                {
-                    try { entry.Action(evt); }
-                    catch (Exception ex) { _log?.Error($"AgentBus handler error: {ex.Message}"); }
-                }
+                try { entry.Action(evt); }
+                catch (Exception ex) { _log?.Error($"AgentBus handler error: {ex.Message}"); }
             }
         }
 
         [ThreadAffinity(ThreadAffinityKind.Any)]
         public void PublishFromBackground<T>(T evt) where T : AgentBusEvent
         {
+            if (evt == null) return;
+            if (!_handlers.TryGetValue(typeof(T), out var list) || list.Count == 0) return;
             _backgroundQueue.Enqueue(new DeferredPublish(typeof(T), evt));
         }
 
@@ -90,15 +90,13 @@ namespace RimMind.Application.Features.AgentBus
         {
             while (_backgroundQueue.TryDequeue(out var deferred))
             {
-                if (_handlers.TryGetValue(deferred.EventType, out var list))
+                if (!_handlers.TryGetValue(deferred.EventType, out var list) || list.Count == 0) continue;
+                HandlerEntry[] snapshot;
+                lock (list) { snapshot = list.ToArray(); }
+                foreach (var entry in snapshot)
                 {
-                    HandlerEntry[] snapshot;
-                    lock (list) { snapshot = list.ToArray(); }
-                    foreach (var entry in snapshot)
-                    {
-                        try { entry.Action(deferred.Event); }
-                        catch (Exception ex) { _log?.Error($"AgentBus deferred handler error: {ex.Message}"); }
-                    }
+                    try { entry.Action(deferred.Event); }
+                    catch (Exception ex) { _log?.Error($"AgentBus deferred handler error: {ex.Message}"); }
                 }
             }
         }

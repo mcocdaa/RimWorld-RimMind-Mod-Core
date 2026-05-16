@@ -1,4 +1,5 @@
-using RimMind.Presentation.Runtime;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
@@ -9,12 +10,12 @@ namespace RimMind.Infrastructure.Verse
 
         public override void StartedNewGame()
         {
-            RimMindRuntime.Instance.EventBus.ClearAllSubscribers();
+            RimMindServiceLocator.Get<IEventBus>()?.ClearAllSubscribers();
         }
 
         public override void LoadedGame()
         {
-            RimMindRuntime.Instance.EventBus.ClearAllSubscribers();
+            RimMindServiceLocator.Get<IEventBus>()?.ClearAllSubscribers();
         }
     }
 }

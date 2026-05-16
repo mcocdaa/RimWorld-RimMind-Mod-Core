@@ -15,7 +15,6 @@ using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Prompt;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Context;
-using RimMind.Presentation.Settings;
 using Verse;
 
 namespace RimMind.Presentation.Context
@@ -92,8 +91,8 @@ namespace RimMind.Presentation.Context
                 ? request.Budget
                 : (scenarioMeta?.DefaultBudget > 0
                     ? scenarioMeta.DefaultBudget
-                    : (RimMindCoreMod.Settings?.Context?.ContextBudget > 0
-                        ? RimMindCoreMod.Settings.Context.ContextBudget
+                    : (RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget > 0
+                        ? RimMindServiceLocator.Get<ISettingsProvider>()!.Context!.ContextBudget
                         : 0.6f));
             var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
 
@@ -245,10 +244,10 @@ namespace RimMind.Presentation.Context
             if (snapshot.Messages == null || snapshot.Messages.Count == 0) return;
 
             int totalBudget = RimMindServiceLocator.Get<IFlywheelParameterStore>()?.TotalBudget ?? 4000;
-            int reserveForOutput = RimMindCoreMod.Settings?.maxTokens > 0
-                ? RimMindCoreMod.Settings.maxTokens
+            int reserveForOutput = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens > 0
+                ? RimMindServiceLocator.Get<ISettingsProvider>()!.MaxTokens
                 : 800;
-            float budgetRatio = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f;
+            float budgetRatio = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;
 
@@ -293,7 +292,7 @@ namespace RimMind.Presentation.Context
             snapshot.EstimatedTokens = trimmed.Sum(s => s.EstimatedTokens);
             snapshot.Meta.TotalTokens = snapshot.EstimatedTokens;
 
-            if (RimMindCoreMod.Settings?.debugLogging == true)
+            if (RimMindServiceLocator.Get<ISettingsProvider>()?.DebugLogging == true)
             {
                 var log = RimMindServiceLocator.Get<ILogSink>();
                 log?.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
@@ -304,7 +303,7 @@ namespace RimMind.Presentation.Context
         {
             if (string.IsNullOrEmpty(content)) return content;
             const int briefLimitFallback = 200;
-            int briefLimit = RimMindCoreMod.Settings?.Context?.contextBriefLimit ?? briefLimitFallback;
+            int briefLimit = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBriefLimit ?? briefLimitFallback;
             if (content.Length <= briefLimit) return content;
             int cut = briefLimit;
             if (char.IsHighSurrogate(content[cut - 1])) cut--;

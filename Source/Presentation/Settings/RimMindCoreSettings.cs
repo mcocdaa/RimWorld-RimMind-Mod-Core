@@ -1,14 +1,16 @@
 using System;
+using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
+using RimMind.Application.Common.Interfaces.Client;
 using Verse;
 
 namespace RimMind.Presentation.Settings
 {
-    public class RimMindCoreSettings : ModSettings
+    public class RimMindCoreSettings : ModSettings, IOpenAISettings
     {
         public string? SavedModVersion;
 
-        public AIProvider provider = AIProvider.OpenAI;
+        public string provider = AIProviders.OpenAI;
 
         public string apiKey = string.Empty;
         public string apiEndpoint = "https://api.deepseek.com/v1";
@@ -59,9 +61,17 @@ namespace RimMind.Presentation.Settings
         public int circuitBreakerFailureThreshold = 5;
         public int circuitBreakerOpenDurationSec = 60;
 
+        string IOpenAISettings.ApiEndpoint => apiEndpoint;
+        string IOpenAISettings.ModelName => modelName;
+        string IOpenAISettings.ApiKey => apiKey;
+        bool IOpenAISettings.ForceJsonMode => forceJsonMode;
+        int IOpenAISettings.MaxTokens => maxTokens;
+        float IOpenAISettings.DefaultTemperature => defaultTemperature;
+        bool IOpenAISettings.DebugLogging => debugLogging;
+
         public bool IsConfigured()
         {
-            if (provider == AIProvider.Player2)
+            if (provider == AIProviders.Player2)
                 return true;
             return !string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(apiEndpoint);
         }
@@ -73,7 +83,7 @@ namespace RimMind.Presentation.Settings
         {
             base.ExposeData();
             Scribe_Values.Look(ref SavedModVersion, "savedModVersion");
-            Scribe_Values.Look(ref provider, "provider", AIProvider.OpenAI);
+            Scribe_Values.Look(ref provider, "provider", AIProviders.OpenAI);
             string storedKey = ApiKeyObfuscator.Obfuscate(apiKey);
             Scribe_Values.Look(ref storedKey, "apiKey", string.Empty);
             apiKey = ApiKeyObfuscator.Deobfuscate(storedKey);

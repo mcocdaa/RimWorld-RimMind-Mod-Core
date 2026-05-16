@@ -14,6 +14,8 @@ namespace RimMind.Application.Features.Queue
 {
     public class AIRequestQueueImpl : IAIRequestQueue
     {
+        private static AIRequestQueueImpl? _instance;
+
         private readonly ConcurrentQueue<(AIResponse response, Action<AIResponse> callback)> _results
             = new ConcurrentQueue<(AIResponse, Action<AIResponse>)>();
         private readonly ConcurrentQueue<(string msg, bool isWarning)> _pendingLogs
@@ -29,6 +31,8 @@ namespace RimMind.Application.Features.Queue
 
         private readonly CooldownTable _cooldowns = new CooldownTable();
 
+        private readonly Func<ISettingsProvider?>? _settingsFactory;
+
         private Func<AIRequest, IAIClient, AIResponse>? _executeViaPipeline;
 
         private int _lastQueueProcessTick;
@@ -41,23 +45,22 @@ namespace RimMind.Application.Features.Queue
         public Action<string, bool>? LogHandler { get; set; }
         public Action? FlushBackgroundQueue { get; set; }
 
-        private ISettingsProvider Settings => RimMindServiceLocator.Get<ISettingsProvider>()
-            ?? new DefaultSettingsProvider();
+        private ISettingsProvider Settings => _settingsFactory?.Invoke() ?? new DefaultSettingsProvider();
 
         private int QueueProcessInterval => Settings.QueueProcessInterval;
 
         public static IAIRequestQueue Instance
         {
-            get => RimMindServiceLocator.Get<IAIRequestQueue>()
-                ?? throw new InvalidOperationException("AIRequestQueue has not been initialized.");
+            get => _instance ?? throw new InvalidOperationException("AIRequestQueue has not been initialized.");
         }
 
         public static void LogFromBackground(string msg, bool isWarning = false)
-            => RimMindServiceLocator.Get<IAIRequestQueue>()?.EnqueueLog(msg, isWarning);
+            => _instance?.EnqueueLog(msg, isWarning);
 
-        public AIRequestQueueImpl()
+        public AIRequestQueueImpl(Func<ISettingsProvider?>? settingsFactory = null)
         {
-            RimMindServiceLocator.Register<IAIRequestQueue>(this);
+            _settingsFactory = settingsFactory;
+            _instance = this;
         }
 
         internal void SetExecuteViaPipeline(Func<AIRequest, IAIClient, AIResponse> executeViaPipeline)
@@ -294,9 +297,76 @@ namespace RimMind.Application.Features.Queue
             public int QueueProcessInterval => 60;
             public int MaxConcurrentRequests => 4;
             public int RequestTimeoutMs => 30000;
-            public bool DebugLogging => false;
+            public int MaxRetryCount => 2;
+            public int RequestExpireTicks => 30000;
             public int AgentTickInterval => 150;
             public int BehaviorHistoryMax => 100;
+            public int ThinkCooldownTicks => 30000;
+            public int MaxToolCallDepth => 3;
+            public int DefaultModCooldownTicks => 3600;
+            public int MaxTokens => 800;
+            public float DefaultTemperature => 0.7f;
+            public bool ForceJsonMode => true;
+            public string ModelName => "";
+            public string Provider => Domain.Common.AIProviders.OpenAI;
+            public string ApiKey => "";
+            public string ApiEndpoint => "";
+            public string Player2RemoteUrl => "";
+            public bool DebugLogging => false;
+            public int CircuitBreakerFailureThreshold => 5;
+            public int CircuitBreakerOpenDurationSec => 60;
+            public int ContextCalibrateInterval => 10000;
+            public int ContextDiffLifetimeTicks => 36000;
+            public bool IsConfigured => false;
+            public IContextSettings Context => new DefaultContextSettings();
+            public bool RequestOverlayEnabled { get => true; set { } }
+            public float RequestOverlayX { get => 20f; set { } }
+            public float RequestOverlayY { get => 20f; set { } }
+            public float RequestOverlayW { get => 300f; set { } }
+            public float RequestOverlayH { get => 200f; set { } }
+        }
+
+        private sealed class DefaultContextSettings : IContextSettings
+        {
+            public float ContextBudget => 0.6f;
+            public int ContextBriefLimit => 200;
+            public int EnvironmentScanRadius => 5;
+            public int EnvironmentMaxItems => 8;
+            public float ThreatThresholdHigh => 200000f;
+            public float ThreatThresholdMedium => 100000f;
+            public float ThreatThresholdLow => 50000f;
+            public int MaxCacheEntries => 100;
+            public float MoodDiffThreshold => 5f;
+            public float TemperatureDiffThreshold => 5f;
+            public bool IncludeRace => true;
+            public bool IncludeAge => true;
+            public bool IncludeGender => true;
+            public bool IncludeBackstory => true;
+            public bool IncludeIdeology => false;
+            public bool IncludeTraits => true;
+            public bool IncludeSkills => true;
+            public int MinSkillLevel => 4;
+            public bool IncludeHealth => true;
+            public bool IncludeCapacities => true;
+            public bool IncludeMood => true;
+            public bool IncludeMoodThoughts => false;
+            public bool IncludeCurrentJob => true;
+            public bool IncludeWorkPriorities => true;
+            public bool IncludeEquipment => true;
+            public bool IncludeInventory => false;
+            public bool IncludeLocation => false;
+            public bool IncludeRelations => true;
+            public bool IncludeGenes => true;
+            public bool IncludeSurroundings => false;
+            public bool IncludeCombatStatus => true;
+            public bool IncludeGameTime => true;
+            public bool IncludeColonistCount => true;
+            public bool IncludeColonistNames => true;
+            public bool IncludeWealth => false;
+            public bool IncludeFood => true;
+            public bool IncludeSeason => true;
+            public bool IncludeWeather => true;
+            public bool IncludeThreats => true;
         }
     }
 }

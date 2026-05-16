@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
@@ -11,15 +12,13 @@ using Newtonsoft.Json;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Queue;
 using RimMind.Application.Features.Pipeline.AI;
-using RimMind.Presentation.Agent;
-using RimMind.Presentation.Llm;
 using RimMind.Infrastructure.Persistence;
-using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Services.Clients.Player2
@@ -163,17 +162,17 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             {
                 if (string.IsNullOrEmpty(gameStateInfo))
                 {
-                    var engine = RimMindAPI.GetContextEngine();
+                    var engine = RimMindServiceLocator.Get<IContextEngine>();
                     if (engine != null)
                     {
                         var request = new ContextRequest
                         {
                             NpcId = npcId,
                             Scenario = ScenarioIds.Dialogue,
-                            Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
+                            Budget = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f,
                             CurrentQuery = message,
-                            MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
-                            Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
+                            MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
+                            Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
                             Map = Find.CurrentMap,
                         };
                         var snapshot = engine.BuildSnapshot(request);
@@ -187,7 +186,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     }
                     else
                     {
-                        gameStateInfo = GameContextBuilder.CollectBasicGameState(npcId);
+                        gameStateInfo = RimMindServiceLocator.Get<IGameContextBuilder>()?.CollectBasicGameState(npcId) ?? "";
                     }
                 }
 
@@ -222,8 +221,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
                 CurrentQuery = gameStateInfo != null ? $"{message}\n\n[Game State]\n{gameStateInfo}" : message,
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
-                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
+                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
+                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
             };
             snapshot.AddMessage(new ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
 
@@ -384,13 +383,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (!AutoDispatch) return;
             try
             {
-                var dispatcher = new RimMind.Presentation.Llm.ResponseDispatcher(
-                    RimMind.Presentation.Runtime.RimMindRuntime.Instance.EventBus);
-                var response = new AIResponse { RequestId = System.Guid.NewGuid().ToString() };
-                var context = new RimMind.Presentation.Pipeline.Npc.NpcChatContext
-                {
-                };
-                dispatcher.Dispatch(context, response);
+                var dispatcher = RimMindServiceLocator.Get<IResponseDispatcher>();
+                dispatcher?.DispatchChatResponse(npcId, System.Guid.NewGuid().ToString());
             }
             catch (System.Exception ex)
             {

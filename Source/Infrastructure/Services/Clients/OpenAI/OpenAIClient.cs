@@ -10,7 +10,6 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Features.Queue;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Settings;
 using Newtonsoft.Json;
 using Verse;
 
@@ -25,18 +24,18 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
             _formatCapabilityCache.Clear();
         }
 
-        private string BuildCacheKey() => $"{_settings.apiEndpoint}|{_settings.modelName}";
+        private string BuildCacheKey() => $"{_settings.ApiEndpoint}|{_settings.ModelName}";
 
-        private readonly RimMindCoreSettings _settings;
+        private readonly IOpenAISettings _settings;
 
-        public OpenAIClient(RimMindCoreSettings settings)
+        public OpenAIClient(IOpenAISettings settings)
         {
             _settings = settings;
         }
 
         public bool IsConfigured() => _settings.IsConfigured();
 
-        public bool IsLocalEndpoint => IsLoopbackEndpoint(_settings.apiEndpoint);
+        public bool IsLocalEndpoint => IsLoopbackEndpoint(_settings.ApiEndpoint);
 
         private static bool IsLoopbackEndpoint(string endpoint)
         {
@@ -54,7 +53,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
             if (!string.IsNullOrEmpty(request.JsonSchema) || (request.Tools != null && request.Tools.Count > 0))
                 return await SendStructuredAsync(request, request.JsonSchema, request.Tools);
 
-            bool wantFormat = _settings.forceJsonMode && request.UseJsonMode;
+            bool wantFormat = _settings.ForceJsonMode && request.UseJsonMode;
             string cacheKey = BuildCacheKey();
 
             if (wantFormat && _formatCapabilityCache.TryGetValue(cacheKey, out string? cached))
@@ -66,7 +65,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
             if (!wantFormat)
             {
                 var noFormatResp = await SendAsyncInner(request, useResponseFormat: false);
-                if (noFormatResp.IsOk && wantFormat != (_settings.forceJsonMode && request.UseJsonMode))
+                if (noFormatResp.IsOk && wantFormat != (_settings.ForceJsonMode && request.UseJsonMode))
                     AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
                 return noFormatResp;
             }
@@ -89,19 +88,19 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
         private async Task<Result<AIResponse, RimMindError>> SendAsyncInner(AIRequest request, bool useResponseFormat)
         {
-            string endpoint = FormatEndpoint(_settings.apiEndpoint);
+            string endpoint = FormatEndpoint(_settings.ApiEndpoint);
             string json = BuildRequestJson(request, useResponseFormat);
 
-            if (_settings.debugLogging)
+            if (_settings.DebugLogging)
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? {request.RequestId}\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
             {
-                bool isLocal = IsLoopbackEndpoint(_settings.apiEndpoint);
+                bool isLocal = IsLoopbackEndpoint(_settings.ApiEndpoint);
                 float connectTimeout = isLocal ? 300f : 60f;
                 (string responseText, long httpStatusCode) = await HttpHelper.PostAsync(
-                    endpoint, json, $"Bearer {_settings.apiKey}", connectTimeout: connectTimeout);
+                    endpoint, json, $"Bearer {_settings.ApiKey}", connectTimeout: connectTimeout);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
                 string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
@@ -111,7 +110,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 int cachedTokens = parsed?.usage?.prompt_tokens_details?.cached_tokens ?? 0;
                 sw.Stop();
 
-                if (_settings.debugLogging)
+                if (_settings.DebugLogging)
                     AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
@@ -149,7 +148,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
         public async Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
         {
-            string endpoint = FormatEndpoint(_settings.apiEndpoint);
+            string endpoint = FormatEndpoint(_settings.ApiEndpoint);
             string cacheKey = BuildCacheKey();
 
             string[] formatModes = { "json_schema", "json_object", "none" };
@@ -209,16 +208,16 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
         {
             string json = BuildStructuredRequestJson(request, jsonSchema, tools, formatMode);
 
-            if (_settings.debugLogging)
+            if (_settings.DebugLogging)
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} (format={formatMode})\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
             {
-                bool isLocal = IsLoopbackEndpoint(_settings.apiEndpoint);
+                bool isLocal = IsLoopbackEndpoint(_settings.ApiEndpoint);
                 float connectTimeout = isLocal ? 300f : 60f;
                 (string responseText, long httpStatusCode) = await HttpHelper.PostAsync(
-                    endpoint, json, $"Bearer {_settings.apiKey}", connectTimeout: connectTimeout);
+                    endpoint, json, $"Bearer {_settings.ApiKey}", connectTimeout: connectTimeout);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
                 string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
@@ -229,7 +228,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 var toolCallsDto = parsed?.choices?[0]?.message?.tool_calls;
                 sw.Stop();
 
-                if (_settings.debugLogging)
+                if (_settings.DebugLogging)
                     AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = new AIResponse
@@ -265,7 +264,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 else if (tools != null && tools.Count > 0 && !string.IsNullOrEmpty(content))
                 {
                     AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
-                    if (_settings.debugLogging && content.Length > 0)
+                    if (_settings.DebugLogging && content.Length > 0)
                         AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
                 }
 
@@ -301,9 +300,9 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
             var body = new OpenAIRequestDto
             {
-                model = _settings.modelName,
+                model = _settings.ModelName,
                 messages = messages,
-                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.maxTokens,
+                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
                 temperature = request.Temperature,
                 stream = false,
             };
@@ -324,9 +323,9 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
             var body = new OpenAIRequestDto
             {
-                model = _settings.modelName,
+                model = _settings.ModelName,
                 messages = messages,
-                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.maxTokens,
+                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
                 temperature = request.Temperature,
                 stream = false,
             };
@@ -339,7 +338,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                     json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(jsonSchema!) },
                 };
             }
-            else if (formatMode == "json_object" && (_settings.forceJsonMode || request.UseJsonMode))
+            else if (formatMode == "json_object" && (_settings.ForceJsonMode || request.UseJsonMode))
             {
                 body.response_format = new ResponseFormatDto { type = "json_object" };
             }

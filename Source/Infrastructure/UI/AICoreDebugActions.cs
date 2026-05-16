@@ -1,21 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using RimMind.Presentation.Agent;
-using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Context;
-using RimMind.Application.Common.Models.Context;
-using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Features.Flywheel;
-using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Application.Common.Models.Npc;
-using RimMind.Application.Features.Logging;
-using RimMind.Presentation;
-using RimMind.Presentation.Context;
+using RimMind.Application.Features.Queue;
 using LudeonTK;
 using RimWorld;
 using Verse;
@@ -28,7 +26,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Test API Connection", actionType = DebugActionType.Action)]
         public static void TestConnection()
         {
-            if (!RimMindAPI.IsConfigured())
+            if (!(RimMindServiceLocator.Get<ISettingsProvider>()?.IsConfigured ?? false))
             {
                 RimMindErrors.Warn("[RimMind-Core] API not configured. Set API Key in mod settings.");
                 return;
@@ -46,13 +44,20 @@ namespace RimMind.Infrastructure.UI
                 Priority = AIRequestPriority.High,
             };
 
-            RimMindAPI.RequestImmediate(request, result =>
+            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            var client = RimMindServiceLocator.Get<IClientManager>()?.GetClient();
+            if (queue == null || client == null)
             {
-                if (result.IsOk && result.Value.State == AIRequestState.Completed)
-                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionSuccess".Translate(result.Value.Content), MessageTypeDefOf.PositiveEvent, false);
+                Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate("Queue or client not available"), MessageTypeDefOf.NegativeEvent, false);
+                return;
+            }
+            queue.EnqueueImmediate(request, response =>
+            {
+                if (response.State == AIRequestState.Completed)
+                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionSuccess".Translate(response.Content), MessageTypeDefOf.PositiveEvent, false);
                 else
-                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate(result.IsErr ? result.Error.ToString() : result.Value.State.ToString()), MessageTypeDefOf.NegativeEvent, false);
-            });
+                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate(response.State.ToString()), MessageTypeDefOf.NegativeEvent, false);
+            }, client);
 
             Messages.Message("RimMind.Infrastructure.Debug.RequestSent".Translate(), MessageTypeDefOf.NeutralEvent, false);
         }
@@ -92,7 +97,13 @@ namespace RimMind.Infrastructure.UI
         {
             var map = Find.CurrentMap;
             if (map == null) { RimMindErrors.Warn("[RimMind-Core] No map loaded."); return; }
-            Log.Message("[RimMind-Core] Map Context:\n" + RimMindAPI.BuildMapContext(map));
+            var ctxProvider = RimMindServiceLocator.Get<IContextKeyProvider>();
+            if (ctxProvider == null) { RimMindErrors.Warn("[RimMind-Core] ContextKeyProvider not available."); return; }
+            var entries = ctxProvider.BuildMapContextEntries(map);
+            var sb = new System.Text.StringBuilder();
+            foreach (var entry in entries)
+                sb.AppendLine(entry.Content);
+            Log.Message("[RimMind-Core] Map Context:\n" + sb.ToString().TrimEnd());
         }
 
         [DebugAction("RimMind", "Show Pawn Context (selected)", actionType = DebugActionType.Action)]
@@ -108,7 +119,7 @@ namespace RimMind.Infrastructure.UI
                 Budget = 0.6f,
                 CurrentQuery = "[Debug] Show context",
             };
-            var engine = RimMindAPI.GetContextEngine();
+            var engine = RimMindServiceLocator.Get<IContextEngine>();
             var snapshot = engine.BuildSnapshot(request);
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
@@ -155,21 +166,21 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Pause Queue", actionType = DebugActionType.Action)]
         public static void PauseQueue()
         {
-            RimMindAPI.PauseQueue();
+            RimMindServiceLocator.Get<IAIRequestQueue>()?.PauseQueue();
             Log.Message("[RimMind-Core] Queue paused.");
         }
 
         [DebugAction("RimMind", "Resume Queue", actionType = DebugActionType.Action)]
         public static void ResumeQueue()
         {
-            RimMindAPI.ResumeQueue();
+            RimMindServiceLocator.Get<IAIRequestQueue>()?.ResumeQueue();
             Log.Message("[RimMind-Core] Queue resumed.");
         }
 
         [DebugAction("RimMind", "Show Registered Providers", actionType = DebugActionType.Action)]
         public static void ShowRegisteredProviders()
         {
-            var categories = RimMindAPI.GetRegisteredCategories();
+            var categories = RimMindServiceLocator.Get<IProviderRegistry>()?.GetRegisteredCategories() ?? new List<string>();
             if (categories.Count == 0)
             {
                 Log.Message("[RimMind-Core] No registered providers.");
@@ -186,19 +197,23 @@ namespace RimMind.Infrastructure.UI
             {
                 sb.AppendLine($"  [{cat}]");
 
-                var staticData = RimMindAPI.GetStaticProviderData(cat);
-                if (staticData.IsOk && staticData.Value != null)
-                    sb.AppendLine($"    Static: {staticData.Value.Length} chars");
-                else if (staticData.IsErr)
-                    sb.AppendLine($"    Static: ERROR - {staticData.Error.Message}");
-
-                if (firstColonist != null)
+                var reg = RimMindServiceLocator.Get<IProviderRegistry>();
+                if (reg != null)
                 {
-                    var pawnData = RimMindAPI.GetProviderData(cat, firstColonist);
-                    if (pawnData.IsOk && pawnData.Value != null)
-                        sb.AppendLine($"    Pawn ({firstColonist.Name?.ToStringShort}): {pawnData.Value.Length} chars");
-                    else if (pawnData.IsErr)
-                        sb.AppendLine($"    Pawn: ERROR - {pawnData.Error.Message}");
+                    var staticData = reg.GetStaticProviderData(cat);
+                    if (staticData.IsOk && staticData.Value != null)
+                        sb.AppendLine($"    Static: {staticData.Value.Length} chars");
+                    else if (staticData.IsErr)
+                        sb.AppendLine($"    Static: ERROR - {staticData.Error.Message}");
+
+                    if (firstColonist != null)
+                    {
+                        var pawnData = reg.GetProviderData(cat, firstColonist);
+                        if (pawnData.IsOk && pawnData.Value != null)
+                            sb.AppendLine($"    Pawn ({firstColonist.Name?.ToStringShort}): {pawnData.Value.Length} chars");
+                        else if (pawnData.IsErr)
+                            sb.AppendLine($"    Pawn: ERROR - {pawnData.Error.Message}");
+                    }
                 }
             }
 
@@ -208,7 +223,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Registered ContextKeys", actionType = DebugActionType.Action)]
         public static void ShowRegisteredContextKeys()
         {
-            var keys = ContextKeyRegistry.GetAll();
+            var keys = RimMindServiceLocator.Get<IContextKeyRegistry>()?.GetAll();
             if (keys.Count == 0)
             {
                 Log.Message("[RimMind-Core] No registered context keys.");
@@ -253,7 +268,7 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  TotalBudget: {store.TotalBudget}");
 
-            var telemetry = RimMindAPI.Telemetry;
+            var telemetry = RimMindServiceLocator.Get<FlywheelTelemetryCollector>();
             var recentRecords = telemetry.GetRecentRecords(100);
             sb.AppendLine($"  Telemetry records (recent 100): {recentRecords?.Count ?? 0}");
 
@@ -313,7 +328,7 @@ namespace RimMind.Infrastructure.UI
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("[RimMind-Core] === AgentBus Subscribers ===");
 
-            var eventBus = RimMindAPI.GetEventBus();
+            var eventBus = RimMindServiceLocator.Get<IEventBus>();
             sb.AppendLine($"  EventBus type: {eventBus?.GetType().Name ?? "null"}");
 
             sb.AppendLine($"  Registered event types: {eventBus.GetHandlerCount()}");
@@ -334,7 +349,7 @@ namespace RimMind.Infrastructure.UI
             }
 
             var npcId = $"NPC-{pawn.thingIDNumber}";
-            var history = RimMindAPI.GetHistoryManager();
+            var history = RimMindServiceLocator.Get<IHistoryManager>();
             var count = history.GetHistoryCount(npcId);
 
             var sb = new System.Text.StringBuilder();
@@ -391,7 +406,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Settings Summary", actionType = DebugActionType.Action)]
         public static void ShowSettingsSummary()
         {
-            var s = RimMindCoreMod.Settings;
+            var s = RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null)
             {
                 RimMindErrors.Warn("[RimMind-Core] Settings not initialized.");
@@ -400,24 +415,24 @@ namespace RimMind.Infrastructure.UI
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("[RimMind-Core] === Settings Summary ===");
-            sb.AppendLine($"  Provider: {s.provider}");
-            sb.AppendLine($"  Model: {s.modelName}");
-            sb.AppendLine($"  Endpoint: {s.apiEndpoint}");
-            sb.AppendLine($"  API Key: {(string.IsNullOrEmpty(s.apiKey) ? "(empty)" : $"({s.apiKey.Length} chars)")}");
-            sb.AppendLine($"  ForceJsonMode: {s.forceJsonMode}");
-            sb.AppendLine($"  MaxTokens: {s.maxTokens}");
-            sb.AppendLine($"  DefaultTemperature: {s.defaultTemperature}");
-            sb.AppendLine($"  DebugLogging: {s.debugLogging}");
-            sb.AppendLine($"  MaxConcurrentRequests: {s.maxConcurrentRequests}");
-            sb.AppendLine($"  MaxRetryCount: {s.maxRetryCount}");
-            sb.AppendLine($"  RequestTimeoutMs: {s.requestTimeoutMs}");
-            sb.AppendLine($"  AutoApplyMode: {s.autoApplyMode}");
-            sb.AppendLine($"  AutoApplyConfidenceThreshold: {s.autoApplyConfidenceThreshold}");
-            sb.AppendLine($"  RequestOverlayEnabled: {s.requestOverlayEnabled}");
-            sb.AppendLine($"  Player2RemoteUrl: {s.player2RemoteUrl}");
-            sb.AppendLine($"  TelemetryDataPath: {(string.IsNullOrEmpty(s.telemetryDataPath) ? "(default)" : s.telemetryDataPath)}");
-            sb.AppendLine($"  AnalysisReportPath: {(string.IsNullOrEmpty(s.analysisReportPath) ? "(default)" : s.analysisReportPath)}");
-            sb.AppendLine($"  IsConfigured: {s.IsConfigured()}");
+            sb.AppendLine($"  Provider: {s.Provider}");
+            sb.AppendLine($"  Model: {s.ModelName}");
+            sb.AppendLine($"  Endpoint: {s.ApiEndpoint}");
+            sb.AppendLine($"  API Key: {(string.IsNullOrEmpty(s.ApiKey) ? "(empty)" : $"({s.ApiKey.Length} chars)")}");
+            sb.AppendLine($"  ForceJsonMode: {s.ForceJsonMode}");
+            sb.AppendLine($"  MaxTokens: {s.MaxTokens}");
+            sb.AppendLine($"  DefaultTemperature: {s.DefaultTemperature}");
+            sb.AppendLine($"  DebugLogging: {s.DebugLogging}");
+            sb.AppendLine($"  MaxConcurrentRequests: {s.MaxConcurrentRequests}");
+            sb.AppendLine($"  MaxRetryCount: {s.MaxRetryCount}");
+            sb.AppendLine($"  RequestTimeoutMs: {s.RequestTimeoutMs}");
+            sb.AppendLine($"  AutoApplyMode: (via Context)");
+            sb.AppendLine($"  AutoApplyConfidenceThreshold: (via Context)");
+            sb.AppendLine($"  RequestOverlayEnabled: (via UI)");
+            sb.AppendLine($"  Player2RemoteUrl: {s.Player2RemoteUrl}");
+            sb.AppendLine($"  TelemetryDataPath: (via Infrastructure)");
+            sb.AppendLine($"  AnalysisReportPath: (via Infrastructure)");
+            sb.AppendLine($"  IsConfigured: {s.IsConfigured}");
 
             Log.Message(sb.ToString());
         }

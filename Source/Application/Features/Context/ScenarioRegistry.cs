@@ -29,16 +29,12 @@ namespace RimMind.Application.Features.Context
     {
         private static readonly ConcurrentDictionary<string, ScenarioMeta> _scenarios = new ConcurrentDictionary<string, ScenarioMeta>();
         private static bool _coreRegistered = false;
-
-        private static ITranslationService? TranslationService =>
-            RimMindServiceLocator.Get<ITranslationService>();
-
-        private static ILogSink? LogSink =>
-            RimMindServiceLocator.Get<ILogSink>();
+        private static ITranslationService? _translationService;
+        private static ILogSink? _logSink;
 
         private static string? T(string key, params object[] args)
         {
-            return TranslationService?.Translate(key, args);
+            return _translationService?.Translate(key, args);
         }
 
         public static void Register(string scenarioId, int defaultBaseRounds, string description,
@@ -47,7 +43,7 @@ namespace RimMind.Application.Features.Context
         {
             if (_scenarios.ContainsKey(scenarioId))
             {
-                LogSink?.Warning($"[RimMind-Core] Scenario '{scenarioId}' already registered, overwriting.");
+                _logSink?.Warning($"[RimMind-Core] Scenario '{scenarioId}' already registered, overwriting.");
             }
             _scenarios[scenarioId] = new ScenarioMeta
             {
@@ -76,10 +72,12 @@ namespace RimMind.Application.Features.Context
             return new List<ScenarioMeta>(_scenarios.Values);
         }
 
-        public static void RegisterCoreScenarios()
+        public static void RegisterCoreScenarios(ITranslationService? translationService = null, ILogSink? logSink = null)
         {
             if (_coreRegistered) return;
             _coreRegistered = true;
+            _translationService = translationService;
+            _logSink = logSink;
             Register(ScenarioIds.Dialogue, 10, T("RimMind.Application.Scenario.Dialogue") ?? "RimMind.Application.Scenario.Dialogue",
                 defaultBudget: 0.6f, l4Mode: L4Mode.BudgetControlled,
                 defaultExcludeKeys: new[] { "combat_status", "task_progress" });

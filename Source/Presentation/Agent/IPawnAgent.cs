@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Domain.Enums;
 using Verse;
 
 namespace RimMind.Presentation.Agent

@@ -4,8 +4,8 @@ using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.ValueObjects;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation;
-using RimMind.Presentation.Settings;
 
 namespace RimMind.Presentation.Pipeline.AI
 {
@@ -15,11 +15,11 @@ namespace RimMind.Presentation.Pipeline.AI
         public string Name => nameof(CircuitBreakerMiddleware);
         public int Order => 5;
 
-        private int FailureThreshold => RimMindCoreMod.Settings?.circuitBreakerFailureThreshold > 0
-            ? RimMindCoreMod.Settings.circuitBreakerFailureThreshold : 5;
+        private int FailureThreshold => RimMindServiceLocator.Get<ISettingsProvider>()?.CircuitBreakerFailureThreshold > 0
+            ? RimMindServiceLocator.Get<ISettingsProvider>()!.CircuitBreakerFailureThreshold : 5;
         private TimeSpan OpenDuration => TimeSpan.FromSeconds(
-            RimMindCoreMod.Settings?.circuitBreakerOpenDurationSec > 0
-            ? RimMindCoreMod.Settings.circuitBreakerOpenDurationSec : 60);
+            RimMindServiceLocator.Get<ISettingsProvider>()?.CircuitBreakerOpenDurationSec > 0
+            ? RimMindServiceLocator.Get<ISettingsProvider>()!.CircuitBreakerOpenDurationSec : 60);
 
         private enum CircuitState { Closed, Open, HalfOpen }
 

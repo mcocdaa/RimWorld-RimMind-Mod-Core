@@ -1,6 +1,6 @@
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces.UI;
-using RimMind.Presentation;
+using RimMind.Application.Common.Interfaces.Internal;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -42,10 +42,10 @@ namespace RimMind.Infrastructure.UI
         {
             if (Current.ProgramState != ProgramState.Playing) return;
 
-            var settings = RimMindCoreMod.Settings;
+            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
             if (settings == null) return;
 
-            bool currentlyEnabled = settings.requestOverlayEnabled;
+            bool currentlyEnabled = settings.RequestOverlayEnabled;
             if (currentlyEnabled && !_lastEnabledState)
                 _temporarilyClosed = false;
             _lastEnabledState = currentlyEnabled;
@@ -54,8 +54,8 @@ namespace RimMind.Infrastructure.UI
 
             if (!_positionLoaded)
             {
-                _windowRect = new Rect(settings.requestOverlayX, settings.requestOverlayY,
-                    settings.requestOverlayW, settings.requestOverlayH);
+                _windowRect = new Rect(settings.RequestOverlayX, settings.RequestOverlayY,
+                    settings.RequestOverlayW, settings.RequestOverlayH);
                 _positionLoaded = true;
             }
 
@@ -281,12 +281,12 @@ namespace RimMind.Infrastructure.UI
 
         private static void SavePositionToSettings()
         {
-            var s = RimMindCoreMod.Settings;
+            var s = RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null) return;
-            s.requestOverlayX = _windowRect.x;
-            s.requestOverlayY = _windowRect.y;
-            s.requestOverlayW = _windowRect.width;
-            s.requestOverlayH = _windowRect.height;
+            s.RequestOverlayX = _windowRect.x;
+            s.RequestOverlayY = _windowRect.y;
+            s.RequestOverlayW = _windowRect.width;
+            s.RequestOverlayH = _windowRect.height;
         }
     }
 }

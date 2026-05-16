@@ -4,9 +4,9 @@ using RimMind.Application.Common.Models.Npc;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Events;
-using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
@@ -80,7 +80,7 @@ namespace RimMind.Infrastructure.Verse
             if (string.IsNullOrEmpty(npcId)) return;
             if (_registry.TryRemove(npcId, out var profile))
             {
-                RimMindAPI.GetEventBus().Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
+                RimMindServiceLocator.Get<IEventBus>()?.Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
             }
         }
 

@@ -1,8 +1,13 @@
 using System.Collections.Generic;
+using RimMind.Domain.Enums;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Infrastructure.UI;
-using RimMind.Presentation;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -17,7 +22,7 @@ namespace RimMind.Infrastructure.Verse
         }
     }
 
-    public class CompPawnAgent : ThingComp
+    public class CompPawnAgent : ThingComp, IAgentRecorder
     {
         public IPawnAgent? Agent { get; internal set; }
 
@@ -28,7 +33,9 @@ namespace RimMind.Infrastructure.Verse
             base.PostSpawnSetup(respawningAfterLoad);
             if (Agent == null)
             {
-                Agent = new PawnAgent(Pawn, RimMindAPI.GetEventBus());
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                if (factory != null)
+                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IEventBus>()!);
             }
         }
 
@@ -47,13 +54,17 @@ namespace RimMind.Infrastructure.Verse
 
             if (Agent == null && parent is Pawn pawn)
             {
-                Agent = new PawnAgent(pawn, RimMindAPI.GetEventBus());
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                if (factory != null)
+                    Agent = (IPawnAgent?)factory.Create(pawn, RimMindServiceLocator.Get<IEventBus>()!);
             }
 
             if (Agent != null && Agent.Pawn == null)
             {
                 Agent.Cleanup();
-                Agent = new PawnAgent(Pawn, RimMindAPI.GetEventBus());
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                if (factory != null)
+                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IEventBus>()!);
             }
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && Agent != null)
@@ -134,6 +145,22 @@ namespace RimMind.Infrastructure.Verse
         {
             var comp = GetComp(pawn);
             return comp?.Agent?.IsActive == true;
+        }
+
+        public void RecordBehavior(BehaviorRecordDto dto)
+        {
+            if (dto == null || Agent == null) return;
+            Agent.RecordBehavior(new BehaviorRecord
+            {
+                Action = dto.Action,
+                Reason = dto.Reason,
+                Success = dto.Success,
+                ResultReason = dto.ResultReason,
+                GoalProgressDelta = dto.GoalProgressDelta,
+                Timestamp = dto.Timestamp,
+                ActionEventId = dto.ActionEventId,
+                DurationMs = dto.DurationMs,
+            });
         }
     }
 }

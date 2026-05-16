@@ -2,8 +2,8 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation;
-using RimMind.Presentation.Settings;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Models.Client;
 
@@ -17,7 +17,7 @@ namespace RimMind.Presentation.Pipeline.AI
 
         public Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {
-            if (RimMindCoreMod.Settings?.IsConfigured() != true)
+            if (RimMindServiceLocator.Get<ISettingsProvider>()?.IsConfigured != true)
             {
                 context.Result = Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("ShortCircuit"));
                 context.ShortCircuit("not_configured");

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
@@ -23,13 +24,15 @@ using RimMind.Application.Features.Queue;
 using RimMind.Application.Features.Registry;
 using RimMind.Application.Features.Tools;
 using RimMind.Infrastructure.Mechanisms;
+using RimMind.Infrastructure.Services.Clients.OpenAI;
 using RimMind.Infrastructure.Services.Clients.Player2;
-using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Context;
+using RimMind.Presentation.Llm;
 using RimMind.Presentation.Pipeline.AI;
 using RimMind.Presentation.Pipeline.Context;
 using RimMind.Presentation.Pipeline.Npc;
+using RimMind.Presentation.Sensor;
 using RimMind.Presentation.Settings;
 using Verse;
 
@@ -54,7 +57,7 @@ namespace RimMind.Presentation.Runtime
         public AIRequestQueueImpl QueueImpl { get; private set; }
         public IAIRequestQueue Queue => QueueImpl;
         public FlywheelTelemetryCollector Telemetry { get; private set; }
-        public ToolRegistry ToolRegistry { get; private set; } = new();
+        public ToolRegistry ToolRegistry { get; private set; }
         public GameMechanismRegistry MechanismRegistry { get; private set; }
         public int MaxToolCallDepth { get; set; } = 3;
         public IPipeline<AIRequestContext> AIRequestPipeline { get; private set; }
@@ -79,17 +82,60 @@ namespace RimMind.Presentation.Runtime
 
         private RimMindRuntime()
         {
-            ProviderRegistry = new ProviderRegistry();
-            ClientManager = new ClientManager();
-            OverlayService = new OverlayService();
-            HistoryManager = new HistoryManager();
+            Application.DependencyInjection.AddApplicationServices();
+            Infrastructure.DependencyInjection.AddInfrastructureServices();
+
+            var providerRegistry = new ProviderRegistry();
+            RimMindServiceLocator.Register<IProviderRegistry>(providerRegistry);
+
+            var historyManager = new HistoryManager();
+            RimMindServiceLocator.Register<IHistoryManager>(historyManager);
+
+            var clientManager = new ClientManager();
+            RimMindServiceLocator.Register<IClientManager>(clientManager);
+
+            var sensorManager = new SensorManager();
+            RimMindServiceLocator.Register<ISensorManager>(sensorManager);
+
+            var overlayService = new OverlayService();
+            RimMindServiceLocator.Register<IOverlayService>(overlayService);
+
+            AgentBus = RimMindServiceLocator.Get<IAgentBus>()!;
+            ProviderRegistry = RimMindServiceLocator.Get<IProviderRegistry>()!;
+            HistoryManager = RimMindServiceLocator.Get<IHistoryManager>()!;
+            ClientManager = RimMindServiceLocator.Get<IClientManager>()!;
+            AudioPlayer = RimMindServiceLocator.Get<IAudioPlayer>()!;
+            OverlayService = RimMindServiceLocator.Get<IOverlayService>()!;
+            ToolRegistry = RimMindServiceLocator.Get<ToolRegistry>()!;
+            MechanismRegistry = RimMindServiceLocator.Get<GameMechanismRegistry>()!;
+            Telemetry = RimMindServiceLocator.Get<FlywheelTelemetryCollector>()!;
+            QueueImpl = RimMindServiceLocator.Get<AIRequestQueueImpl>()!;
+
             ContextEngine = new ContextEngine(HistoryManager);
-            AgentBus = new AgentBusImpl();
+            RimMindServiceLocator.Register<IContextEngine>(ContextEngine);
+            RimMindServiceLocator.Register<IContextKeyProvider>(new DefaultContextKeyProvider());
+
             EventBus = new SimpleEventBusAdapter(AgentBus);
-            AudioPlayer = new NullAudioPlayer();
-            Telemetry = new FlywheelTelemetryCollector();
-            QueueImpl = new AIRequestQueueImpl();
-            MechanismRegistry = new GameMechanismRegistry(ToolRegistry);
+            RimMindServiceLocator.Register<IEventBus>(EventBus);
+
+            RimMindServiceLocator.Register<IRimMindRuntime>(this);
+
+            RimMindServiceLocator.Register<IPawnAgentFactory>(new PawnAgentFactory());
+            RimMindServiceLocator.Register<IGameContextBuilder>(new GameContextBuilder());
+
+            var responseDispatcher = new ResponseDispatcher(EventBus);
+            RimMindServiceLocator.Register<IResponseDispatcher>(responseDispatcher);
+
+            var contextKeyRegistry = new ContextKeyRegistryAdapter();
+            RimMindServiceLocator.Register<IContextKeyRegistry>(contextKeyRegistry);
+
+            RimMindServiceLocator.Register(GetExtensionRegistry<ISettingsTab>());
+            RimMindServiceLocator.Register(GetExtensionRegistry<IModCooldown>());
+
+            var clientFactoryRegistry = GetExtensionRegistry<IAIClientFactory>();
+            clientFactoryRegistry.Register(new OpenAIClientFactory());
+            clientFactoryRegistry.Register(new Player2ClientFactory());
+            RimMindServiceLocator.Register(clientFactoryRegistry);
 
             AIRequestPipeline = AIRequestPipelineFactory.Build(
                 ToolRegistry,
@@ -143,7 +189,10 @@ namespace RimMind.Presentation.Runtime
             => _agentIdentityProvider?.Invoke(pawn);
 
         public void RegisterAgentActionBridge(IAgentActionBridge bridge)
-            => _agentActionBridge = bridge;
+        {
+            _agentActionBridge = bridge;
+            RimMindServiceLocator.Register(bridge);
+        }
 
         public IAgentActionBridge? GetAgentActionBridge() => _agentActionBridge;
 
@@ -173,7 +222,8 @@ namespace RimMind.Presentation.Runtime
     internal sealed class SimpleEventBusAdapter : IEventBus
     {
         private readonly IAgentBus _bus;
-        public SimpleEventBusAdapter(IAgentBus bus) => _bus = bus;
+        private readonly IEventBus? _eventBus;
+        public SimpleEventBusAdapter(IAgentBus bus) { _bus = bus; _eventBus = bus as IEventBus; }
         public void Subscribe<T>(string key, Action<T> handler) where T : Domain.Events.AgentBusEvent => _bus.Subscribe(key, handler);
         public string Subscribe<T>(Action<T> handler) where T : Domain.Events.AgentBusEvent => _bus.Subscribe(handler);
         public void Unsubscribe<T>(string key) where T : Domain.Events.AgentBusEvent => _bus.Unsubscribe<T>(key);
@@ -182,7 +232,7 @@ namespace RimMind.Presentation.Runtime
         public void PublishFromBackground<T>(T evt) where T : Domain.Events.AgentBusEvent => _bus.PublishFromBackground(evt);
         public void FlushBackgroundQueue() => _bus.FlushBackgroundQueue();
         public void ClearAllSubscribers() => _bus.ClearAllSubscribers();
-        public int GetHandlerCount() => 0;
-        public int GetBackgroundQueueCount() => 0;
+        public int GetHandlerCount() => _eventBus?.GetHandlerCount() ?? 0;
+        public int GetBackgroundQueueCount() => _eventBus?.GetBackgroundQueueCount() ?? 0;
     }
 }

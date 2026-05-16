@@ -1,10 +1,12 @@
-using RimMind.Presentation.Agent;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.Verse;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation;
+using RimMind.Presentation.Agent;
 using UnityEngine;
 using Verse;
 
@@ -66,7 +68,7 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawHistory(Rect rect)
         {
-            var history = RimMindAPI.GetHistoryManager().GetHistory(_npcId, MaxHistoryRounds);
+            var history = RimMindServiceLocator.Get<IHistoryManager>()?.GetHistory(_npcId, MaxHistoryRounds);
 
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
 
@@ -122,22 +124,23 @@ namespace RimMind.Infrastructure.UI
             _inputText = "";
 
             string thinkingText = "RimMind.Infrastructure.UI.AgentDialogue.Thinking".Translate();
-            RimMindAPI.GetHistoryManager().AddTurn(_npcId, message, thinkingText, "Dialogue");
+            RimMindServiceLocator.Get<IHistoryManager>()?.AddTurn(_npcId, message, thinkingText, "Dialogue");
 
             var npcId = _npcId;
             _agent.ForceThink();
 
+            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
             var request = new ContextRequest
             {
                 NpcId = _agent?.Identity?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
                 Scenario = ScenarioIds.Dialogue,
                 Budget = 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindCoreMod.Settings.maxTokens,
-                Temperature = RimMindCoreMod.Settings.defaultTemperature,
+                MaxTokens = settings?.MaxTokens ?? 800,
+                Temperature = settings?.DefaultTemperature ?? 0.7f,
             };
 
-            var engine = RimMindAPI.GetContextEngine();
+            var engine = RimMindServiceLocator.Get<IContextEngine>();
             var snapshot = engine.BuildSnapshot(request);
             var driver = RimMind.Infrastructure.Persistence.StorageDriverFactory.GetDriver();
 
@@ -148,7 +151,7 @@ namespace RimMind.Infrastructure.UI
                     var result = await driver.ChatAsync(snapshot.NpcId, snapshot.CurrentQuery ?? "", null);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        var hm = RimMindAPI.GetHistoryManager();
+                        var hm = RimMindServiceLocator.Get<IHistoryManager>();
                         var currentHistory = hm.GetHistory(npcId, MaxHistoryRounds);
                         if (currentHistory != null)
                         {

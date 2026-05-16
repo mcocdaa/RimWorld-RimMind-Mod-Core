@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
-using RimMind.Presentation;
-using RimMind.Presentation.Settings;
 using RimMind.Infrastructure.Services.Clients.OpenAI;
 using RimMind.Infrastructure.Services.Clients.Player2;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Presentation;
+using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;
 
@@ -69,8 +70,10 @@ namespace RimMind.Infrastructure.UI
                 case "context": DrawContextTab(content); break;
                 case "prompts": DrawPromptsTab(content); break;
                 default:
-                    foreach (var tab in RimMindAPI.Extensions<ISettingsTab>().All)
-                        if (tab.Id == _curTab) { tab.Draw(content); break; }
+                    var settingsTabRegistry = RimMindServiceLocator.Get<IExtensionRegistry<ISettingsTab>>();
+                    if (settingsTabRegistry != null)
+                        foreach (var tab in settingsTabRegistry.All)
+                            if (tab.Id == _curTab) { tab.Draw(content); break; }
                     break;
             }
         }
@@ -84,8 +87,10 @@ namespace RimMind.Infrastructure.UI
                 ("prompts", "RimMind.Infrastructure.Settings.Tab.Prompts".Translate()),
                 ("context", "RimMind.Infrastructure.Settings.Tab.Context".Translate()),
             };
-            foreach (var tab in RimMindAPI.Extensions<ISettingsTab>().All)
-                tabs.Add((tab.Id, tab.Label));
+            var settingsTabRegistry = RimMindServiceLocator.Get<IExtensionRegistry<ISettingsTab>>();
+            if (settingsTabRegistry != null)
+                foreach (var tab in settingsTabRegistry.All)
+                    tabs.Add((tab.Id, tab.Label));
             return tabs;
         }
 
@@ -158,17 +163,18 @@ namespace RimMind.Infrastructure.UI
                 if (Widgets.ButtonText(row, GetProviderLabel(s.provider)))
                 {
                     var options = new List<FloatMenuOption>();
-                    foreach (AIProvider p in Enum.GetValues(typeof(AIProvider)))
+                    var allProviders = new[] { AIProviders.OpenAI, AIProviders.Player2 };
+                    foreach (var p in allProviders)
                     {
                         var label = GetProviderLabel(p);
                         options.Add(new FloatMenuOption(label, () =>
                         {
                             var prev = s.provider;
                             s.provider = p;
-                            if (p == AIProvider.Player2)
+                            if (p == AIProviders.Player2)
                                 Player2Client.CheckPlayer2StatusAndNotify();
                             if (prev != p)
-                                RimMindAPI.InvalidateClientCache();
+                                RimMindServiceLocator.Get<IClientManager>()?.InvalidateCache();
                         }));
                     }
                     Find.WindowStack.Add(new FloatMenu(options));
@@ -178,7 +184,7 @@ namespace RimMind.Infrastructure.UI
             listing.Gap(6f);
 
             // ── API 配置（OpenAI 兼容模式） ──────────────────────────────────
-            if (s.provider == AIProvider.OpenAI)
+            if (s.provider == AIProviders.OpenAI)
             {
                 listing.Label("RimMind.Infrastructure.Settings.ApiKey".Translate());
                 GUI.color = Color.gray;
@@ -218,7 +224,7 @@ namespace RimMind.Infrastructure.UI
             }
 
             // ── Player2 模式 ───────────────────────────────────────────────
-            if (s.provider == AIProvider.Player2)
+            if (s.provider == AIProviders.Player2)
             {
                 GUI.color = Color.gray;
                 listing.Label("RimMind.Infrastructure.Settings.Player2.Desc".Translate());
@@ -396,7 +402,7 @@ namespace RimMind.Infrastructure.UI
         /// </summary>
         private static void RunConnectionTest(RimMindCoreSettings s)
         {
-            if (s.provider == AIProvider.Player2)
+            if (s.provider == AIProviders.Player2)
             {
                 _testStatus = "RimMind.Infrastructure.Settings.Status.Testing".Translate();
                 _testStatusColor = Color.yellow;
@@ -405,7 +411,7 @@ namespace RimMind.Infrastructure.UI
                 {
                     try
                     {
-                        var client = await Player2Client.CreateAsync(s);
+                        var client = await Player2Client.CreateAsync(new SettingsProvider(s));
                         if (!client.IsConfigured())
                         {
                             LongEventHandler.ExecuteWhenFinished(() =>
@@ -546,7 +552,7 @@ namespace RimMind.Infrastructure.UI
             var allCooldowns = queue.GetAllCooldowns();
             var allModIds = new HashSet<string>(allDepths.Keys);
             allModIds.UnionWith(allCooldowns.Keys);
-            allModIds.UnionWith(RimMindAPI.Extensions<IModCooldown>().All.Select(c => c.Id));
+            allModIds.UnionWith(RimMindServiceLocator.Get<IExtensionRegistry<IModCooldown>>()?.All.Select(c => c.Id) ?? Enumerable.Empty<string>());
 
             int modCount = allModIds.Count;
             int activeCount = queue.ActiveRequestCount;
@@ -805,6 +811,7 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
             ctx.ContextBudget = listing.Slider(ctx.ContextBudget, 0.1f, 2.0f);
 
+#pragma warning disable CS0618
             listing.Label($"{"RimMind.Presentation.Context.BudgetW1".Translate()}: {ctx.BudgetW1:F2}");
             GUI.color = Color.gray;
             listing.Label("  " + "RimMind.Presentation.Context.BudgetW1.Desc".Translate());
@@ -816,6 +823,7 @@ namespace RimMind.Infrastructure.UI
             listing.Label("  " + "RimMind.Presentation.Context.BudgetW2.Desc".Translate());
             GUI.color = Color.white;
             ctx.BudgetW2 = Mathf.Round(listing.Slider(ctx.BudgetW2, 0f, 1f) * 20f) / 20f;
+#pragma warning restore CS0618
 
             listing.Gap(8f);
 
@@ -912,13 +920,13 @@ namespace RimMind.Infrastructure.UI
             return h + 40f;
         }
 
-        private static string GetProviderLabel(AIProvider p)
+        private static string GetProviderLabel(string p)
         {
             return p switch
             {
-                AIProvider.OpenAI => "RimMind.Infrastructure.Settings.Provider.OpenAI".Translate(),
-                AIProvider.Player2 => "RimMind.Infrastructure.Settings.Provider.Player2".Translate(),
-                _ => p.ToString()
+                AIProviders.OpenAI => "RimMind.Infrastructure.Settings.Provider.OpenAI".Translate(),
+                AIProviders.Player2 => "RimMind.Infrastructure.Settings.Provider.Player2".Translate(),
+                _ => p
             };
         }
 

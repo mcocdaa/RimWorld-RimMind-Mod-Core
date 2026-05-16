@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Settings;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -23,8 +23,8 @@ namespace RimMind.Presentation.Runtime
 
         public AIRequestQueue()
         {
-            _maxConcurrent = RimMindCoreMod.Settings?.maxConcurrentRequests ?? 3;
-            _processInterval = RimMindCoreMod.Settings?.queueProcessInterval ?? 60;
+            _maxConcurrent = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxConcurrentRequests ?? 3;
+            _processInterval = RimMindServiceLocator.Get<ISettingsProvider>()?.QueueProcessInterval ?? 60;
         }
 
         public void Enqueue(AIRequest request, Action<AIResponse> onComplete, IAIClient client)

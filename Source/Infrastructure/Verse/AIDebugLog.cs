@@ -4,7 +4,6 @@ using RimMind.Application.Common.Models.Client;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
@@ -66,7 +65,7 @@ namespace RimMind.Infrastructure.Verse
             _pendingEntries.Enqueue(new AIDebugEntry
             {
                 Source = request.RequestId ?? "",
-                ModelName = RimMindCoreMod.Settings?.modelName ?? "",
+                ModelName = RimMindServiceLocator.Get<ISettingsProvider>()?.ModelName ?? "",
                 FullSystemPrompt = request.Messages != null
                     ? BuildLayeredText(request.Messages, "system")
                     : (request.SystemPrompt ?? ""),

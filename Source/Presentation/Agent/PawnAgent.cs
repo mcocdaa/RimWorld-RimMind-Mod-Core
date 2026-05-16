@@ -8,7 +8,7 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 using Verse.AI;
 
@@ -50,8 +50,8 @@ namespace RimMind.Presentation.Agent
             _thinker = new PawnThinker(this);
             _actor = new PawnActor(this);
             _recorder = new PawnRecorder(this);
-            _tickInterval = RimMindCoreMod.Settings?.agentTickInterval ?? 150;
-            _maxBehaviorHistory = RimMindCoreMod.Settings?.behaviorHistoryMax ?? 100;
+            _tickInterval = RimMindServiceLocator.Get<ISettingsProvider>()?.AgentTickInterval ?? 150;
+            _maxBehaviorHistory = RimMindServiceLocator.Get<ISettingsProvider>()?.BehaviorHistoryMax ?? 100;
         }
 
         public PawnAgent(Pawn pawn, IEventBus eventBus) : this(pawn)

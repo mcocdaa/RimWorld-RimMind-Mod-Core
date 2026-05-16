@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Presentation;
@@ -10,7 +11,7 @@ namespace RimMind.Presentation
     {
         public static class Settings
         {
-            public static bool IsConfigured() => RimMindCoreMod.Settings.IsConfigured();
+            public static bool IsConfigured() => RimMindServiceLocator.Get<ISettingsProvider>()?.IsConfigured == true;
 
             internal static IHistoryManager GetHistoryManager() => RimMindRuntime.Instance.HistoryManager;
             public static IContextEngine GetContextEngine() => RimMindRuntime.Instance.ContextEngine;

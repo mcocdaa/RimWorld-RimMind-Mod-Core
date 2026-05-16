@@ -1,8 +1,38 @@
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Interfaces.Sensor;
+using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Features.Queue;
+using RimMind.Application.Features.Tools;
+
 namespace RimMind.Application
 {
     public static class DependencyInjection
     {
-        // Application layer service registration
-        // Will be implemented in Phase 6 (循环依赖)
+        public static void AddApplicationServices()
+        {
+            var agentBus = new AgentBusImpl();
+            RimMindServiceLocator.Register<IAgentBus>(agentBus);
+
+            var toolRegistry = new ToolRegistry();
+            RimMindServiceLocator.Register<IToolRegistry>(toolRegistry);
+            RimMindServiceLocator.Register(toolRegistry);
+
+            var parameterStore = new FlywheelParameterStore();
+            RimMindServiceLocator.Register<IFlywheelParameterStore>(parameterStore);
+
+            var queue = new AIRequestQueueImpl(() => RimMindServiceLocator.Get<ISettingsProvider>());
+            RimMindServiceLocator.Register<IAIRequestQueue>(queue);
+            RimMindServiceLocator.Register(queue);
+
+            var telemetry = new FlywheelTelemetryCollector();
+            RimMindServiceLocator.Register(telemetry);
+        }
     }
 }

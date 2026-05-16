@@ -9,10 +9,8 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Enums;
+using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation;
-using RimMind.Presentation.Settings;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Queue;
 using Newtonsoft.Json;
@@ -29,19 +27,19 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
         private readonly string _apiKey;
         private readonly bool _isLocalConnection;
-        private readonly RimMindCoreSettings _settings;
+        private readonly ISettingsProvider _settings;
 
         private static DateTime _lastHealthCheck = DateTime.MinValue;
         private static volatile bool _healthCheckActive;
         private static CancellationTokenSource _healthCheckCts = new CancellationTokenSource();
 
-        private string RemoteUrl => string.IsNullOrWhiteSpace(_settings.player2RemoteUrl)
+        private string RemoteUrl => string.IsNullOrWhiteSpace(_settings.Player2RemoteUrl)
             ? "https://api.player2.game"
-            : _settings.player2RemoteUrl.Trim().TrimEnd('/');
+            : _settings.Player2RemoteUrl.Trim().TrimEnd('/');
 
         private string CurrentApiUrl => _isLocalConnection ? LocalUrl : RemoteUrl;
 
-        private Player2Client(string apiKey, bool isLocal, RimMindCoreSettings settings)
+        private Player2Client(string apiKey, bool isLocal, ISettingsProvider settings)
         {
             _apiKey = apiKey;
             _isLocalConnection = isLocal;
@@ -59,7 +57,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
         }
 
-        public static async Task<Player2Client> CreateAsync(RimMindCoreSettings settings)
+        public static async Task<Player2Client> CreateAsync(ISettingsProvider settings)
         {
             try
             {
@@ -71,10 +69,10 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     return new Player2Client(localKey!, isLocal: true, settings);
                 }
 
-                if (!string.IsNullOrEmpty(settings.apiKey))
+                if (!string.IsNullOrEmpty(settings.ApiKey))
                 {
                     AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
-                    return new Player2Client(settings.apiKey, isLocal: false, settings);
+                    return new Player2Client(settings.ApiKey, isLocal: false, settings);
                 }
 
                 ShowNotification("RimMind.Infrastructure.Player2.LocalNotFound");
@@ -99,7 +97,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             string endpoint = $"{CurrentApiUrl}/v1/chat/completions";
             string json = BuildRequestJson(request);
 
-            if (_settings.debugLogging)
+            if (_settings.DebugLogging)
                 AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] >> {request.RequestId} (Player2)\n{json}");
 
             var sw = Stopwatch.StartNew();
@@ -116,7 +114,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 int cachedTokens = parsed?.Usage?.PromptTokensDetails?.CachedTokens ?? 0;
                 sw.Stop();
 
-                if (_settings.debugLogging)
+                if (_settings.DebugLogging)
                     AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] << {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
@@ -173,7 +171,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             {
                 Model = "default",
                 Messages = messages,
-                MaxTokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.maxTokens,
+                MaxTokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
                 Temperature = request.Temperature,
                 Stream = false,
             };
@@ -422,8 +420,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
         public static void RefreshJoulesBalance()
         {
-            var s = RimMindCoreMod.Settings;
-            if (s == null || s.provider != AIProvider.Player2) return;
+            var s = RimMindServiceLocator.Get<ISettingsProvider>();
+            if (s == null || s.Provider != AIProviders.Player2) return;
 
             Task.Run(async () =>
             {
@@ -523,7 +521,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 {
                     ["model"] = "default",
                     ["messages"] = messages,
-                    ["max_tokens"] = request.MaxTokens > 0 ? request.MaxTokens : _settings.maxTokens,
+                    ["max_tokens"] = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
                     ["temperature"] = request.Temperature,
                 };
 

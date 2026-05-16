@@ -1,6 +1,5 @@
 using System;
-using RimMind.Presentation;
-using RimMind.Presentation.Runtime;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Flywheel;
 using Verse;
@@ -13,7 +12,7 @@ namespace RimMind.Infrastructure.Verse
         private int _lastAnalysisTick;
 
         private int AnalysisIntervalTicks =>
-            RimMindCoreMod.Settings?.contextCalibrateInterval ?? 10000;
+            RimMindServiceLocator.Get<ISettingsProvider>()?.ContextCalibrateInterval ?? 10000;
 
         public FlywheelGameComponent() : base() { }
         public FlywheelGameComponent(Game game) : base() { }
@@ -35,7 +34,7 @@ namespace RimMind.Infrastructure.Verse
             base.ExposeData();
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                RimMindRuntime.Instance.Telemetry.Flush();
+                RimMindServiceLocator.Get<FlywheelTelemetryCollector>()?.Flush();
             }
         }
 
@@ -58,7 +57,8 @@ namespace RimMind.Infrastructure.Verse
 
         private void RunPeriodicAnalysis()
         {
-            var records = RimMindRuntime.Instance.Telemetry.GetRecentRecords(100);
+            var telemetry = RimMindServiceLocator.Get<FlywheelTelemetryCollector>();
+            var records = telemetry?.GetRecentRecords(100);
             if (records == null || records.Count == 0) return;
             FlywheelRuleEngine.Analyze(records);
         }

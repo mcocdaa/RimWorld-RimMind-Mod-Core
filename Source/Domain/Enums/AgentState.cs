@@ -1,4 +1,4 @@
-namespace RimMind.Presentation.Agent
+namespace RimMind.Domain.Enums
 {
     public enum AgentState
     {

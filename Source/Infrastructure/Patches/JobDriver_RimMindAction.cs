@@ -1,9 +1,11 @@
 using System.Collections.Generic;
-using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Events;
+using RimMind.Domain.Enums;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Agent;
 using Verse;
 using Verse.AI;
 using RimMind.Domain.ValueObjects;
@@ -32,7 +34,7 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                var bridge = RimMindRuntime.Instance.GetAgentActionBridge();
+                var bridge = RimMindServiceLocator.Get<IAgentActionBridge>();
                 if (bridge == null)
                 {
                     EndJobWith(JobCondition.Incompletable);
@@ -61,7 +63,7 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                RimMindRuntime.Instance.EventBus.Publish(new DecisionEvent(
+                RimMindServiceLocator.Get<IEventBus>()?.Publish(new DecisionEvent(
                     $"NPC-{pawn.thingIDNumber}",
                     pawn.thingIDNumber,
                     "job_driven",
@@ -82,7 +84,7 @@ namespace RimMind.Infrastructure.Patches
             finishToil.initAction = () =>
             {
                 var comp = pawn.GetComp<CompPawnAgent>();
-                comp?.Agent?.RecordBehavior(new BehaviorRecord
+                comp?.RecordBehavior(new BehaviorRecordDto
                 {
                     Action = job.def.defName,
                     Reason = "JobDriver completed",

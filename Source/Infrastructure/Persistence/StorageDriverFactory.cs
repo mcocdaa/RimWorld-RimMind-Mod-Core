@@ -1,9 +1,11 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Domain.Enums;
+using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Services.Clients.Player2;
-using RimMind.Presentation;
 using Verse;
 
 namespace RimMind.Infrastructure.Persistence
@@ -12,24 +14,24 @@ namespace RimMind.Infrastructure.Persistence
     {
         private static readonly object _lock = new object();
         private static IStorageDriver? _cachedDriver;
-        private static AIProvider _cachedProvider;
+        private static string? _cachedProvider;
 
         public static IStorageDriver GetDriver()
         {
             lock (_lock)
             {
-                var s = RimMindCoreMod.Settings;
-                var historyManager = RimMindAPI.GetHistoryManager();
+                var s = RimMindServiceLocator.Get<ISettingsProvider>();
+                var historyManager = RimMindServiceLocator.Get<IHistoryManager>();
                 if (s == null) return new LocalStorageDriver(historyManager);
 
-                if (_cachedDriver != null && _cachedProvider == s.provider)
+                if (_cachedDriver != null && _cachedProvider == s.Provider)
                     return _cachedDriver;
 
-                _cachedProvider = s.provider;
+                _cachedProvider = s.Provider;
 
-                if (s.provider == AIProvider.Player2)
+                if (s.Provider == AIProviders.Player2)
                 {
-                    var client = RimMindAPI.GetPlayer2Client();
+                    var client = RimMindServiceLocator.Get<IClientManager>()?.GetPlayer2Client() as Player2Client;
                     if (client != null && client.IsConfigured())
                     {
                         _cachedDriver = new HybridStorageDriver(client, historyManager);
@@ -48,7 +50,7 @@ namespace RimMind.Infrastructure.Persistence
             lock (_lock)
             {
                 _cachedDriver = null;
-                _cachedProvider = default;
+                _cachedProvider = null;
             }
         }
     }

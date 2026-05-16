@@ -1,5 +1,7 @@
 using System;
 using HarmonyLib;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Context;
@@ -24,9 +26,12 @@ namespace RimMind.Presentation
         {
             AssemblyLoadGuard.AssertAssembliesLoaded();
 
+            RimMindServiceLocator.OnServiceNotFound = msg => Log.Warning(msg);
+
             RimMindRuntime.Initialize();
             Settings = GetSettings<RimMindCoreSettings>();
             RimMindServiceLocator.Register<ISettingsProvider>(new SettingsProvider(Settings));
+            RimMindServiceLocator.Register<IOpenAISettings>(Settings);
 
             if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
             {
@@ -48,7 +53,9 @@ namespace RimMind.Presentation
 
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
 
-            ScenarioRegistry.RegisterCoreScenarios();
+            ScenarioRegistry.RegisterCoreScenarios(
+                RimMindServiceLocator.Get<ITranslationService>(),
+                RimMindServiceLocator.Get<ILogSink>());
             RelevanceTable.RegisterCoreRelevance();
             ContextKeyRegistry.RegisterCoreKeys();
         }

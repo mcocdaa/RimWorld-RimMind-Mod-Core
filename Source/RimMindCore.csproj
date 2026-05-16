@@ -13,6 +13,7 @@
     <OutputPath>..\$(GameVersion)\Assemblies\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS8604;CS8601;CS8602;CS8603</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>

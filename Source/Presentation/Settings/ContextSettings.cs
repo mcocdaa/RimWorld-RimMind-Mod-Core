@@ -1,9 +1,11 @@
 using System;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Domain.Enums;
 using Verse;
 
 namespace RimMind.Presentation.Settings
 {
-    public class ContextSettings : IExposable
+    public class ContextSettings : IExposable, IContextSettings
     {
         public bool IncludeRace = true;
         public bool IncludeAge = true;
@@ -37,12 +39,12 @@ namespace RimMind.Presentation.Settings
         public bool IncludeThreats = true;
 
         public float ContextBudget = 0.6f;
-#pragma warning disable CS0612
+#pragma warning disable CS0618
         [Obsolete("Use FlywheelParameterStore w1/w2 instead. This field is only kept for savegame compatibility.")]
         public float BudgetW1 = 0.4f;
         [Obsolete("Use FlywheelParameterStore w1/w2 instead. This field is only kept for savegame compatibility.")]
         public float BudgetW2 = 0.6f;
-#pragma warning restore CS0612
+#pragma warning restore CS0618
 
         public int maxCacheEntries = 100;
         public int contextBriefLimit = 200;
@@ -53,6 +55,47 @@ namespace RimMind.Presentation.Settings
         public float threatThresholdHigh = 200000f;
         public float threatThresholdMedium = 100000f;
         public float threatThresholdLow = 50000f;
+
+        float IContextSettings.ContextBudget => ContextBudget;
+        int IContextSettings.ContextBriefLimit => contextBriefLimit;
+        int IContextSettings.EnvironmentScanRadius => environmentScanRadius;
+        int IContextSettings.EnvironmentMaxItems => environmentMaxItems;
+        float IContextSettings.ThreatThresholdHigh => threatThresholdHigh;
+        float IContextSettings.ThreatThresholdMedium => threatThresholdMedium;
+        float IContextSettings.ThreatThresholdLow => threatThresholdLow;
+        int IContextSettings.MaxCacheEntries => maxCacheEntries;
+        float IContextSettings.MoodDiffThreshold => moodDiffThreshold;
+        float IContextSettings.TemperatureDiffThreshold => temperatureDiffThreshold;
+
+        bool IContextSettings.IncludeRace => IncludeRace;
+        bool IContextSettings.IncludeAge => IncludeAge;
+        bool IContextSettings.IncludeGender => IncludeGender;
+        bool IContextSettings.IncludeBackstory => IncludeBackstory;
+        bool IContextSettings.IncludeIdeology => IncludeIdeology;
+        bool IContextSettings.IncludeTraits => IncludeTraits;
+        bool IContextSettings.IncludeSkills => IncludeSkills;
+        int IContextSettings.MinSkillLevel => MinSkillLevel;
+        bool IContextSettings.IncludeHealth => IncludeHealth;
+        bool IContextSettings.IncludeCapacities => IncludeCapacities;
+        bool IContextSettings.IncludeMood => IncludeMood;
+        bool IContextSettings.IncludeMoodThoughts => IncludeMoodThoughts;
+        bool IContextSettings.IncludeCurrentJob => IncludeCurrentJob;
+        bool IContextSettings.IncludeWorkPriorities => IncludeWorkPriorities;
+        bool IContextSettings.IncludeEquipment => IncludeEquipment;
+        bool IContextSettings.IncludeInventory => IncludeInventory;
+        bool IContextSettings.IncludeLocation => IncludeLocation;
+        bool IContextSettings.IncludeRelations => IncludeRelations;
+        bool IContextSettings.IncludeGenes => IncludeGenes;
+        bool IContextSettings.IncludeSurroundings => IncludeSurroundings;
+        bool IContextSettings.IncludeCombatStatus => IncludeCombatStatus;
+        bool IContextSettings.IncludeGameTime => IncludeGameTime;
+        bool IContextSettings.IncludeColonistCount => IncludeColonistCount;
+        bool IContextSettings.IncludeColonistNames => IncludeColonistNames;
+        bool IContextSettings.IncludeWealth => IncludeWealth;
+        bool IContextSettings.IncludeFood => IncludeFood;
+        bool IContextSettings.IncludeSeason => IncludeSeason;
+        bool IContextSettings.IncludeWeather => IncludeWeather;
+        bool IContextSettings.IncludeThreats => IncludeThreats;
 
         public void ExposeData()
         {
@@ -86,10 +129,10 @@ namespace RimMind.Presentation.Settings
             Scribe_Values.Look(ref IncludeWeather, "IncludeWeather", true);
             Scribe_Values.Look(ref IncludeThreats, "IncludeThreats", true);
             Scribe_Values.Look(ref ContextBudget, "ContextBudget", 0.6f);
-#pragma warning disable CS0612
+#pragma warning disable CS0618
             Scribe_Values.Look(ref BudgetW1, "BudgetW1", 0.4f);
             Scribe_Values.Look(ref BudgetW2, "BudgetW2", 0.6f);
-#pragma warning restore CS0612
+#pragma warning restore CS0618
             Scribe_Values.Look(ref maxCacheEntries, "maxCacheEntries", 100);
             Scribe_Values.Look(ref contextBriefLimit, "contextBriefLimit", 200);
             Scribe_Values.Look(ref moodDiffThreshold, "moodDiffThreshold", 5f);
@@ -152,6 +195,4 @@ namespace RimMind.Presentation.Settings
             }
         }
     }
-
-    public enum ContextPreset { Minimal, Standard, Full, Custom }
 }

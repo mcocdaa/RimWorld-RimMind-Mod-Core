@@ -1,5 +1,7 @@
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
@@ -13,8 +15,6 @@ using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
-using RimMind.Presentation;
-using RimMind.Presentation.Settings;
 using Verse;
 
 namespace RimMind.Infrastructure.Persistence
@@ -75,12 +75,12 @@ namespace RimMind.Infrastructure.Persistence
                 Temperature = snapshot.Temperature,
                 RequestId = $"NpcChat_{snapshot.NpcId}_{Find.TickManager.TicksGame}",
                 ModId = "NpcChat",
-                ExpireAtTicks = Find.TickManager.TicksGame + (RimMindCoreMod.Settings?.requestExpireTicks ?? 30000),
+                ExpireAtTicks = Find.TickManager.TicksGame + (RimMindServiceLocator.Get<ISettingsProvider>()?.RequestExpireTicks ?? 30000),
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
 
-            var client = RimMindAPI.GetClient();
+            var client = RimMindServiceLocator.Get<IClientManager>()?.GetClient();
             if (client == null)
                 return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.ClientNotConfigured(nameof(LocalStorageDriver)));
 
@@ -116,12 +116,12 @@ namespace RimMind.Infrastructure.Persistence
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
+                Budget = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
-                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
+                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
+                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
             };
-            var engine = RimMindAPI.GetContextEngine();
+            var engine = RimMindServiceLocator.Get<IContextEngine>();
             var snapshot = engine.BuildSnapshot(request);
             return await ChatAsync(snapshot, ct);
         }
@@ -132,12 +132,12 @@ namespace RimMind.Infrastructure.Persistence
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = RimMindCoreMod.Settings?.Context?.ContextBudget ?? 0.6f,
+                Budget = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
-                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
+                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
+                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
             };
-            var engine = RimMindAPI.GetContextEngine();
+            var engine = RimMindServiceLocator.Get<IContextEngine>();
             var snapshot = engine.BuildSnapshot(request);
             var result = await ChatAsync(snapshot, ct);
             if (result.TryGetValue(out var chatResult) && chatResult.Message != null)

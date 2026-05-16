@@ -9,7 +9,6 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Presentation;
 using RimMind.Presentation.Pipeline.AI;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -34,8 +33,8 @@ namespace RimMind.Presentation
 
             public static void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<Result<AIResponse, RimMindError>> onComplete, List<StructuredTool>? tools = null)
             {
-                var s = RimMindCoreMod.Settings;
-                if (s == null || !s.IsConfigured())
+                var s = RimMindServiceLocator.Get<ISettingsProvider>();
+                if (s?.IsConfigured != true)
                 {
                     onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
                     return;
@@ -75,7 +74,7 @@ namespace RimMind.Presentation
                     Temperature = snapshot.Temperature,
                     RequestId = $"Structured_{request.NpcId}",
                     ModId = request.Scenario.ToString(),
-                    ExpireAtTicks = Find.TickManager.TicksGame + (RimMindCoreMod.Settings?.requestExpireTicks ?? 30000),
+                    ExpireAtTicks = Find.TickManager.TicksGame + (RimMindServiceLocator.Get<ISettingsProvider>()?.RequestExpireTicks ?? 30000),
                     UseJsonMode = true,
                     Priority = AIRequestPriority.Normal,
                 };

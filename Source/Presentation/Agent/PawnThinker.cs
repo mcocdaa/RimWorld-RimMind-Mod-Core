@@ -7,10 +7,11 @@ using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
+using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation;
 using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -25,7 +26,7 @@ namespace RimMind.Presentation.Agent
         public PawnThinker(IPawnAgent agent)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
-            _thinkCooldownTicks = RimMindCoreMod.Settings?.thinkCooldownTicks ?? 30000;
+            _thinkCooldownTicks = RimMindServiceLocator.Get<ISettingsProvider>()?.ThinkCooldownTicks ?? 30000;
         }
 
         public bool IsThinking => _thinking;
@@ -75,12 +76,12 @@ namespace RimMind.Presentation.Agent
             var request = new AIRequest
             {
                 SystemPrompt = "",
-                MaxTokens = RimMindCoreMod.Settings?.maxTokens ?? 800,
-                Temperature = RimMindCoreMod.Settings?.defaultTemperature ?? 0.7f,
+                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
+                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
                 RequestId = $"Think_{pawn.thingIDNumber}_{Find.TickManager.TicksGame}",
                 ModId = "AgentThink",
                 Priority = AIRequestPriority.Normal,
-                UseJsonMode = RimMindCoreMod.Settings?.forceJsonMode ?? true,
+                UseJsonMode = RimMindServiceLocator.Get<ISettingsProvider>()?.ForceJsonMode ?? true,
             };
             return request;
         }

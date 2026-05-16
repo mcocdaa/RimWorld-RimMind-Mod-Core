@@ -1,10 +1,11 @@
 using System;
+using System.Linq;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Enums;
+using RimMind.Domain.Common;
 using RimMind.Infrastructure.Services.Clients.Player2;
-using RimMind.Presentation.Settings;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -12,36 +13,36 @@ namespace RimMind.Presentation.Runtime
     {
         private IAIClient? _client;
         private Player2Client? _player2Client;
-        private AIProvider _lastProvider;
+        private string _lastProvider = "";
         private string _lastApiKey = "";
         private string _lastEndpoint = "";
         private string _lastModel = "";
 
         public IAIClient? GetClient()
         {
-            var s = RimMindCoreMod.Settings;
+            var s = RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null) return null;
 
             if (_client != null &&
-                _lastProvider == s.provider &&
-                _lastApiKey == s.apiKey &&
-                _lastEndpoint == s.apiEndpoint &&
-                _lastModel == s.modelName)
+                _lastProvider == s.Provider &&
+                _lastApiKey == s.ApiKey &&
+                _lastEndpoint == s.ApiEndpoint &&
+                _lastModel == s.ModelName)
                 return _client;
 
             _client = CreateClient(s);
-            _lastProvider = s.provider;
-            _lastApiKey = s.apiKey;
-            _lastEndpoint = s.apiEndpoint;
-            _lastModel = s.modelName;
+            _lastProvider = s.Provider;
+            _lastApiKey = s.ApiKey;
+            _lastEndpoint = s.ApiEndpoint;
+            _lastModel = s.ModelName;
             return _client;
         }
 
         public Player2Client? GetPlayer2Client()
         {
-            var s = RimMindCoreMod.Settings;
+            var s = RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null) return null;
-            if (s.provider != AIProvider.Player2) return null;
+            if (s.Provider != AIProviders.Player2) return null;
 
             if (_player2Client != null) return _player2Client;
             try
@@ -63,9 +64,11 @@ namespace RimMind.Presentation.Runtime
             _player2Client = null;
         }
 
-        private IAIClient? CreateClient(RimMindCoreSettings s)
+        private IAIClient? CreateClient(ISettingsProvider s)
         {
-            return null;
+            var factoryRegistry = RimMindServiceLocator.Get<IExtensionRegistry<IAIClientFactory>>();
+            var factory = factoryRegistry?.All.FirstOrDefault(f => f.ProviderId == s.Provider);
+            return factory?.Create(s);
         }
     }
 }
