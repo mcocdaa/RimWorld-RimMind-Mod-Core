@@ -35,29 +35,35 @@ namespace RimMind.Presentation.Agent
             => RimMindAPI.Modes.FindById(_currentModeId.Value)
                ?? throw new InvalidOperationException($"AgentMode '{_currentModeId}' not registered");
         public int? LastThinkTick { get; set; }
+        string IAgentInfo.NpcId => Identity.NpcId;
+        string IAgentInfo.Label => Pawn?.Label ?? Identity.DisplayName;
+        int IAgentInfo.GoalCount => GoalStack.TotalCount;
 
         private readonly PawnPerceiver _perceiver;
         private readonly PawnThinker _thinker;
         private readonly PawnActor _actor;
         private readonly PawnRecorder _recorder;
         private readonly List<BehaviorRecord> _behaviorHistory = new List<BehaviorRecord>();
+        private readonly IAgentTickSettings? _tickSettings;
+        private readonly IAgentBus _agentBus;
         private int _lastTick;
         private int _tickInterval;
         private int _maxBehaviorHistory;
 
         IReadOnlyList<BehaviorRecord> IPawnAgent.BehaviorHistory => _behaviorHistory;
 
-        public PawnAgent(Pawn pawn)
+        public PawnAgent(Pawn pawn, IAgentTickSettings tickSettings, IAgentBus agentBus)
         {
             Pawn = pawn ?? throw new ArgumentNullException(nameof(pawn));
+            _tickSettings = tickSettings;
+            _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
             Identity = new AgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
             _perceiver = new PawnPerceiver(this);
-            _thinker = new PawnThinker(this);
+            _thinker = new PawnThinker(this, _tickSettings);
             _actor = new PawnActor(this);
             _recorder = new PawnRecorder(this);
-            var agentSettings = RimMindServiceLocator.Get<IAgentTickSettings>();
-            _tickInterval = agentSettings?.AgentTickInterval ?? 150;
-            _maxBehaviorHistory = agentSettings?.BehaviorHistoryMax ?? 100;
+            _tickInterval = _tickSettings?.AgentTickInterval ?? 150;
+            _maxBehaviorHistory = _tickSettings?.BehaviorHistoryMax ?? 100;
         }
 
         public void Tick()
@@ -144,7 +150,7 @@ namespace RimMind.Presentation.Agent
             _currentModeId = modeId;
             LastThinkTick = null;
 
-            var bus = RimMindServiceLocator.Get<IAgentBus>();
+            var bus = _agentBus;
             if (bus != null)
             {
                 bus.Publish(new AgentModeChangedEvent(

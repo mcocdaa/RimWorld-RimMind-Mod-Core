@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Client;
@@ -13,6 +14,7 @@ using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Interfaces.Runtime;
 using RimMind.Application.Common.Interfaces.Sensor;
+using RimMind.Presentation.Settings;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Client;
@@ -62,10 +64,49 @@ namespace RimMind.Presentation.Runtime
         public ToolRegistry ToolRegistry { get; private set; }
         public GameMechanismRegistry MechanismRegistry { get; private set; }
         public int MaxToolCallDepth { get; set; } = 3;
-        public IPipeline<AIRequestContext> AIRequestPipeline { get; private set; }
-        public IPipeline<NpcChatContext> NpcChatPipeline { get; private set; }
-        public IPipeline<ContextBuildContext> ContextBuildPipeline { get; private set; }
-        public IPipeline<BusPublishContext> BusPublishPipeline { get; private set; }
+        private IPipeline<AIRequestContext>? _aiRequestPipeline;
+        public IPipeline<AIRequestContext> AIRequestPipeline
+        {
+            get
+            {
+                return _aiRequestPipeline ??= AIRequestPipelineFactory.Build(
+                    RimMindServiceLocator.Get<ISettingsProvider>()!,
+                    GetExtensionRegistry<IMiddleware<AIRequestContext>>());
+            }
+        }
+
+        private IPipeline<NpcChatContext>? _npcChatPipeline;
+        public IPipeline<NpcChatContext> NpcChatPipeline
+        {
+            get
+            {
+                return _npcChatPipeline ??= NpcChatPipelineFactory.Build(
+                    GetExtensionRegistry<IMiddleware<NpcChatContext>>());
+            }
+        }
+
+        private IPipeline<ContextBuildContext>? _contextBuildPipeline;
+        public IPipeline<ContextBuildContext> ContextBuildPipeline
+        {
+            get
+            {
+                return _contextBuildPipeline ??= ContextBuildPipelineFactory.Build(
+                    RimMindServiceLocator.Get<ISettingsProvider>()!,
+                    GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
+            }
+        }
+
+        private IPipeline<BusPublishContext>? _busPublishPipeline;
+        public IPipeline<BusPublishContext> BusPublishPipeline
+        {
+            get
+            {
+                return _busPublishPipeline ??= BusPublishPipelineFactory.Build(
+                    AgentBus,
+                    RimMindServiceLocator.Get<ILogSink>(),
+                    GetExtensionRegistry<IMiddleware<BusPublishContext>>());
+            }
+        }
 
         private readonly ConcurrentDictionary<Type, object> _registries = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners = new ConcurrentDictionary<string, IParameterTuner>();
@@ -141,17 +182,6 @@ namespace RimMind.Presentation.Runtime
             clientFactoryRegistry.Register(new Player2ClientFactory());
             RimMindServiceLocator.Register(clientFactoryRegistry);
 
-            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
-            AIRequestPipeline = AIRequestPipelineFactory.Build(
-                settings!,
-                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
-            NpcChatPipeline = NpcChatPipelineFactory.Build(
-                GetExtensionRegistry<IMiddleware<NpcChatContext>>());
-            ContextBuildPipeline = ContextBuildPipelineFactory.Build(
-                settings!,
-                GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
-            BusPublishPipeline = BusPublishPipelineFactory.Build(
-                GetExtensionRegistry<IMiddleware<BusPublishContext>>());
         }
 
         public static void Initialize()
@@ -161,6 +191,7 @@ namespace RimMind.Presentation.Runtime
                 if (_instance != null) return;
                 _instance = new RimMindRuntime();
                 _instance.RegisterBuiltinModes();
+                _instance.RegisterCoreSubscribers();
                 Log.Message("[RimMind-Core] Runtime initialized");
             }
         }
@@ -221,8 +252,17 @@ namespace RimMind.Presentation.Runtime
         private void RegisterBuiltinModes()
         {
             var modeRegistry = GetExtensionRegistry<IAgentMode>();
+            var tickProvider = RimMindServiceLocator.Get<ITickProvider>()
+                ?? throw new InvalidOperationException("ITickProvider not registered");
             modeRegistry.Register(new ReactiveAgentMode());
-            modeRegistry.Register(new ProactiveAgentMode());
+            modeRegistry.Register(new ProactiveAgentMode(tickProvider));
+        }
+
+        private void RegisterCoreSubscribers()
+        {
+            var logSink = RimMindServiceLocator.Get<ILogSink>()!;
+            var agentBus = RimMindServiceLocator.Get<IAgentBus>()!;
+            new AgentBusCoreSubscriber(agentBus, logSink);
         }
     }
 

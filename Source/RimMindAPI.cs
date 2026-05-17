@@ -6,7 +6,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Application.Common.Interfaces.Sensor;
+using RimMind.Presentation.Settings;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Client;

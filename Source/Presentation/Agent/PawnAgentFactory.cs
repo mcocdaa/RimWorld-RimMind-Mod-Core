@@ -1,4 +1,6 @@
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -7,7 +9,9 @@ namespace RimMind.Presentation.Agent
     {
         public object Create(object pawn, object eventBus)
         {
-            return new PawnAgent((Verse.Pawn)pawn);
+            var tickSettings = RimMindServiceLocator.Get<IAgentTickSettings>();
+            var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+            return new PawnAgent((Verse.Pawn)pawn, tickSettings!, agentBus!);
         }
 
         public void SerializeAgent(ref object? agent, string label)

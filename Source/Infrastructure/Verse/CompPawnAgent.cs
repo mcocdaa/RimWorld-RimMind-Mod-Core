@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Interfaces.UI;
+using RimMind.Presentation.Agent;
 using RimWorld;
 using UnityEngine;
 using Verse;

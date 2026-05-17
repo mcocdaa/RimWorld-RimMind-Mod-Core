@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Sensor;
+using RimMind.Presentation.Settings;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Agent;

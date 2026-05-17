@@ -1,6 +1,6 @@
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Extension;
-using RimMind.Application.Common.Interfaces.Sensor;
+using RimMind.Presentation.Settings;
 using System.Collections.Generic;
 
 namespace RimMind.Presentation

@@ -42,6 +42,7 @@
     <Compile Include="RimMindAPI.cs" />
     <Compile Include="Infrastructure\**\*.cs" />
     <Compile Include="Presentation\**\*.cs" />
+    <Compile Remove="Presentation\Agent\Modes\**\*.cs" />
   </ItemGroup>
 
 </Project>

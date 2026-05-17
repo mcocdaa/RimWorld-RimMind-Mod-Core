@@ -167,5 +167,52 @@ namespace RimMind.Presentation.Settings
         }
 
         public bool IsOpenAIConfigured() => _settings.IsOpenAIConfigured();
+
+        bool IContextIncludeSettings.IncludeRace { get => Context.IncludeRace; set => Context.IncludeRace = value; }
+        bool IContextIncludeSettings.IncludeAge { get => Context.IncludeAge; set => Context.IncludeAge = value; }
+        bool IContextIncludeSettings.IncludeGender { get => Context.IncludeGender; set => Context.IncludeGender = value; }
+        bool IContextIncludeSettings.IncludeBackstory { get => Context.IncludeBackstory; set => Context.IncludeBackstory = value; }
+        bool IContextIncludeSettings.IncludeIdeology { get => Context.IncludeIdeology; set => Context.IncludeIdeology = value; }
+        bool IContextIncludeSettings.IncludeTraits { get => Context.IncludeTraits; set => Context.IncludeTraits = value; }
+        bool IContextIncludeSettings.IncludeSkills { get => Context.IncludeSkills; set => Context.IncludeSkills = value; }
+        int IContextIncludeSettings.MinSkillLevel { get => Context.MinSkillLevel; set => Context.MinSkillLevel = value; }
+        bool IContextIncludeSettings.IncludeHealth { get => Context.IncludeHealth; set => Context.IncludeHealth = value; }
+        bool IContextIncludeSettings.IncludeCapacities { get => Context.IncludeCapacities; set => Context.IncludeCapacities = value; }
+        bool IContextIncludeSettings.IncludeMood { get => Context.IncludeMood; set => Context.IncludeMood = value; }
+        bool IContextIncludeSettings.IncludeMoodThoughts { get => Context.IncludeMoodThoughts; set => Context.IncludeMoodThoughts = value; }
+        bool IContextIncludeSettings.IncludeCurrentJob { get => Context.IncludeCurrentJob; set => Context.IncludeCurrentJob = value; }
+        bool IContextIncludeSettings.IncludeWorkPriorities { get => Context.IncludeWorkPriorities; set => Context.IncludeWorkPriorities = value; }
+        bool IContextIncludeSettings.IncludeEquipment { get => Context.IncludeEquipment; set => Context.IncludeEquipment = value; }
+        bool IContextIncludeSettings.IncludeInventory { get => Context.IncludeInventory; set => Context.IncludeInventory = value; }
+        bool IContextIncludeSettings.IncludeLocation { get => Context.IncludeLocation; set => Context.IncludeLocation = value; }
+        bool IContextIncludeSettings.IncludeRelations { get => Context.IncludeRelations; set => Context.IncludeRelations = value; }
+        bool IContextIncludeSettings.IncludeGenes { get => Context.IncludeGenes; set => Context.IncludeGenes = value; }
+        bool IContextIncludeSettings.IncludeSurroundings { get => Context.IncludeSurroundings; set => Context.IncludeSurroundings = value; }
+        bool IContextIncludeSettings.IncludeCombatStatus { get => Context.IncludeCombatStatus; set => Context.IncludeCombatStatus = value; }
+        bool IContextIncludeSettings.IncludeGameTime { get => Context.IncludeGameTime; set => Context.IncludeGameTime = value; }
+        bool IContextIncludeSettings.IncludeColonistCount { get => Context.IncludeColonistCount; set => Context.IncludeColonistCount = value; }
+        bool IContextIncludeSettings.IncludeColonistNames { get => Context.IncludeColonistNames; set => Context.IncludeColonistNames = value; }
+        bool IContextIncludeSettings.IncludeWealth { get => Context.IncludeWealth; set => Context.IncludeWealth = value; }
+        bool IContextIncludeSettings.IncludeFood { get => Context.IncludeFood; set => Context.IncludeFood = value; }
+        bool IContextIncludeSettings.IncludeSeason { get => Context.IncludeSeason; set => Context.IncludeSeason = value; }
+        bool IContextIncludeSettings.IncludeWeather { get => Context.IncludeWeather; set => Context.IncludeWeather = value; }
+        bool IContextIncludeSettings.IncludeThreats { get => Context.IncludeThreats; set => Context.IncludeThreats = value; }
+
+        float IContextBudgetSettings.ContextBudget { get => Context.ContextBudget; set => Context.ContextBudget = value; }
+        int IContextBudgetSettings.ContextBriefLimit => Context.ContextBriefLimit;
+        int IContextBudgetSettings.MaxCacheEntries => Context.MaxCacheEntries;
+        float IContextBudgetSettings.BudgetW1 { get => Context.BudgetW1; set => Context.BudgetW1 = value; }
+        float IContextBudgetSettings.BudgetW2 { get => Context.BudgetW2; set => Context.BudgetW2 = value; }
+
+        int IContextEnvironmentSettings.EnvironmentScanRadius => Context.EnvironmentScanRadius;
+        int IContextEnvironmentSettings.EnvironmentMaxItems => Context.EnvironmentMaxItems;
+        float IContextEnvironmentSettings.ThreatThresholdHigh => Context.ThreatThresholdHigh;
+        float IContextEnvironmentSettings.ThreatThresholdMedium => Context.ThreatThresholdMedium;
+        float IContextEnvironmentSettings.ThreatThresholdLow => Context.ThreatThresholdLow;
+        float IContextEnvironmentSettings.MoodDiffThreshold => Context.MoodDiffThreshold;
+        float IContextEnvironmentSettings.TemperatureDiffThreshold => Context.TemperatureDiffThreshold;
+
+        void IContextSettings.ApplyPreset(ContextPreset preset) => Context.ApplyPreset(preset);
+        void IContextSettings.ResetToDefault() => Context.ResetToDefault();
     }
 }

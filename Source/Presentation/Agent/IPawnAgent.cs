@@ -1,17 +1,16 @@
 using System.Collections.Generic;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
-using RimMind.Presentation.Agent;
 using Verse;
 
-namespace RimMind.Application.Common.Interfaces.Agent
+namespace RimMind.Presentation.Agent
 {
-    public interface IPawnAgent : IExposable
+    public interface IPawnAgent : IAgentInfo, IExposable
     {
         Pawn Pawn { get; }
-        AgentState State { get; }
         AgentIdentity Identity { get; }
         AgentGoalStack GoalStack { get; }
         IReadOnlyList<BehaviorRecord> BehaviorHistory { get; }
@@ -21,7 +20,6 @@ namespace RimMind.Application.Common.Interfaces.Agent
 
         AgentModeId CurrentModeId { get; }
         IAgentMode CurrentMode { get; }
-        int? LastThinkTick { get; set; }
 
         void Tick();
         bool TransitionTo(AgentState newState);

@@ -30,6 +30,10 @@ namespace RimMind.Presentation.Context
         private readonly IContextDiffTracker _diffTracker;
         private readonly IContextLayerBuilder _layerBuilder;
         private readonly IBudgetScheduler _scheduler;
+        private readonly ISettingsProvider _settingsProvider;
+        private readonly ITranslationService _translationService;
+        private readonly IFlywheelParameterStore _flywheelParameterStore;
+        private readonly ILogSink _logSink;
 
         public ContextOrchestrator(
             IHistoryManager historyManager,
@@ -37,7 +41,11 @@ namespace RimMind.Presentation.Context
             IContextCacheManager cacheManager,
             IContextDiffTracker diffTracker,
             IContextLayerBuilder layerBuilder,
-            IBudgetScheduler scheduler)
+            IBudgetScheduler scheduler,
+            ISettingsProvider settingsProvider,
+            ITranslationService translationService,
+            IFlywheelParameterStore flywheelParameterStore,
+            ILogSink logSink)
         {
             _historyManager = historyManager;
             _npcManager = npcManager;
@@ -45,6 +53,10 @@ namespace RimMind.Presentation.Context
             _diffTracker = diffTracker;
             _layerBuilder = layerBuilder;
             _scheduler = scheduler;
+            _settingsProvider = settingsProvider;
+            _translationService = translationService;
+            _flywheelParameterStore = flywheelParameterStore;
+            _logSink = logSink;
         }
 
         public ContextSnapshot? BuildSnapshot(ContextRequest request)
@@ -91,8 +103,8 @@ namespace RimMind.Presentation.Context
                 ? request.Budget
                 : (scenarioMeta?.DefaultBudget > 0
                     ? scenarioMeta.DefaultBudget
-                    : (RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget > 0
-                        ? RimMindServiceLocator.Get<ISettingsProvider>()!.Context!.ContextBudget
+                    : (_settingsProvider?.Context?.ContextBudget > 0
+                        ? _settingsProvider!.Context!.ContextBudget
                         : 0.6f));
             var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
 
@@ -203,7 +215,7 @@ namespace RimMind.Presentation.Context
 
             if (!string.IsNullOrEmpty(request.CurrentQuery))
             {
-                var translationService = RimMindServiceLocator.Get<ITranslationService>();
+                var translationService = _translationService;
                 string queryContent = !string.IsNullOrEmpty(request.SpeakerName)
                     ? translationService?.Translate("RimMind.Presentation.Prompt.Dialogue.SpeakerSays", request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
                         ?? $"[{request.SpeakerName}]: {PromptSanitizer.SanitizeUserInput(request.CurrentQuery!)}"
@@ -216,7 +228,7 @@ namespace RimMind.Presentation.Context
             {
                 string scenarioLabel = !string.IsNullOrEmpty(request.Scenario)
                     ? request.Scenario! : "general";
-                var translationService = RimMindServiceLocator.Get<ITranslationService>();
+                var translationService = _translationService;
                 string autoAwaitContent = translationService?.Translate("RimMind.Presentation.Prompt.AutoAwait", scenarioLabel)
                     ?? $"[AutoAwait: {scenarioLabel}]";
                 messages.Add(new ChatMessage { Role = "user", Content = autoAwaitContent });
@@ -243,11 +255,11 @@ namespace RimMind.Presentation.Context
         {
             if (snapshot.Messages == null || snapshot.Messages.Count == 0) return;
 
-            int totalBudget = RimMindServiceLocator.Get<IFlywheelParameterStore>()?.TotalBudget ?? 4000;
-            int reserveForOutput = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens > 0
-                ? RimMindServiceLocator.Get<ISettingsProvider>()!.MaxTokens
+            int totalBudget = _flywheelParameterStore?.TotalBudget ?? 4000;
+            int reserveForOutput = _settingsProvider?.MaxTokens > 0
+                ? _settingsProvider!.MaxTokens
                 : 800;
-            float budgetRatio = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f;
+            float budgetRatio = _settingsProvider?.Context?.ContextBudget ?? 0.6f;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;
 
@@ -292,18 +304,17 @@ namespace RimMind.Presentation.Context
             snapshot.EstimatedTokens = trimmed.Sum(s => s.EstimatedTokens);
             snapshot.Meta.TotalTokens = snapshot.EstimatedTokens;
 
-            if (RimMindServiceLocator.Get<ISettingsProvider>()?.DebugLogging == true)
+            if (_settingsProvider?.DebugLogging == true)
             {
-                var log = RimMindServiceLocator.Get<ILogSink>();
-                log?.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
+                _logSink?.Message($"Budget trim applied for {snapshot.NpcId}: trimmed to {snapshot.EstimatedTokens} tokens (budget: {available})");
             }
         }
 
-        private static string CompressToBrief(string content)
+        private string CompressToBrief(string content)
         {
             if (string.IsNullOrEmpty(content)) return content;
             const int briefLimitFallback = 200;
-            int briefLimit = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBriefLimit ?? briefLimitFallback;
+            int briefLimit = _settingsProvider?.Context?.ContextBriefLimit ?? briefLimitFallback;
             if (content.Length <= briefLimit) return content;
             int cut = briefLimit;
             if (char.IsHighSurrogate(content[cut - 1])) cut--;

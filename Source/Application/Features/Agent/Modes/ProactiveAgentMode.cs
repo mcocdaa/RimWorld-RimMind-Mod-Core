@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Tools;
@@ -11,12 +12,18 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
-using Verse;
 
 namespace RimMind.Application.Features.Agent.Modes;
 
 internal sealed class ProactiveAgentMode : IAgentMode
 {
+    private readonly ITickProvider _tickProvider;
+
+    public ProactiveAgentMode(ITickProvider tickProvider)
+    {
+        _tickProvider = tickProvider;
+    }
+
     public AgentModeId ModeId => AgentModeId.Proactive;
     public string DisplayName => "Proactive";
     public string Description => "Periodically initiates decisions even without perception triggers";
@@ -24,16 +31,16 @@ internal sealed class ProactiveAgentMode : IAgentMode
 
     private const int ProactiveTickInterval = 60000;
 
-    public bool IsApplicable(IPawnAgent agent) => agent.State == AgentState.Active;
+    public bool IsApplicable(IAgentInfo agent) => agent.State == AgentState.Active;
 
-    public bool ShouldThink(IPawnAgent agent, IReadOnlyList<PerceptionBufferEntry> perceptions)
+    public bool ShouldThink(IAgentInfo agent, IReadOnlyList<PerceptionBufferEntry> perceptions)
     {
         if (perceptions.Count > 0) return true;
 
         var lastThinkTick = agent.LastThinkTick;
         if (lastThinkTick == null) return true;
 
-        var ticksSinceLastThink = Find.TickManager.TicksGame - lastThinkTick.Value;
+        var ticksSinceLastThink = _tickProvider.TicksGame - lastThinkTick.Value;
         return ticksSinceLastThink >= ProactiveTickInterval;
     }
 
@@ -47,7 +54,7 @@ internal sealed class ProactiveThinkStrategy : IThinkStrategy
 {
     public string ScenarioId => ScenarioIds.Decision;
 
-    public ContextRequest BuildRequest(IPawnAgent agent,
+    public ContextRequest BuildRequest(IAgentInfo agent,
         IReadOnlyList<PerceptionBufferEntry> perceptions,
         IReadOnlyList<ToolDefinition> availableTools)
     {
@@ -57,13 +64,13 @@ internal sealed class ProactiveThinkStrategy : IThinkStrategy
 
         return new ContextRequest
         {
-            NpcId = agent.Identity.NpcId,
+            NpcId = agent.NpcId,
             Scenario = ScenarioId,
             CurrentQuery = query,
         };
     }
 
-    public Result<AgentDecision, RimMindError> ParseDecision(IPawnAgent agent, AIResponse response)
+    public Result<AgentDecision, RimMindError> ParseDecision(IAgentInfo agent, AIResponse response)
         => new ReactiveThinkStrategy().ParseDecision(agent, response);
 
     private static string FormatPerceptions(IReadOnlyList<PerceptionBufferEntry> perceptions)
@@ -74,10 +81,8 @@ internal sealed class ProactiveThinkStrategy : IThinkStrategy
         return string.Join("\n", parts);
     }
 
-    private static string SerializeAgentState(IPawnAgent agent)
+    private static string SerializeAgentState(IAgentInfo agent)
     {
-        var pawn = agent.Pawn;
-        var goals = agent.GoalStack;
-        return $"Pawn={pawn?.Label ?? "null"}, State={agent.State}, Goals={goals?.TotalCount ?? 0}";
+        return $"Pawn={agent.Label}, State={agent.State}, Goals={agent.GoalCount}";
     }
 }

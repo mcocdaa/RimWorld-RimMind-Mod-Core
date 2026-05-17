@@ -19,14 +19,16 @@ namespace RimMind.Presentation.Agent
     public class PawnThinker
     {
         private readonly IPawnAgent _agent;
+        private readonly IAgentTickSettings? _tickSettings;
         private int _lastThinkTick;
         private int _thinkCooldownTicks;
         private bool _thinking;
 
-        public PawnThinker(IPawnAgent agent)
+        public PawnThinker(IPawnAgent agent, IAgentTickSettings tickSettings)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
-            _thinkCooldownTicks = RimMindServiceLocator.Get<IAgentTickSettings>()?.ThinkCooldownTicks ?? 30000;
+            _tickSettings = tickSettings;
+            _thinkCooldownTicks = _tickSettings?.ThinkCooldownTicks ?? 30000;
         }
 
         public bool IsThinking => _thinking;
@@ -92,9 +94,10 @@ namespace RimMind.Presentation.Agent
                     }
                 }, structuredTools);
             }
-            catch
+            catch (Exception ex)
             {
                 _thinking = false;
+                Log.Error($"[Think] Unexpected error for {_agent.Identity.NpcId}: {ex}");
             }
         }
 
