@@ -1,19 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
-using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Agent.Modes;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Common.Models.Context;
-using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Domain.Enums;
-using RimMind.Domain.ValueObjects;
 using RimMind.Presentation;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -49,23 +47,50 @@ namespace RimMind.Presentation.Agent
             try
             {
                 var pawn = _agent.Pawn;
-                if (pawn == null || pawn.Dead) return;
+                if (pawn == null || pawn.Dead) { _thinking = false; return; }
 
                 var entries = _agent.PerceptionBuffer.Flush();
-                if (entries.Count == 0) return;
+                var mode = _agent.CurrentMode;
 
-                var request = BuildRequest(pawn, entries);
-                if (request == null) return;
+                if (!mode.ShouldThink(_agent, entries)) { _thinking = false; return; }
 
-                var client = RimMindRuntime.Instance.GetClient();
-                if (client == null) return;
+                var strategy = mode.GetThinkStrategy();
+                var allowedToolIds = mode.AllowedToolIds(RimMindAPI.Tools);
 
-                RimMindAPI.Request.RequestStructuredAsync(request, null, response =>
+                var availableTools = RimMindAPI.Tools.GetAllDefinitions()
+                    .Where(d => allowedToolIds.Contains(d.Id))
+                    .ToList();
+
+                var contextRequest = strategy.BuildRequest(_agent, entries, availableTools);
+                var structuredTools = ConvertToStructuredTools(availableTools);
+
+                RimMindAPI.Request.RequestStructured(contextRequest, "<Action>...</Action>", result =>
                 {
                     _thinking = false;
-                    if (response.IsOk)
-                        ProcessResponse(response.Value);
-                });
+                    if (result.IsOk)
+                    {
+                        var decision = strategy.ParseDecision(_agent, result.Value);
+                        if (decision.IsOk)
+                        {
+                            _agent.LastThinkTick = Find.TickManager.TicksGame;
+                            _agent.RecordBehavior(new BehaviorRecordDto
+                            {
+                                Action = decision.Value.ActionIntent,
+                                Reason = decision.Value.Reason,
+                                Success = true,
+                                Timestamp = Find.TickManager.TicksGame
+                            });
+                        }
+                        else
+                        {
+                            Log.Warning($"[Think] Parse failed: {decision.Error}");
+                        }
+                    }
+                    else
+                    {
+                        Log.Warning($"[Think] AI request failed: {result.Error}");
+                    }
+                }, structuredTools);
             }
             catch
             {
@@ -73,56 +98,19 @@ namespace RimMind.Presentation.Agent
             }
         }
 
-        private AIRequest? BuildRequest(Pawn pawn, List<PerceptionBufferEntry> entries)
+        private static List<StructuredTool> ConvertToStructuredTools(IReadOnlyList<ToolDefinition> defs)
         {
-            var modelSettings = RimMindServiceLocator.Get<IAIModelSettings>();
-            var request = new AIRequest
+            return defs.Select(d => new StructuredTool
             {
-                SystemPrompt = "",
-                MaxTokens = modelSettings?.MaxTokens ?? 800,
-                Temperature = modelSettings?.DefaultTemperature ?? 0.7f,
-                RequestId = $"Think_{pawn.thingIDNumber}_{Find.TickManager.TicksGame}",
-                ModId = "AgentThink",
-                Priority = AIRequestPriority.Normal,
-                UseJsonMode = modelSettings?.ForceJsonMode ?? true,
-            };
-            return request;
-        }
-
-        private void ProcessResponse(AIResponse response)
-        {
-            if (response == null || string.IsNullOrEmpty(response.Content)) return;
-            try
-            {
-                var action = ParseAction(response.Content);
-                if (action != null)
-                {
-                    _agent.RecordBehavior(new BehaviorRecordDto
-                    {
-                        Action = action.Action,
-                        Reason = action.Reason,
-                        Success = true,
-                        Timestamp = Find.TickManager.TicksGame
-                    });
-                }
-            }
-            catch { }
-        }
-
-        private ParsedAction? ParseAction(string content)
-        {
-            return null;
+                Name = d.Id,
+                Description = d.Description,
+                Parameters = d.ParametersSchema,
+            }).ToList();
         }
 
         public void ForceThink()
         {
             _lastThinkTick = 0;
-        }
-
-        private class ParsedAction
-        {
-            public string Action = "";
-            public string Reason = "";
         }
     }
 }

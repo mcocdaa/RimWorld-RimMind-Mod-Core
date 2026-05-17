@@ -68,8 +68,6 @@ namespace RimMind.Infrastructure.Verse
                     Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
 
-            if (Scribe.mode == LoadSaveMode.PostLoadInit && Agent != null)
-                Agent.ResubscribeEvents();
         }
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()

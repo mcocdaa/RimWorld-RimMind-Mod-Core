@@ -27,4 +27,9 @@
     <InternalsVisibleTo Include="RimMindCore.Integration.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Features\Agent\Modes\**" />
+    <Compile Remove="Common\Interfaces\Agent\Modes\**" />
+  </ItemGroup>
+
 </Project>

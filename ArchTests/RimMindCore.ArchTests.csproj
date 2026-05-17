@@ -32,6 +32,8 @@
     <Compile Include="PhaseG\**\*.cs" />
     <Compile Include="PhaseJ\**\*.cs" />
     <Compile Include="PhaseH1\**\*.cs" />
+    <Compile Include="PhaseI\**\*.cs" />
+    <Compile Remove="PhaseI\R_I1_I4_AgentModeArchTests.cs" />
     <Compile Include="PhaseStructure\**\*.cs" />
     <Compile Include="General\**\*.cs" />
     <Compile Include="../Tests/VerseStubs.cs" Link="VerseStubs.cs" />

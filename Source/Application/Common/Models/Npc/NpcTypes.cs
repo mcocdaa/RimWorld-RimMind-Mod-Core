@@ -114,12 +114,4 @@ namespace RimMind.Application.Common.Models.Npc
             Message = message;
         }
     }
-
-    public class HistoryEntry
-    {
-        public string Role { get; set; } = "";
-        public string Content { get; set; } = "";
-        public string? Scenario { get; set; }
-        public long TimestampTicks { get; set; }
-    }
 }

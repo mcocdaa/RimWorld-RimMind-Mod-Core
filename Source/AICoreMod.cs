@@ -29,7 +29,18 @@ namespace RimMind.Presentation
             RimMindServiceLocator.OnServiceNotFound = msg => Log.Warning(msg);
 
             Settings = GetSettings<RimMindCoreSettings>();
-            RimMindServiceLocator.Register<ISettingsProvider>(new SettingsProvider(Settings));
+            var sp = new SettingsProvider(Settings);
+            RimMindServiceLocator.Register<ISettingsProvider>(sp);
+            RimMindServiceLocator.Register<IAIModelSettings>(sp);
+            RimMindServiceLocator.Register<IApiCredentialSettings>(sp);
+            RimMindServiceLocator.Register<ICircuitBreakerSettings>(sp);
+            RimMindServiceLocator.Register<IContextCalibrationSettings>(sp);
+            RimMindServiceLocator.Register<IQueueSettings>(sp);
+            RimMindServiceLocator.Register<IAgentTickSettings>(sp);
+            RimMindServiceLocator.Register<IDebugSettings>(sp);
+            RimMindServiceLocator.Register<IOverlaySettings>(sp);
+            RimMindServiceLocator.Register<IPromptSettings>(sp);
+            RimMindServiceLocator.Register<IFlywheelSettings>(sp);
             RimMindServiceLocator.Register<IOpenAISettings>(Settings);
 
             RimMindRuntime.Initialize();

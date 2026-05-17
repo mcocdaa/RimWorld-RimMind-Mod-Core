@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
-using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Application.Features.AgentBus;
+using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
+using RimMind.Domain.Events;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
@@ -30,14 +29,18 @@ namespace RimMind.Presentation.Agent
         public PerceptionBuffer PerceptionBuffer { get; } = new PerceptionBuffer();
         public bool IsActive => State == AgentState.Active;
 
+        private AgentModeId _currentModeId = AgentModeId.Reactive;
+        public AgentModeId CurrentModeId => _currentModeId;
+        public IAgentMode CurrentMode
+            => RimMindAPI.Modes.FindById(_currentModeId.Value)
+               ?? throw new InvalidOperationException($"AgentMode '{_currentModeId}' not registered");
+        public int? LastThinkTick { get; set; }
+
         private readonly PawnPerceiver _perceiver;
         private readonly PawnThinker _thinker;
         private readonly PawnActor _actor;
         private readonly PawnRecorder _recorder;
         private readonly List<BehaviorRecord> _behaviorHistory = new List<BehaviorRecord>();
-#pragma warning disable CS0169
-        private Verse.AI.Job? _pendingJob;
-#pragma warning restore CS0169
         private int _lastTick;
         private int _tickInterval;
         private int _maxBehaviorHistory;
@@ -55,10 +58,6 @@ namespace RimMind.Presentation.Agent
             var agentSettings = RimMindServiceLocator.Get<IAgentTickSettings>();
             _tickInterval = agentSettings?.AgentTickInterval ?? 150;
             _maxBehaviorHistory = agentSettings?.BehaviorHistoryMax ?? 100;
-        }
-
-        public PawnAgent(Pawn pawn, IAgentBus eventBus) : this(pawn)
-        {
         }
 
         public void Tick()
@@ -133,14 +132,35 @@ namespace RimMind.Presentation.Agent
             _recorder.Record(record);
         }
 
+        public void SwitchMode(AgentModeId modeId)
+        {
+            var newMode = RimMindAPI.Modes.FindById(modeId.Value);
+            if (newMode == null)
+                throw new InvalidOperationException($"Mode '{modeId}' not registered");
+            if (!newMode.IsApplicable(this)) return;
+            if (_currentModeId == modeId) return;
+
+            var oldModeId = _currentModeId;
+            _currentModeId = modeId;
+            LastThinkTick = null;
+
+            var bus = RimMindServiceLocator.Get<IAgentBus>();
+            if (bus != null)
+            {
+                bus.Publish(new AgentModeChangedEvent(
+                    Identity.NpcId,
+                    Pawn?.thingIDNumber ?? -1,
+                    oldModeId.Value,
+                    modeId.Value));
+            }
+        }
+
+        public void ResubscribeEvents() { }
+
         public void Cleanup()
         {
             PerceptionBuffer.Clear();
             _behaviorHistory.Clear();
-        }
-
-        public void ResubscribeEvents()
-        {
         }
 
         public void ExposeData()
@@ -149,6 +169,10 @@ namespace RimMind.Presentation.Agent
             Scribe_Deep.Look(ref _identity, "identity");
             Scribe_Deep.Look(ref _goalStack, "goalStack");
             Scribe_Deep.Look(ref _strategyOptimizer, "strategyOptimizer");
+
+            string _currentModeIdStr = _currentModeId.Value;
+            Scribe_Values.Look(ref _currentModeIdStr, "currentModeId", AgentModeId.Reactive.Value);
+            _currentModeId = new AgentModeId(_currentModeIdStr);
         }
     }
 }

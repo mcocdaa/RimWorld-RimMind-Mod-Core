@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
@@ -17,7 +18,9 @@ using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Context;
+using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Queue;
 using RimMind.Application.Features.Registry;
@@ -62,6 +65,7 @@ namespace RimMind.Presentation.Runtime
         public IPipeline<AIRequestContext> AIRequestPipeline { get; private set; }
         public IPipeline<NpcChatContext> NpcChatPipeline { get; private set; }
         public IPipeline<ContextBuildContext> ContextBuildPipeline { get; private set; }
+        public IPipeline<BusPublishContext> BusPublishPipeline { get; private set; }
 
         private readonly ConcurrentDictionary<Type, object> _registries = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners = new ConcurrentDictionary<string, IParameterTuner>();
@@ -146,6 +150,8 @@ namespace RimMind.Presentation.Runtime
             ContextBuildPipeline = ContextBuildPipelineFactory.Build(
                 settings!,
                 GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
+            BusPublishPipeline = BusPublishPipelineFactory.Build(
+                GetExtensionRegistry<IMiddleware<BusPublishContext>>());
         }
 
         public static void Initialize()
@@ -154,6 +160,7 @@ namespace RimMind.Presentation.Runtime
             {
                 if (_instance != null) return;
                 _instance = new RimMindRuntime();
+                _instance.RegisterBuiltinModes();
                 Log.Message("[RimMind-Core] Runtime initialized");
             }
         }
@@ -210,6 +217,13 @@ namespace RimMind.Presentation.Runtime
         public IAIClient? GetClient() => ClientManager.GetClient();
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
         public IAIClient? GetPlayer2Client() => ClientManager.GetPlayer2Client();
+
+        private void RegisterBuiltinModes()
+        {
+            var modeRegistry = GetExtensionRegistry<IAgentMode>();
+            modeRegistry.Register(new ReactiveAgentMode());
+            modeRegistry.Register(new ProactiveAgentMode());
+        }
     }
 
 }

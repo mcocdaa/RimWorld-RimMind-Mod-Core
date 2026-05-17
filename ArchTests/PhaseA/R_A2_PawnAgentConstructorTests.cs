@@ -10,7 +10,7 @@ namespace RimMind.Core.ArchTests.PhaseA
     {
         [Fact]
         [Trait("Phase", "A")]
-        public void R_A2_PawnAgent_Constructor_ShouldInject_IAgentBus()
+        public void R_A2_PawnAgent_Constructor_ShouldAccept_Pawn_Only()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
@@ -22,11 +22,16 @@ namespace RimMind.Core.ArchTests.PhaseA
 
             var source = File.ReadAllText(pawnAgentFile!);
 
-            var constructorPattern = @"public\s+PawnAgent\s*\([^)]*IAgentBus[^)]*\)";
-            Regex.IsMatch(source, constructorPattern).Should().BeTrue(
-                "R-A2: PawnAgent constructor must accept IAgentBus parameter for dependency injection. " +
-                "Direct dependency on RimMindAPI.GetBus() breaks the dependency inversion principle — " +
-                "the agent should receive its bus through constructor injection, not reach for a global static.");
+            var pawnOnlyPattern = @"public\s+PawnAgent\s*\(\s*Pawn\s+pawn\s*\)";
+            Regex.IsMatch(source, pawnOnlyPattern).Should().BeTrue(
+                "R-A2: PawnAgent constructor must accept only Pawn parameter. " +
+                "IAgentBus dependency was removed with Agent Modes cleanup — " +
+                "the agent no longer needs bus injection in its constructor.");
+
+            var busPattern = @"public\s+PawnAgent\s*\([^)]*IAgentBus[^)]*\)";
+            Regex.IsMatch(source, busPattern).Should().BeFalse(
+                "R-A2: PawnAgent must NOT have a constructor accepting IAgentBus. " +
+                "Bus injection was a legacy pattern from Agent Modes that has been removed.");
         }
 
         private static string FindSourceDirectory()

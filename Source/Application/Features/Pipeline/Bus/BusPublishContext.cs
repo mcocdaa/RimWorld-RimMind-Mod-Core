@@ -3,7 +3,7 @@ using RimMind.Domain.Events;
 
 namespace RimMind.Application.Features.Pipeline.Bus
 {
-    internal sealed class BusPublishContext : PipelineContextBase
+    public sealed class BusPublishContext : PipelineContextBase
     {
         public AgentBusEvent Event { get; }
 

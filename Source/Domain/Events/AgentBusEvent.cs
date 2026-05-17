@@ -8,7 +8,8 @@ namespace RimMind.Domain.Events
         Action,
         Lifecycle,
         ToolCall,
-        ToolResult
+        ToolResult,
+        ModeChange
     }
 
     public class AgentBusEvent
