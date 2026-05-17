@@ -20,7 +20,7 @@ namespace RimMind.Infrastructure.Persistence
         {
             lock (_lock)
             {
-                var s = RimMindServiceLocator.Get<ISettingsProvider>();
+                var s = RimMindServiceLocator.Get<IApiCredentialSettings>();
                 var historyManager = RimMindServiceLocator.Get<IHistoryManager>();
                 if (s == null) return new LocalStorageDriver(historyManager);
 

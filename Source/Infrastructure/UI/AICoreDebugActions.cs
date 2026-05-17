@@ -328,7 +328,7 @@ namespace RimMind.Infrastructure.UI
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("[RimMind-Core] === AgentBus Subscribers ===");
 
-            var eventBus = RimMindServiceLocator.Get<IEventBus>();
+            var eventBus = RimMindServiceLocator.Get<IAgentBus>();
             sb.AppendLine($"  EventBus type: {eventBus?.GetType().Name ?? "null"}");
 
             sb.AppendLine($"  Registered event types: {eventBus.GetHandlerCount()}");

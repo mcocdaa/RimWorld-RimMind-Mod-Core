@@ -23,8 +23,8 @@ namespace RimMind.Presentation.Runtime
 
         public AIRequestQueue()
         {
-            _maxConcurrent = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxConcurrentRequests ?? 3;
-            _processInterval = RimMindServiceLocator.Get<ISettingsProvider>()?.QueueProcessInterval ?? 60;
+            _maxConcurrent = RimMindServiceLocator.Get<IQueueSettings>()?.MaxConcurrentRequests ?? 3;
+            _processInterval = RimMindServiceLocator.Get<IQueueSettings>()?.QueueProcessInterval ?? 60;
         }
 
         public void Enqueue(AIRequest request, Action<AIResponse> onComplete, IAIClient client)

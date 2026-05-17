@@ -1,10 +1,10 @@
 using System;
-using RimMind.Domain.Events;
-using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 using Xunit;
 
@@ -13,19 +13,16 @@ namespace RimMind.Presentation.Tests
     public class PawnThinkerTests : IDisposable
     {
         private readonly Pawn _pawn;
-        private readonly IEventBus _eventBus;
-        private readonly AgentGoalStack _goalStack;
-        private readonly PawnRecorder _recorder;
-        private readonly PawnActor _actor;
-        private readonly PawnThinker _thinker;
-        private AgentState _state = AgentState.Active;
+        private readonly PawnAgent _agent;
+        private readonly IAgentBus _agentBus;
 
         public PawnThinkerTests()
         {
             RimMindRuntime.Initialize();
             _pawn = new Pawn { thingIDNumber = 77, Dead = false };
             _pawn.jobs = new Pawn_JobTracker { jobQueue = new Verse.AI.JobQueue() };
-            RimMindCoreMod.Settings = new AICoreSettings
+            RimMindServiceLocator.Reset();
+            RimMindCoreMod.Settings = new RimMindCoreSettings
             {
                 Context = new ContextSettings(),
                 maxTokens = 800,
@@ -35,58 +32,62 @@ namespace RimMind.Presentation.Tests
                 maxToolCallDepth = 3,
                 behaviorHistoryMax = 100,
             };
-            _eventBus = new EventBusAdapter(new AgentBusImpl());
-            _goalStack = new AgentGoalStack();
-            _recorder = new PawnRecorder(_pawn, _eventBus, () => _state);
-            _actor = new PawnActor(_pawn, _eventBus, _goalStack, _recorder);
-            _thinker = new PawnThinker(_pawn, _eventBus, _goalStack, _actor, _recorder);
+            _agentBus = new AgentBusImpl();
+            _agent = new PawnAgent(_pawn, _agentBus);
         }
 
         public void Dispose()
         {
-            _recorder.Cleanup();
+            if (_agent.State != AgentState.Terminated)
+                _agent.TransitionTo(AgentState.Terminated);
             RimMindCoreMod.Settings = null;
         }
 
         [Fact]
-        public void Constructor_InitializesLastThinkTick()
+        public void ForceThink_DoesNotThrow()
         {
-            Assert.True(_thinker.LastThinkTick <= 0);
-        }
-
-        [Fact]
-        public void ForceThink_ResetsLastThinkTick()
-        {
-            _thinker.ForceThink();
-            Assert.True(_thinker.LastThinkTick <= 0);
-        }
-
-        [Fact]
-        public void Think_WithNoGoals_DoesNotThrow()
-        {
-            var emptyPerceptions = Array.Empty<PerceptionBufferEntry>();
-            var exception = Record.Exception(() => _thinker.Think(emptyPerceptions));
+            var exception = Record.Exception(() => _agent.ForceThink());
             Assert.Null(exception);
         }
 
         [Fact]
-        public void Think_WithActiveGoal_DoesNotThrow()
+        public void Tick_WithNoGoals_DoesNotThrow()
         {
-            _goalStack.TryAdd(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active), _pawn.thingIDNumber);
-            var emptyPerceptions = Array.Empty<PerceptionBufferEntry>();
-            var exception = Record.Exception(() => _thinker.Think(emptyPerceptions));
+            _agent.TransitionTo(AgentState.Active);
+            var exception = Record.Exception(() => _agent.Tick());
             Assert.Null(exception);
         }
 
         [Fact]
-        public void Think_WithPerceptions_DoesNotThrow()
+        public void Tick_WithActiveGoal_DoesNotThrow()
         {
-            _goalStack.TryAdd(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active), _pawn.thingIDNumber);
-            var perceptions = new[]
+            _agent.TransitionTo(AgentState.Active);
+            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            var exception = Record.Exception(() => _agent.Tick());
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void Tick_WithPerceptions_DoesNotThrow()
+        {
+            _agent.TransitionTo(AgentState.Active);
+            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
             {
-                new PerceptionBufferEntry { PerceptionType = "sight", Content = "something", Importance = 0.5f, PawnId = _pawn.thingIDNumber }
-            };
-            var exception = Record.Exception(() => _thinker.Think(perceptions));
+                PerceptionType = "sight",
+                Content = "something",
+                Importance = 0.5f,
+                PawnId = _pawn.thingIDNumber
+            });
+            var exception = Record.Exception(() => _agent.Tick());
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void Tick_WhenNotActive_DoesNotThink()
+        {
+            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            var exception = Record.Exception(() => _agent.Tick());
             Assert.Null(exception);
         }
     }

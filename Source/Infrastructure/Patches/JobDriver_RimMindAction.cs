@@ -63,7 +63,7 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                RimMindServiceLocator.Get<IEventBus>()?.Publish(new DecisionEvent(
+                RimMindServiceLocator.Get<IAgentBus>()?.Publish(new DecisionEvent(
                     $"NPC-{pawn.thingIDNumber}",
                     pawn.thingIDNumber,
                     "job_driven",

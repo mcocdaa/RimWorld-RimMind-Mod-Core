@@ -125,7 +125,7 @@ namespace RimMind.Tests.Runtime
         {
             var runtime = RimMindRuntime.Instance;
             var originalBus = runtime.EventBus;
-            var fakeBus = new EventBusAdapter(new AgentBusImpl());
+            var fakeBus = new AgentBusImpl();
 
             using (runtime.WithOverrides(o => o.EventBus = fakeBus))
             {
@@ -155,8 +155,8 @@ namespace RimMind.Tests.Runtime
         {
             var runtime = RimMindRuntime.Instance;
             var originalBus = runtime.EventBus;
-            var fakeBus1 = new EventBusAdapter(new AgentBusImpl());
-            var fakeBus2 = new EventBusAdapter(new AgentBusImpl());
+            var fakeBus1 = new AgentBusImpl();
+            var fakeBus2 = new AgentBusImpl();
 
             using (runtime.WithOverrides(o => o.EventBus = fakeBus1))
             {
@@ -178,7 +178,7 @@ namespace RimMind.Tests.Runtime
         {
             var runtime = RimMindRuntime.Instance;
             var originalBus = runtime.EventBus;
-            var fakeBus = new EventBusAdapter(new AgentBusImpl());
+            var fakeBus = new AgentBusImpl();
 
             var scope = runtime.WithOverrides(o => o.EventBus = fakeBus);
             Assert.Same(fakeBus, runtime.EventBus);

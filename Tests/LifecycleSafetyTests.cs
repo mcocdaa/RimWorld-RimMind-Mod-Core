@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Domain.Events;
 using RimMind.Infrastructure.Services.Clients;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Interfaces.Context;
@@ -141,8 +143,8 @@ namespace RimMind.Tests.Lifecycle
         {
             RimMindRuntime.Initialize();
             var pawn = new Pawn { thingIDNumber = 1 };
-            var eventBus = new EventBusAdapter(new AgentBusImpl());
-            var agent = new PawnAgent(pawn, eventBus);
+            var agentBus = new AgentBusImpl();
+            var agent = new PawnAgent(pawn, agentBus);
             agent.GoalStack.TryAdd(new AgentGoal("test", GoalCategory.Survival, 1f, GoalStatus.Active), pawn.thingIDNumber);
 
             agent.Cleanup();
@@ -154,8 +156,8 @@ namespace RimMind.Tests.Lifecycle
         public void Cleanup_ClearsPerceptionBuffer()
         {
             var pawn = new Pawn { thingIDNumber = 2 };
-            var eventBus = new EventBusAdapter(new AgentBusImpl());
-            var agent = new PawnAgent(pawn, eventBus);
+            var agentBus = new AgentBusImpl();
+            var agent = new PawnAgent(pawn, agentBus);
             agent.PerceptionBuffer.Add(new PerceptionBufferEntry
             {
                 PerceptionType = "test",
@@ -171,20 +173,20 @@ namespace RimMind.Tests.Lifecycle
         public void Cleanup_UnsubscribesFromEventBus()
         {
             var pawn = new Pawn { thingIDNumber = 3 };
-            var eventBus = new EventBusAdapter(new AgentBusImpl());
-            var agent = new PawnAgent(pawn, eventBus);
+            var agentBus = new AgentBusImpl();
+            var agent = new PawnAgent(pawn, agentBus);
 
             agent.Cleanup();
 
-            eventBus.Publish(new PerceptionEvent("npc_3", 3, "test", "test content"));
+            agentBus.Publish(new PerceptionEvent("npc_3", 3, "test", "test content"));
         }
 
         [Fact]
         public void Cleanup_CalledTwice_DoesNotThrow()
         {
             var pawn = new Pawn { thingIDNumber = 4 };
-            var eventBus = new EventBusAdapter(new AgentBusImpl());
-            var agent = new PawnAgent(pawn, eventBus);
+            var agentBus = new AgentBusImpl();
+            var agent = new PawnAgent(pawn, agentBus);
 
             agent.Cleanup();
             var ex = Record.Exception(() => agent.Cleanup());
@@ -195,13 +197,13 @@ namespace RimMind.Tests.Lifecycle
         public void Cleanup_ThenResubscribe_DoesNotThrow()
         {
             var pawn = new Pawn { thingIDNumber = 5 };
-            var eventBus = new EventBusAdapter(new AgentBusImpl());
-            var agent = new PawnAgent(pawn, eventBus);
+            var agentBus = new AgentBusImpl();
+            var agent = new PawnAgent(pawn, agentBus);
 
             agent.Cleanup();
             agent.ResubscribeEvents();
 
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             bus.Publish(new PerceptionEvent("npc_5", 5, "test", "test content"));
         }
     }

@@ -64,18 +64,18 @@ namespace RimMind.Presentation.Agent
 
     public class PawnAgent
     {
-        private readonly IEventBus _eventBus;
+        private readonly IAgentBus _agentBus;
 
-        public PawnAgent(IEventBus eventBus)
+        public PawnAgent(IAgentBus agentBus)
         {
-            _eventBus = eventBus;
+            _agentBus = agentBus;
         }
     }
 }
 
 namespace RimMind.Domain.Events
 {
-    public interface IEventBus
+    public interface IAgentBus
     {
         void Publish<T>(T evt) where T : notnull;
         void Subscribe<T>(Action<T> handler) where T : notnull;

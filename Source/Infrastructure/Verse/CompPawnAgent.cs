@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using RimMind.Domain.Enums;
-using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
@@ -35,7 +34,7 @@ namespace RimMind.Infrastructure.Verse
             {
                 var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
                 if (factory != null)
-                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IEventBus>()!);
+                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
         }
 
@@ -48,23 +47,25 @@ namespace RimMind.Infrastructure.Verse
         public override void PostExposeData()
         {
             base.PostExposeData();
-            PawnAgent? agent = Agent as PawnAgent;
-            Scribe_Deep.Look(ref agent, "pawnAgent");
-            if (agent != null) Agent = agent;
+            var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+            if (factory != null)
+            {
+                object? agentObj = Agent;
+                factory.SerializeAgent(ref agentObj, "pawnAgent");
+                Agent = agentObj as IPawnAgent;
+            }
 
             if (Agent == null && parent is Pawn pawn)
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
                 if (factory != null)
-                    Agent = (IPawnAgent?)factory.Create(pawn, RimMindServiceLocator.Get<IEventBus>()!);
+                    Agent = (IPawnAgent?)factory.Create(pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
 
             if (Agent != null && Agent.Pawn == null)
             {
                 Agent.Cleanup();
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
                 if (factory != null)
-                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IEventBus>()!);
+                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit && Agent != null)
@@ -150,17 +151,7 @@ namespace RimMind.Infrastructure.Verse
         public void RecordBehavior(BehaviorRecordDto dto)
         {
             if (dto == null || Agent == null) return;
-            Agent.RecordBehavior(new BehaviorRecord
-            {
-                Action = dto.Action,
-                Reason = dto.Reason,
-                Success = dto.Success,
-                ResultReason = dto.ResultReason,
-                GoalProgressDelta = dto.GoalProgressDelta,
-                Timestamp = dto.Timestamp,
-                ActionEventId = dto.ActionEventId,
-                DurationMs = dto.DurationMs,
-            });
+            Agent.RecordBehavior(dto);
         }
     }
 }

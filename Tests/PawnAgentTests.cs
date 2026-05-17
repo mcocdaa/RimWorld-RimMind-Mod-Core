@@ -1,6 +1,6 @@
 ?using System;
 using System.Collections.Generic;
-using RimMind.Domain.Events;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Agent;
@@ -27,7 +27,7 @@ namespace RimMind.Presentation.Tests
         private readonly RimMindCoreSettings? _originalSettings;
         private readonly IFlywheelParameterStore? _originalFlywheel;
         private readonly NpcManager _npcManager;
-        private readonly IEventBus _eventBus;
+        private readonly IAgentBus _agentBus;
 
         public PawnAgentTests()
         {
@@ -51,8 +51,8 @@ namespace RimMind.Presentation.Tests
             };
             var flywheel = new FlywheelParameterStore();
             flywheel.FinalizeInit();
-            _eventBus = new EventBusAdapter(new AgentBusImpl());
-            _agent = new PawnAgent(_pawn, _eventBus);
+            _agentBus = new AgentBusImpl();
+            _agent = new PawnAgent(_pawn, _agentBus);
         }
 
         public void Dispose()

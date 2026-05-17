@@ -6,7 +6,6 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using System;
 using System.Collections.Generic;

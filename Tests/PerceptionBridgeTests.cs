@@ -1,6 +1,8 @@
-????using System;
+using System;
 using System.Collections.Generic;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Domain.Events;
 using RimMind.Presentation.Perception;
 using Verse;
 using Xunit;
@@ -12,7 +14,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void PublishPerception_PublishesPerceptionEvent()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             PerceptionEvent? received = null;
             bus.Subscribe<PerceptionEvent>(e => received = e);
             PerceptionBridge.PublishPerception(1, "sight", "saw something", 0.5f, bus);
@@ -23,7 +25,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void PublishPerception_MultiplePerceptions_allPublished()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             var received = new List<PerceptionEvent>();
             bus.Subscribe<PerceptionEvent>(e => received.Add(e));
             try
@@ -40,7 +42,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void PublishPerception_NullContent_DoesNotThrow()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             PerceptionBridge.PublishPerception(1, "test", null!, 0.5f, bus);
         }
     }

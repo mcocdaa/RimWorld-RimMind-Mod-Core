@@ -9,7 +9,7 @@ using RimMind.Domain.Events;
 
 namespace RimMind.Application.Features.AgentBus
 {
-    public sealed class AgentBusImpl : IAgentBus, IEventBus
+    public sealed class AgentBusImpl : IAgentBus
     {
         private readonly ConcurrentDictionary<Type, List<HandlerEntry>> _handlers
             = new ConcurrentDictionary<Type, List<HandlerEntry>>();

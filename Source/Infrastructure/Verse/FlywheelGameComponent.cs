@@ -12,7 +12,7 @@ namespace RimMind.Infrastructure.Verse
         private int _lastAnalysisTick;
 
         private int AnalysisIntervalTicks =>
-            RimMindServiceLocator.Get<ISettingsProvider>()?.ContextCalibrateInterval ?? 10000;
+            RimMindServiceLocator.Get<IContextCalibrationSettings>()?.ContextCalibrateInterval ?? 10000;
 
         public FlywheelGameComponent() : base() { }
         public FlywheelGameComponent(Game game) : base() { }

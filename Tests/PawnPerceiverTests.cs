@@ -1,9 +1,9 @@
 using System;
-using RimMind.Domain.Events;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 using Xunit;
 
@@ -12,16 +12,16 @@ namespace RimMind.Presentation.Tests
     public class PawnPerceiverTests : IDisposable
     {
         private readonly Pawn _pawn;
-        private readonly IEventBus _eventBus;
-        private readonly PawnPerceiver _perceiver;
-        private AgentState _state = AgentState.Active;
+        private readonly PawnAgent _agent;
+        private readonly IAgentBus _agentBus;
 
         public PawnPerceiverTests()
         {
             RimMindRuntime.Initialize();
             _pawn = new Pawn { thingIDNumber = 42, Dead = false };
             _pawn.jobs = new Pawn_JobTracker { jobQueue = new Verse.AI.JobQueue() };
-            RimMindCoreMod.Settings = new AICoreSettings
+            RimMindServiceLocator.Reset();
+            RimMindCoreMod.Settings = new RimMindCoreSettings
             {
                 Context = new ContextSettings(),
                 maxTokens = 800,
@@ -30,104 +30,73 @@ namespace RimMind.Presentation.Tests
                 agentTickInterval = 150,
                 behaviorHistoryMax = 100,
             };
-            _eventBus = new EventBusAdapter(new AgentBusImpl());
-            _perceiver = new PawnPerceiver(_pawn, _eventBus, () => _state);
+            _agentBus = new AgentBusImpl();
+            _agent = new PawnAgent(_pawn, _agentBus);
         }
 
         public void Dispose()
         {
-            _perceiver.Cleanup();
+            if (_agent.State != AgentState.Terminated)
+                _agent.TransitionTo(AgentState.Terminated);
             RimMindCoreMod.Settings = null;
         }
 
         [Fact]
-        public void Constructor_SubscribesToEventBus()
+        public void PerceptionBuffer_IsAccessible()
         {
-            Assert.NotNull(_perceiver.Buffer);
+            Assert.NotNull(_agent.PerceptionBuffer);
         }
 
         [Fact]
-        public void Collect_WithNoPerceptions_ReturnsEmptyList()
+        public void PerceptionBuffer_InitiallyEmpty()
         {
-            var result = _perceiver.Collect();
-            Assert.Empty(result);
+            Assert.Equal(0, _agent.PerceptionBuffer.Count);
         }
 
         [Fact]
-        public void Collect_AfterPerceptionEvent_ReturnsEntries()
+        public void Tick_WhenNotActive_DoesNotThrow()
         {
-            var evt = new PerceptionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "sight", "saw something", 0.5f);
-            _eventBus.Publish(evt);
-
-            var result = _perceiver.Collect();
-            Assert.NotEmpty(result);
+            var exception = Record.Exception(() => _agent.Tick());
+            Assert.Null(exception);
         }
 
         [Fact]
-        public void Collect_IgnoresPerceptionsWhenNotActive()
+        public void Tick_WhenActive_DoesNotThrow()
         {
-            _state = AgentState.Dormant;
-            var evt = new PerceptionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "sight", "saw something", 0.5f);
-            _eventBus.Publish(evt);
-
-            var result = _perceiver.Collect();
-            Assert.Empty(result);
+            _agent.TransitionTo(AgentState.Active);
+            var exception = Record.Exception(() => _agent.Tick());
+            Assert.Null(exception);
         }
 
         [Fact]
-        public void Collect_IgnoresPerceptionsForOtherPawns()
+        public void PerceptionBuffer_AddAndFlush()
         {
-            var evt = new PerceptionEvent("NPC-999", 999, "sight", "saw something", 0.5f);
-            _eventBus.Publish(evt);
+            _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
+            {
+                PerceptionType = "sight",
+                Content = "saw something",
+                Importance = 0.5f,
+                PawnId = _pawn.thingIDNumber
+            });
+            Assert.Equal(1, _agent.PerceptionBuffer.Count);
 
-            var result = _perceiver.Collect();
-            Assert.Empty(result);
+            var flushed = _agent.PerceptionBuffer.Flush();
+            Assert.Single(flushed);
+            Assert.Equal(0, _agent.PerceptionBuffer.Count);
         }
 
         [Fact]
-        public void ClearPending_RemovesAllPendingPerceptions()
+        public void PerceptionBuffer_Clear()
         {
-            var evt = new PerceptionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "sight", "saw something", 0.5f);
-            _eventBus.Publish(evt);
-
-            _perceiver.Collect();
-            _perceiver.ClearPending();
-
-            var result = _perceiver.Collect();
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void Cleanup_UnsubscribesFromEventBus()
-        {
-            _perceiver.Cleanup();
-
-            var evt = new PerceptionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "sight", "after cleanup", 0.5f);
-            _eventBus.Publish(evt);
-
-            _perceiver.Resubscribe();
-            var result = _perceiver.Collect();
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void Resubscribe_ReceivesEventsAgain()
-        {
-            _perceiver.Cleanup();
-            _perceiver.Resubscribe();
-
-            var evt = new PerceptionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "sight", "resubscribed", 0.5f);
-            _eventBus.Publish(evt);
-
-            var result = _perceiver.Collect();
-            Assert.NotEmpty(result);
-        }
-
-        [Fact]
-        public void Buffer_IsAccessible()
-        {
-            Assert.NotNull(_perceiver.Buffer);
-            Assert.Equal(0, _perceiver.Buffer.Count);
+            _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
+            {
+                PerceptionType = "sight",
+                Content = "saw something",
+                Importance = 0.5f,
+                PawnId = _pawn.thingIDNumber
+            });
+            _agent.PerceptionBuffer.Clear();
+            Assert.Equal(0, _agent.PerceptionBuffer.Count);
         }
     }
 }

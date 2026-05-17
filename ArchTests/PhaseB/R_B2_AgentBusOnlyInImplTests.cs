@@ -55,7 +55,7 @@ namespace RimMind.Core.ArchTests.PhaseB
 
             violatingFiles.Should().BeEmpty(
                 $"Static AgentBus calls are only allowed in AgentBusImpl.cs. " +
-                $"All other code should use IEventBus (injected) or RimMindAPI.GetEventBus(). " +
+                $"All other code should use IAgentBus (injected) or RimMindAPI.GetBus(). " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

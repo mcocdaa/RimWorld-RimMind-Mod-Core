@@ -28,10 +28,11 @@ namespace RimMind.Presentation
 
             RimMindServiceLocator.OnServiceNotFound = msg => Log.Warning(msg);
 
-            RimMindRuntime.Initialize();
             Settings = GetSettings<RimMindCoreSettings>();
             RimMindServiceLocator.Register<ISettingsProvider>(new SettingsProvider(Settings));
             RimMindServiceLocator.Register<IOpenAISettings>(Settings);
+
+            RimMindRuntime.Initialize();
 
             if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
             {

@@ -80,7 +80,7 @@ namespace RimMind.Infrastructure.Verse
             if (string.IsNullOrEmpty(npcId)) return;
             if (_registry.TryRemove(npcId, out var profile))
             {
-                RimMindServiceLocator.Get<IEventBus>()?.Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
+                RimMindServiceLocator.Get<IAgentBus>()?.Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
             }
         }
 

@@ -94,7 +94,7 @@ namespace RimMind.Presentation
 
         public static IAudioPlayer AudioPlayer => Audio.AudioPlayer;
 
-        public static IEventBus GetEventBus() => Bus.GetEventBus();
+        public static IAgentBus GetEventBus() => Bus.GetEventBus();
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f) => Bus.PublishPerception(pawnId, type, content, importance);
         public static void RegisterPendingRequest(UIRequestEntry entry) => Bus.RegisterPendingRequest(entry);
         public static IReadOnlyList<UIRequestEntry> GetPendingRequests() => Bus.GetPendingRequests();

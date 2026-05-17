@@ -11,7 +11,7 @@ namespace RimMind.Presentation
     {
         public static class Bus
         {
-            public static IEventBus GetEventBus() => RimMindRuntime.Instance.EventBus;
+            public static IAgentBus GetEventBus() => RimMindRuntime.Instance.EventBus;
 
             public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
                 => PerceptionBridge.PublishPerception(pawnId, type, content, importance, GetEventBus());

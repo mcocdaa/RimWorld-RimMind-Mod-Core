@@ -46,7 +46,7 @@ namespace RimMind.Presentation.Runtime
             ?? throw new InvalidOperationException("[RimMind-Core] RimMindRuntime not initialized. Call Initialize() first.");
 
         public IAgentBus AgentBus { get; internal set; }
-        public IEventBus EventBus { get; internal set; }
+        public IAgentBus EventBus { get; internal set; }
         public IContextEngine ContextEngine { get; internal set; }
         public IHistoryManager HistoryManager { get; internal set; }
         public IClientManager ClientManager { get; internal set; }
@@ -80,7 +80,8 @@ namespace RimMind.Presentation.Runtime
 
         private RimMindRuntime()
         {
-            Application.DependencyInjection.AddApplicationServices();
+            Application.DependencyInjection.AddApplicationServices(
+                RimMindServiceLocator.Get<ISettingsProvider>());
             Infrastructure.DependencyInjection.AddInfrastructureServices();
 
             var providerRegistry = new ProviderRegistry();
@@ -115,8 +116,7 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IContextEngine>(ContextEngine);
             RimMindServiceLocator.Register<IContextKeyProvider>(new DefaultContextKeyProvider());
 
-            EventBus = new SimpleEventBusAdapter(AgentBus);
-            RimMindServiceLocator.Register<IEventBus>(EventBus);
+            EventBus = AgentBus;
 
             RimMindServiceLocator.Register<IRimMindRuntime>(this);
 
@@ -137,15 +137,14 @@ namespace RimMind.Presentation.Runtime
             clientFactoryRegistry.Register(new Player2ClientFactory());
             RimMindServiceLocator.Register(clientFactoryRegistry);
 
+            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
             AIRequestPipeline = AIRequestPipelineFactory.Build(
-                ToolRegistry,
-                GetExtensionRegistry<IMiddleware<AIRequestContext>>(),
-                () => MaxToolCallDepth,
-                AgentBus);
+                settings!,
+                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
             NpcChatPipeline = NpcChatPipelineFactory.Build(
                 GetExtensionRegistry<IMiddleware<NpcChatContext>>());
             ContextBuildPipeline = ContextBuildPipelineFactory.Build(
-                (ContextOrchestrator)((ContextEngine)ContextEngine).Orchestrator!,
+                settings!,
                 GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
         }
 
@@ -213,20 +212,4 @@ namespace RimMind.Presentation.Runtime
         public IAIClient? GetPlayer2Client() => ClientManager.GetPlayer2Client();
     }
 
-    internal sealed class SimpleEventBusAdapter : IEventBus
-    {
-        private readonly IAgentBus _bus;
-        private readonly IEventBus? _eventBus;
-        public SimpleEventBusAdapter(IAgentBus bus) { _bus = bus; _eventBus = bus as IEventBus; }
-        public void Subscribe<T>(string key, Action<T> handler) where T : Domain.Events.AgentBusEvent => _bus.Subscribe(key, handler);
-        public string Subscribe<T>(Action<T> handler) where T : Domain.Events.AgentBusEvent => _bus.Subscribe(handler);
-        public void Unsubscribe<T>(string key) where T : Domain.Events.AgentBusEvent => _bus.Unsubscribe<T>(key);
-        public void Unsubscribe<T>(Action<T> handler) where T : Domain.Events.AgentBusEvent => _bus.Unsubscribe(handler);
-        public void Publish<T>(T evt) where T : Domain.Events.AgentBusEvent => _bus.Publish(evt);
-        public void PublishFromBackground<T>(T evt) where T : Domain.Events.AgentBusEvent => _bus.PublishFromBackground(evt);
-        public void FlushBackgroundQueue() => _bus.FlushBackgroundQueue();
-        public void ClearAllSubscribers() => _bus.ClearAllSubscribers();
-        public int GetHandlerCount() => _eventBus?.GetHandlerCount() ?? 0;
-        public int GetBackgroundQueueCount() => _eventBus?.GetBackgroundQueueCount() ?? 0;
-    }
 }

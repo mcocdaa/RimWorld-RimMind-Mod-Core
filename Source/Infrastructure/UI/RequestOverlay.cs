@@ -42,7 +42,7 @@ namespace RimMind.Infrastructure.UI
         {
             if (Current.ProgramState != ProgramState.Playing) return;
 
-            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
+            var settings = RimMindServiceLocator.Get<IOverlaySettings>();
             if (settings == null) return;
 
             bool currentlyEnabled = settings.RequestOverlayEnabled;
@@ -281,7 +281,7 @@ namespace RimMind.Infrastructure.UI
 
         private static void SavePositionToSettings()
         {
-            var s = RimMindServiceLocator.Get<ISettingsProvider>();
+            var s = RimMindServiceLocator.Get<IOverlaySettings>();
             if (s == null) return;
             s.RequestOverlayX = _windowRect.x;
             s.RequestOverlayY = _windowRect.y;

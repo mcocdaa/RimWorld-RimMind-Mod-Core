@@ -7,21 +7,20 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Agent;
 using RimMind.Infrastructure.Patches;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Infrastructure.Services.Clients;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Infrastructure.Verse;
-using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using Verse.AI;
 using Xunit;
 
 namespace RimMind.Presentation.Tests
 {
-    public class PublishDecisionJobEnqueueTests : IDisposable
+    public class PawnAgentJobTests : IDisposable
     {
         private readonly Pawn _pawn;
         private readonly PawnAgent _agent;
@@ -29,7 +28,7 @@ namespace RimMind.Presentation.Tests
         private readonly IAgentActionBridge? _originalBridge;
         private readonly NpcManager _npcManager;
 
-        public PublishDecisionJobEnqueueTests()
+        public PawnAgentJobTests()
         {
             RegisterJobDefs();
             _pawn = new Pawn { thingIDNumber = 42, Dead = false };
@@ -50,7 +49,7 @@ namespace RimMind.Presentation.Tests
             var flywheel = new FlywheelParameterStore();
             flywheel.FinalizeInit();
             _originalFlywheel = FlywheelParameterStore.Instance;
-            _agent = new PawnAgent(_pawn, new EventBusAdapter(new AgentBusImpl()));
+            _agent = new PawnAgent(_pawn, new AgentBusImpl());
             _agent.TransitionTo(AgentState.Active);
             _originalBridge = RimMindAPI.GetAgentActionBridge();
         }
@@ -79,84 +78,35 @@ namespace RimMind.Presentation.Tests
         }
 
         [Fact]
-        public void PublishDecisionAndRecord_EnqueuesJobInPawnJobQueue()
+        public void SetPendingJob_ConsumePendingJob_RoundTrip()
         {
-            _agent.PublishDecisionAndRecord("force_rest", null, "tired");
+            var job = new Verse.AI.Job();
+            _agent.SetPendingJob(job);
 
-            Assert.NotNull(_pawn.jobs?.jobQueue);
-            Assert.True(_pawn.jobs.jobQueue.Count > 0, "Job should be enqueued in pawn's job queue");
+            var consumed = _agent.ConsumePendingJob();
+            Assert.Same(job, consumed);
+
+            var secondConsume = _agent.ConsumePendingJob();
+            Assert.Null(secondConsume);
         }
 
         [Fact]
-        public void PublishDecisionAndRecord_CreatesJobViaJobMaker()
+        public void RecordBehavior_AddsToHistory()
         {
-            _agent.PublishDecisionAndRecord("force_rest", null, "tired");
-
-            var queuedJob = _pawn.jobs?.jobQueue?.Peek();
-            Assert.NotNull(queuedJob);
-            Assert.NotNull(queuedJob.job);
-            Assert.True(queuedJob.job.createdViaJobMaker,
-                "Job should be created via JobMaker.MakeJob(), not new Job()");
+            _agent.RecordBehavior(new BehaviorRecordDto
+            {
+                Action = "test_action",
+                Reason = "testing",
+                Success = true,
+            });
+            Assert.True(((IPawnAgent)_agent).BehaviorHistory.Count > 0);
         }
 
         [Fact]
-        public void PublishDecisionAndRecord_SetsJobDefFromAction()
+        public void RecordBehavior_NullDto_DoesNothing()
         {
-            _agent.PublishDecisionAndRecord("force_rest", null, "tired");
-
-            var queuedJob = _pawn.jobs?.jobQueue?.Peek();
-            Assert.NotNull(queuedJob?.job?.def);
-            Assert.Equal("RimMind_Rest", queuedJob.job.def.defName);
-        }
-
-        [Fact]
-        public void PublishDecisionAndRecord_FallbackToGenericAction()
-        {
-            _agent.PublishDecisionAndRecord("unknown_action", null, "testing");
-
-            var queuedJob = _pawn.jobs?.jobQueue?.Peek();
-            Assert.NotNull(queuedJob?.job?.def);
-            Assert.Equal("RimMind_GenericAction", queuedJob.job.def.defName);
-        }
-
-        [Fact]
-        public void PublishDecisionAndRecord_DoesNotCallBridgeExecuteDirectly()
-        {
-            bool bridgeCalled = false;
-            var trackingBridge = new TrackingActionBridge(() => bridgeCalled = true);
-            RimMindAPI.RegisterAgentActionBridge(trackingBridge);
-
-            _agent.PublishDecisionAndRecord("force_rest", null, "tired");
-
-            Assert.False(bridgeCalled,
-                "PublishDecisionAndRecord should NOT call bridge.Execute() directly; execution should happen in JobDriver");
-        }
-
-        [Fact]
-        public void PublishDecisionAndRecord_SetsJobGiverForConsumePendingJob()
-        {
-            _agent.PublishDecisionAndRecord("force_rest", null, "tired");
-
-            var queuedJob = _pawn.jobs?.jobQueue?.Peek();
-            Assert.NotNull(queuedJob?.job?.jobGiver);
-            Assert.IsType<ThinkNode_RimMindAgent>(queuedJob.job.jobGiver);
-        }
-
-        [Fact]
-        public void PublishDecisionAndRecord_WithTarget_SetsTargetA()
-        {
-            var targetPawn = new Pawn { thingIDNumber = 99 };
-            targetPawn.jobs = new Pawn_JobTracker { jobQueue = new JobQueue() };
-            _npcManager.IndexPawn(targetPawn);
-            var map = new Map { mapPawns = new MapPawns() };
-            map.mapPawns.AllPawns.Add(targetPawn);
-            _pawn.Map = map;
-
-            _agent.PublishDecisionAndRecord("tend_pawn", "99", "injured");
-
-            var queuedJob = _pawn.jobs?.jobQueue?.Peek();
-            Assert.NotNull(queuedJob?.job);
-            Assert.Equal(targetPawn, queuedJob.job.targetA.Thing as Pawn);
+            _agent.RecordBehavior(null!);
+            Assert.Equal(0, ((IPawnAgent)_agent).BehaviorHistory.Count);
         }
 
         private class TrackingActionBridge : IAgentActionBridge

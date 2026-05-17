@@ -36,7 +36,7 @@ namespace RimMind.Presentation.Agent
             var entries = new List<ContextEntry>();
             if (map == null) return entries;
 
-            var ctx = RimMindServiceLocator.Get<ISettingsProvider>()?.Context;
+            var ctx = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context;
 
             entries.Add(new ContextEntry("RimMind.Presentation.Prompt.MapStatusHeader".Translate()));
 
@@ -145,7 +145,7 @@ namespace RimMind.Presentation.Agent
             if (pawn == null) return string.Empty;
 
             var data = PawnDataExtractor.Extract(pawn);
-            var ctx = RimMindServiceLocator.Get<ISettingsProvider>()?.Context;
+            var ctx = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context;
             var sb = new StringBuilder();
             sb.Append("RimMind.Presentation.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
 
@@ -294,8 +294,8 @@ namespace RimMind.Presentation.Agent
 
         private static string BuildSurroundings(Pawn pawn, int? radius = null, int? maxItems = null)
         {
-            int r = radius ?? (RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.EnvironmentScanRadius ?? 5);
-            int m = maxItems ?? (RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.EnvironmentMaxItems ?? 8);
+            int r = radius ?? (RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.EnvironmentScanRadius ?? 5);
+            int m = maxItems ?? (RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.EnvironmentMaxItems ?? 8);
             var map = pawn.Map;
             var buildings = new List<string>();
             var items = new Dictionary<string, int>();
@@ -357,9 +357,9 @@ namespace RimMind.Presentation.Agent
 
         private static string ThreatLabel(float wealth)
         {
-            float high = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ThreatThresholdHigh ?? 200000f;
-            float medium = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ThreatThresholdMedium ?? 100000f;
-            float low = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ThreatThresholdLow ?? 50000f;
+            float high = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.ThreatThresholdHigh ?? 200000f;
+            float medium = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.ThreatThresholdMedium ?? 100000f;
+            float low = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.ThreatThresholdLow ?? 50000f;
 
             float threatScale = 1f;
             try { threatScale = Find.Storyteller?.difficulty?.threatScale ?? 1f; } catch { }

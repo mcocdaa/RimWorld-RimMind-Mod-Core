@@ -10,12 +10,12 @@ namespace RimMind.Infrastructure.Verse
 
         public override void StartedNewGame()
         {
-            RimMindServiceLocator.Get<IEventBus>()?.ClearAllSubscribers();
+            RimMindServiceLocator.Get<IAgentBus>()?.ClearAllSubscribers();
         }
 
         public override void LoadedGame()
         {
-            RimMindServiceLocator.Get<IEventBus>()?.ClearAllSubscribers();
+            RimMindServiceLocator.Get<IAgentBus>()?.ClearAllSubscribers();
         }
     }
 }

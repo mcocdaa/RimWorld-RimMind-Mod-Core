@@ -10,9 +10,9 @@ namespace RimMind.Presentation.Llm
 {
     public class ResponseDispatcher : IResponseDispatcher
     {
-        private readonly IEventBus _eventBus;
+        private readonly IAgentBus _eventBus;
 
-        public ResponseDispatcher(IEventBus eventBus)
+        public ResponseDispatcher(IAgentBus eventBus)
         {
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         }

@@ -21,7 +21,7 @@ namespace RimMind.Infrastructure.Verse
                 else Log.Message(msg);
             };
             _impl.FlushBackgroundQueue = () =>
-                RimMindServiceLocator.Get<IEventBus>()?.FlushBackgroundQueue();
+                RimMindServiceLocator.Get<IAgentBus>()?.FlushBackgroundQueue();
         }
 
         public override void GameComponentTick()

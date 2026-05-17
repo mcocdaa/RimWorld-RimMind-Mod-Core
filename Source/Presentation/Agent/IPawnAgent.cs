@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Domain.Enums;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using Verse;
 
@@ -23,7 +24,7 @@ namespace RimMind.Application.Common.Interfaces.Agent
         Verse.AI.Job? ConsumePendingJob();
         void SetPendingJob(Verse.AI.Job job);
         bool RemoveGoal(string goalDescription);
-        void RecordBehavior(BehaviorRecord record);
+        void RecordBehavior(BehaviorRecordDto record);
         void Cleanup();
         void ResubscribeEvents();
     }

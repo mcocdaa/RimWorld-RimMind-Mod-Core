@@ -65,7 +65,7 @@ namespace RimMind.Infrastructure.Verse
             _pendingEntries.Enqueue(new AIDebugEntry
             {
                 Source = request.RequestId ?? "",
-                ModelName = RimMindServiceLocator.Get<ISettingsProvider>()?.ModelName ?? "",
+                ModelName = RimMindServiceLocator.Get<IAIModelSettings>()?.ModelName ?? "",
                 FullSystemPrompt = request.Messages != null
                     ? BuildLayeredText(request.Messages, "system")
                     : (request.SystemPrompt ?? ""),

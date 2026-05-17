@@ -11,7 +11,7 @@ namespace RimMind.Presentation
     {
         public static class Settings
         {
-            public static bool IsConfigured() => RimMindServiceLocator.Get<ISettingsProvider>()?.IsConfigured == true;
+            public static bool IsConfigured() => RimMindServiceLocator.Get<IApiCredentialSettings>()?.IsConfigured == true;
 
             internal static IHistoryManager GetHistoryManager() => RimMindRuntime.Instance.HistoryManager;
             public static IContextEngine GetContextEngine() => RimMindRuntime.Instance.ContextEngine;

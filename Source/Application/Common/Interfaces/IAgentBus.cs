@@ -21,5 +21,11 @@ namespace RimMind.Application.Common.Interfaces
         void FlushBackgroundQueue();
 
         void ClearAllSubscribers();
+
+        [ThreadAffinity(ThreadAffinityKind.Any)]
+        int GetHandlerCount();
+
+        [ThreadAffinity(ThreadAffinityKind.Any)]
+        int GetBackgroundQueueCount();
     }
 }

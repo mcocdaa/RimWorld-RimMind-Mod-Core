@@ -1,9 +1,10 @@
 using System;
-using RimMind.Domain.Events;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 using Xunit;
 
@@ -12,16 +13,16 @@ namespace RimMind.Presentation.Tests
     public class PawnRecorderTests : IDisposable
     {
         private readonly Pawn _pawn;
-        private readonly IEventBus _eventBus;
-        private readonly PawnRecorder _recorder;
-        private AgentState _state = AgentState.Active;
+        private readonly PawnAgent _agent;
+        private readonly IAgentBus _agentBus;
 
         public PawnRecorderTests()
         {
             RimMindRuntime.Initialize();
             _pawn = new Pawn { thingIDNumber = 33, Dead = false };
             _pawn.jobs = new Pawn_JobTracker { jobQueue = new Verse.AI.JobQueue() };
-            RimMindCoreMod.Settings = new AICoreSettings
+            RimMindServiceLocator.Reset();
+            RimMindCoreMod.Settings = new RimMindCoreSettings
             {
                 Context = new ContextSettings(),
                 maxTokens = 800,
@@ -30,28 +31,47 @@ namespace RimMind.Presentation.Tests
                 agentTickInterval = 150,
                 behaviorHistoryMax = 100,
             };
-            _eventBus = new EventBusAdapter(new AgentBusImpl());
-            _recorder = new PawnRecorder(_pawn, _eventBus, () => _state);
+            _agentBus = new AgentBusImpl();
+            _agent = new PawnAgent(_pawn, _agentBus);
         }
 
         public void Dispose()
         {
-            _recorder.Cleanup();
+            if (_agent.State != AgentState.Terminated)
+                _agent.TransitionTo(AgentState.Terminated);
             RimMindCoreMod.Settings = null;
         }
 
         [Fact]
-        public void Record_AddsToBehaviorHistory()
+        public void RecordBehavior_AddsToHistory()
         {
-            _recorder.Record("test_action", "test reason", true, "ok", 0.1f, 100, "evt-1");
-            Assert.Single(_recorder.BehaviorHistory);
+            _agent.RecordBehavior(new BehaviorRecordDto
+            {
+                Action = "test_action",
+                Reason = "test reason",
+                Success = true,
+                ResultReason = "ok",
+                GoalProgressDelta = 0.1f,
+                Timestamp = 100,
+                ActionEventId = "evt-1",
+            });
+            Assert.Single(_agent.BehaviorHistory);
         }
 
         [Fact]
-        public void Record_StoresCorrectData()
+        public void RecordBehavior_StoresCorrectData()
         {
-            _recorder.Record("force_rest", "tired", true, "resting", 0.15f, 200, "evt-2");
-            var record = _recorder.BehaviorHistory[0];
+            _agent.RecordBehavior(new BehaviorRecordDto
+            {
+                Action = "force_rest",
+                Reason = "tired",
+                Success = true,
+                ResultReason = "resting",
+                GoalProgressDelta = 0.15f,
+                Timestamp = 200,
+                ActionEventId = "evt-2",
+            });
+            var record = _agent.BehaviorHistory[0];
             Assert.Equal("force_rest", record.Action);
             Assert.Equal("tired", record.Reason);
             Assert.True(record.Success);
@@ -62,96 +82,74 @@ namespace RimMind.Presentation.Tests
         }
 
         [Fact]
-        public void Record_RespectsMaxHistorySize()
+        public void RecordBehavior_RespectsMaxHistorySize()
         {
             RimMindCoreMod.Settings!.behaviorHistoryMax = 5;
+            var agent = new PawnAgent(_pawn, _agentBus);
             for (int i = 0; i < 10; i++)
-                _recorder.Record($"action_{i}", "test", true, "ok", 0.1f, i, $"evt-{i}");
-
-            Assert.Equal(5, _recorder.BehaviorHistory.Count);
+            {
+                agent.RecordBehavior(new BehaviorRecordDto
+                {
+                    Action = $"action_{i}",
+                    Reason = "test",
+                    Success = true,
+                    GoalProgressDelta = 0.1f,
+                    Timestamp = i,
+                    ActionEventId = $"evt-{i}",
+                });
+            }
+            Assert.Equal(5, agent.BehaviorHistory.Count);
         }
 
         [Fact]
-        public void Record_DequeuesOldest_WhenOverCapacity()
+        public void RecordBehavior_DequeuesOldest_WhenOverCapacity()
         {
             RimMindCoreMod.Settings!.behaviorHistoryMax = 3;
+            var agent = new PawnAgent(_pawn, _agentBus);
             for (int i = 0; i < 5; i++)
-                _recorder.Record($"action_{i}", "test", true, "ok", 0.1f, i, $"evt-{i}");
+            {
+                agent.RecordBehavior(new BehaviorRecordDto
+                {
+                    Action = $"action_{i}",
+                    Reason = "test",
+                    Success = true,
+                    GoalProgressDelta = 0.1f,
+                    Timestamp = i,
+                    ActionEventId = $"evt-{i}",
+                });
+            }
+            Assert.Equal(3, agent.BehaviorHistory.Count);
+            Assert.Equal("action_2", agent.BehaviorHistory[0].Action);
+            Assert.Equal("action_4", agent.BehaviorHistory[2].Action);
+        }
 
-            Assert.Equal(3, _recorder.BehaviorHistory.Count);
-            Assert.Equal("action_2", _recorder.BehaviorHistory[0].Action);
-            Assert.Equal("action_4", _recorder.BehaviorHistory[2].Action);
+        [Fact]
+        public void RecordBehavior_NullDto_DoesNothing()
+        {
+            _agent.RecordBehavior(null!);
+            Assert.Empty(_agent.BehaviorHistory);
         }
 
         [Fact]
         public void BehaviorHistory_IsReadOnlyCopy()
         {
-            _recorder.Record("action_1", "test", true, "ok", 0.1f, 100, "evt-1");
-            var history = _recorder.BehaviorHistory;
+            _agent.RecordBehavior(new BehaviorRecordDto
+            {
+                Action = "action_1",
+                Reason = "test",
+                Success = true,
+                GoalProgressDelta = 0.1f,
+                Timestamp = 100,
+                ActionEventId = "evt-1",
+            });
+            var history = _agent.BehaviorHistory;
             Assert.Single(history);
         }
 
         [Fact]
         public void StrategyOptimizer_IsAccessible()
         {
-            Assert.NotNull(_recorder.StrategyOptimizer);
-        }
-
-        [Fact]
-        public void AdjustStrategyWeight_ModifiesOptimizer()
-        {
-            _recorder.AdjustStrategyWeight("force_rest", 0.5f);
-            var top = _recorder.StrategyOptimizer.GetTopN(1);
-            Assert.Single(top);
-            Assert.Equal("force_rest", top[0].Key);
-        }
-
-        [Fact]
-        public void Cleanup_UnsubscribesFromEventBus()
-        {
-            _recorder.Cleanup();
-
-            var evt = new ActionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "test_action", true, "ok", "evt-cleanup");
-            _eventBus.Publish(evt);
-
-            var historyCountBefore = _recorder.BehaviorHistory.Count;
-            _recorder.Record("after_cleanup", "test", true, "ok", 0.1f, 300, "evt-after");
-            Assert.Equal(historyCountBefore + 1, _recorder.BehaviorHistory.Count);
-        }
-
-        [Fact]
-        public void Resubscribe_ReceivesActionEvents()
-        {
-            _recorder.Cleanup();
-            _recorder.Resubscribe();
-
-            var evt = new ActionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "force_rest", true, "ok", "evt-resub");
-            _eventBus.Publish(evt);
-
-            var top = _recorder.StrategyOptimizer.GetTopN(1);
-            Assert.Single(top);
-        }
-
-        [Fact]
-        public void OnActionEvent_IgnoresWhenNotActive()
-        {
-            _state = AgentState.Dormant;
-
-            var evt = new ActionEvent($"NPC-{_pawn.thingIDNumber}", _pawn.thingIDNumber, "force_rest", true, "ok", "evt-dormant");
-            _eventBus.Publish(evt);
-
-            var top = _recorder.StrategyOptimizer.GetTopN(1);
-            Assert.Empty(top);
-        }
-
-        [Fact]
-        public void OnActionEvent_IgnoresEventsForOtherPawns()
-        {
-            var evt = new ActionEvent("NPC-999", 999, "force_rest", true, "ok", "evt-other");
-            _eventBus.Publish(evt);
-
-            var top = _recorder.StrategyOptimizer.GetTopN(1);
-            Assert.Empty(top);
+            Assert.NotNull(_agent.StrategyOptimizer);
         }
     }
 }

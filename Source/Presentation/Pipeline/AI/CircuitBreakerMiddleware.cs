@@ -5,21 +5,27 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Presentation;
 
 namespace RimMind.Presentation.Pipeline.AI
 {
     public sealed class CircuitBreakerMiddleware : IMiddleware<AIRequestContext>
     {
+        private readonly ICircuitBreakerSettings _settings;
+
+        public CircuitBreakerMiddleware(ICircuitBreakerSettings settings)
+        {
+            _settings = settings;
+        }
+
         public string Id => Name;
         public string Name => nameof(CircuitBreakerMiddleware);
         public int Order => 5;
 
-        private int FailureThreshold => RimMindServiceLocator.Get<ISettingsProvider>()?.CircuitBreakerFailureThreshold > 0
-            ? RimMindServiceLocator.Get<ISettingsProvider>()!.CircuitBreakerFailureThreshold : 5;
+        private int FailureThreshold => _settings.CircuitBreakerFailureThreshold > 0
+            ? _settings.CircuitBreakerFailureThreshold : 5;
         private TimeSpan OpenDuration => TimeSpan.FromSeconds(
-            RimMindServiceLocator.Get<ISettingsProvider>()?.CircuitBreakerOpenDurationSec > 0
-            ? RimMindServiceLocator.Get<ISettingsProvider>()!.CircuitBreakerOpenDurationSec : 60);
+            _settings.CircuitBreakerOpenDurationSec > 0
+            ? _settings.CircuitBreakerOpenDurationSec : 60);
 
         private enum CircuitState { Closed, Open, HalfOpen }
 

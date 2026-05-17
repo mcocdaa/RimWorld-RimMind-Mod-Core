@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
@@ -51,11 +52,12 @@ namespace RimMind.Presentation.Agent
             _thinker = new PawnThinker(this);
             _actor = new PawnActor(this);
             _recorder = new PawnRecorder(this);
-            _tickInterval = RimMindServiceLocator.Get<ISettingsProvider>()?.AgentTickInterval ?? 150;
-            _maxBehaviorHistory = RimMindServiceLocator.Get<ISettingsProvider>()?.BehaviorHistoryMax ?? 100;
+            var agentSettings = RimMindServiceLocator.Get<IAgentTickSettings>();
+            _tickInterval = agentSettings?.AgentTickInterval ?? 150;
+            _maxBehaviorHistory = agentSettings?.BehaviorHistoryMax ?? 100;
         }
 
-        public PawnAgent(Pawn pawn, IEventBus eventBus) : this(pawn)
+        public PawnAgent(Pawn pawn, IAgentBus eventBus) : this(pawn)
         {
         }
 
@@ -111,9 +113,20 @@ namespace RimMind.Presentation.Agent
             return GoalStack.Remove(goalDescription, Pawn.thingIDNumber);
         }
 
-        public void RecordBehavior(BehaviorRecord record)
+        public void RecordBehavior(BehaviorRecordDto dto)
         {
-            if (record == null) return;
+            if (dto == null) return;
+            var record = new BehaviorRecord
+            {
+                Action = dto.Action,
+                Reason = dto.Reason,
+                Success = dto.Success,
+                ResultReason = dto.ResultReason,
+                GoalProgressDelta = dto.GoalProgressDelta,
+                Timestamp = dto.Timestamp,
+                ActionEventId = dto.ActionEventId,
+                DurationMs = dto.DurationMs,
+            };
             _behaviorHistory.Add(record);
             while (_behaviorHistory.Count > _maxBehaviorHistory)
                 _behaviorHistory.RemoveAt(0);

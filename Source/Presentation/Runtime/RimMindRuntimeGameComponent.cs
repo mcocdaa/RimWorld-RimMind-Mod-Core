@@ -7,7 +7,6 @@ using RimMind.Application.Features.Queue;
 using RimMind.Domain.Enums;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Presentation.Agent;
-using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 
 namespace RimMind.Presentation.Runtime

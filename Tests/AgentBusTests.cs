@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using RimMind.Domain.Events;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Interfaces.Context;
 using Xunit;
@@ -11,16 +12,16 @@ namespace RimMind.Presentation.Tests
     public class AgentBusTests
     {
         [Fact]
-        public void EventBusAdapter_ImplementsIEventBus()
+        public void AgentBusImpl_ImplementsIAgentBus()
         {
-            IEventBus bus = new EventBusAdapter(new AgentBusImpl());
+            IAgentBus bus = new AgentBusImpl();
             Assert.NotNull(bus);
         }
 
         [Fact]
         public void Subscribe_AndPublish_HandlerReceivesEvent()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             DecisionEvent? received = null;
             bus.Subscribe<DecisionEvent>(e => received = e);
             bus.Publish(new DecisionEvent("test_npc", 0, "type", "reason", "action"));
@@ -31,7 +32,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void Unsubscribe_HandlerNoLongerReceivesEvents()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             int count = 0;
             Action<DecisionEvent> handler = e => count++;
             bus.Subscribe(handler);
@@ -45,7 +46,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void MultipleHandlers_AllReceiveEvent()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             int count1 = 0, count2 = 0;
             bus.Subscribe<DecisionEvent>(e => count1++);
             bus.Subscribe<DecisionEvent>(e => count2++);
@@ -57,7 +58,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void DifferentEventTypes_Isolated()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             bool decisionReceived = false;
             bool perceptionReceived = false;
             bus.Subscribe<DecisionEvent>(e => decisionReceived = true);
@@ -70,7 +71,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void ClearAllSubscribers_NoHandlersReceiveEvents()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             int count = 0;
             bus.Subscribe<DecisionEvent>(e => count++);
             bus.ClearAllSubscribers();
@@ -81,14 +82,14 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void FlushBackgroundQueue_DoesNotThrow()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             bus.FlushBackgroundQueue();
         }
 
         [Fact]
         public void PublishFromBackground_EnqueuesForFlush()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             DecisionEvent? received = null;
             bus.Subscribe<DecisionEvent>(e => received = e);
             bus.PublishFromBackground(new DecisionEvent("bg", 0, "t", "r", "a"));
@@ -99,7 +100,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void HandlerException_DoesNotBlockOtherHandlers()
         {
-            var bus = new EventBusAdapter(new AgentBusImpl());
+            var bus = new AgentBusImpl();
             int count = 0;
             bus.Subscribe<DecisionEvent>(e => throw new Exception("test error"));
             bus.Subscribe<DecisionEvent>(e => count++);

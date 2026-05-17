@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
@@ -27,7 +28,7 @@ namespace RimMind.Presentation.Agent
         public PawnThinker(IPawnAgent agent)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
-            _thinkCooldownTicks = RimMindServiceLocator.Get<ISettingsProvider>()?.ThinkCooldownTicks ?? 30000;
+            _thinkCooldownTicks = RimMindServiceLocator.Get<IAgentTickSettings>()?.ThinkCooldownTicks ?? 30000;
         }
 
         public bool IsThinking => _thinking;
@@ -74,15 +75,16 @@ namespace RimMind.Presentation.Agent
 
         private AIRequest? BuildRequest(Pawn pawn, List<PerceptionBufferEntry> entries)
         {
+            var modelSettings = RimMindServiceLocator.Get<IAIModelSettings>();
             var request = new AIRequest
             {
                 SystemPrompt = "",
-                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
-                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
+                MaxTokens = modelSettings?.MaxTokens ?? 800,
+                Temperature = modelSettings?.DefaultTemperature ?? 0.7f,
                 RequestId = $"Think_{pawn.thingIDNumber}_{Find.TickManager.TicksGame}",
                 ModId = "AgentThink",
                 Priority = AIRequestPriority.Normal,
-                UseJsonMode = RimMindServiceLocator.Get<ISettingsProvider>()?.ForceJsonMode ?? true,
+                UseJsonMode = modelSettings?.ForceJsonMode ?? true,
             };
             return request;
         }
@@ -95,7 +97,7 @@ namespace RimMind.Presentation.Agent
                 var action = ParseAction(response.Content);
                 if (action != null)
                 {
-                    _agent.RecordBehavior(new BehaviorRecord
+                    _agent.RecordBehavior(new BehaviorRecordDto
                     {
                         Action = action.Action,
                         Reason = action.Reason,

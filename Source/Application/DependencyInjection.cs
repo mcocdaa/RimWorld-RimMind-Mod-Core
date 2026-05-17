@@ -15,7 +15,7 @@ namespace RimMind.Application
 {
     public static class DependencyInjection
     {
-        public static void AddApplicationServices()
+        public static void AddApplicationServices(ISettingsProvider? settingsProvider = null)
         {
             var agentBus = new AgentBusImpl();
             RimMindServiceLocator.Register<IAgentBus>(agentBus);
@@ -27,7 +27,7 @@ namespace RimMind.Application
             var parameterStore = new FlywheelParameterStore();
             RimMindServiceLocator.Register<IFlywheelParameterStore>(parameterStore);
 
-            var queue = new AIRequestQueueImpl(() => RimMindServiceLocator.Get<ISettingsProvider>());
+            var queue = new AIRequestQueueImpl(() => settingsProvider);
             RimMindServiceLocator.Register<IAIRequestQueue>(queue);
             RimMindServiceLocator.Register(queue);
 
