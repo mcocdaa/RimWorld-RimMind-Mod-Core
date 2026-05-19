@@ -1,6 +1,5 @@
 using Verse;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Features.Queue;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 
@@ -8,12 +7,12 @@ namespace RimMind.Infrastructure.Verse
 {
     public class AIRequestQueueGameComponent : GameComponent
     {
-        private readonly AIRequestQueueImpl _impl;
+        private readonly IAIRequestQueueTickable _impl;
 
         public AIRequestQueueGameComponent() : base()
         {
-            _impl = RimMindServiceLocator.Get<AIRequestQueueImpl>()
-                ?? throw new System.InvalidOperationException("AIRequestQueueImpl not available.");
+            _impl = RimMindServiceLocator.Get<IAIRequestQueueTickable>()
+                ?? throw new System.InvalidOperationException("IAIRequestQueueTickable not available.");
             _impl.CurrentTick = Find.TickManager.TicksGame;
             _impl.LogHandler = (msg, isWarning) =>
             {

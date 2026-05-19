@@ -21,31 +21,31 @@ internal sealed class AgentBusCoreSubscriber
 
     private void OnPerception(PerceptionEvent e)
     {
-        _logSink.Message($"[EventBus] Perception: NpcId={e.NpcId}, PawnId={e.PawnId}, Type={e.PerceptionType}");
+        _logSink.Message($"[AgentBus] Perception: NpcId={e.NpcId}, PawnId={e.PawnId}, Type={e.PerceptionType}");
     }
 
     private void OnAction(ActionEvent e)
     {
-        _logSink.Message($"[EventBus] Action: NpcId={e.NpcId}, PawnId={e.PawnId}, Name={e.ActionName}, Success={e.Success}");
+        _logSink.Message($"[AgentBus] Action: NpcId={e.NpcId}, PawnId={e.PawnId}, Name={e.ActionName}, Success={e.Success}");
     }
 
     private void OnModeChanged(AgentModeChangedEvent e)
     {
-        _logSink.Message($"[EventBus] ModeChanged: NpcId={e.NpcId}, PawnId={e.PawnId}, {e.OldMode}->{e.NewMode}");
+        _logSink.Message($"[AgentBus] ModeChanged: NpcId={e.NpcId}, PawnId={e.PawnId}, {e.OldMode}->{e.NewMode}");
     }
 
     private void OnLifecycle(AgentLifecycleEvent e)
     {
-        _logSink.Message($"[EventBus] Lifecycle: NpcId={e.NpcId}, PawnId={e.PawnId}, {e.PreviousState}->{e.NewState}");
+        _logSink.Message($"[AgentBus] Lifecycle: NpcId={e.NpcId}, PawnId={e.PawnId}, {e.PreviousState}->{e.NewState}");
     }
 
     private void OnDecision(DecisionEvent e)
     {
-        _logSink.Message($"[EventBus] Decision: NpcId={e.NpcId}, PawnId={e.PawnId}, Type={e.DecisionType}");
+        _logSink.Message($"[AgentBus] Decision: NpcId={e.NpcId}, PawnId={e.PawnId}, Type={e.DecisionType}");
     }
 
     private void OnGoal(GoalEvent e)
     {
-        _logSink.Message($"[EventBus] Goal: NpcId={e.NpcId}, PawnId={e.PawnId}, Status={e.Status}, Desc={e.GoalDescription}");
+        _logSink.Message($"[AgentBus] Goal: NpcId={e.NpcId}, PawnId={e.PawnId}, Status={e.Status}, Desc={e.GoalDescription}");
     }
 }

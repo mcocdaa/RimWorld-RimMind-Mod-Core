@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 
 namespace RimMind.Application.Features.Queue
 {
-    public class AIRequestQueueImpl : IAIRequestQueue
+    public class AIRequestQueueImpl : IAIRequestQueueTickable
     {
         private static AIRequestQueueImpl? _instance;
 
@@ -30,6 +31,10 @@ namespace RimMind.Application.Features.Queue
             = new ConcurrentDictionary<string, TrackedRequest>();
 
         private readonly CooldownTable _cooldowns = new CooldownTable();
+
+        private readonly ILogSink? _logSink;
+
+        private ILogSink? LogSink => _logSink;
 
         private readonly Func<ISettingsProvider?>? _settingsFactory;
 
@@ -57,9 +62,10 @@ namespace RimMind.Application.Features.Queue
         public static void LogFromBackground(string msg, bool isWarning = false)
             => _instance?.EnqueueLog(msg, isWarning);
 
-        public AIRequestQueueImpl(Func<ISettingsProvider?>? settingsFactory = null)
+        public AIRequestQueueImpl(Func<ISettingsProvider?>? settingsFactory = null, ILogSink? logSink = null)
         {
             _settingsFactory = settingsFactory;
+            _logSink = logSink;
             _instance = this;
         }
 
@@ -220,7 +226,7 @@ namespace RimMind.Application.Features.Queue
                     }
                 }
                 catch (OperationCanceledException) { response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
-                catch (Exception ex) { AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Execute threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
+                catch (Exception ex) { LogSink?.LogFromBackground($"[RimMind-Core] Execute threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
                 long queueWaitMs = (tracked.StartedProcessingAtTick > 0 && tracked.EnqueuedAtTick > 0) ? (tracked.StartedProcessingAtTick - tracked.EnqueuedAtTick) * 16L : 0;
                 response.QueueWaitMs = queueWaitMs; response.Priority = tracked.Request.Priority;
                 lock (_queueLock)
@@ -308,7 +314,7 @@ namespace RimMind.Application.Features.Queue
             public float DefaultTemperature { get => 0.7f; set { } }
             public bool ForceJsonMode { get => true; set { } }
             public string ModelName { get => ""; set { } }
-            public string Provider { get => Domain.Common.AIProviders.OpenAI; set { } }
+            public string Provider { get => ProviderHelper.GetDefaultProviderId(); set { } }
             public string ApiKey { get => ""; set { } }
             public string ApiEndpoint { get => ""; set { } }
             public string Player2RemoteUrl { get => ""; set { } }

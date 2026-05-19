@@ -1,4 +1,4 @@
-﻿using RimMind.Infrastructure.Verse;
+using RimMind.Infrastructure.Verse;
 using Verse;
 using Verse.AI;
 
@@ -17,7 +17,7 @@ namespace RimMind.Infrastructure.Patches
         {
             var comp = pawn.GetComp<CompPawnAgent>();
             if (comp == null || comp.Agent == null || !comp.Agent.IsActive) return ThinkResult.NoJob;
-            var job = comp.Agent.ConsumePendingJob();
+            var job = comp.ConsumePendingJob();
             if (job == null) return ThinkResult.NoJob;
             job.jobGiver = this;
             return new ThinkResult(job, this, default, false);

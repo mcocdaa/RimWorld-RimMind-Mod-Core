@@ -3,11 +3,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Application.Common.Models.Tools;
-using RimMind.Application.Features.Json;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 
@@ -20,14 +21,16 @@ namespace RimMind.Infrastructure.Mechanisms
         private readonly IMechanismTrigger _trigger;
         private readonly IMechanismMetadata _metadata;
         private readonly MechanismOperationType _operation;
+        private readonly IJsonExtractor _jsonExtractor;
 
-        public MechanismToolHandler(IMechanismReader reader, IMechanismWriter writer, IMechanismTrigger trigger, IMechanismMetadata metadata, MechanismOperationType operation)
+        public MechanismToolHandler(IMechanismReader reader, IMechanismWriter writer, IMechanismTrigger trigger, IMechanismMetadata metadata, MechanismOperationType operation, IJsonExtractor? jsonExtractor = null)
         {
             _reader = reader;
             _writer = writer;
             _trigger = trigger;
             _metadata = metadata;
             _operation = operation;
+            _jsonExtractor = jsonExtractor ?? RimMindServiceLocator.Get<IJsonExtractor>() ?? new FallbackJsonExtractor();
             Definition = BuildDefinition(metadata, operation);
         }
 
@@ -299,18 +302,32 @@ namespace RimMind.Infrastructure.Mechanisms
             };
         }
 
-        private static string? ExtractString(string? json, string propertyName) => JsonHelpers.ExtractString(json ?? "{}", propertyName);
+        private string? ExtractString(string? json, string propertyName) => _jsonExtractor.ExtractString(json ?? "{}", propertyName);
 
-        private static int ExtractInt(string? json, string propertyName)
+        private int ExtractInt(string? json, string propertyName)
         {
-            var str = JsonHelpers.ExtractString(json ?? "{}", propertyName);
+            var str = _jsonExtractor.ExtractString(json ?? "{}", propertyName);
             return int.TryParse(str, out var val) ? val : 0;
         }
 
-        private static int? ExtractNullableInt(string? json, string propertyName)
+        private int? ExtractNullableInt(string? json, string propertyName)
         {
-            var str = JsonHelpers.ExtractString(json ?? "{}", propertyName);
+            var str = _jsonExtractor.ExtractString(json ?? "{}", propertyName);
             return int.TryParse(str, out var val) ? val : (int?)null;
+        }
+
+        private sealed class FallbackJsonExtractor : IJsonExtractor
+        {
+            public string? ExtractString(string json, string propertyName)
+            {
+                if (string.IsNullOrEmpty(json)) return null;
+                try
+                {
+                    var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
+                    return obj[propertyName]?.ToString();
+                }
+                catch { return null; }
+            }
         }
     }
 }

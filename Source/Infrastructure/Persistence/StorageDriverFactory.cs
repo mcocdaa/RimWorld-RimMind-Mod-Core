@@ -3,7 +3,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Domain.Common;
+using RimMind.Application.Common.Helpers;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Services.Clients.Player2;
 using Verse;
@@ -29,7 +29,7 @@ namespace RimMind.Infrastructure.Persistence
 
                 _cachedProvider = s.Provider;
 
-                if (s.Provider == AIProviders.Player2)
+                if (!ProviderHelper.RequiresApiKey(s.Provider))
                 {
                     var client = RimMindServiceLocator.Get<IClientManager>()?.GetPlayer2Client() as Player2Client;
                     if (client != null && client.IsConfigured())

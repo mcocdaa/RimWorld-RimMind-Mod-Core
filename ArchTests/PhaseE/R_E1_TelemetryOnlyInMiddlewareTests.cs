@@ -127,7 +127,6 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             var expectedMiddlewareFiles = new[]
             {
-                Path.Combine(sourceDir, "Application", "Common", "Behaviours", "CommonTelemetryMiddleware.cs"),
                 Path.Combine(sourceDir, "Application", "Features", "Pipeline", "Bus", "BusPublishTelemetryMiddleware.cs"),
             };
 

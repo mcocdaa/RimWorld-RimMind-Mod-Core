@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Npc;
@@ -6,10 +7,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Features.Queue;
 using RimMind.Infrastructure.Persistence;
 
 namespace RimMind.Infrastructure.Services.Clients.Player2
@@ -18,6 +17,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
     {
         private readonly LocalStorageDriver _local;
         private readonly Player2StorageDriver _remote;
+        private readonly ILogSink? _logSink;
 
         public bool IsRemote => true;
         public bool SupportsStreaming => _remote.SupportsStreaming;
@@ -29,6 +29,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         {
             _local = new LocalStorageDriver(historyManager);
             _remote = new Player2StorageDriver(client, RimMindServiceLocator.Get<INpcManager>());
+            _logSink = RimMindServiceLocator.Get<ILogSink>();
         }
 
         public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
@@ -42,7 +43,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             var remoteResult = await _remote.SpawnNpcAsync(profile);
             if (localResult.IsErr) return localResult;
             if (remoteResult.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote SpawnNpc failed: {remoteResult.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote SpawnNpc failed: {remoteResult.Error}", isWarning: true);
             return localResult;
         }
 
@@ -52,7 +53,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             var remoteResult = await _remote.KillNpcAsync(npcId);
             if (localResult.IsErr) return localResult;
             if (remoteResult.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote KillNpc failed: {remoteResult.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote KillNpc failed: {remoteResult.Error}", isWarning: true);
             return localResult;
         }
 
@@ -67,7 +68,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (remoteResult.IsOk)
                 return remoteResult;
 
-            AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {remoteResult.Error?.Message}", isWarning: true);
+            _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync failed, falling back to local: {remoteResult.Error?.Message}", isWarning: true);
             return await _local.ChatAsync(snapshot, ct);
         }
 
@@ -77,7 +78,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (remoteResult.IsOk)
                 return remoteResult;
 
-            AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {remoteResult.Error?.Message}", isWarning: true);
+            _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatAsync(legacy) failed, falling back to local: {remoteResult.Error?.Message}", isWarning: true);
             return await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
         }
 
@@ -100,7 +101,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
             if (hasError && remoteError != null)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {remoteError.Message}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote ChatStreamingAsync failed, falling back to local: {remoteError.Message}", isWarning: true);
                 var localResult = await _local.ChatAsync(npcId, sender, message, gameStateInfo, ct);
                 if (localResult.IsOk)
                 {
@@ -122,7 +123,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (local.IsOk && !string.IsNullOrEmpty(local.Value)) return local;
             var remote = await _remote.GetHistoryAsync(npcId, limit);
             if (remote.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetHistory failed: {remote.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetHistory failed: {remote.Error}", isWarning: true);
             return remote.IsOk ? remote : local;
         }
 
@@ -131,7 +132,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             var localResult = await _local.PutAsync(key, value);
             var remoteResult = await _remote.PutAsync(key, value);
             if (remoteResult.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote Put failed: {remoteResult.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote Put failed: {remoteResult.Error}", isWarning: true);
             return localResult;
         }
 
@@ -141,7 +142,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (local.IsOk && local.Value != null) return local;
             var remote = await _remote.GetAsync(key);
             if (remote.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote Get failed: {remote.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote Get failed: {remote.Error}", isWarning: true);
             return remote.IsOk ? remote : local;
         }
 
@@ -150,7 +151,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             var localResult = await _local.DeleteAsync(key);
             var remoteResult = await _remote.DeleteAsync(key);
             if (remoteResult.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote Delete failed: {remoteResult.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote Delete failed: {remoteResult.Error}", isWarning: true);
             return localResult;
         }
 
@@ -160,7 +161,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (local.IsOk && local.Value != null && local.Value.Count > 0) return local;
             var remote = await _remote.GetBatchAsync(keys);
             if (remote.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetBatch failed: {remote.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote GetBatch failed: {remote.Error}", isWarning: true);
             return remote.IsOk ? remote : local;
         }
 
@@ -169,7 +170,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             var localResult = await _local.SaveAllEntriesAsync(json);
             var remoteResult = await _remote.SaveAllEntriesAsync(json);
             if (remoteResult.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote SaveAllEntries failed: {remoteResult.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote SaveAllEntries failed: {remoteResult.Error}", isWarning: true);
             return localResult;
         }
 
@@ -179,7 +180,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (local.IsOk && local.Value != null) return local;
             var remote = await _remote.LoadAllEntriesAsync();
             if (remote.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote LoadAllEntries failed: {remote.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote LoadAllEntries failed: {remote.Error}", isWarning: true);
             return remote.IsOk ? remote : local;
         }
 
@@ -189,7 +190,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (local.IsOk && local.Value != null && local.Value.Count > 0) return local;
             var remote = await _remote.QueryMemoriesAsync(npcId, query, limit);
             if (remote.IsErr)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] HybridDriver: remote QueryMemories failed: {remote.Error}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] HybridDriver: remote QueryMemories failed: {remote.Error}", isWarning: true);
             return remote.IsOk ? remote : local;
         }
     }

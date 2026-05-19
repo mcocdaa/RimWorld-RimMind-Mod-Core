@@ -1,31 +1,27 @@
-﻿using System.Collections.Generic;
-using RimMind.Application.Features.Flywheel;
+using System.Collections.Generic;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
 {
     public class FlywheelParameterStoreGameComponent : GameComponent
     {
-        private readonly FlywheelParameterStore _store;
+        private IFlywheelParameterStore? _store;
 
-        public FlywheelParameterStoreGameComponent() : base()
-        {
-            _store = new FlywheelParameterStore();
-        }
+        public FlywheelParameterStoreGameComponent() : base() { }
+        public FlywheelParameterStoreGameComponent(global::Verse.Game game) : base() { }
 
-        public FlywheelParameterStoreGameComponent(global::Verse.Game game) : base()
-        {
-            _store = new FlywheelParameterStore();
-        }
-
-        public FlywheelParameterStore Store => _store;
+        public IFlywheelParameterStore Store => _store ??= RimMindServiceLocator.Get<IFlywheelParameterStore>()!;
 
         public override void ExposeData()
         {
             base.ExposeData();
+            var store = Store;
             if (global::Verse.Scribe.mode == global::Verse.LoadSaveMode.Saving)
             {
-                var (keys, values) = _store.GetSaveSnapshot();
+                var (keys, values) = store.GetSaveSnapshot();
                 global::Verse.Scribe_Collections.Look(ref keys, "paramKeys");
                 global::Verse.Scribe_Collections.Look(ref values, "paramValues");
             }
@@ -35,14 +31,14 @@ namespace RimMind.Infrastructure.Verse
                 var values = new List<float>();
                 global::Verse.Scribe_Collections.Look(ref keys, "paramKeys");
                 global::Verse.Scribe_Collections.Look(ref values, "paramValues");
-                _store.LoadFromSnapshot(keys, values);
+                store.LoadFromSnapshot(keys, values);
             }
         }
 
         public override void FinalizeInit()
         {
             base.FinalizeInit();
-            _store.FinalizeInit();
+            Store.FinalizeInit();
         }
     }
 }

@@ -3,7 +3,7 @@ using RimMind.Application.Common.Models.Client;
 
 namespace RimMind.Application.Common.Interfaces.Extension
 {
-    public interface IParameterTuner
+    public interface IParameterTuner : IExtension
     {
         string Name { get; }
         string TunerId { get; }

@@ -7,8 +7,6 @@ namespace RimMind.Domain.Events
         Goal,
         Action,
         Lifecycle,
-        ToolCall,
-        ToolResult,
         ModeChange
     }
 

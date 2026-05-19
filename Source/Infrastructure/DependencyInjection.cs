@@ -4,7 +4,6 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
-using RimMind.Application.Features.Tools;
 using RimMind.Infrastructure.Mechanisms;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI;
@@ -33,7 +32,7 @@ namespace RimMind.Infrastructure
             var translationService = new VerseTranslationService();
             RimMindServiceLocator.Register<ITranslationService>(translationService);
 
-            var toolRegistry = RimMindServiceLocator.Get<ToolRegistry>();
+            var toolRegistry = RimMindServiceLocator.Get<IToolRegistry>();
             var mechanismRegistry = new GameMechanismRegistry(toolRegistry);
             RimMindServiceLocator.Register<IGameMechanismRegistry>(mechanismRegistry);
             RimMindServiceLocator.Register(mechanismRegistry);

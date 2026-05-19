@@ -27,7 +27,7 @@ namespace RimMind.Presentation.Agent
             _history.Add(record);
             while (_history.Count > MaxHistory)
                 _history.RemoveAt(0);
-            RimMindRuntime.Instance.EventBus.Publish(new ActionEvent(
+            RimMindRuntime.Instance.AgentBus.Publish(new ActionEvent(
                 _agent.Identity.NpcId, _agent.Pawn?.thingIDNumber ?? 0,
                 record.Action, record.Success, record.Reason, Guid.NewGuid().ToString()));
         }

@@ -24,11 +24,4 @@ namespace RimMind.Presentation.Agent
                 yield return "RimMindActionDef must have an actionId";
         }
     }
-
-    public class RimMindGoalCategoryDef : Def
-    {
-        public float defaultPriority = 1f;
-        public float decayRate = 0.001f;
-        public int expiryTicks = 60000;
-    }
 }

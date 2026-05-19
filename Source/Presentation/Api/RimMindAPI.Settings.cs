@@ -1,7 +1,7 @@
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
-using RimMind.Application.Features.Flywheel;
 using RimMind.Presentation;
 using RimMind.Presentation.Runtime;
 
@@ -17,7 +17,7 @@ namespace RimMind.Presentation
             public static IContextEngine GetContextEngine() => RimMindRuntime.Instance.ContextEngine;
             internal static IBudgetScheduler? GetContextScheduler() => RimMindRuntime.Instance.ContextEngine.GetScheduler();
             internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => RimMindRuntime.Instance.ContextEngine.GetEmbeddingSnapshotStore();
-            public static FlywheelTelemetryCollector Telemetry => RimMindRuntime.Instance.Telemetry;
+            public static ITelemetryCollector Telemetry => RimMindRuntime.Instance.Telemetry;
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace RimMind.Application.Common.Interfaces.Flywheel
+namespace RimMind.Application.Common.Models.Flywheel
 {
     public class ParameterRecommendation
     {

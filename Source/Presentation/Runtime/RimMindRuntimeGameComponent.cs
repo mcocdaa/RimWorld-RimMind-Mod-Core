@@ -6,7 +6,6 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Features.Queue;
 using RimMind.Domain.Enums;
-using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Presentation.Agent;
 using Verse;
 
@@ -42,7 +41,9 @@ namespace RimMind.Presentation.Runtime
             if (pawn == null) throw new System.ArgumentNullException(nameof(pawn));
             if (!_agents.TryGetValue(pawn.thingIDNumber, out var agent))
             {
-                agent = new PawnAgent(pawn, RimMindServiceLocator.Get<IAgentTickSettings>()!, RimMindServiceLocator.Get<IAgentBus>()!);
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                agent = factory!.Create(pawn, agentBus!);
                 agent.TransitionTo(AgentState.Active);
                 _agents[pawn.thingIDNumber] = agent;
             }

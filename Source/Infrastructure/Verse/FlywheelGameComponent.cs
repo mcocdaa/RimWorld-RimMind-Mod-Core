@@ -1,9 +1,9 @@
 using System;
+using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Features.Logging;
-using RimMind.Application.Features.Flywheel;
-using Verse;
+using RimMind.Application.Common.Models.Flywheel;
 using RimMind.Domain.ValueObjects;
+using Verse;
 
 namespace RimMind.Infrastructure.Verse
 {
@@ -34,7 +34,7 @@ namespace RimMind.Infrastructure.Verse
             base.ExposeData();
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                RimMindServiceLocator.Get<FlywheelTelemetryCollector>()?.Flush();
+                RimMindServiceLocator.Get<ITelemetryCollector>()?.Flush();
             }
         }
 
@@ -57,10 +57,11 @@ namespace RimMind.Infrastructure.Verse
 
         private void RunPeriodicAnalysis()
         {
-            var telemetry = RimMindServiceLocator.Get<FlywheelTelemetryCollector>();
+            var telemetry = RimMindServiceLocator.Get<ITelemetryCollector>();
             var records = telemetry?.GetRecentRecords(100);
             if (records == null || records.Count == 0) return;
-            FlywheelRuleEngine.Analyze(records);
+            var ruleEngine = RimMindServiceLocator.Get<IFlywheelRuleEngine>();
+            ruleEngine?.Analyze(records);
         }
     }
 }

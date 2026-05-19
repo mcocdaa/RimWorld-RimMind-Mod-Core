@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
@@ -15,7 +16,7 @@ using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models.UI;
-using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Runtime;
@@ -74,7 +75,7 @@ namespace RimMind.Presentation
         public static void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider) => Ext.RegisterAgentIdentityProvider(provider);
         public static AgentIdentity? GetAgentIdentity(Pawn pawn) => Ext.GetAgentIdentity(pawn);
         public static void RegisterAgentActionBridge(IAgentActionBridge bridge) => Ext.RegisterAgentActionBridge(bridge);
-        public static IAgentActionBridge? GetAgentActionBridge() => Ext.GetAgentActionBridge();
+        public static IAgentActionBridge GetAgentActionBridge() => Ext.GetAgentActionBridge();
         public static void RegisterParameterTuner(IParameterTuner tuner) => Ext.RegisterParameterTuner(tuner);
         public static IReadOnlyList<IParameterTuner> ParameterTuners => Ext.ParameterTuners;
         public static void RegisterPawnContextProvider(string key, Func<Pawn, string?> provider, int priority = 8) => Ext.RegisterPawnContextProvider(key, provider, priority);
@@ -88,7 +89,7 @@ namespace RimMind.Presentation
         public static IContextEngine GetContextEngine() => Settings.GetContextEngine();
         internal static IBudgetScheduler? GetContextScheduler() => Settings.GetContextScheduler();
         internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => Settings.GetEmbeddingSnapshotStore();
-        public static FlywheelTelemetryCollector Telemetry => Settings.Telemetry;
+        public static ITelemetryCollector Telemetry => Settings.Telemetry;
 
         public static void RegisterSensorProvider(ISensorProvider provider) => Sensors.RegisterSensorProvider(provider);
         public static void UnregisterSensorProvider(string sensorId) => Sensors.UnregisterSensorProvider(sensorId);
@@ -96,12 +97,20 @@ namespace RimMind.Presentation
 
         public static IAudioPlayer AudioPlayer => Audio.AudioPlayer;
 
+        [Obsolete("Use GetAgentBus() instead")]
         public static IAgentBus GetEventBus() => Bus.GetEventBus();
+        public static IAgentBus GetAgentBus() => Bus.GetAgentBus();
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f) => Bus.PublishPerception(pawnId, type, content, importance);
         public static void RegisterPendingRequest(UIRequestEntry entry) => Bus.RegisterPendingRequest(entry);
         public static IReadOnlyList<UIRequestEntry> GetPendingRequests() => Bus.GetPendingRequests();
         internal static IAIClient? GetClient() => Bus.GetClient();
         public static void InvalidateClientCache() => Bus.InvalidateClientCache();
         public static IAIClient? GetPlayer2Client() => Bus.GetPlayer2Client();
+
+        public static string? GetNpcForMap(Map map)
+            => RimMindServiceLocator.Get<INpcManager>()?.GetNpcForMap(map);
+
+        public static bool IsAgentActive(string thingId)
+            => RimMindServiceLocator.Get<IAgentActiveChecker>()?.IsAgentActive(thingId) == true;
     }
 }

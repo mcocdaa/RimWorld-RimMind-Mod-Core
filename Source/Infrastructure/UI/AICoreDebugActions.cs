@@ -11,9 +11,6 @@ using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Features.Context;
-using RimMind.Application.Features.Flywheel;
-using RimMind.Application.Features.Queue;
 using LudeonTK;
 using RimWorld;
 using Verse;
@@ -268,7 +265,7 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  TotalBudget: {store.TotalBudget}");
 
-            var telemetry = RimMindServiceLocator.Get<FlywheelTelemetryCollector>();
+            var telemetry = RimMindServiceLocator.Get<ITelemetryCollector>();
             var recentRecords = telemetry.GetRecentRecords(100);
             sb.AppendLine($"  Telemetry records (recent 100): {recentRecords?.Count ?? 0}");
 
@@ -295,29 +292,7 @@ namespace RimMind.Infrastructure.UI
             var agent = comp.Agent;
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] Agent State for {pawn.Name?.ToStringShort}:");
-            sb.AppendLine($"  State: {agent.State}");
-            sb.AppendLine($"  IsActive: {agent.IsActive}");
-
-            sb.AppendLine($"  Identity:");
-            sb.AppendLine($"    Motivations: [{string.Join(", ", agent.Identity.Motivations)}]");
-            sb.AppendLine($"    PersonalityTraits: [{string.Join(", ", agent.Identity.PersonalityTraits)}]");
-            sb.AppendLine($"    CoreValues: [{string.Join(", ", agent.Identity.CoreValues)}]");
-
-            sb.AppendLine($"  Goals (Total={agent.GoalStack.TotalCount}, Active={agent.GoalStack.ActiveCount}):");
-            foreach (var g in agent.GoalStack.Goals)
-                sb.AppendLine($"    [{g.Status}] {g.Description} | Cat={g.Category} P={g.Priority:F1} Progress={g.Progress:F2}");
-
-            sb.AppendLine($"  Behavior History: {agent.BehaviorHistory.Count}");
-
-            var topW = agent.StrategyOptimizer.GetTopN(5);
-            if (topW.Count > 0)
-            {
-                sb.AppendLine("  Strategy Weights (Top 5):");
-                foreach (var kv in topW)
-                    sb.AppendLine($"    {kv.Key}: {kv.Value:F2}");
-            }
-
-            sb.AppendLine($"  Perception Buffer: {agent.PerceptionBuffer.Entries.Count} entries");
+            sb.AppendLine(agent.GetDebugInfo());
 
             Log.Message(sb.ToString());
         }
@@ -328,12 +303,12 @@ namespace RimMind.Infrastructure.UI
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("[RimMind-Core] === AgentBus Subscribers ===");
 
-            var eventBus = RimMindServiceLocator.Get<IAgentBus>();
-            sb.AppendLine($"  EventBus type: {eventBus?.GetType().Name ?? "null"}");
+            var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+            sb.AppendLine($"  AgentBus type: {agentBus?.GetType().Name ?? "null"}");
 
-            sb.AppendLine($"  Registered event types: {eventBus.GetHandlerCount()}");
+            sb.AppendLine($"  Registered event types: {agentBus.GetHandlerCount()}");
 
-            sb.AppendLine($"  Background queue pending: {eventBus.GetBackgroundQueueCount()}");
+            sb.AppendLine($"  Background queue pending: {agentBus.GetBackgroundQueueCount()}");
 
             Log.Message(sb.ToString());
         }

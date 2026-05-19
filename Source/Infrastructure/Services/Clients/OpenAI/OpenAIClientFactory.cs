@@ -8,6 +8,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
     {
         public string Id => AIProviders.OpenAI;
         public string ProviderId => AIProviders.OpenAI;
+        public bool RequiresApiKey => true;
 
         public IAIClient Create(ISettingsProvider settings)
         {

@@ -3,10 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Models.Flywheel;
 
 namespace RimMind.Application.Features.Flywheel
 {
-    public sealed class FlywheelTelemetryCollector : IDisposable
+    public sealed class FlywheelTelemetryCollector : ITelemetryCollector, IDisposable
     {
         private readonly ConcurrentQueue<TelemetryRecord> _records
             = new ConcurrentQueue<TelemetryRecord>();
@@ -75,11 +76,4 @@ namespace RimMind.Application.Features.Flywheel
         }
     }
 
-    public class TelemetryRecord
-    {
-        public string Metric { get; set; } = "";
-        public float Value { get; set; }
-        public long TimestampTicks { get; set; }
-        public Dictionary<string, string>? Tags { get; set; }
-    }
 }

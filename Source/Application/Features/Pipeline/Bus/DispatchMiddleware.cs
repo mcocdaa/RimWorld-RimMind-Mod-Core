@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
@@ -14,18 +13,18 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public int Order => 100;
         public string Id => "BusDispatch";
 
-        private readonly IAgentBus _bus;
+        private readonly Action<AgentBusEvent> _dispatch;
         private readonly ILogSink? _log;
 
-        public DispatchMiddleware(IAgentBus bus, ILogSink? log = null)
+        public DispatchMiddleware(Action<AgentBusEvent> dispatch, ILogSink? log = null)
         {
-            _bus = bus;
+            _dispatch = dispatch;
             _log = log;
         }
 
         public Task InvokeAsync(BusPublishContext context, MiddlewareDelegate<BusPublishContext> next)
         {
-            _bus.Publish(context.Event);
+            _dispatch(context.Event);
             return next(context);
         }
     }

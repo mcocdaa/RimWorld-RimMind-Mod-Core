@@ -13,6 +13,9 @@ namespace RimMind.Application.Common.Interfaces.Flywheel
         void ResetAll();
         Dictionary<string, float> GetAll();
         Dictionary<string, float> GetDefaults();
+        (List<string> keys, List<float> values) GetSaveSnapshot();
+        void LoadFromSnapshot(List<string> keys, List<float> values);
+        void FinalizeInit();
         event Action<string, float>? OnParameterChanged;
     }
 }

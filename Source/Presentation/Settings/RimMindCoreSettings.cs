@@ -2,6 +2,7 @@ using System;
 using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Helpers;
 using Verse;
 
 namespace RimMind.Presentation.Settings
@@ -10,7 +11,7 @@ namespace RimMind.Presentation.Settings
     {
         public string? SavedModVersion;
 
-        public string provider = AIProviders.OpenAI;
+        public string provider = ProviderHelper.GetDefaultProviderId();
 
         public string apiKey = string.Empty;
         public string apiEndpoint = "https://api.deepseek.com/v1";
@@ -71,7 +72,7 @@ namespace RimMind.Presentation.Settings
 
         public bool IsConfigured()
         {
-            if (provider == AIProviders.Player2)
+            if (!ProviderHelper.RequiresApiKey(provider))
                 return true;
             return !string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(apiEndpoint);
         }
@@ -83,7 +84,7 @@ namespace RimMind.Presentation.Settings
         {
             base.ExposeData();
             Scribe_Values.Look(ref SavedModVersion, "savedModVersion");
-            Scribe_Values.Look(ref provider, "provider", AIProviders.OpenAI);
+            Scribe_Values.Look(ref provider, "provider", ProviderHelper.GetDefaultProviderId());
             string storedKey = ApiKeyObfuscator.Obfuscate(apiKey);
             Scribe_Values.Look(ref storedKey, "apiKey", string.Empty);
             apiKey = ApiKeyObfuscator.Deobfuscate(storedKey);

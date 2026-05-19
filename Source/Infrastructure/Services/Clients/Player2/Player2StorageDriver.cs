@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
@@ -10,14 +11,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Features.Logging;
-using RimMind.Application.Features.Queue;
-using RimMind.Application.Features.Pipeline.AI;
 using RimMind.Infrastructure.Persistence;
 using Verse;
 
@@ -28,6 +25,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly Player2Client _client;
         private readonly string _gameId;
         private readonly INpcManager _npcManager;
+        private readonly ILogSink? _logSink;
 
         private readonly List<LocalMemoryEntry> _localMemoryIndex = new List<LocalMemoryEntry>();
         private readonly object _indexLock = new object();
@@ -51,6 +49,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             _client = client;
             _npcManager = npcManager;
             _gameId = Player2Client.GameClientId;
+            _logSink = RimMindServiceLocator.Get<ILogSink>();
         }
 
         public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
@@ -151,7 +150,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
             catch (System.Exception ex)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
                 return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed(ex.Message, ex));
             }
         }
@@ -388,7 +387,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
             catch (System.Exception ex)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}", isWarning: true);
             }
         }
     }

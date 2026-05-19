@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Threading;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Domain.Common;
 using RimMind.Domain.Events;
 
@@ -17,12 +20,31 @@ namespace RimMind.Application.Features.AgentBus
             = new ConcurrentQueue<DeferredPublish>();
         private readonly ILogSink? _log;
         private readonly IThreadChecker? _threadChecker;
+        private IPipeline<BusPublishContext>? _pipeline;
         private int _handlerIdCounter;
 
         public AgentBusImpl(ILogSink? log = null, IThreadChecker? threadChecker = null)
         {
             _log = log;
             _threadChecker = threadChecker;
+        }
+
+        public void SetPipeline(IPipeline<BusPublishContext> pipeline)
+        {
+            _pipeline = pipeline;
+        }
+
+        internal void DispatchToHandlers(AgentBusEvent evt)
+        {
+            if (evt == null) return;
+            if (!_handlers.TryGetValue(evt.GetType(), out var list) || list.Count == 0) return;
+            HandlerEntry[] snapshot;
+            lock (list) { snapshot = list.ToArray(); }
+            foreach (var entry in snapshot)
+            {
+                try { entry.Action(evt); }
+                catch (Exception ex) { _log?.Error($"AgentBus handler error: {ex.Message}"); }
+            }
         }
 
         public string Subscribe<T>(Action<T> handler) where T : AgentBusEvent
@@ -67,14 +89,13 @@ namespace RimMind.Application.Features.AgentBus
         public void Publish<T>(T evt) where T : AgentBusEvent
         {
             if (evt == null) return;
-            if (!_handlers.TryGetValue(typeof(T), out var list) || list.Count == 0) return;
-            HandlerEntry[] snapshot;
-            lock (list) { snapshot = list.ToArray(); }
-            foreach (var entry in snapshot)
+            if (_pipeline != null)
             {
-                try { entry.Action(evt); }
-                catch (Exception ex) { _log?.Error($"AgentBus handler error: {ex.Message}"); }
+                var context = new BusPublishContext(evt);
+                _pipeline.ExecuteAsync(context).GetAwaiter().GetResult();
+                return;
             }
+            DispatchToHandlers(evt);
         }
 
         [ThreadAffinity(ThreadAffinityKind.Any)]

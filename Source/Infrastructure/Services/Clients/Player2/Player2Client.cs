@@ -6,13 +6,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Helpers;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Features.Logging;
-using RimMind.Application.Features.Queue;
 using Newtonsoft.Json;
 using RimWorld;
 using UnityEngine.Networking;
@@ -28,6 +28,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly string _apiKey;
         private readonly bool _isLocalConnection;
         private readonly ISettingsProvider _settings;
+        private readonly ILogSink? _logSink;
 
         private static DateTime _lastHealthCheck = DateTime.MinValue;
         private static volatile bool _healthCheckActive;
@@ -44,6 +45,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             _apiKey = apiKey;
             _isLocalConnection = isLocal;
             _settings = settings;
+            _logSink = RimMindServiceLocator.Get<ILogSink>();
 
             if (!_healthCheckActive && !string.IsNullOrEmpty(apiKey) && !isLocal)
             {
@@ -64,14 +66,14 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 string? localKey = await TryGetLocalPlayer2Key();
                 if (!string.IsNullOrEmpty(localKey))
                 {
-                    AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Player2 local app detected.");
+                    RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground("[RimMind-Core] Player2 local app detected.");
                     ShowNotification("RimMind.Infrastructure.Player2.LocalDetected");
                     return new Player2Client(localKey!, isLocal: true, settings);
                 }
 
                 if (!string.IsNullOrEmpty(settings.ApiKey))
                 {
-                    AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
+                    RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
                     return new Player2Client(settings.ApiKey, isLocal: false, settings);
                 }
 
@@ -80,7 +82,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
+                RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
                 return new Player2Client(string.Empty, isLocal: false, settings);
             }
         }
@@ -98,7 +100,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             string json = BuildRequestJson(request);
 
             if (_settings.DebugLogging)
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] >> {request.RequestId} (Player2)\n{json}");
+                _logSink?.LogFromBackground($"[RimMind-Core] >> {request.RequestId} (Player2)\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
@@ -115,7 +117,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 sw.Stop();
 
                 if (_settings.DebugLogging)
-                    AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] << {request.RequestId} ({tokens} tok)\n{content}");
+                    _logSink?.LogFromBackground($"[RimMind-Core] << {request.RequestId} ({tokens} tok)\n{content}");
 
                 var response = AIResponse.Ok(request.RequestId, content, tokens);
                 response.PromptTokens = promptTokens;
@@ -131,19 +133,19 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             catch (TaskCanceledException)
             {
                 sw.Stop();
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request cancelled ({request.RequestId})", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] Player2 request cancelled ({request.RequestId})", isWarning: true);
                 return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
             }
             catch (HttpHelper.HttpException ex)
             {
                 sw.Stop();
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
             }
             catch (Exception ex)
             {
                 sw.Stop();
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
                 return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"Player2 request failed: {ex.Message}", ex));
             }
         }
@@ -253,7 +255,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                         loginRequest.downloadHandler.text);
                     if (response != null && !string.IsNullOrEmpty(response.P2Key))
                     {
-                        AIRequestQueueImpl.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
+                        RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
                         return response.P2Key;
                     }
                     return null!;
@@ -261,7 +263,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
+                RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
                 return null!;
             }
         }
@@ -297,7 +299,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
             catch (Exception ex)
             {
-                AIRequestQueueImpl.LogFromBackground($"[RimMind-Core] Player2 health check loop crashed: {ex.Message}", isWarning: true);
+                _logSink?.LogFromBackground($"[RimMind-Core] Player2 health check loop crashed: {ex.Message}", isWarning: true);
                 _healthCheckActive = false;
             }
         }
@@ -328,12 +330,12 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
                 _lastHealthCheck = DateTime.Now;
                 if (webRequest.responseCode != 200)
-                    AIRequestQueueImpl.LogFromBackground(
+                    _logSink?.LogFromBackground(
                         $"[RimMind-Core] Player2 health check failed: {webRequest.responseCode}", isWarning: true);
             }
             catch (Exception ex)
             {
-                AIRequestQueueImpl.LogFromBackground(
+                _logSink?.LogFromBackground(
                     $"[RimMind-Core] Player2 health check exception: {ex.Message}", isWarning: true);
             }
         }
@@ -421,7 +423,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         public static void RefreshJoulesBalance()
         {
             var s = RimMindServiceLocator.Get<ISettingsProvider>();
-            if (s == null || s.Provider != AIProviders.Player2) return;
+            if (s == null || ProviderHelper.RequiresApiKey(s.Provider)) return;
 
             Task.Run(async () =>
             {

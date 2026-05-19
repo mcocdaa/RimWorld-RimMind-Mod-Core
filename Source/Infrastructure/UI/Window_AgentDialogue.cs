@@ -2,12 +2,10 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.Verse;
-using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Agent;
-using RimMind.Presentation.Agent;
 using UnityEngine;
 using Verse;
 
@@ -16,7 +14,7 @@ namespace RimMind.Infrastructure.UI
     public class Window_AgentDialogue : Window
     {
         private readonly Pawn _pawn;
-        private readonly IPawnAgent? _agent;
+        private readonly IAgentControl? _agent;
         private readonly string _npcId;
         private string _inputText = "";
         private Vector2 _scrollPosition;
@@ -133,7 +131,7 @@ namespace RimMind.Infrastructure.UI
             var settings = RimMindServiceLocator.Get<ISettingsProvider>();
             var request = new ContextRequest
             {
-                NpcId = _agent?.Identity?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
+                NpcId = _agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
                 Scenario = ScenarioIds.Dialogue,
                 Budget = 0.6f,
                 CurrentQuery = message,

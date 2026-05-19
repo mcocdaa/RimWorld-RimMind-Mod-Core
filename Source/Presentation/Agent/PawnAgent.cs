@@ -28,6 +28,7 @@ namespace RimMind.Presentation.Agent
         public StrategyOptimizer StrategyOptimizer { get => _strategyOptimizer; private set => _strategyOptimizer = value; }
         public PerceptionBuffer PerceptionBuffer { get; } = new PerceptionBuffer();
         public bool IsActive => State == AgentState.Active;
+        public bool IsPawnValid => Pawn != null && !Pawn.Dead;
 
         private AgentModeId _currentModeId = AgentModeId.Reactive;
         public AgentModeId CurrentModeId => _currentModeId;
@@ -169,6 +170,24 @@ namespace RimMind.Presentation.Agent
             _behaviorHistory.Clear();
         }
 
+        public string GetDebugInfo()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"State: {State}");
+            sb.AppendLine($"Goals: {GoalStack.TotalCount}");
+            foreach (var g in GoalStack.Goals)
+                sb.AppendLine($"  - [{g.Status}] {g.Description} (P:{g.Priority:F1})");
+            sb.AppendLine($"Behavior History: {((IPawnAgent)this).BehaviorHistory.Count}");
+            var topW = StrategyOptimizer.GetTopN(5);
+            if (topW.Count > 0)
+            {
+                sb.AppendLine("Strategy Weights (Top 5):");
+                foreach (var kv in topW)
+                    sb.AppendLine($"  {kv.Key}: {kv.Value:F2}");
+            }
+            return sb.ToString();
+        }
+
         public void ExposeData()
         {
             Scribe_Values.Look(ref _state, "agentState", AgentState.Dormant);
@@ -178,7 +197,7 @@ namespace RimMind.Presentation.Agent
 
             string _currentModeIdStr = _currentModeId.Value;
             Scribe_Values.Look(ref _currentModeIdStr, "currentModeId", AgentModeId.Reactive.Value);
-            _currentModeId = new AgentModeId(_currentModeIdStr);
+            _currentModeId = AgentModeId.Normalize(_currentModeIdStr);
         }
     }
 }

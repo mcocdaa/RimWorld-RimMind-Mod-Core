@@ -3,7 +3,6 @@ using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Npc;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Events;

@@ -1,13 +1,10 @@
 using System.Collections.Generic;
 using RimMind.Domain.Enums;
-using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Agent;
-using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Interfaces.UI;
-using RimMind.Presentation.Agent;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -22,9 +19,9 @@ namespace RimMind.Infrastructure.Verse
         }
     }
 
-    public class CompPawnAgent : ThingComp, IAgentRecorder
+    public class CompPawnAgent : ThingComp
     {
-        public IPawnAgent? Agent { get; internal set; }
+        public IAgentControl? Agent { get; internal set; }
 
         private Pawn Pawn => (Pawn)parent;
 
@@ -33,9 +30,9 @@ namespace RimMind.Infrastructure.Verse
             base.PostSpawnSetup(respawningAfterLoad);
             if (Agent == null)
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                var factory = RimMindServiceLocator.Get<IAgentFactory>();
                 if (factory != null)
-                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
+                    Agent = factory.CreateAgent(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
         }
 
@@ -48,25 +45,25 @@ namespace RimMind.Infrastructure.Verse
         public override void PostExposeData()
         {
             base.PostExposeData();
-            var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+            var factory = RimMindServiceLocator.Get<IAgentFactory>();
             if (factory != null)
             {
-                object? agentObj = Agent;
-                factory.SerializeAgent(ref agentObj, "pawnAgent");
-                Agent = agentObj as IPawnAgent;
+                var agent = Agent;
+                factory.SerializeAgent(ref agent, "pawnAgent");
+                Agent = agent;
             }
 
             if (Agent == null && parent is Pawn pawn)
             {
                 if (factory != null)
-                    Agent = (IPawnAgent?)factory.Create(pawn, RimMindServiceLocator.Get<IAgentBus>()!);
+                    Agent = factory.CreateAgent(pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
 
-            if (Agent != null && Agent.Pawn == null)
+            if (Agent != null && !Agent.IsPawnValid)
             {
                 Agent.Cleanup();
                 if (factory != null)
-                    Agent = (IPawnAgent?)factory.Create(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
+                    Agent = factory.CreateAgent(Pawn, RimMindServiceLocator.Get<IAgentBus>()!);
             }
 
         }
@@ -117,23 +114,17 @@ namespace RimMind.Infrastructure.Verse
                     icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
                     action = () =>
                     {
-                        var sb = new System.Text.StringBuilder();
-                        sb.AppendLine($"State: {Agent.State}");
-                        sb.AppendLine($"Goals: {Agent.GoalStack.TotalCount}");
-                        foreach (var g in Agent.GoalStack.Goals)
-                            sb.AppendLine($"  - [{g.Status}] {g.Description} (P:{g.Priority:F1})");
-                        sb.AppendLine($"Behavior History: {Agent.BehaviorHistory.Count}");
-                        var topW = Agent.StrategyOptimizer.GetTopN(5);
-                        if (topW.Count > 0)
-                        {
-                            sb.AppendLine("Strategy Weights (Top 5):");
-                            foreach (var kv in topW)
-                                sb.AppendLine($"  {kv.Key}: {kv.Value:F2}");
-                        }
-                        Log.Message($"[RimMind-Core] {Pawn.Name?.ToStringShort}\n{sb}");
+                        Log.Message($"[RimMind-Core] {Pawn.Name?.ToStringShort}\n{Agent.GetDebugInfo()}");
                     },
                 };
             }
+        }
+
+        public global::Verse.AI.Job? ConsumePendingJob()
+        {
+            if (Agent is RimMind.Presentation.Agent.IPawnAgent pawnAgent)
+                return pawnAgent.ConsumePendingJob();
+            return null;
         }
 
         public static CompPawnAgent? GetComp(Pawn pawn)
@@ -147,10 +138,5 @@ namespace RimMind.Infrastructure.Verse
             return comp?.Agent?.IsActive == true;
         }
 
-        public void RecordBehavior(BehaviorRecordDto dto)
-        {
-            if (dto == null || Agent == null) return;
-            Agent.RecordBehavior(dto);
-        }
     }
 }

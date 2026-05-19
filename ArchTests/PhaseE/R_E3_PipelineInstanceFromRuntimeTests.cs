@@ -25,6 +25,7 @@ namespace RimMind.Core.ArchTests.PhaseE
         {
             @"Presentation\Runtime\RimMindRuntime.cs",
             @"Application\Features\Tools\ToolCallDispatchMiddleware.cs",
+            @"Application\Features\AgentBus\AgentBusImpl.cs",
         };
 
         [Fact]

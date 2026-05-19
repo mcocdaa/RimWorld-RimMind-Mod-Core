@@ -84,7 +84,7 @@ namespace RimMind.Infrastructure.Patches
             finishToil.initAction = () =>
             {
                 var comp = pawn.GetComp<CompPawnAgent>();
-                comp?.RecordBehavior(new BehaviorRecordDto
+                comp?.Agent?.RecordBehavior(new BehaviorRecordDto
                 {
                     Action = job.def.defName,
                     Reason = "JobDriver completed",

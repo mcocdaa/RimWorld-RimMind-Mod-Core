@@ -11,7 +11,6 @@ using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Prompt;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Flywheel;
-using RimMind.Application.Features.Logging;
 using RimMind.Application.Features.Prompt;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Context;
@@ -34,6 +33,7 @@ namespace RimMind.Presentation.Context
         private readonly ITranslationService _translationService;
         private readonly IFlywheelParameterStore _flywheelParameterStore;
         private readonly ILogSink _logSink;
+        private readonly EmbeddingSnapshotStore _embeddingSnapshotStore = new EmbeddingSnapshotStore();
 
         public ContextOrchestrator(
             IHistoryManager historyManager,
@@ -345,7 +345,7 @@ namespace RimMind.Presentation.Context
         public void UpdateBaseline(string npcId) { _cacheManager.UpdateBaseline(npcId); if (_diffTracker.TryGetDiffStore(npcId, out var diffs)) diffs.Clear(); }
         public void InvalidateNpc(string npcId) { _cacheManager.InvalidateNpc(npcId); _diffTracker.ClearNpcDiffs(npcId); _diffTracker.RemoveNpcKeyLastValues(npcId); _historyManager.ClearHistory(npcId); _needsFullRebuild = true; }
         public IBudgetScheduler? GetScheduler() => _scheduler;
-        public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => null;
+        public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => _embeddingSnapshotStore;
         public void Dispose() { _disposed = true; }
     }
 }

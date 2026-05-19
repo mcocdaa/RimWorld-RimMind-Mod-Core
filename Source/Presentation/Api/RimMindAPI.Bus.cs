@@ -1,3 +1,4 @@
+using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.UI;
@@ -11,10 +12,13 @@ namespace RimMind.Presentation
     {
         public static class Bus
         {
-            public static IAgentBus GetEventBus() => RimMindRuntime.Instance.EventBus;
+            [Obsolete("Use GetAgentBus() instead")]
+            public static IAgentBus GetEventBus() => RimMindRuntime.Instance.AgentBus;
+
+            public static IAgentBus GetAgentBus() => RimMindRuntime.Instance.AgentBus;
 
             public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
-                => PerceptionBridge.PublishPerception(pawnId, type, content, importance, GetEventBus());
+                => PerceptionBridge.PublishPerception(pawnId, type, content, importance, GetAgentBus());
 
             public static void RegisterPendingRequest(RequestEntry entry)
                 => RimMindRuntime.Instance.OverlayService.RegisterPendingRequest(entry);

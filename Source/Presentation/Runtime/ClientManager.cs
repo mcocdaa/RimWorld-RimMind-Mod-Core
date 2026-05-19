@@ -4,7 +4,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Common;
+using RimMind.Application.Common.Helpers;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -41,7 +41,7 @@ namespace RimMind.Presentation.Runtime
         {
             var s = RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null) return null;
-            if (s.Provider != AIProviders.Player2) return null;
+            if (ProviderHelper.RequiresApiKey(s.Provider)) return null;
 
             if (_player2Client != null) return _player2Client;
             _player2Client = CreateClient(s);

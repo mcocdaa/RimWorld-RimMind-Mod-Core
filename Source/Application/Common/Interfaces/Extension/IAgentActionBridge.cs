@@ -3,7 +3,7 @@ using RimMind.Application.Common.Models.Client;
 
 namespace RimMind.Application.Common.Interfaces.Extension
 {
-    public interface IAgentActionBridge
+    public interface IAgentActionBridge : IExtension
     {
         void ExecuteAction(string npcId, string actionName, string[]? args = null);
         bool CanExecute(string npcId, string actionName);

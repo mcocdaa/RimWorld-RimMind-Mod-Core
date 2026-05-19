@@ -64,7 +64,7 @@ namespace RimMind.Presentation
             public static void RegisterAgentActionBridge(IAgentActionBridge bridge)
                 => RimMindRuntime.Instance.RegisterAgentActionBridge(bridge);
 
-            public static IAgentActionBridge? GetAgentActionBridge()
+            public static IAgentActionBridge GetAgentActionBridge()
                 => RimMindRuntime.Instance.GetAgentActionBridge();
 
             public static void RegisterParameterTuner(IParameterTuner tuner)

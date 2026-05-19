@@ -64,10 +64,10 @@ namespace RimMind.Core.ArchTests.PhaseI
         [Trait("Phase", "I")]
         public void Builtin_ModeIds_Should_Be_LowerSnakeCase()
         {
-            AgentModeId.Reactive.Value.Should().MatchRegex(@"^[a-z][a-z0-9_]*$",
-                "AgentModeId.Reactive must be lower_snake_case (R-I2)");
-            AgentModeId.Proactive.Value.Should().MatchRegex(@"^[a-z][a-z0-9_]*$",
-                "AgentModeId.Proactive must be lower_snake_case (R-I2)");
+            AgentModeId.Reactive.Value.Should().MatchRegex(@"^[a-z][a-z0-9_.]*$",
+                "AgentModeId.Reactive must be namespaced lower_snake_case (R-I2)");
+            AgentModeId.Proactive.Value.Should().MatchRegex(@"^[a-z][a-z0-9_.]*$",
+                "AgentModeId.Proactive must be namespaced lower_snake_case (R-I2)");
         }
     }
 

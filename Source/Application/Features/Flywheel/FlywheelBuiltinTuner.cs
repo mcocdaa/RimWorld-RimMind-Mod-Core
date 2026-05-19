@@ -4,6 +4,7 @@ namespace RimMind.Application.Features.Flywheel
 {
     public class FlywheelBuiltinTuner : IParameterTuner
     {
+        public string Id => TunerId;
         public string Name => "FlywheelBuiltin";
         public string TunerId => "flywheel_builtin";
 

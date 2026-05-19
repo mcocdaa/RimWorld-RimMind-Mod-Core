@@ -35,5 +35,4 @@ global using RimMind.Application.Features.Prompt;
 global using RimMind.Application.Features.Queue;
 global using RimMind.Application.Features.Registry;
 global using RimMind.Application.Features.Tools;
-global using RimMind.Application.Features.Logging;
 global using RimMind.Application.Features.Json;

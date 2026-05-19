@@ -125,7 +125,6 @@ namespace RimMind.Core.ArchTests.PhaseE
             var expectedMiddlewareFiles = new[]
             {
                 Path.Combine(sourceDir, "Application", "Features", "Pipeline", "AI", "RetryMiddleware.cs"),
-                Path.Combine(sourceDir, "Application", "Common", "Behaviours", "CommonRetryMiddleware.cs"),
             };
 
             foreach (var expected in expectedMiddlewareFiles)

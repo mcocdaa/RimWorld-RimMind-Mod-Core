@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Models.Flywheel;
 using RimMind.Application.Common.Models.Context;
 
 namespace RimMind.Application.Features.Flywheel
 {
-    internal sealed class FlywheelRuleEngine
+    internal sealed class FlywheelRuleEngine : IFlywheelRuleEngine
     {
         private readonly IFlywheelParameterStore _store;
         private readonly ILogSink? _log;
@@ -17,7 +18,7 @@ namespace RimMind.Application.Features.Flywheel
             _log = log;
         }
 
-        public static void Analyze(List<TelemetryRecord> records)
+        public void Analyze(List<TelemetryRecord> records)
         {
         }
 
