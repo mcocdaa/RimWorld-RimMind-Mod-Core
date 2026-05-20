@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Models.Agent;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -13,7 +14,7 @@ namespace RimMind.Presentation.Agent
         StrategyOptimizer StrategyOptimizer { get; }
         PerceptionBuffer PerceptionBuffer { get; }
         void AddGoal(AgentGoal goal);
-        Verse.AI.Job? ConsumePendingJob();
+        new Verse.AI.Job? ConsumePendingJob();
         void SetPendingJob(Verse.AI.Job job);
     }
 }

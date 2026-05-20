@@ -1,4 +1,6 @@
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Npc;
@@ -25,11 +27,19 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         public bool SupportsCommands => _remote.SupportsCommands;
         public bool SupportsStructuredOutput => _remote.SupportsStructuredOutput;
 
-        public HybridStorageDriver(Player2Client client, IHistoryManager historyManager)
+        public HybridStorageDriver(Player2Client client, IHistoryManager historyManager,
+            INpcManager npcManager, ILogSink? logSink = null,
+            ISettingsProvider? settingsProvider = null, IClientManager? clientManager = null,
+            IContextEngine? contextEngine = null, IGameContextBuilder? gameContextBuilder = null,
+            IResponseDispatcher? responseDispatcher = null)
         {
-            _local = new LocalStorageDriver(historyManager);
-            _remote = new Player2StorageDriver(client, RimMindServiceLocator.Get<INpcManager>());
-            _logSink = RimMindServiceLocator.Get<ILogSink>();
+            _local = new LocalStorageDriver(historyManager, settingsProvider: settingsProvider,
+                clientManager: clientManager, contextEngine: contextEngine);
+            _remote = new Player2StorageDriver(client, npcManager,
+                logSink: logSink, contextEngine: contextEngine,
+                settingsProvider: settingsProvider, gameContextBuilder: gameContextBuilder,
+                responseDispatcher: responseDispatcher);
+            _logSink = logSink;
         }
 
         public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)

@@ -3,7 +3,7 @@ using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Agent;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.Runtime;
 using Verse;
@@ -42,18 +42,16 @@ namespace RimMind.Presentation
 
             public static void TriggerDialogue(Pawn pawn, string context, Pawn? recipient = null)
             {
-                foreach (var t in Get<IDialogueTrigger>().All)
-                    t.Trigger(pawn, context, recipient);
+                // IDialogueTrigger removed (dead interface, no implementations)
             }
 
             public static void NotifyIncidentExecuted()
             {
-                foreach (var l in Get<IIncidentExecutedListener>().All)
-                    l.OnIncidentExecuted();
+                // IIncidentExecutedListener removed (dead interface, no implementations)
             }
 
             public static bool CanTriggerDialogue
-                => Get<IDialogueTrigger>().All.Any();
+                => false;
 
             public static void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
                 => RimMindRuntime.Instance.RegisterAgentIdentityProvider(provider);

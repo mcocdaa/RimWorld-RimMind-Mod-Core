@@ -14,6 +14,8 @@ namespace RimMind.Application.Features.AgentBus
 {
     public sealed class AgentBusImpl : IAgentBus
     {
+        public event Action? SubscribersCleared;
+
         private readonly ConcurrentDictionary<Type, List<HandlerEntry>> _handlers
             = new ConcurrentDictionary<Type, List<HandlerEntry>>();
         private readonly ConcurrentQueue<DeferredPublish> _backgroundQueue
@@ -43,7 +45,14 @@ namespace RimMind.Application.Features.AgentBus
             foreach (var entry in snapshot)
             {
                 try { entry.Action(evt); }
-                catch (Exception ex) { _log?.Error($"AgentBus handler error: {ex.Message}"); }
+                catch (Exception ex)
+                {
+                    var errorMsg = $"AgentBus handler error: {ex}";
+                    if (_log != null)
+                        _log.Error(errorMsg);
+                    else
+                        System.Diagnostics.Debug.WriteLine(errorMsg);
+                }
             }
         }
 
@@ -111,13 +120,17 @@ namespace RimMind.Application.Features.AgentBus
         {
             while (_backgroundQueue.TryDequeue(out var deferred))
             {
-                if (!_handlers.TryGetValue(deferred.EventType, out var list) || list.Count == 0) continue;
-                HandlerEntry[] snapshot;
-                lock (list) { snapshot = list.ToArray(); }
-                foreach (var entry in snapshot)
+                if (deferred.Event is AgentBusEvent evt)
                 {
-                    try { entry.Action(deferred.Event); }
-                    catch (Exception ex) { _log?.Error($"AgentBus deferred handler error: {ex.Message}"); }
+                    if (_pipeline != null)
+                    {
+                        var context = new BusPublishContext(evt);
+                        _pipeline.ExecuteAsync(context).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        DispatchToHandlers(evt);
+                    }
                 }
             }
         }
@@ -125,6 +138,7 @@ namespace RimMind.Application.Features.AgentBus
         public void ClearAllSubscribers()
         {
             _handlers.Clear();
+            SubscribersCleared?.Invoke();
         }
 
         public int GetHandlerCount()

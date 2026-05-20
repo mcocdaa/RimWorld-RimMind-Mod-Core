@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Abstractions;
 
 namespace RimMind.Presentation.Pipeline.AI
 {
@@ -11,6 +12,7 @@ namespace RimMind.Presentation.Pipeline.AI
     {
         public static IPipeline<AIRequestContext> Build(
             ISettingsProvider settings,
+            ILogSink? logSink = null,
             IExtensionRegistry<IMiddleware<AIRequestContext>>? extensions = null)
         {
             var defaults = new IMiddleware<AIRequestContext>[]

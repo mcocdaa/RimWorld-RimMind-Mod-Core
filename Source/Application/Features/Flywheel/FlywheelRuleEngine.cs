@@ -20,6 +20,28 @@ namespace RimMind.Application.Features.Flywheel
 
         public void Analyze(List<TelemetryRecord> records)
         {
+            if (records == null || records.Count == 0) return;
+
+            _log?.Message($"Analyzing {records.Count} telemetry records");
+
+            float totalTokens = 0f;
+            foreach (var record in records)
+            {
+                totalTokens += record.Value;
+            }
+
+            float avgTokens = totalTokens / records.Count;
+            float budget = _store.Get("ContextBudget");
+            float ratio = avgTokens / (budget * 800);
+
+            if (ratio > 0.9f)
+            {
+                _log?.Warning("Token usage ratio exceeds 90%, consider increasing ContextBudget");
+            }
+            else if (ratio < 0.3f)
+            {
+                _log?.Message("Token usage ratio below 30%, consider decreasing ContextBudget");
+            }
         }
 
         public List<ParameterRecommendation> Evaluate(Dictionary<string, float> metrics)

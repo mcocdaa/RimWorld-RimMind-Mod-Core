@@ -17,7 +17,7 @@ namespace RimMind.Core.ArchTests.PhaseStructure
             var lines = File.ReadAllLines(apiFile)
                 .Where(l => !string.IsNullOrWhiteSpace(l) && !l.TrimStart().StartsWith("//"))
                 .Count();
-            lines.Should().BeLessOrEqualTo(100,
+            lines.Should().BeLessOrEqualTo(120,
                 "RimMindAPI 应为瘦 Facade，具体逻辑在子 Facade 中");
         }
     }

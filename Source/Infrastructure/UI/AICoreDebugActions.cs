@@ -20,10 +20,58 @@ namespace RimMind.Infrastructure.UI
     [StaticConstructorOnStartup]
     public static class RimMindCoreDebugActions
     {
+        // Cached service references — populated by Initialize()
+        private static ISettingsProvider? _settingsProvider;
+        private static IAIRequestQueue? _requestQueue;
+        private static IClientManager? _clientManager;
+        private static IAIDebugLog? _debugLog;
+        private static IContextKeyProvider? _contextKeyProvider;
+        private static IContextEngine? _contextEngine;
+        private static IProviderRegistry? _providerRegistry;
+        private static IContextKeyRegistry? _contextKeyRegistry;
+        private static IFlywheelParameterStore? _flywheelParameterStore;
+        private static ITelemetryCollector? _telemetryCollector;
+        private static IAgentBus? _agentBus;
+        private static IHistoryManager? _historyManager;
+        private static INpcManager? _npcManager;
+
+        /// <summary>
+        /// Cache all service references. Called from RimMindRuntime after services are registered.
+        /// </summary>
+        public static void Initialize(
+            ISettingsProvider? settingsProvider,
+            IAIRequestQueue? requestQueue,
+            IClientManager? clientManager,
+            IAIDebugLog? debugLog,
+            IContextKeyProvider? contextKeyProvider,
+            IContextEngine? contextEngine,
+            IProviderRegistry? providerRegistry,
+            IContextKeyRegistry? contextKeyRegistry,
+            IFlywheelParameterStore? flywheelParameterStore,
+            ITelemetryCollector? telemetryCollector,
+            IAgentBus? agentBus,
+            IHistoryManager? historyManager,
+            INpcManager? npcManager)
+        {
+            _settingsProvider = settingsProvider;
+            _requestQueue = requestQueue;
+            _clientManager = clientManager;
+            _debugLog = debugLog;
+            _contextKeyProvider = contextKeyProvider;
+            _contextEngine = contextEngine;
+            _providerRegistry = providerRegistry;
+            _contextKeyRegistry = contextKeyRegistry;
+            _flywheelParameterStore = flywheelParameterStore;
+            _telemetryCollector = telemetryCollector;
+            _agentBus = agentBus;
+            _historyManager = historyManager;
+            _npcManager = npcManager;
+        }
+
         [DebugAction("RimMind", "Test API Connection", actionType = DebugActionType.Action)]
         public static void TestConnection()
         {
-            if (!(RimMindServiceLocator.Get<ISettingsProvider>()?.IsConfigured ?? false))
+            if (!(_settingsProvider?.IsConfigured ?? false))
             {
                 RimMindErrors.Warn("[RimMind-Core] API not configured. Set API Key in mod settings.");
                 return;
@@ -41,8 +89,8 @@ namespace RimMind.Infrastructure.UI
                 Priority = AIRequestPriority.High,
             };
 
-            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
-            var client = RimMindServiceLocator.Get<IClientManager>()?.GetClient();
+            var queue = _requestQueue;
+            var client = _clientManager?.GetClient();
             if (queue == null || client == null)
             {
                 Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate("Queue or client not available"), MessageTypeDefOf.NegativeEvent, false);
@@ -62,7 +110,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Last Prompt", actionType = DebugActionType.Action)]
         public static void ShowLastPrompt()
         {
-            var entries = RimMindServiceLocator.Get<IAIDebugLog>()?.Entries;
+            var entries = _debugLog?.Entries;
             if (entries == null || entries.Count == 0)
             {
                 Log.Message("[RimMind-Core] No request records.");
@@ -78,14 +126,14 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Clear Debug Log", actionType = DebugActionType.Action)]
         public static void ClearLog()
         {
-            RimMindServiceLocator.Get<IAIDebugLog>()?.Clear();
+            _debugLog?.Clear();
             Log.Message("[RimMind-Core] Debug log cleared.");
         }
 
         [DebugAction("RimMind", "Clear All Cooldowns", actionType = DebugActionType.Action)]
         public static void ClearCooldowns()
         {
-            RimMindServiceLocator.Get<IAIRequestQueue>()?.ClearAllCooldowns();
+            _requestQueue?.ClearAllCooldowns();
             Log.Message("[RimMind-Core] All cooldowns cleared.");
         }
 
@@ -94,9 +142,8 @@ namespace RimMind.Infrastructure.UI
         {
             var map = Find.CurrentMap;
             if (map == null) { RimMindErrors.Warn("[RimMind-Core] No map loaded."); return; }
-            var ctxProvider = RimMindServiceLocator.Get<IContextKeyProvider>();
-            if (ctxProvider == null) { RimMindErrors.Warn("[RimMind-Core] ContextKeyProvider not available."); return; }
-            var entries = ctxProvider.BuildMapContextEntries(map);
+            if (_contextKeyProvider == null) { RimMindErrors.Warn("[RimMind-Core] ContextKeyProvider not available."); return; }
+            var entries = _contextKeyProvider.BuildMapContextEntries(map);
             var sb = new System.Text.StringBuilder();
             foreach (var entry in entries)
                 sb.AppendLine(entry.Content);
@@ -116,8 +163,8 @@ namespace RimMind.Infrastructure.UI
                 Budget = 0.6f,
                 CurrentQuery = "[Debug] Show context",
             };
-            var engine = RimMindServiceLocator.Get<IContextEngine>();
-            var snapshot = engine.BuildSnapshot(request);
+            var snapshot = _contextEngine?.BuildSnapshot(request);
+            if (snapshot == null) { RimMindErrors.Warn("[RimMind-Core] ContextEngine not available."); return; }
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
             sb.AppendLine($"Estimated tokens: {snapshot.EstimatedTokens}");
@@ -131,7 +178,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Queue State", actionType = DebugActionType.Action)]
         public static void ShowQueueState()
         {
-            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            var queue = _requestQueue;
             if (queue == null)
             {
                 RimMindErrors.Warn("[RimMind-Core] AIRequestQueue not initialized.");
@@ -163,21 +210,21 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Pause Queue", actionType = DebugActionType.Action)]
         public static void PauseQueue()
         {
-            RimMindServiceLocator.Get<IAIRequestQueue>()?.PauseQueue();
+            _requestQueue?.PauseQueue();
             Log.Message("[RimMind-Core] Queue paused.");
         }
 
         [DebugAction("RimMind", "Resume Queue", actionType = DebugActionType.Action)]
         public static void ResumeQueue()
         {
-            RimMindServiceLocator.Get<IAIRequestQueue>()?.ResumeQueue();
+            _requestQueue?.ResumeQueue();
             Log.Message("[RimMind-Core] Queue resumed.");
         }
 
         [DebugAction("RimMind", "Show Registered Providers", actionType = DebugActionType.Action)]
         public static void ShowRegisteredProviders()
         {
-            var categories = RimMindServiceLocator.Get<IProviderRegistry>()?.GetRegisteredCategories() ?? new List<string>();
+            var categories = _providerRegistry?.GetRegisteredCategories() ?? new List<string>();
             if (categories.Count == 0)
             {
                 Log.Message("[RimMind-Core] No registered providers.");
@@ -194,10 +241,9 @@ namespace RimMind.Infrastructure.UI
             {
                 sb.AppendLine($"  [{cat}]");
 
-                var reg = RimMindServiceLocator.Get<IProviderRegistry>();
-                if (reg != null)
+                if (_providerRegistry != null)
                 {
-                    var staticData = reg.GetStaticProviderData(cat);
+                    var staticData = _providerRegistry.GetStaticProviderData(cat);
                     if (staticData.IsOk && staticData.Value != null)
                         sb.AppendLine($"    Static: {staticData.Value.Length} chars");
                     else if (staticData.IsErr)
@@ -205,7 +251,7 @@ namespace RimMind.Infrastructure.UI
 
                     if (firstColonist != null)
                     {
-                        var pawnData = reg.GetProviderData(cat, firstColonist);
+                        var pawnData = _providerRegistry.GetProviderData(cat, firstColonist);
                         if (pawnData.IsOk && pawnData.Value != null)
                             sb.AppendLine($"    Pawn ({firstColonist.Name?.ToStringShort}): {pawnData.Value.Length} chars");
                         else if (pawnData.IsErr)
@@ -220,7 +266,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Registered ContextKeys", actionType = DebugActionType.Action)]
         public static void ShowRegisteredContextKeys()
         {
-            var keys = RimMindServiceLocator.Get<IContextKeyRegistry>()?.GetAll();
+            var keys = _contextKeyRegistry?.GetAll();
             if (keys.Count == 0)
             {
                 Log.Message("[RimMind-Core] No registered context keys.");
@@ -241,8 +287,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Flywheel State", actionType = DebugActionType.Action)]
         public static void ShowFlywheelState()
         {
-            var store = RimMindServiceLocator.Get<IFlywheelParameterStore>();
-            if (store == null)
+            if (_flywheelParameterStore == null)
             {
                 RimMindErrors.Warn("[RimMind-Core] FlywheelParameterStore not initialized.");
                 return;
@@ -251,8 +296,8 @@ namespace RimMind.Infrastructure.UI
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("[RimMind-Core] === Flywheel State ===");
 
-            var current = store.GetAll();
-            var defaults = store.GetDefaults();
+            var current = _flywheelParameterStore.GetAll();
+            var defaults = _flywheelParameterStore.GetDefaults();
 
             sb.AppendLine("  Parameters:");
             foreach (var kvp in current)
@@ -263,10 +308,9 @@ namespace RimMind.Infrastructure.UI
                 sb.AppendLine($"    {kvp.Key} = {kvp.Value}{defaultTag}");
             }
 
-            sb.AppendLine($"  TotalBudget: {store.TotalBudget}");
+            sb.AppendLine($"  TotalBudget: {_flywheelParameterStore.TotalBudget}");
 
-            var telemetry = RimMindServiceLocator.Get<ITelemetryCollector>();
-            var recentRecords = telemetry.GetRecentRecords(100);
+            var recentRecords = _telemetryCollector?.GetRecentRecords(100);
             sb.AppendLine($"  Telemetry records (recent 100): {recentRecords?.Count ?? 0}");
 
             Log.Message(sb.ToString());
@@ -303,12 +347,11 @@ namespace RimMind.Infrastructure.UI
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("[RimMind-Core] === AgentBus Subscribers ===");
 
-            var agentBus = RimMindServiceLocator.Get<IAgentBus>();
-            sb.AppendLine($"  AgentBus type: {agentBus?.GetType().Name ?? "null"}");
+            sb.AppendLine($"  AgentBus type: {_agentBus?.GetType().Name ?? "null"}");
 
-            sb.AppendLine($"  Registered event types: {agentBus.GetHandlerCount()}");
+            sb.AppendLine($"  Registered event types: {_agentBus?.GetHandlerCount() ?? 0}");
 
-            sb.AppendLine($"  Background queue pending: {agentBus.GetBackgroundQueueCount()}");
+            sb.AppendLine($"  Background queue pending: {_agentBus?.GetBackgroundQueueCount() ?? 0}");
 
             Log.Message(sb.ToString());
         }
@@ -324,16 +367,15 @@ namespace RimMind.Infrastructure.UI
             }
 
             var npcId = $"NPC-{pawn.thingIDNumber}";
-            var history = RimMindServiceLocator.Get<IHistoryManager>();
-            var count = history.GetHistoryCount(npcId);
+            var count = _historyManager?.GetHistoryCount(npcId) ?? 0;
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] History State for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
             sb.AppendLine($"  Total entries: {count}");
 
-            if (count > 0)
+            if (count > 0 && _historyManager != null)
             {
-                var recent = history.GetHistory(npcId, 3);
+                var recent = _historyManager.GetHistory(npcId, 3);
                 sb.AppendLine($"  Last {recent.Count} entries:");
                 foreach (var (role, content) in recent)
                 {
@@ -342,8 +384,11 @@ namespace RimMind.Infrastructure.UI
                 }
             }
 
-            var allForSave = history.GetAllForSaveDict();
-            sb.AppendLine($"  Total NPC histories: {allForSave.Count}");
+            if (_historyManager != null)
+            {
+                var allForSave = _historyManager.GetAllForSaveDict();
+                sb.AppendLine($"  Total NPC histories: {allForSave.Count}");
+            }
 
             Log.Message(sb.ToString());
         }
@@ -351,14 +396,13 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show NPC Manager State", actionType = DebugActionType.Action)]
         public static void ShowNpcManagerState()
         {
-            var mgr = RimMindServiceLocator.Get<INpcManager>();
-            if (mgr == null)
+            if (_npcManager == null)
             {
                 RimMindErrors.Warn("[RimMind-Core] NpcManager not initialized.");
                 return;
             }
 
-            var npcs = mgr.GetAllNpcs();
+            var npcs = _npcManager.GetAllNpcs();
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] NPC Manager State:");
             sb.AppendLine($"  Total NPCs: {npcs.Count}");
@@ -381,7 +425,7 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Settings Summary", actionType = DebugActionType.Action)]
         public static void ShowSettingsSummary()
         {
-            var s = RimMindServiceLocator.Get<ISettingsProvider>();
+            var s = _settingsProvider;
             if (s == null)
             {
                 RimMindErrors.Warn("[RimMind-Core] Settings not initialized.");

@@ -9,7 +9,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
     internal sealed class ErrorIsolationMiddleware : IMiddleware<BusPublishContext>
     {
         public string Name => "BusErrorIsolation";
-        public int Order => 200;
+        public int Order => 90;
         public string Id => "BusErrorIsolation";
 
         private readonly ILogSink? _log;

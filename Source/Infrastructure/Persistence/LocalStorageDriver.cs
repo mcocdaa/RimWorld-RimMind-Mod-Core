@@ -23,6 +23,9 @@ namespace RimMind.Infrastructure.Persistence
         private readonly Dictionary<string, NpcProfile> _npcRegistry = new Dictionary<string, NpcProfile>();
         internal static readonly ConcurrentDictionary<string, string> KvStore = new ConcurrentDictionary<string, string>();
         private readonly IHistoryManager _historyManager;
+        private readonly ISettingsProvider? _settingsProvider;
+        private readonly IClientManager? _clientManager;
+        private readonly IContextEngine? _contextEngine;
         private readonly string _keyPrefix;
 
         public bool IsRemote => false;
@@ -31,10 +34,14 @@ namespace RimMind.Infrastructure.Persistence
         public bool SupportsCommands => true;
         public bool SupportsStructuredOutput => true;
 
-        public LocalStorageDriver(IHistoryManager historyManager, string keyPrefix = "core")
+        public LocalStorageDriver(IHistoryManager historyManager, string keyPrefix = "core",
+            ISettingsProvider? settingsProvider = null, IClientManager? clientManager = null, IContextEngine? contextEngine = null)
         {
             _historyManager = historyManager;
             _keyPrefix = keyPrefix + ":";
+            _settingsProvider = settingsProvider;
+            _clientManager = clientManager;
+            _contextEngine = contextEngine;
         }
 
         private string PrefixKey(string key) => _keyPrefix + key;
@@ -74,12 +81,12 @@ namespace RimMind.Infrastructure.Persistence
                 Temperature = snapshot.Temperature,
                 RequestId = $"NpcChat_{snapshot.NpcId}_{Find.TickManager.TicksGame}",
                 ModId = "NpcChat",
-                ExpireAtTicks = Find.TickManager.TicksGame + (RimMindServiceLocator.Get<ISettingsProvider>()?.RequestExpireTicks ?? 30000),
+                ExpireAtTicks = Find.TickManager.TicksGame + (_settingsProvider?.RequestExpireTicks ?? 30000),
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
 
-            var client = RimMindServiceLocator.Get<IClientManager>()?.GetClient();
+            var client = _clientManager?.GetClient();
             if (client == null)
                 return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.ClientNotConfigured(nameof(LocalStorageDriver)));
 
@@ -115,13 +122,14 @@ namespace RimMind.Infrastructure.Persistence
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f,
+                Budget = _settingsProvider?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
-                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
+                MaxTokens = _settingsProvider?.MaxTokens ?? 800,
+                Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
             };
-            var engine = RimMindServiceLocator.Get<IContextEngine>();
-            var snapshot = engine.BuildSnapshot(request);
+            var snapshot = _contextEngine?.BuildSnapshot(request);
+            if (snapshot == null)
+                return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed("ContextEngine not available"));
             return await ChatAsync(snapshot, ct);
         }
 
@@ -131,13 +139,17 @@ namespace RimMind.Infrastructure.Persistence
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f,
+                Budget = _settingsProvider?.Context?.ContextBudget ?? 0.6f,
                 CurrentQuery = message,
-                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
-                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
+                MaxTokens = _settingsProvider?.MaxTokens ?? 800,
+                Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
             };
-            var engine = RimMindServiceLocator.Get<IContextEngine>();
-            var snapshot = engine.BuildSnapshot(request);
+            var snapshot = _contextEngine?.BuildSnapshot(request);
+            if (snapshot == null)
+            {
+                yield return Result<NpcChatChunk, RimMindError>.Err(RimMindErrors.StorageDriverFailed("ContextEngine not available"));
+                yield break;
+            }
             var result = await ChatAsync(snapshot, ct);
             if (result.TryGetValue(out var chatResult) && chatResult.Message != null)
                 onChunk?.Invoke(chatResult.Message);

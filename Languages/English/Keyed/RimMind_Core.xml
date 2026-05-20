@@ -1,354 +1,354 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
   <!-- Window_AIDebugLog.cs -->
-  <RimMind.Infrastructure.UI.DebugLog.Title>AI Request Debug Log</RimMind.Infrastructure.UI.DebugLog.Title>
-  <RimMind.Infrastructure.UI.DebugLog.Search>Search source or response...</RimMind.Infrastructure.UI.DebugLog.Search>
-  <RimMind.Infrastructure.UI.DebugLog.Clear>Clear</RimMind.Infrastructure.UI.DebugLog.Clear>
-  <RimMind.Infrastructure.UI.DebugLog.CopyResponse>Copy Response</RimMind.Infrastructure.UI.DebugLog.CopyResponse>
-  <RimMind.Infrastructure.UI.DebugLog.ClickToView>(Click an entry on the left to view details)</RimMind.Infrastructure.UI.DebugLog.ClickToView>
-  <RimMind.Infrastructure.UI.DebugLog.RecordCount>{0} records</RimMind.Infrastructure.UI.DebugLog.RecordCount>
-  <RimMind.Infrastructure.UI.DebugLog.Tok>tok</RimMind.Infrastructure.UI.DebugLog.Tok>
-  <RimMind.Infrastructure.UI.DebugLog.Retry>retry</RimMind.Infrastructure.UI.DebugLog.Retry>
-  <RimMind.Infrastructure.UI.DebugLog.Wait>wait</RimMind.Infrastructure.UI.DebugLog.Wait>
-  <RimMind.Infrastructure.UI.DebugLog.Attempt>attempt</RimMind.Infrastructure.UI.DebugLog.Attempt>
-  <RimMind.Infrastructure.UI.DebugLog.QueueWait>queueWait</RimMind.Infrastructure.UI.DebugLog.QueueWait>
-  <RimMind.Infrastructure.UI.Empty>(empty)</RimMind.Infrastructure.UI.Empty>
+  <RimMind.UI.DebugLog.Title>AI Request Debug Log</RimMind.UI.DebugLog.Title>
+  <RimMind.UI.DebugLog.Search>Search source or response...</RimMind.UI.DebugLog.Search>
+  <RimMind.UI.DebugLog.Clear>Clear</RimMind.UI.DebugLog.Clear>
+  <RimMind.UI.DebugLog.CopyResponse>Copy Response</RimMind.UI.DebugLog.CopyResponse>
+  <RimMind.UI.DebugLog.ClickToView>(Click an entry on the left to view details)</RimMind.UI.DebugLog.ClickToView>
+  <RimMind.UI.DebugLog.RecordCount>{0} records</RimMind.UI.DebugLog.RecordCount>
+  <RimMind.UI.DebugLog.Tok>tok</RimMind.UI.DebugLog.Tok>
+  <RimMind.UI.DebugLog.Retry>retry</RimMind.UI.DebugLog.Retry>
+  <RimMind.UI.DebugLog.Wait>wait</RimMind.UI.DebugLog.Wait>
+  <RimMind.UI.DebugLog.Attempt>attempt</RimMind.UI.DebugLog.Attempt>
+  <RimMind.UI.DebugLog.QueueWait>queueWait</RimMind.UI.DebugLog.QueueWait>
+  <RimMind.UI.Empty>(empty)</RimMind.UI.Empty>
   <!-- AITogglePatch.cs -->
   <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\nClick to toggle registered features on/off\nShift+Click to open mod settings\nCtrl+Click to open debug log window</RimMind.Presentation.Toggle.Tooltip>
   <!-- AICoreSettingsUI.cs - Tab labels -->
-  <RimMind.Infrastructure.Settings.Tab.Api>API Config</RimMind.Infrastructure.Settings.Tab.Api>
-  <RimMind.Infrastructure.Settings.Tab.Context>Context Filter</RimMind.Infrastructure.Settings.Tab.Context>
-  <RimMind.Infrastructure.Settings.Tab.Prompts>Custom Prompts</RimMind.Infrastructure.Settings.Tab.Prompts>
+  <RimMind.Settings.Tab.Api>API Config</RimMind.Settings.Tab.Api>
+  <RimMind.Settings.Tab.Context>Context Filter</RimMind.Settings.Tab.Context>
+  <RimMind.Settings.Tab.Prompts>Custom Prompts</RimMind.Settings.Tab.Prompts>
   <!-- AICoreSettingsUI.cs - API settings -->
-  <RimMind.Infrastructure.Settings.Provider>AI Provider</RimMind.Infrastructure.Settings.Provider>
-  <RimMind.Infrastructure.Settings.Provider.Desc>Select an AI service provider. Player2 can auto-detect the local desktop app, no manual configuration needed.</RimMind.Infrastructure.Settings.Provider.Desc>
-  <RimMind.Infrastructure.Settings.Provider.OpenAI>OpenAI Compatible</RimMind.Infrastructure.Settings.Provider.OpenAI>
-  <RimMind.Infrastructure.Settings.Provider.Player2>Player2</RimMind.Infrastructure.Settings.Provider.Player2>
-  <RimMind.Infrastructure.Settings.ApiKey>API Key</RimMind.Infrastructure.Settings.ApiKey>
-  <RimMind.Infrastructure.Settings.ApiKey.Desc>Your AI provider's API key for authentication.</RimMind.Infrastructure.Settings.ApiKey.Desc>
-  <RimMind.Infrastructure.Settings.ApiEndpoint>API Endpoint</RimMind.Infrastructure.Settings.ApiEndpoint>
-  <RimMind.Infrastructure.Settings.ApiEndpoint.Desc>AI service API address. Supports OpenAI-compatible interfaces (e.g. DeepSeek, local Ollama).</RimMind.Infrastructure.Settings.ApiEndpoint.Desc>
-  <RimMind.Infrastructure.Settings.ModelName>Model Name</RimMind.Infrastructure.Settings.ModelName>
-  <RimMind.Infrastructure.Settings.ModelName.Desc>The model ID to use, e.g. gpt-4o-mini, deepseek-chat.</RimMind.Infrastructure.Settings.ModelName.Desc>
-  <RimMind.Infrastructure.Settings.ForceJsonMode>Force JSON Mode (response_format)</RimMind.Infrastructure.Settings.ForceJsonMode>
-  <RimMind.Infrastructure.Settings.ForceJsonModeDesc>Append response_format=json_object to the API request, forcing the model to return JSON. Disable this for local models that don't support this parameter.</RimMind.Infrastructure.Settings.ForceJsonModeDesc>
-  <RimMind.Infrastructure.Settings.MaxTokens>Max Tokens</RimMind.Infrastructure.Settings.MaxTokens>
-  <RimMind.Infrastructure.Settings.MaxTokens.Desc>Maximum tokens per AI response. Higher values allow longer replies but increase cost.</RimMind.Infrastructure.Settings.MaxTokens.Desc>
-  <RimMind.Infrastructure.Settings.Temperature>Temperature</RimMind.Infrastructure.Settings.Temperature>
-  <RimMind.Infrastructure.Settings.Temperature.Desc>Controls randomness. Lower = more deterministic, higher = more creative. Range: 0.0-2.0</RimMind.Infrastructure.Settings.Temperature.Desc>
-  <RimMind.Infrastructure.Settings.ResetToDefault>Reset to Default</RimMind.Infrastructure.Settings.ResetToDefault>
-  <RimMind.Infrastructure.Settings.DebugLogging>Verbose Logging (Player.log)</RimMind.Infrastructure.Settings.DebugLogging>
-  <RimMind.Infrastructure.Settings.DebugLogging.Desc>Output detailed AI request and response info to Player.log for troubleshooting.</RimMind.Infrastructure.Settings.DebugLogging.Desc>
-  <RimMind.Infrastructure.Settings.TestConnection>Test Connection</RimMind.Infrastructure.Settings.TestConnection>
-  <RimMind.Infrastructure.Settings.Status.Ok>✓ Connected</RimMind.Infrastructure.Settings.Status.Ok>
-  <RimMind.Infrastructure.Settings.Status.NotConfigured>⚠ API Key not configured</RimMind.Infrastructure.Settings.Status.NotConfigured>
-  <RimMind.Infrastructure.Settings.Status.Error>✗ Connection failed</RimMind.Infrastructure.Settings.Status.Error>
-  <RimMind.Infrastructure.Settings.Status.Testing>Testing...</RimMind.Infrastructure.Settings.Status.Testing>
-  <RimMind.Infrastructure.Settings.Show>Show</RimMind.Infrastructure.Settings.Show>
-  <RimMind.Infrastructure.Settings.Hide>Hide</RimMind.Infrastructure.Settings.Hide>
+  <RimMind.Settings.Provider>AI Provider</RimMind.Settings.Provider>
+  <RimMind.Settings.Provider.Desc>Select an AI service provider. Player2 can auto-detect the local desktop app, no manual configuration needed.</RimMind.Settings.Provider.Desc>
+  <RimMind.Settings.Provider.OpenAI>OpenAI Compatible</RimMind.Settings.Provider.OpenAI>
+  <RimMind.Settings.Provider.Player2>Player2</RimMind.Settings.Provider.Player2>
+  <RimMind.Settings.ApiKey>API Key</RimMind.Settings.ApiKey>
+  <RimMind.Settings.ApiKey.Desc>Your AI provider's API key for authentication.</RimMind.Settings.ApiKey.Desc>
+  <RimMind.Settings.ApiEndpoint>API Endpoint</RimMind.Settings.ApiEndpoint>
+  <RimMind.Settings.ApiEndpoint.Desc>AI service API address. Supports OpenAI-compatible interfaces (e.g. DeepSeek, local Ollama).</RimMind.Settings.ApiEndpoint.Desc>
+  <RimMind.Settings.ModelName>Model Name</RimMind.Settings.ModelName>
+  <RimMind.Settings.ModelName.Desc>The model ID to use, e.g. gpt-4o-mini, deepseek-chat.</RimMind.Settings.ModelName.Desc>
+  <RimMind.Settings.ForceJsonMode>Force JSON Mode (response_format)</RimMind.Settings.ForceJsonMode>
+  <RimMind.Settings.ForceJsonModeDesc>Append response_format=json_object to the API request, forcing the model to return JSON. Disable this for local models that don't support this parameter.</RimMind.Settings.ForceJsonModeDesc>
+  <RimMind.Settings.MaxTokens>Max Tokens</RimMind.Settings.MaxTokens>
+  <RimMind.Settings.MaxTokens.Desc>Maximum tokens per AI response. Higher values allow longer replies but increase cost.</RimMind.Settings.MaxTokens.Desc>
+  <RimMind.Settings.Temperature>Temperature</RimMind.Settings.Temperature>
+  <RimMind.Settings.Temperature.Desc>Controls randomness. Lower = more deterministic, higher = more creative. Range: 0.0-2.0</RimMind.Settings.Temperature.Desc>
+  <RimMind.Settings.ResetToDefault>Reset to Default</RimMind.Settings.ResetToDefault>
+  <RimMind.Settings.DebugLogging>Verbose Logging (Player.log)</RimMind.Settings.DebugLogging>
+  <RimMind.Settings.DebugLogging.Desc>Output detailed AI request and response info to Player.log for troubleshooting.</RimMind.Settings.DebugLogging.Desc>
+  <RimMind.Settings.TestConnection>Test Connection</RimMind.Settings.TestConnection>
+  <RimMind.Settings.Status.Ok>✓ Connected</RimMind.Settings.Status.Ok>
+  <RimMind.Settings.Status.NotConfigured>⚠ API Key not configured</RimMind.Settings.Status.NotConfigured>
+  <RimMind.Settings.Status.Error>✗ Connection failed</RimMind.Settings.Status.Error>
+  <RimMind.Settings.Status.Testing>Testing...</RimMind.Settings.Status.Testing>
+  <RimMind.Settings.Show>Show</RimMind.Settings.Show>
+  <RimMind.Settings.Hide>Hide</RimMind.Settings.Hide>
   <!-- Player2 -->
-  <RimMind.Infrastructure.Settings.Player2.Desc>Player2 is an AI gaming assistant platform. When selected, the system will auto-detect the local Player2 desktop app and authenticate, no API Key needed. If the local app is not installed, you can also enter an API Key manually.</RimMind.Infrastructure.Settings.Player2.Desc>
-  <RimMind.Infrastructure.Settings.Player2.ApiKeyOptional>optional</RimMind.Infrastructure.Settings.Player2.ApiKeyOptional>
-  <RimMind.Infrastructure.Settings.Player2.ApiKeyDesc>Player2 prioritizes local desktop app auto-authentication. Only enter an API Key manually if the local app is not installed.</RimMind.Infrastructure.Settings.Player2.ApiKeyDesc>
-  <RimMind.Infrastructure.Settings.Player2.CheckLocal>Detect Local Player2 App</RimMind.Infrastructure.Settings.Player2.CheckLocal>
-  <RimMind.Infrastructure.Settings.Player2.NotAvailable>Player2 not available: local app not detected and no API Key configured</RimMind.Infrastructure.Settings.Player2.NotAvailable>
-  <RimMind.Infrastructure.Settings.Player2.RemoteUrl>Remote API URL</RimMind.Infrastructure.Settings.Player2.RemoteUrl>
-  <RimMind.Infrastructure.Settings.Player2.RemoteUrl.Desc>Player2 remote service URL. Defaults to https://api.player2.game, usually no need to change.</RimMind.Infrastructure.Settings.Player2.RemoteUrl.Desc>
-  <RimMind.Infrastructure.Settings.Player2.BalanceUnknown>Balance: unknown</RimMind.Infrastructure.Settings.Player2.BalanceUnknown>
-  <RimMind.Infrastructure.Settings.Player2.RefreshBalance>Refresh Balance</RimMind.Infrastructure.Settings.Player2.RefreshBalance>
+  <RimMind.Settings.Player2.Desc>Player2 is an AI gaming assistant platform. When selected, the system will auto-detect the local Player2 desktop app and authenticate, no API Key needed. If the local app is not installed, you can also enter an API Key manually.</RimMind.Settings.Player2.Desc>
+  <RimMind.Settings.Player2.ApiKeyOptional>optional</RimMind.Settings.Player2.ApiKeyOptional>
+  <RimMind.Settings.Player2.ApiKeyDesc>Player2 prioritizes local desktop app auto-authentication. Only enter an API Key manually if the local app is not installed.</RimMind.Settings.Player2.ApiKeyDesc>
+  <RimMind.Settings.Player2.CheckLocal>Detect Local Player2 App</RimMind.Settings.Player2.CheckLocal>
+  <RimMind.Settings.Player2.NotAvailable>Player2 not available: local app not detected and no API Key configured</RimMind.Settings.Player2.NotAvailable>
+  <RimMind.Settings.Player2.RemoteUrl>Remote API URL</RimMind.Settings.Player2.RemoteUrl>
+  <RimMind.Settings.Player2.RemoteUrl.Desc>Player2 remote service URL. Defaults to https://api.player2.game, usually no need to change.</RimMind.Settings.Player2.RemoteUrl.Desc>
+  <RimMind.Settings.Player2.BalanceUnknown>Balance: unknown</RimMind.Settings.Player2.BalanceUnknown>
+  <RimMind.Settings.Player2.RefreshBalance>Refresh Balance</RimMind.Settings.Player2.RefreshBalance>
   <!-- Agent Gizmo -->
-  <RimMind.Presentation.Agent.Gizmo.Activate>Activate Agent</RimMind.Presentation.Agent.Gizmo.Activate>
-  <RimMind.Presentation.Agent.Gizmo.Deactivate>Deactivate Agent</RimMind.Presentation.Agent.Gizmo.Deactivate>
-  <RimMind.Presentation.Agent.Gizmo.ToggleDesc>Toggle PawnAgent active state</RimMind.Presentation.Agent.Gizmo.ToggleDesc>
-  <RimMind.Presentation.Agent.Gizmo.DevView>Dev: View Agent</RimMind.Presentation.Agent.Gizmo.DevView>
-  <RimMind.Presentation.Agent.Gizmo.DevViewDesc>Dump Agent internal state to log</RimMind.Presentation.Agent.Gizmo.DevViewDesc>
-  <RimMind.Presentation.Agent.State.Active>Active</RimMind.Presentation.Agent.State.Active>
-  <RimMind.Presentation.Agent.State.Dormant>Dormant</RimMind.Presentation.Agent.State.Dormant>
-  <RimMind.Presentation.Agent.State.Terminated>Terminated</RimMind.Presentation.Agent.State.Terminated>
+  <RimMind.Agent.Gizmo.Activate>Activate Agent</RimMind.Agent.Gizmo.Activate>
+  <RimMind.Agent.Gizmo.Deactivate>Deactivate Agent</RimMind.Agent.Gizmo.Deactivate>
+  <RimMind.Agent.Gizmo.ToggleDesc>Toggle PawnAgent active state</RimMind.Agent.Gizmo.ToggleDesc>
+  <RimMind.Agent.Gizmo.DevView>Dev: View Agent</RimMind.Agent.Gizmo.DevView>
+  <RimMind.Agent.Gizmo.DevViewDesc>Dump Agent internal state to log</RimMind.Agent.Gizmo.DevViewDesc>
+  <RimMind.Agent.State.Active>Active</RimMind.Agent.State.Active>
+  <RimMind.Agent.State.Dormant>Dormant</RimMind.Agent.State.Dormant>
+  <RimMind.Agent.State.Terminated>Terminated</RimMind.Agent.State.Terminated>
   <RimMind.Infrastructure.Player2.LocalDetected>RimMind: Player2 desktop app detected! Using automatic authentication (no API key needed).</RimMind.Infrastructure.Player2.LocalDetected>
   <RimMind.Infrastructure.Player2.LocalNotFound>RimMind: Player2 desktop app not found. Please start the app or add an API key manually.</RimMind.Infrastructure.Player2.LocalNotFound>
   <!-- AICoreSettingsUI.cs - Section headers -->
-  <RimMind.Infrastructure.Settings.Section.ModelBehavior>Model Behavior</RimMind.Infrastructure.Settings.Section.ModelBehavior>
-  <RimMind.Infrastructure.Settings.Section.Request>Request Settings</RimMind.Infrastructure.Settings.Section.Request>
-  <RimMind.Infrastructure.Settings.Section.Debug>Debug</RimMind.Infrastructure.Settings.Section.Debug>
-  <RimMind.Infrastructure.Settings.MaxConcurrent>Max Concurrent Requests</RimMind.Infrastructure.Settings.MaxConcurrent>
-  <RimMind.Infrastructure.Settings.MaxConcurrent.Desc>Maximum number of simultaneous AI requests. Higher values improve responsiveness but increase API costs.</RimMind.Infrastructure.Settings.MaxConcurrent.Desc>
-  <RimMind.Infrastructure.Settings.MaxRetry>Max Retry Count</RimMind.Infrastructure.Settings.MaxRetry>
-  <RimMind.Infrastructure.Settings.MaxRetry.Desc>Maximum number of retries after a request failure. Set to 0 to disable retries.</RimMind.Infrastructure.Settings.MaxRetry.Desc>
-  <RimMind.Infrastructure.Settings.RequestTimeout>Request Timeout (seconds)</RimMind.Infrastructure.Settings.RequestTimeout>
-  <RimMind.Infrastructure.Settings.RequestTimeout.Desc>Maximum time to wait for an AI response before timing out. Increase for slow models or networks.</RimMind.Infrastructure.Settings.RequestTimeout.Desc>
-  <RimMind.Infrastructure.Settings.RequestExpireTicks>Request Expiry (ticks)</RimMind.Infrastructure.Settings.RequestExpireTicks>
-  <RimMind.Infrastructure.Settings.RequestExpireTicks.Desc>Requests older than this tick count are automatically removed from the queue. Prevents stale requests from accumulating. Range: 6000-120000.</RimMind.Infrastructure.Settings.RequestExpireTicks.Desc>
-  <RimMind.Infrastructure.Settings.BehaviorHistoryMax>Behavior History Limit</RimMind.Infrastructure.Settings.BehaviorHistoryMax>
-  <RimMind.Infrastructure.Settings.BehaviorHistoryMax.Desc>Maximum number of behavior history records retained per agent. Higher values provide more context but increase token usage. Range: 10-500.</RimMind.Infrastructure.Settings.BehaviorHistoryMax.Desc>
-  <RimMind.Infrastructure.Settings.QueueProcessInterval>Queue Process Interval (ticks)</RimMind.Infrastructure.Settings.QueueProcessInterval>
-  <RimMind.Infrastructure.Settings.QueueProcessInterval.Desc>Interval in ticks between queue processing cycles. Lower values process requests faster but consume more CPU. Range: 10-300.</RimMind.Infrastructure.Settings.QueueProcessInterval.Desc>
-  <RimMind.Infrastructure.Settings.DefaultModCooldown>Default Mod Cooldown (ticks)</RimMind.Infrastructure.Settings.DefaultModCooldown>
-  <RimMind.Infrastructure.Settings.DefaultModCooldown.Desc>Default cooldown in ticks between consecutive requests for the same mod. Prevents API rate limiting. Individual mods may override this. Range: 600-36000.</RimMind.Infrastructure.Settings.DefaultModCooldown.Desc>
-  <RimMind.Infrastructure.Settings.QueuePaused>Queue: PAUSED</RimMind.Infrastructure.Settings.QueuePaused>
-  <RimMind.Infrastructure.Settings.QueueRunning>Queue: Running</RimMind.Infrastructure.Settings.QueueRunning>
-  <RimMind.Infrastructure.Settings.QueueSeeTab>Queue status has been moved to the "Queue" tab</RimMind.Infrastructure.Settings.QueueSeeTab>
-  <RimMind.Infrastructure.Settings.Tab.Queue>Queue</RimMind.Infrastructure.Settings.Tab.Queue>
-  <RimMind.Infrastructure.Settings.QueueNotAvailable>Queue not initialized (available after loading a save)</RimMind.Infrastructure.Settings.QueueNotAvailable>
-  <RimMind.Infrastructure.Settings.Queue.Status>Overall Status</RimMind.Infrastructure.Settings.Queue.Status>
-  <RimMind.Infrastructure.Settings.Queue.Active>Active Requests</RimMind.Infrastructure.Settings.Queue.Active>
-  <RimMind.Infrastructure.Settings.Queue.Queued>Queued Requests</RimMind.Infrastructure.Settings.Queue.Queued>
-  <RimMind.Infrastructure.Settings.Queue.LocalModel>Local Model</RimMind.Infrastructure.Settings.Queue.LocalModel>
-  <RimMind.Infrastructure.Settings.Queue.Busy>Busy</RimMind.Infrastructure.Settings.Queue.Busy>
-  <RimMind.Infrastructure.Settings.Queue.Idle>Idle</RimMind.Infrastructure.Settings.Queue.Idle>
-  <RimMind.Infrastructure.Settings.Queue.Resume>Resume Queue</RimMind.Infrastructure.Settings.Queue.Resume>
-  <RimMind.Infrastructure.Settings.Queue.Pause>Pause Queue</RimMind.Infrastructure.Settings.Queue.Pause>
-  <RimMind.Infrastructure.Settings.Queue.ClearQueues>Clear Queues</RimMind.Infrastructure.Settings.Queue.ClearQueues>
-  <RimMind.Infrastructure.Settings.Queue.ClearCooldowns>Clear Cooldowns</RimMind.Infrastructure.Settings.Queue.ClearCooldowns>
-  <RimMind.Infrastructure.Settings.Queue.PerMod>Per-Mod Queues</RimMind.Infrastructure.Settings.Queue.PerMod>
-  <RimMind.Infrastructure.Settings.Queue.NoMods>No registered mod queues</RimMind.Infrastructure.Settings.Queue.NoMods>
-  <RimMind.Infrastructure.Settings.Queue.Cooldown>Cooldown</RimMind.Infrastructure.Settings.Queue.Cooldown>
-  <RimMind.Infrastructure.Settings.Queue.Ready>Ready</RimMind.Infrastructure.Settings.Queue.Ready>
-  <RimMind.Infrastructure.Settings.Queue.QueueCount>Queued</RimMind.Infrastructure.Settings.Queue.QueueCount>
-  <RimMind.Infrastructure.Settings.Queue.ActiveRequests>Active Request Details</RimMind.Infrastructure.Settings.Queue.ActiveRequests>
-  <RimMind.Infrastructure.Settings.Queue.NoActive>No active requests</RimMind.Infrastructure.Settings.Queue.NoActive>
-  <RimMind.Infrastructure.Settings.Queue.QueuedRequests>Queued Request Details</RimMind.Infrastructure.Settings.Queue.QueuedRequests>
-  <RimMind.Infrastructure.Settings.Queue.NoQueued>No queued requests</RimMind.Infrastructure.Settings.Queue.NoQueued>
-  <RimMind.Infrastructure.Settings.Queue.Priority>Priority</RimMind.Infrastructure.Settings.Queue.Priority>
-  <RimMind.Infrastructure.Settings.Queue.Attempt>Attempt</RimMind.Infrastructure.Settings.Queue.Attempt>
-  <RimMind.Infrastructure.Settings.Queue.Elapsed>Elapsed</RimMind.Infrastructure.Settings.Queue.Elapsed>
-  <RimMind.Infrastructure.Settings.Queue.Waiting>Waiting</RimMind.Infrastructure.Settings.Queue.Waiting>
-  <RimMind.Infrastructure.Settings.TestMessage>This is a test message, please reply in one sentence.</RimMind.Infrastructure.Settings.TestMessage>
+  <RimMind.Settings.Section.ModelBehavior>Model Behavior</RimMind.Settings.Section.ModelBehavior>
+  <RimMind.Settings.Section.Request>Request Settings</RimMind.Settings.Section.Request>
+  <RimMind.Settings.Section.Debug>Debug</RimMind.Settings.Section.Debug>
+  <RimMind.Settings.MaxConcurrent>Max Concurrent Requests</RimMind.Settings.MaxConcurrent>
+  <RimMind.Settings.MaxConcurrent.Desc>Maximum number of simultaneous AI requests. Higher values improve responsiveness but increase API costs.</RimMind.Settings.MaxConcurrent.Desc>
+  <RimMind.Settings.MaxRetry>Max Retry Count</RimMind.Settings.MaxRetry>
+  <RimMind.Settings.MaxRetry.Desc>Maximum number of retries after a request failure. Set to 0 to disable retries.</RimMind.Settings.MaxRetry.Desc>
+  <RimMind.Settings.RequestTimeout>Request Timeout (seconds)</RimMind.Settings.RequestTimeout>
+  <RimMind.Settings.RequestTimeout.Desc>Maximum time to wait for an AI response before timing out. Increase for slow models or networks.</RimMind.Settings.RequestTimeout.Desc>
+  <RimMind.Settings.RequestExpireTicks>Request Expiry (ticks)</RimMind.Settings.RequestExpireTicks>
+  <RimMind.Settings.RequestExpireTicks.Desc>Requests older than this tick count are automatically removed from the queue. Prevents stale requests from accumulating. Range: 6000-120000.</RimMind.Settings.RequestExpireTicks.Desc>
+  <RimMind.Settings.BehaviorHistoryMax>Behavior History Limit</RimMind.Settings.BehaviorHistoryMax>
+  <RimMind.Settings.BehaviorHistoryMax.Desc>Maximum number of behavior history records retained per agent. Higher values provide more context but increase token usage. Range: 10-500.</RimMind.Settings.BehaviorHistoryMax.Desc>
+  <RimMind.Settings.QueueProcessInterval>Queue Process Interval (ticks)</RimMind.Settings.QueueProcessInterval>
+  <RimMind.Settings.QueueProcessInterval.Desc>Interval in ticks between queue processing cycles. Lower values process requests faster but consume more CPU. Range: 10-300.</RimMind.Settings.QueueProcessInterval.Desc>
+  <RimMind.Settings.DefaultModCooldown>Default Mod Cooldown (ticks)</RimMind.Settings.DefaultModCooldown>
+  <RimMind.Settings.DefaultModCooldown.Desc>Default cooldown in ticks between consecutive requests for the same mod. Prevents API rate limiting. Individual mods may override this. Range: 600-36000.</RimMind.Settings.DefaultModCooldown.Desc>
+  <RimMind.Settings.QueuePaused>Queue: PAUSED</RimMind.Settings.QueuePaused>
+  <RimMind.Settings.QueueRunning>Queue: Running</RimMind.Settings.QueueRunning>
+  <RimMind.Settings.QueueSeeTab>Queue status has been moved to the "Queue" tab</RimMind.Settings.QueueSeeTab>
+  <RimMind.Settings.Tab.Queue>Queue</RimMind.Settings.Tab.Queue>
+  <RimMind.Settings.QueueNotAvailable>Queue not initialized (available after loading a save)</RimMind.Settings.QueueNotAvailable>
+  <RimMind.Settings.Queue.Status>Overall Status</RimMind.Settings.Queue.Status>
+  <RimMind.Settings.Queue.Active>Active Requests</RimMind.Settings.Queue.Active>
+  <RimMind.Settings.Queue.Queued>Queued Requests</RimMind.Settings.Queue.Queued>
+  <RimMind.Settings.Queue.LocalModel>Local Model</RimMind.Settings.Queue.LocalModel>
+  <RimMind.Settings.Queue.Busy>Busy</RimMind.Settings.Queue.Busy>
+  <RimMind.Settings.Queue.Idle>Idle</RimMind.Settings.Queue.Idle>
+  <RimMind.Settings.Queue.Resume>Resume Queue</RimMind.Settings.Queue.Resume>
+  <RimMind.Settings.Queue.Pause>Pause Queue</RimMind.Settings.Queue.Pause>
+  <RimMind.Settings.Queue.ClearQueues>Clear Queues</RimMind.Settings.Queue.ClearQueues>
+  <RimMind.Settings.Queue.ClearCooldowns>Clear Cooldowns</RimMind.Settings.Queue.ClearCooldowns>
+  <RimMind.Settings.Queue.PerMod>Per-Mod Queues</RimMind.Settings.Queue.PerMod>
+  <RimMind.Settings.Queue.NoMods>No registered mod queues</RimMind.Settings.Queue.NoMods>
+  <RimMind.Settings.Queue.Cooldown>Cooldown</RimMind.Settings.Queue.Cooldown>
+  <RimMind.Settings.Queue.Ready>Ready</RimMind.Settings.Queue.Ready>
+  <RimMind.Settings.Queue.QueueCount>Queued</RimMind.Settings.Queue.QueueCount>
+  <RimMind.Settings.Queue.ActiveRequests>Active Request Details</RimMind.Settings.Queue.ActiveRequests>
+  <RimMind.Settings.Queue.NoActive>No active requests</RimMind.Settings.Queue.NoActive>
+  <RimMind.Settings.Queue.QueuedRequests>Queued Request Details</RimMind.Settings.Queue.QueuedRequests>
+  <RimMind.Settings.Queue.NoQueued>No queued requests</RimMind.Settings.Queue.NoQueued>
+  <RimMind.Settings.Queue.Priority>Priority</RimMind.Settings.Queue.Priority>
+  <RimMind.Settings.Queue.Attempt>Attempt</RimMind.Settings.Queue.Attempt>
+  <RimMind.Settings.Queue.Elapsed>Elapsed</RimMind.Settings.Queue.Elapsed>
+  <RimMind.Settings.Queue.Waiting>Waiting</RimMind.Settings.Queue.Waiting>
+  <RimMind.Settings.TestMessage>This is a test message, please reply in one sentence.</RimMind.Settings.TestMessage>
   <!-- AICoreSettingsUI.cs - Context filter -->
-  <RimMind.Presentation.Context.Desc>Control which game state information is injected into the AI Prompt. Disabling unnecessary fields saves token consumption.</RimMind.Presentation.Context.Desc>
-  <RimMind.Presentation.Context.Presets>Quick Presets</RimMind.Presentation.Context.Presets>
-  <RimMind.Presentation.Context.PawnInfo>Pawn Info</RimMind.Presentation.Context.PawnInfo>
-  <RimMind.Presentation.Context.Environment>Environment</RimMind.Presentation.Context.Environment>
-  <RimMind.Presentation.Context.ResetDefault>Reset to Default (Standard)</RimMind.Presentation.Context.ResetDefault>
+  <RimMind.Context.Desc>Control which game state information is injected into the AI Prompt. Disabling unnecessary fields saves token consumption.</RimMind.Context.Desc>
+  <RimMind.Context.Presets>Quick Presets</RimMind.Context.Presets>
+  <RimMind.Context.PawnInfo>Pawn Info</RimMind.Context.PawnInfo>
+  <RimMind.Context.Environment>Environment</RimMind.Context.Environment>
+  <RimMind.Context.ResetDefault>Reset to Default (Standard)</RimMind.Context.ResetDefault>
   <!-- Context presets -->
-  <RimMind.Presentation.Context.Preset.Minimal>Minimal</RimMind.Presentation.Context.Preset.Minimal>
-  <RimMind.Presentation.Context.Preset.Minimal.Desc>Core info only, least tokens</RimMind.Presentation.Context.Preset.Minimal.Desc>
-  <RimMind.Presentation.Context.Preset.Standard>Standard</RimMind.Presentation.Context.Preset.Standard>
-  <RimMind.Presentation.Context.Preset.Standard.Desc>Balanced detail and cost (Recommended)</RimMind.Presentation.Context.Preset.Standard.Desc>
-  <RimMind.Presentation.Context.Preset.Full>Full</RimMind.Presentation.Context.Preset.Full>
-  <RimMind.Presentation.Context.Preset.Full.Desc>All fields, highest token cost</RimMind.Presentation.Context.Preset.Full.Desc>
-  <RimMind.Presentation.Context.Preset.Custom>Custom</RimMind.Presentation.Context.Preset.Custom>
-  <RimMind.Presentation.Context.Preset.Custom.Desc>Manually select fields</RimMind.Presentation.Context.Preset.Custom.Desc>
+  <RimMind.Context.Preset.Minimal>Minimal</RimMind.Context.Preset.Minimal>
+  <RimMind.Context.Preset.Minimal.Desc>Core info only, least tokens</RimMind.Context.Preset.Minimal.Desc>
+  <RimMind.Context.Preset.Standard>Standard</RimMind.Context.Preset.Standard>
+  <RimMind.Context.Preset.Standard.Desc>Balanced detail and cost (Recommended)</RimMind.Context.Preset.Standard.Desc>
+  <RimMind.Context.Preset.Full>Full</RimMind.Context.Preset.Full>
+  <RimMind.Context.Preset.Full.Desc>All fields, highest token cost</RimMind.Context.Preset.Full.Desc>
+  <RimMind.Context.Preset.Custom>Custom</RimMind.Context.Preset.Custom>
+  <RimMind.Context.Preset.Custom.Desc>Manually select fields</RimMind.Context.Preset.Custom.Desc>
   <!-- Context - Pawn info checkboxes -->
-  <RimMind.Presentation.Context.IncludeRace>Race</RimMind.Presentation.Context.IncludeRace>
-  <RimMind.Presentation.Context.IncludeRace.Desc>Inject the pawn's race info into AI context.</RimMind.Presentation.Context.IncludeRace.Desc>
-  <RimMind.Presentation.Context.IncludeAge>Age</RimMind.Presentation.Context.IncludeAge>
-  <RimMind.Presentation.Context.IncludeAge.Desc>Inject the pawn's age into AI context.</RimMind.Presentation.Context.IncludeAge.Desc>
-  <RimMind.Presentation.Context.IncludeGender>Gender</RimMind.Presentation.Context.IncludeGender>
-  <RimMind.Presentation.Context.IncludeGender.Desc>Inject the pawn's gender into AI context.</RimMind.Presentation.Context.IncludeGender.Desc>
-  <RimMind.Presentation.Context.IncludeBackstory>Backstory</RimMind.Presentation.Context.IncludeBackstory>
-  <RimMind.Presentation.Context.IncludeBackstory.Desc>Inject the pawn's childhood and adulthood backstories into AI context.</RimMind.Presentation.Context.IncludeBackstory.Desc>
-  <RimMind.Presentation.Context.IncludeIdeology>Ideology (requires Ideology DLC)</RimMind.Presentation.Context.IncludeIdeology>
-  <RimMind.Presentation.Context.IncludeIdeology.Desc>Inject the pawn's ideology and beliefs into AI context.</RimMind.Presentation.Context.IncludeIdeology.Desc>
-  <RimMind.Presentation.Context.IncludeTraits>Traits</RimMind.Presentation.Context.IncludeTraits>
-  <RimMind.Presentation.Context.IncludeTraits.Desc>Inject the pawn's character traits into AI context.</RimMind.Presentation.Context.IncludeTraits.Desc>
-  <RimMind.Presentation.Context.IncludeSkills>Skills</RimMind.Presentation.Context.IncludeSkills>
-  <RimMind.Presentation.Context.IncludeSkills.Desc>Inject the pawn's skill levels into AI context. Skills below the minimum level are filtered out.</RimMind.Presentation.Context.IncludeSkills.Desc>
-  <RimMind.Presentation.Context.MinSkillLevel>Min Skill Level</RimMind.Presentation.Context.MinSkillLevel>
-  <RimMind.Presentation.Context.MinSkillLevel.Desc>Skills below this level are not injected into AI context, saving tokens.</RimMind.Presentation.Context.MinSkillLevel.Desc>
-  <RimMind.Presentation.Context.IncludeHealth>Health</RimMind.Presentation.Context.IncludeHealth>
-  <RimMind.Presentation.Context.IncludeHealth.Desc>Inject the pawn's health issues (wounds, diseases, implants, etc.) into AI context.</RimMind.Presentation.Context.IncludeHealth.Desc>
-  <RimMind.Presentation.Context.IncludeCapacities>Capacities</RimMind.Presentation.Context.IncludeCapacities>
-  <RimMind.Presentation.Context.IncludeCapacities.Desc>Inject the pawn's body capacities (manipulation, moving, sight, etc.) into AI context.</RimMind.Presentation.Context.IncludeCapacities.Desc>
-  <RimMind.Presentation.Context.IncludeMood>Mood</RimMind.Presentation.Context.IncludeMood>
-  <RimMind.Presentation.Context.IncludeMood.Desc>Inject the pawn's current mood percentage into AI context.</RimMind.Presentation.Context.IncludeMood.Desc>
-  <RimMind.Presentation.Context.IncludeMoodThoughts>Mood Factors (top 8)</RimMind.Presentation.Context.IncludeMoodThoughts>
-  <RimMind.Presentation.Context.IncludeMoodThoughts.Desc>Inject the top 8 mood-affecting factors into AI context.</RimMind.Presentation.Context.IncludeMoodThoughts.Desc>
-  <RimMind.Presentation.Context.IncludeCurrentJob>Current Job</RimMind.Presentation.Context.IncludeCurrentJob>
-  <RimMind.Presentation.Context.IncludeCurrentJob.Desc>Inject the pawn's current job into AI context.</RimMind.Presentation.Context.IncludeCurrentJob.Desc>
-  <RimMind.Presentation.Context.IncludeWorkPriorities>Work Assignments</RimMind.Presentation.Context.IncludeWorkPriorities>
-  <RimMind.Presentation.Context.IncludeWorkPriorities.Desc>Inject the pawn's work priority assignments into AI context.</RimMind.Presentation.Context.IncludeWorkPriorities.Desc>
-  <RimMind.Presentation.Context.IncludeEquipment>Weapons &amp; Apparel</RimMind.Presentation.Context.IncludeEquipment>
-  <RimMind.Presentation.Context.IncludeEquipment.Desc>Inject the pawn's equipped weapons and apparel into AI context.</RimMind.Presentation.Context.IncludeEquipment.Desc>
-  <RimMind.Presentation.Context.IncludeInventory>Carried Items</RimMind.Presentation.Context.IncludeInventory>
-  <RimMind.Presentation.Context.IncludeInventory.Desc>Inject the pawn's carried items (inventory) into AI context.</RimMind.Presentation.Context.IncludeInventory.Desc>
-  <RimMind.Presentation.Context.IncludeLocation>Location &amp; Temperature</RimMind.Presentation.Context.IncludeLocation>
-  <RimMind.Presentation.Context.IncludeLocation.Desc>Inject the pawn's location (indoors/outdoors/room type) and local temperature into AI context.</RimMind.Presentation.Context.IncludeLocation.Desc>
-  <RimMind.Presentation.Context.IncludeRelations>Relations</RimMind.Presentation.Context.IncludeRelations>
-  <RimMind.Presentation.Context.IncludeRelations.Desc>Inject the pawn's social relationships into AI context.</RimMind.Presentation.Context.IncludeRelations.Desc>
-  <RimMind.Presentation.Context.IncludeGenes>Genes (requires Biotech DLC)</RimMind.Presentation.Context.IncludeGenes>
-  <RimMind.Presentation.Context.IncludeGenes.Desc>Inject the pawn's gene information into AI context.</RimMind.Presentation.Context.IncludeGenes.Desc>
-  <RimMind.Presentation.Context.IncludeSurroundings>Surroundings</RimMind.Presentation.Context.IncludeSurroundings>
-  <RimMind.Presentation.Context.IncludeSurroundings.Desc>Inject nearby buildings, items, and animals into AI context.</RimMind.Presentation.Context.IncludeSurroundings.Desc>
-  <RimMind.Presentation.Context.IncludeCombatStatus>Combat Status</RimMind.Presentation.Context.IncludeCombatStatus>
-  <RimMind.Presentation.Context.IncludeCombatStatus.Desc>Inject whether the pawn is in combat or drafted into AI context.</RimMind.Presentation.Context.IncludeCombatStatus.Desc>
+  <RimMind.Context.IncludeRace>Race</RimMind.Context.IncludeRace>
+  <RimMind.Context.IncludeRace.Desc>Inject the pawn's race info into AI context.</RimMind.Context.IncludeRace.Desc>
+  <RimMind.Context.IncludeAge>Age</RimMind.Context.IncludeAge>
+  <RimMind.Context.IncludeAge.Desc>Inject the pawn's age into AI context.</RimMind.Context.IncludeAge.Desc>
+  <RimMind.Context.IncludeGender>Gender</RimMind.Context.IncludeGender>
+  <RimMind.Context.IncludeGender.Desc>Inject the pawn's gender into AI context.</RimMind.Context.IncludeGender.Desc>
+  <RimMind.Context.IncludeBackstory>Backstory</RimMind.Context.IncludeBackstory>
+  <RimMind.Context.IncludeBackstory.Desc>Inject the pawn's childhood and adulthood backstories into AI context.</RimMind.Context.IncludeBackstory.Desc>
+  <RimMind.Context.IncludeIdeology>Ideology (requires Ideology DLC)</RimMind.Context.IncludeIdeology>
+  <RimMind.Context.IncludeIdeology.Desc>Inject the pawn's ideology and beliefs into AI context.</RimMind.Context.IncludeIdeology.Desc>
+  <RimMind.Context.IncludeTraits>Traits</RimMind.Context.IncludeTraits>
+  <RimMind.Context.IncludeTraits.Desc>Inject the pawn's character traits into AI context.</RimMind.Context.IncludeTraits.Desc>
+  <RimMind.Context.IncludeSkills>Skills</RimMind.Context.IncludeSkills>
+  <RimMind.Context.IncludeSkills.Desc>Inject the pawn's skill levels into AI context. Skills below the minimum level are filtered out.</RimMind.Context.IncludeSkills.Desc>
+  <RimMind.Context.MinSkillLevel>Min Skill Level</RimMind.Context.MinSkillLevel>
+  <RimMind.Context.MinSkillLevel.Desc>Skills below this level are not injected into AI context, saving tokens.</RimMind.Context.MinSkillLevel.Desc>
+  <RimMind.Context.IncludeHealth>Health</RimMind.Context.IncludeHealth>
+  <RimMind.Context.IncludeHealth.Desc>Inject the pawn's health issues (wounds, diseases, implants, etc.) into AI context.</RimMind.Context.IncludeHealth.Desc>
+  <RimMind.Context.IncludeCapacities>Capacities</RimMind.Context.IncludeCapacities>
+  <RimMind.Context.IncludeCapacities.Desc>Inject the pawn's body capacities (manipulation, moving, sight, etc.) into AI context.</RimMind.Context.IncludeCapacities.Desc>
+  <RimMind.Context.IncludeMood>Mood</RimMind.Context.IncludeMood>
+  <RimMind.Context.IncludeMood.Desc>Inject the pawn's current mood percentage into AI context.</RimMind.Context.IncludeMood.Desc>
+  <RimMind.Context.IncludeMoodThoughts>Mood Factors (top 8)</RimMind.Context.IncludeMoodThoughts>
+  <RimMind.Context.IncludeMoodThoughts.Desc>Inject the top 8 mood-affecting factors into AI context.</RimMind.Context.IncludeMoodThoughts.Desc>
+  <RimMind.Context.IncludeCurrentJob>Current Job</RimMind.Context.IncludeCurrentJob>
+  <RimMind.Context.IncludeCurrentJob.Desc>Inject the pawn's current job into AI context.</RimMind.Context.IncludeCurrentJob.Desc>
+  <RimMind.Context.IncludeWorkPriorities>Work Assignments</RimMind.Context.IncludeWorkPriorities>
+  <RimMind.Context.IncludeWorkPriorities.Desc>Inject the pawn's work priority assignments into AI context.</RimMind.Context.IncludeWorkPriorities.Desc>
+  <RimMind.Context.IncludeEquipment>Weapons &amp; Apparel</RimMind.Context.IncludeEquipment>
+  <RimMind.Context.IncludeEquipment.Desc>Inject the pawn's equipped weapons and apparel into AI context.</RimMind.Context.IncludeEquipment.Desc>
+  <RimMind.Context.IncludeInventory>Carried Items</RimMind.Context.IncludeInventory>
+  <RimMind.Context.IncludeInventory.Desc>Inject the pawn's carried items (inventory) into AI context.</RimMind.Context.IncludeInventory.Desc>
+  <RimMind.Context.IncludeLocation>Location &amp; Temperature</RimMind.Context.IncludeLocation>
+  <RimMind.Context.IncludeLocation.Desc>Inject the pawn's location (indoors/outdoors/room type) and local temperature into AI context.</RimMind.Context.IncludeLocation.Desc>
+  <RimMind.Context.IncludeRelations>Relations</RimMind.Context.IncludeRelations>
+  <RimMind.Context.IncludeRelations.Desc>Inject the pawn's social relationships into AI context.</RimMind.Context.IncludeRelations.Desc>
+  <RimMind.Context.IncludeGenes>Genes (requires Biotech DLC)</RimMind.Context.IncludeGenes>
+  <RimMind.Context.IncludeGenes.Desc>Inject the pawn's gene information into AI context.</RimMind.Context.IncludeGenes.Desc>
+  <RimMind.Context.IncludeSurroundings>Surroundings</RimMind.Context.IncludeSurroundings>
+  <RimMind.Context.IncludeSurroundings.Desc>Inject nearby buildings, items, and animals into AI context.</RimMind.Context.IncludeSurroundings.Desc>
+  <RimMind.Context.IncludeCombatStatus>Combat Status</RimMind.Context.IncludeCombatStatus>
+  <RimMind.Context.IncludeCombatStatus.Desc>Inject whether the pawn is in combat or drafted into AI context.</RimMind.Context.IncludeCombatStatus.Desc>
   <!-- Context - Environment checkboxes -->
-  <RimMind.Presentation.Context.IncludeGameTime>Game Time</RimMind.Presentation.Context.IncludeGameTime>
-  <RimMind.Presentation.Context.IncludeGameTime.Desc>Inject the current game date and time into AI context.</RimMind.Presentation.Context.IncludeGameTime.Desc>
-  <RimMind.Presentation.Context.IncludeColonistCount>Colonist Count</RimMind.Presentation.Context.IncludeColonistCount>
-  <RimMind.Presentation.Context.IncludeColonistCount.Desc>Inject the colonist and prisoner counts into AI context.</RimMind.Presentation.Context.IncludeColonistCount.Desc>
-  <RimMind.Presentation.Context.IncludeColonistNames>Colonist Names</RimMind.Presentation.Context.IncludeColonistNames>
-  <RimMind.Presentation.Context.IncludeColonistNames.Desc>Inject the names of colonists and prisoners into AI context.</RimMind.Presentation.Context.IncludeColonistNames.Desc>
-  <RimMind.Presentation.Context.IncludeWealth>Wealth Level</RimMind.Presentation.Context.IncludeWealth>
-  <RimMind.Presentation.Context.IncludeWealth.Desc>Inject the colony wealth and threat level into AI context.</RimMind.Presentation.Context.IncludeWealth.Desc>
-  <RimMind.Presentation.Context.IncludeFood>Food Storage</RimMind.Presentation.Context.IncludeFood>
-  <RimMind.Presentation.Context.IncludeFood.Desc>Inject the colony's total food nutrition into AI context.</RimMind.Presentation.Context.IncludeFood.Desc>
-  <RimMind.Presentation.Context.IncludeSeason>Season</RimMind.Presentation.Context.IncludeSeason>
-  <RimMind.Presentation.Context.IncludeSeason.Desc>Inject the current season into AI context.</RimMind.Presentation.Context.IncludeSeason.Desc>
-  <RimMind.Presentation.Context.IncludeWeather>Weather</RimMind.Presentation.Context.IncludeWeather>
-  <RimMind.Presentation.Context.IncludeWeather.Desc>Inject the current weather conditions into AI context.</RimMind.Presentation.Context.IncludeWeather.Desc>
-  <RimMind.Presentation.Context.IncludeThreats>Threat Level</RimMind.Presentation.Context.IncludeThreats>
-  <RimMind.Presentation.Context.IncludeThreats.Desc>Inject the current map threat level into AI context.</RimMind.Presentation.Context.IncludeThreats.Desc>
-  <RimMind.Presentation.Context.ContextBudget>Context Budget</RimMind.Presentation.Context.ContextBudget>
-  <RimMind.Presentation.Context.ContextBudget.Desc>Controls how much context information is included in AI requests. Higher values provide more detail but use more tokens.</RimMind.Presentation.Context.ContextBudget.Desc>
-  <RimMind.Presentation.Context.BudgetW1>Pawn Budget Weight</RimMind.Presentation.Context.BudgetW1>
-  <RimMind.Presentation.Context.BudgetW1.Desc>Weight for pawn-related context in the budget scheduler. Higher values allocate more tokens to pawn information.</RimMind.Presentation.Context.BudgetW1.Desc>
-  <RimMind.Presentation.Context.BudgetW2>Map Budget Weight</RimMind.Presentation.Context.BudgetW2>
-  <RimMind.Presentation.Context.BudgetW2.Desc>Weight for map/environment context in the budget scheduler. Higher values allocate more tokens to environmental information.</RimMind.Presentation.Context.BudgetW2.Desc>
-  <RimMind.Infrastructure.Settings.ContextDiffLifetime>Context Diff Lifetime</RimMind.Infrastructure.Settings.ContextDiffLifetime>
-  <RimMind.Infrastructure.Settings.ContextDiffLifetime.Desc>How long (in ticks) context change diffs remain before expiring. Lower values keep context more current; higher values preserve change history longer.</RimMind.Infrastructure.Settings.ContextDiffLifetime.Desc>
-  <RimMind.Infrastructure.Settings.CalibrateInterval>Context Calibrate Interval</RimMind.Infrastructure.Settings.CalibrateInterval>
-  <RimMind.Infrastructure.Settings.CalibrateInterval.Desc>Interval between Flywheel context calibrations (ticks). Shorter intervals update more frequently but cost more CPU. Range: 5000-60000.</RimMind.Infrastructure.Settings.CalibrateInterval.Desc>
+  <RimMind.Context.IncludeGameTime>Game Time</RimMind.Context.IncludeGameTime>
+  <RimMind.Context.IncludeGameTime.Desc>Inject the current game date and time into AI context.</RimMind.Context.IncludeGameTime.Desc>
+  <RimMind.Context.IncludeColonistCount>Colonist Count</RimMind.Context.IncludeColonistCount>
+  <RimMind.Context.IncludeColonistCount.Desc>Inject the colonist and prisoner counts into AI context.</RimMind.Context.IncludeColonistCount.Desc>
+  <RimMind.Context.IncludeColonistNames>Colonist Names</RimMind.Context.IncludeColonistNames>
+  <RimMind.Context.IncludeColonistNames.Desc>Inject the names of colonists and prisoners into AI context.</RimMind.Context.IncludeColonistNames.Desc>
+  <RimMind.Context.IncludeWealth>Wealth Level</RimMind.Context.IncludeWealth>
+  <RimMind.Context.IncludeWealth.Desc>Inject the colony wealth and threat level into AI context.</RimMind.Context.IncludeWealth.Desc>
+  <RimMind.Context.IncludeFood>Food Storage</RimMind.Context.IncludeFood>
+  <RimMind.Context.IncludeFood.Desc>Inject the colony's total food nutrition into AI context.</RimMind.Context.IncludeFood.Desc>
+  <RimMind.Context.IncludeSeason>Season</RimMind.Context.IncludeSeason>
+  <RimMind.Context.IncludeSeason.Desc>Inject the current season into AI context.</RimMind.Context.IncludeSeason.Desc>
+  <RimMind.Context.IncludeWeather>Weather</RimMind.Context.IncludeWeather>
+  <RimMind.Context.IncludeWeather.Desc>Inject the current weather conditions into AI context.</RimMind.Context.IncludeWeather.Desc>
+  <RimMind.Context.IncludeThreats>Threat Level</RimMind.Context.IncludeThreats>
+  <RimMind.Context.IncludeThreats.Desc>Inject the current map threat level into AI context.</RimMind.Context.IncludeThreats.Desc>
+  <RimMind.Context.ContextBudget>Context Budget</RimMind.Context.ContextBudget>
+  <RimMind.Context.ContextBudget.Desc>Controls how much context information is included in AI requests. Higher values provide more detail but use more tokens.</RimMind.Context.ContextBudget.Desc>
+  <RimMind.Context.BudgetW1>Pawn Budget Weight</RimMind.Context.BudgetW1>
+  <RimMind.Context.BudgetW1.Desc>Weight for pawn-related context in the budget scheduler. Higher values allocate more tokens to pawn information.</RimMind.Context.BudgetW1.Desc>
+  <RimMind.Context.BudgetW2>Map Budget Weight</RimMind.Context.BudgetW2>
+  <RimMind.Context.BudgetW2.Desc>Weight for map/environment context in the budget scheduler. Higher values allocate more tokens to environmental information.</RimMind.Context.BudgetW2.Desc>
+  <RimMind.Settings.ContextDiffLifetime>Context Diff Lifetime</RimMind.Settings.ContextDiffLifetime>
+  <RimMind.Settings.ContextDiffLifetime.Desc>How long (in ticks) context change diffs remain before expiring. Lower values keep context more current; higher values preserve change history longer.</RimMind.Settings.ContextDiffLifetime.Desc>
+  <RimMind.Settings.CalibrateInterval>Context Calibrate Interval</RimMind.Settings.CalibrateInterval>
+  <RimMind.Settings.CalibrateInterval.Desc>Interval between Flywheel context calibrations (ticks). Shorter intervals update more frequently but cost more CPU. Range: 5000-60000.</RimMind.Settings.CalibrateInterval.Desc>
   <!-- GameContextBuilder.cs - Map context -->
-  <RimMind.Presentation.Prompt.MapStatusHeader>[Current Map Status]</RimMind.Presentation.Prompt.MapStatusHeader>
-  <RimMind.Presentation.Prompt.TimeFormat>Time: {0} {1}:00</RimMind.Presentation.Prompt.TimeFormat>
-  <RimMind.Presentation.Prompt.ColonistCount>Colonists: {0} ({1})</RimMind.Presentation.Prompt.ColonistCount>
-  <RimMind.Presentation.Prompt.ColonistCountBrief>Colonists: {0}</RimMind.Presentation.Prompt.ColonistCountBrief>
-  <RimMind.Presentation.Prompt.PrisonerCount>Prisoners: {0} ({1})</RimMind.Presentation.Prompt.PrisonerCount>
-  <RimMind.Presentation.Prompt.Threat.Extreme>Extreme</RimMind.Presentation.Prompt.Threat.Extreme>
-  <RimMind.Presentation.Prompt.Threat.High>High</RimMind.Presentation.Prompt.Threat.High>
-  <RimMind.Presentation.Prompt.Threat.Medium>Medium</RimMind.Presentation.Prompt.Threat.Medium>
-  <RimMind.Presentation.Prompt.Threat.Low>Low</RimMind.Presentation.Prompt.Threat.Low>
-  <RimMind.Presentation.Prompt.WealthWithThreat>Wealth: {0} (Threat: {1})</RimMind.Presentation.Prompt.WealthWithThreat>
-  <RimMind.Presentation.Prompt.ThreatLevel>Threat Level: {0}</RimMind.Presentation.Prompt.ThreatLevel>
-  <RimMind.Presentation.Prompt.FoodStorage>Food Storage: ~{0} nutrition</RimMind.Presentation.Prompt.FoodStorage>
-  <RimMind.Presentation.Prompt.Season>Season: {0}</RimMind.Presentation.Prompt.Season>
-  <RimMind.Presentation.Prompt.Weather>Weather: {0}</RimMind.Presentation.Prompt.Weather>
+  <RimMind.Prompt.MapStatusHeader>[Current Map Status]</RimMind.Prompt.MapStatusHeader>
+  <RimMind.Prompt.TimeFormat>Time: {0} {1}:00</RimMind.Prompt.TimeFormat>
+  <RimMind.Prompt.ColonistCount>Colonists: {0} ({1})</RimMind.Prompt.ColonistCount>
+  <RimMind.Prompt.ColonistCountBrief>Colonists: {0}</RimMind.Prompt.ColonistCountBrief>
+  <RimMind.Prompt.PrisonerCount>Prisoners: {0} ({1})</RimMind.Prompt.PrisonerCount>
+  <RimMind.Prompt.Threat.Extreme>Extreme</RimMind.Prompt.Threat.Extreme>
+  <RimMind.Prompt.Threat.High>High</RimMind.Prompt.Threat.High>
+  <RimMind.Prompt.Threat.Medium>Medium</RimMind.Prompt.Threat.Medium>
+  <RimMind.Prompt.Threat.Low>Low</RimMind.Prompt.Threat.Low>
+  <RimMind.Prompt.WealthWithThreat>Wealth: {0} (Threat: {1})</RimMind.Prompt.WealthWithThreat>
+  <RimMind.Prompt.ThreatLevel>Threat Level: {0}</RimMind.Prompt.ThreatLevel>
+  <RimMind.Prompt.FoodStorage>Food Storage: ~{0} nutrition</RimMind.Prompt.FoodStorage>
+  <RimMind.Prompt.Season>Season: {0}</RimMind.Prompt.Season>
+  <RimMind.Prompt.Weather>Weather: {0}</RimMind.Prompt.Weather>
   <!-- GameContextBuilder.cs - Pawn context -->
-  <RimMind.Presentation.Prompt.PawnStatusHeader>[{0}'s Status]</RimMind.Presentation.Prompt.PawnStatusHeader>
-  <RimMind.Presentation.Prompt.AgeFormat>{0}yo</RimMind.Presentation.Prompt.AgeFormat>
-  <RimMind.Presentation.Prompt.Childhood>Childhood: {0}</RimMind.Presentation.Prompt.Childhood>
-  <RimMind.Presentation.Prompt.Adulthood>Adulthood: {0}</RimMind.Presentation.Prompt.Adulthood>
-  <RimMind.Presentation.Prompt.Backstory>Background: {0}</RimMind.Presentation.Prompt.Backstory>
-  <RimMind.Presentation.Prompt.IdeologyFormat>Ideology: {0}{1}</RimMind.Presentation.Prompt.IdeologyFormat>
-  <RimMind.Presentation.Prompt.MoodBreak>Mood: {0} (Mental break: {1})</RimMind.Presentation.Prompt.MoodBreak>
-  <RimMind.Presentation.Prompt.MoodDowned>Mood: {0} (Downed)</RimMind.Presentation.Prompt.MoodDowned>
-  <RimMind.Presentation.Prompt.MoodPercent>Mood: {0} {1}%</RimMind.Presentation.Prompt.MoodPercent>
-  <RimMind.Presentation.Prompt.MoodFactors>Mood Factors: {0}</RimMind.Presentation.Prompt.MoodFactors>
-  <RimMind.Presentation.Prompt.FullBody>Full Body</RimMind.Presentation.Prompt.FullBody>
-  <RimMind.Presentation.Prompt.HealthIssues>Health Issues: {0}</RimMind.Presentation.Prompt.HealthIssues>
-  <RimMind.Presentation.Prompt.Capacities>Capacities: {0}</RimMind.Presentation.Prompt.Capacities>
-  <RimMind.Presentation.Prompt.Skills>Skills: {0}</RimMind.Presentation.Prompt.Skills>
-  <RimMind.Presentation.Prompt.None>None</RimMind.Presentation.Prompt.None>
-  <RimMind.Presentation.Prompt.CurrentJob>Current Job: {0}</RimMind.Presentation.Prompt.CurrentJob>
-  <RimMind.Presentation.Prompt.WorkPriorities>Work Assignments: {0}</RimMind.Presentation.Prompt.WorkPriorities>
-  <RimMind.Presentation.Prompt.Traits>Traits: {0}</RimMind.Presentation.Prompt.Traits>
-  <RimMind.Presentation.Prompt.Weapon>Weapon: {0}</RimMind.Presentation.Prompt.Weapon>
-  <RimMind.Presentation.Prompt.Apparel>Apparel: {0}</RimMind.Presentation.Prompt.Apparel>
-  <RimMind.Presentation.Prompt.Inventory>Carried: {0}</RimMind.Presentation.Prompt.Inventory>
-  <RimMind.Presentation.Prompt.Damaged>damaged</RimMind.Presentation.Prompt.Damaged>
-  <RimMind.Presentation.Prompt.Room.Indoors>Indoors</RimMind.Presentation.Prompt.Room.Indoors>
-  <RimMind.Presentation.Prompt.Room.Outdoors>Outdoors</RimMind.Presentation.Prompt.Room.Outdoors>
-  <RimMind.Presentation.Prompt.Location>Location: {0}  Temp: {1}°C</RimMind.Presentation.Prompt.Location>
-  <RimMind.Presentation.Prompt.Genes>Genes: {0}</RimMind.Presentation.Prompt.Genes>
-  <RimMind.Presentation.Prompt.Relations>Relations: {0}</RimMind.Presentation.Prompt.Relations>
-  <RimMind.Presentation.Prompt.InCombat>In Combat (target: {0})</RimMind.Presentation.Prompt.InCombat>
-  <RimMind.Presentation.Prompt.Drafted>Drafted</RimMind.Presentation.Prompt.Drafted>
-  <RimMind.Presentation.Prompt.Unknown>Unknown</RimMind.Presentation.Prompt.Unknown>
-  <RimMind.Presentation.Prompt.Surroundings>Surroundings: {0}</RimMind.Presentation.Prompt.Surroundings>
-  <RimMind.Presentation.Prompt.SurroundingsBuildings>Buildings: {0}</RimMind.Presentation.Prompt.SurroundingsBuildings>
-  <RimMind.Presentation.Prompt.SurroundingsItems>Items: {0}</RimMind.Presentation.Prompt.SurroundingsItems>
-  <RimMind.Presentation.Prompt.SurroundingsAnimals>Animals: {0}</RimMind.Presentation.Prompt.SurroundingsAnimals>
+  <RimMind.Prompt.PawnStatusHeader>[{0}'s Status]</RimMind.Prompt.PawnStatusHeader>
+  <RimMind.Prompt.AgeFormat>{0}yo</RimMind.Prompt.AgeFormat>
+  <RimMind.Prompt.Childhood>Childhood: {0}</RimMind.Prompt.Childhood>
+  <RimMind.Prompt.Adulthood>Adulthood: {0}</RimMind.Prompt.Adulthood>
+  <RimMind.Prompt.Backstory>Background: {0}</RimMind.Prompt.Backstory>
+  <RimMind.Prompt.IdeologyFormat>Ideology: {0}{1}</RimMind.Prompt.IdeologyFormat>
+  <RimMind.Prompt.MoodBreak>Mood: {0} (Mental break: {1})</RimMind.Prompt.MoodBreak>
+  <RimMind.Prompt.MoodDowned>Mood: {0} (Downed)</RimMind.Prompt.MoodDowned>
+  <RimMind.Prompt.MoodPercent>Mood: {0} {1}%</RimMind.Prompt.MoodPercent>
+  <RimMind.Prompt.MoodFactors>Mood Factors: {0}</RimMind.Prompt.MoodFactors>
+  <RimMind.Prompt.FullBody>Full Body</RimMind.Prompt.FullBody>
+  <RimMind.Prompt.HealthIssues>Health Issues: {0}</RimMind.Prompt.HealthIssues>
+  <RimMind.Prompt.Capacities>Capacities: {0}</RimMind.Prompt.Capacities>
+  <RimMind.Prompt.Skills>Skills: {0}</RimMind.Prompt.Skills>
+  <RimMind.Prompt.None>None</RimMind.Prompt.None>
+  <RimMind.Prompt.CurrentJob>Current Job: {0}</RimMind.Prompt.CurrentJob>
+  <RimMind.Prompt.WorkPriorities>Work Assignments: {0}</RimMind.Prompt.WorkPriorities>
+  <RimMind.Prompt.Traits>Traits: {0}</RimMind.Prompt.Traits>
+  <RimMind.Prompt.Weapon>Weapon: {0}</RimMind.Prompt.Weapon>
+  <RimMind.Prompt.Apparel>Apparel: {0}</RimMind.Prompt.Apparel>
+  <RimMind.Prompt.Inventory>Carried: {0}</RimMind.Prompt.Inventory>
+  <RimMind.Prompt.Damaged>damaged</RimMind.Prompt.Damaged>
+  <RimMind.Prompt.Room.Indoors>Indoors</RimMind.Prompt.Room.Indoors>
+  <RimMind.Prompt.Room.Outdoors>Outdoors</RimMind.Prompt.Room.Outdoors>
+  <RimMind.Prompt.Location>Location: {0}  Temp: {1}°C</RimMind.Prompt.Location>
+  <RimMind.Prompt.Genes>Genes: {0}</RimMind.Prompt.Genes>
+  <RimMind.Prompt.Relations>Relations: {0}</RimMind.Prompt.Relations>
+  <RimMind.Prompt.InCombat>In Combat (target: {0})</RimMind.Prompt.InCombat>
+  <RimMind.Prompt.Drafted>Drafted</RimMind.Prompt.Drafted>
+  <RimMind.Prompt.Unknown>Unknown</RimMind.Prompt.Unknown>
+  <RimMind.Prompt.Surroundings>Surroundings: {0}</RimMind.Prompt.Surroundings>
+  <RimMind.Prompt.SurroundingsBuildings>Buildings: {0}</RimMind.Prompt.SurroundingsBuildings>
+  <RimMind.Prompt.SurroundingsItems>Items: {0}</RimMind.Prompt.SurroundingsItems>
+  <RimMind.Prompt.SurroundingsAnimals>Animals: {0}</RimMind.Prompt.SurroundingsAnimals>
   <!-- GameContextBuilder.cs - Compact Pawn context -->
-  <RimMind.Presentation.Prompt.CompactMentalBreak>Mental Break</RimMind.Presentation.Prompt.CompactMentalBreak>
-  <RimMind.Presentation.Prompt.CompactDowned>Downed</RimMind.Presentation.Prompt.CompactDowned>
-  <RimMind.Presentation.Prompt.CompactMood>Mood: {0}</RimMind.Presentation.Prompt.CompactMood>
-  <RimMind.Presentation.Prompt.CompactHealth>Health: {0}</RimMind.Presentation.Prompt.CompactHealth>
-  <RimMind.Presentation.Prompt.CompactJob>Job: {0}</RimMind.Presentation.Prompt.CompactJob>
-  <RimMind.Presentation.Prompt.CompactLocation>Location: {0}  Temp: {1}°C</RimMind.Presentation.Prompt.CompactLocation>
-  <RimMind.Presentation.Prompt.CompactWeapon>Weapon: {0}</RimMind.Presentation.Prompt.CompactWeapon>
-  <RimMind.Presentation.Prompt.EnvironmentChange>[Environment Change]</RimMind.Presentation.Prompt.EnvironmentChange>
-  <RimMind.Presentation.Prompt.StateChange>{0}: {1} → {2}</RimMind.Presentation.Prompt.StateChange>
-  <RimMind.Presentation.Prompt.MapSummary>[Map] Time:{0} Colonists:{1}</RimMind.Presentation.Prompt.MapSummary>
+  <RimMind.Prompt.CompactMentalBreak>Mental Break</RimMind.Prompt.CompactMentalBreak>
+  <RimMind.Prompt.CompactDowned>Downed</RimMind.Prompt.CompactDowned>
+  <RimMind.Prompt.CompactMood>Mood: {0}</RimMind.Prompt.CompactMood>
+  <RimMind.Prompt.CompactHealth>Health: {0}</RimMind.Prompt.CompactHealth>
+  <RimMind.Prompt.CompactJob>Job: {0}</RimMind.Prompt.CompactJob>
+  <RimMind.Prompt.CompactLocation>Location: {0}  Temp: {1}°C</RimMind.Prompt.CompactLocation>
+  <RimMind.Prompt.CompactWeapon>Weapon: {0}</RimMind.Prompt.CompactWeapon>
+  <RimMind.Prompt.EnvironmentChange>[Environment Change]</RimMind.Prompt.EnvironmentChange>
+  <RimMind.Prompt.StateChange>{0}: {1} → {2}</RimMind.Prompt.StateChange>
+  <RimMind.Prompt.MapSummary>[Map] Time:{0} Colonists:{1}</RimMind.Prompt.MapSummary>
   <!-- AIDebugLog.cs -->
-  <RimMind.Presentation.Prompt.Time.Format>D{0} {1}:{2}</RimMind.Presentation.Prompt.Time.Format>
+  <RimMind.Prompt.Time.Format>D{0} {1}:{2}</RimMind.Prompt.Time.Format>
   <!-- AICoreDebugActions.cs -->
   <RimMind.Infrastructure.Debug.ConnectionSuccess>[RimMind] Connection successful: {0}</RimMind.Infrastructure.Debug.ConnectionSuccess>
   <RimMind.Infrastructure.Debug.ConnectionFailed>[RimMind] Connection failed: {0}</RimMind.Infrastructure.Debug.ConnectionFailed>
   <RimMind.Infrastructure.Debug.RequestSent>[RimMind] Request sent, waiting for response...</RimMind.Infrastructure.Debug.RequestSent>
   <!-- AICoreSettingsUI.cs - Prompts tab -->
-  <RimMind.Presentation.Prompts.Desc>Edit global custom prompts here. They will be appended to the end of the AI Prompt. Leave empty to skip.</RimMind.Presentation.Prompts.Desc>
-  <RimMind.Presentation.Prompts.PawnPrompt>Global Pawn Prompt</RimMind.Presentation.Prompts.PawnPrompt>
-  <RimMind.Presentation.Prompts.PawnPromptLabel>Custom prompt appended after pawn context (leave empty to skip):</RimMind.Presentation.Prompts.PawnPromptLabel>
-  <RimMind.Presentation.Prompts.MapPrompt>Global Map Prompt</RimMind.Presentation.Prompts.MapPrompt>
-  <RimMind.Presentation.Prompts.MapPromptLabel>Custom prompt appended after map context (leave empty to skip):</RimMind.Presentation.Prompts.MapPromptLabel>
+  <RimMind.Prompts.Desc>Edit global custom prompts here. They will be appended to the end of the AI Prompt. Leave empty to skip.</RimMind.Prompts.Desc>
+  <RimMind.Prompts.PawnPrompt>Global Pawn Prompt</RimMind.Prompts.PawnPrompt>
+  <RimMind.Prompts.PawnPromptLabel>Custom prompt appended after pawn context (leave empty to skip):</RimMind.Prompts.PawnPromptLabel>
+  <RimMind.Prompts.MapPrompt>Global Map Prompt</RimMind.Prompts.MapPrompt>
+  <RimMind.Prompts.MapPromptLabel>Custom prompt appended after map context (leave empty to skip):</RimMind.Prompts.MapPromptLabel>
   <!-- ContextComposer.cs -->
-  <RimMind.Presentation.Prompt.HistoryOmitted>({0} earlier records omitted)</RimMind.Presentation.Prompt.HistoryOmitted>
+  <RimMind.Prompt.HistoryOmitted>({0} earlier records omitted)</RimMind.Prompt.HistoryOmitted>
   <!-- AICoreAPI.cs - Custom prompt headers -->
-  <RimMind.Presentation.Prompt.CustomPawnHeader>[Player Custom Pawn Prompt]</RimMind.Presentation.Prompt.CustomPawnHeader>
-  <RimMind.Presentation.Prompt.CustomMapHeader>[Player Custom Map Prompt]</RimMind.Presentation.Prompt.CustomMapHeader>
+  <RimMind.Prompt.CustomPawnHeader>[Player Custom Pawn Prompt]</RimMind.Prompt.CustomPawnHeader>
+  <RimMind.Prompt.CustomMapHeader>[Player Custom Map Prompt]</RimMind.Prompt.CustomMapHeader>
   <!-- Shared Prompt sections -->
-  <RimMind.Presentation.Prompt.JsonConstraint>Only return valid JSON format. Do not output anything else. Do not wrap in markdown code blocks.</RimMind.Presentation.Prompt.JsonConstraint>
-  <RimMind.Presentation.Prompt.Fallback>If you cannot determine, return a default value or empty result.</RimMind.Presentation.Prompt.Fallback>
-  <RimMind.Presentation.Prompt.WorldConstraint>You are in the RimWorld game world. Do not break the fourth wall. Do not mention game mechanics, "player", or "game".</RimMind.Presentation.Prompt.WorldConstraint>
-  <RimMind.Presentation.Prompt.NoFourthWall>Do not break the fourth wall. Do not mention game mechanics, code, data structures, or the concept of "player". Act naturally as your character.</RimMind.Presentation.Prompt.NoFourthWall>
-  <RimMind.Presentation.Prompt.CustomHeader>[Player Custom Rules]</RimMind.Presentation.Prompt.CustomHeader>
+  <RimMind.Prompt.JsonConstraint>Only return valid JSON format. Do not output anything else. Do not wrap in markdown code blocks.</RimMind.Prompt.JsonConstraint>
+  <RimMind.Prompt.Fallback>If you cannot determine, return a default value or empty result.</RimMind.Prompt.Fallback>
+  <RimMind.Prompt.WorldConstraint>You are in the RimWorld game world. Do not break the fourth wall. Do not mention game mechanics, "player", or "game".</RimMind.Prompt.WorldConstraint>
+  <RimMind.Prompt.NoFourthWall>Do not break the fourth wall. Do not mention game mechanics, code, data structures, or the concept of "player". Act naturally as your character.</RimMind.Prompt.NoFourthWall>
+  <RimMind.Prompt.CustomHeader>[Player Custom Rules]</RimMind.Prompt.CustomHeader>
   <!-- RequestOverlay.cs -->
-  <RimMind.Infrastructure.UI.RequestOverlay.Title>RimMind Requests</RimMind.Infrastructure.UI.RequestOverlay.Title>
-  <RimMind.Infrastructure.UI.RequestOverlay.SystemBlocked>[System Blocked] {0}</RimMind.Infrastructure.UI.RequestOverlay.SystemBlocked>
-  <RimMind.Infrastructure.UI.RequestOverlay.Empty>No pending requests</RimMind.Infrastructure.UI.RequestOverlay.Empty>
-  <RimMind.Infrastructure.UI.RequestOverlay.Details>Details</RimMind.Infrastructure.UI.RequestOverlay.Details>
-  <RimMind.Infrastructure.UI.RequestOverlay.DragResize>Drag to resize</RimMind.Infrastructure.UI.RequestOverlay.DragResize>
+  <RimMind.UI.RequestOverlay.Title>RimMind Requests</RimMind.UI.RequestOverlay.Title>
+  <RimMind.UI.RequestOverlay.SystemBlocked>[System Blocked] {0}</RimMind.UI.RequestOverlay.SystemBlocked>
+  <RimMind.UI.RequestOverlay.Empty>No pending requests</RimMind.UI.RequestOverlay.Empty>
+  <RimMind.UI.RequestOverlay.Details>Details</RimMind.UI.RequestOverlay.Details>
+  <RimMind.UI.RequestOverlay.DragResize>Drag to resize</RimMind.UI.RequestOverlay.DragResize>
   <!-- Window_RequestLog.cs -->
-  <RimMind.Infrastructure.UI.RequestLog.Title>Approval &amp; Requests</RimMind.Infrastructure.UI.RequestLog.Title>
-  <RimMind.Infrastructure.UI.RequestLog.ClearAll>Clear All</RimMind.Infrastructure.UI.RequestLog.ClearAll>
-  <RimMind.Infrastructure.UI.RequestLog.Count>{0} pending</RimMind.Infrastructure.UI.RequestLog.Count>
+  <RimMind.UI.RequestLog.Title>Approval &amp; Requests</RimMind.UI.RequestLog.Title>
+  <RimMind.UI.RequestLog.ClearAll>Clear All</RimMind.UI.RequestLog.ClearAll>
+  <RimMind.UI.RequestLog.Count>{0} pending</RimMind.UI.RequestLog.Count>
   <!-- Window_AgentDialogue.cs -->
-  <RimMind.Infrastructure.UI.AgentDialogue.Title>Agent Dialogue</RimMind.Infrastructure.UI.AgentDialogue.Title>
-  <RimMind.Infrastructure.UI.AgentDialogue.Send>Send</RimMind.Infrastructure.UI.AgentDialogue.Send>
-  <RimMind.Infrastructure.UI.AgentDialogue.PlayerLabel>Player</RimMind.Infrastructure.UI.AgentDialogue.PlayerLabel>
-  <RimMind.Infrastructure.UI.AgentDialogue.AgentLabel>Agent</RimMind.Infrastructure.UI.AgentDialogue.AgentLabel>
-  <RimMind.Infrastructure.UI.AgentDialogue.Thinking>(thinking...)</RimMind.Infrastructure.UI.AgentDialogue.Thinking>
+  <RimMind.UI.AgentDialogue.Title>Agent Dialogue</RimMind.UI.AgentDialogue.Title>
+  <RimMind.UI.AgentDialogue.Send>Send</RimMind.UI.AgentDialogue.Send>
+  <RimMind.UI.AgentDialogue.PlayerLabel>Player</RimMind.UI.AgentDialogue.PlayerLabel>
+  <RimMind.UI.AgentDialogue.AgentLabel>Agent</RimMind.UI.AgentDialogue.AgentLabel>
+  <RimMind.UI.AgentDialogue.Thinking>(thinking...)</RimMind.UI.AgentDialogue.Thinking>
   <!-- Task Instructions (npc_task_instruction) -->
-  <RimMind.Presentation.Prompt.TaskInstruction.Base>You are in the RimWorld game world.\n\nOutput constraints:\n- You must return valid JSON format\n- Do not wrap in markdown code blocks\n- If you cannot determine, return a default value or empty result\n\nBehavior constraints:\n- Do not break the fourth wall\n- Do not mention game mechanics, code, data structures, or the concept of "player"\n- Act naturally as your character</RimMind.Presentation.Prompt.TaskInstruction.Base>
-  <RimMind.Presentation.Prompt.TaskInstruction.WorldOnly>You are in the RimWorld game world.</RimMind.Presentation.Prompt.TaskInstruction.WorldOnly>
+  <RimMind.Prompt.TaskInstruction.Base>You are in the RimWorld game world.\n\nOutput constraints:\n- You must return valid JSON format\n- Do not wrap in markdown code blocks\n- If you cannot determine, return a default value or empty result\n\nBehavior constraints:\n- Do not break the fourth wall\n- Do not mention game mechanics, code, data structures, or the concept of "player"\n- Act naturally as your character</RimMind.Prompt.TaskInstruction.Base>
+  <RimMind.Prompt.TaskInstruction.WorldOnly>You are in the RimWorld game world.</RimMind.Prompt.TaskInstruction.WorldOnly>
   <!-- System Instruction (system_instruction) -->
-  <RimMind.Presentation.Prompt.SystemInstruction.Pawn>You are {0}, a colonist in a RimWorld colony.</RimMind.Presentation.Prompt.SystemInstruction.Pawn>
-  <RimMind.Presentation.Prompt.SystemInstruction.Advisor>You are a colonial advisor. Recommend the most appropriate actions for colonists based on their current state and available actions.</RimMind.Presentation.Prompt.SystemInstruction.Advisor>
-  <RimMind.Presentation.Prompt.Dialogue.SpeakerSays>{0} says to you: {1}</RimMind.Presentation.Prompt.Dialogue.SpeakerSays>
-  <RimMind.Presentation.Prompt.AutoAwait>Based on the above context, provide your {0} response.</RimMind.Presentation.Prompt.AutoAwait>
+  <RimMind.Prompt.SystemInstruction.Pawn>You are {0}, a colonist in a RimWorld colony.</RimMind.Prompt.SystemInstruction.Pawn>
+  <RimMind.Prompt.SystemInstruction.Advisor>You are a colonial advisor. Recommend the most appropriate actions for colonists based on their current state and available actions.</RimMind.Prompt.SystemInstruction.Advisor>
+  <RimMind.Prompt.Dialogue.SpeakerSays>{0} says to you: {1}</RimMind.Prompt.Dialogue.SpeakerSays>
+  <RimMind.Prompt.AutoAwait>Based on the above context, provide your {0} response.</RimMind.Prompt.AutoAwait>
   <!-- Identity (npc_identity) -->
-  <RimMind.Presentation.Prompt.Identity.Name>Name: {0}</RimMind.Presentation.Prompt.Identity.Name>
-  <RimMind.Presentation.Prompt.Identity.ShortName>ShortName: {0}</RimMind.Presentation.Prompt.Identity.ShortName>
-  <RimMind.Presentation.Prompt.Identity.Description>Description: {0}</RimMind.Presentation.Prompt.Identity.Description>
+  <RimMind.Prompt.Identity.Name>Name: {0}</RimMind.Prompt.Identity.Name>
+  <RimMind.Prompt.Identity.ShortName>ShortName: {0}</RimMind.Prompt.Identity.ShortName>
+  <RimMind.Prompt.Identity.Description>Description: {0}</RimMind.Prompt.Identity.Description>
   <!-- Commands (npc_commands) -->
-  <RimMind.Presentation.Prompt.Commands.Available>Available commands:</RimMind.Presentation.Prompt.Commands.Available>
-  <RimMind.Presentation.Prompt.Commands.Entry>- {0}: {1}</RimMind.Presentation.Prompt.Commands.Entry>
+  <RimMind.Prompt.Commands.Available>Available commands:</RimMind.Prompt.Commands.Available>
+  <RimMind.Prompt.Commands.Entry>- {0}: {1}</RimMind.Prompt.Commands.Entry>
   <!-- World Rules (world_rules) -->
-  <RimMind.Presentation.Prompt.WorldRules.Header>Core rules:</RimMind.Presentation.Prompt.WorldRules.Header>
-  <RimMind.Presentation.Prompt.WorldRules.Survival>- Colonists must survive by managing food, shelter, and mood</RimMind.Presentation.Prompt.WorldRules.Survival>
-  <RimMind.Presentation.Prompt.WorldRules.Combat>- Combat is dangerous; avoid unnecessary fights</RimMind.Presentation.Prompt.WorldRules.Combat>
-  <RimMind.Presentation.Prompt.WorldRules.Relationships>- Relationships affect mood and productivity</RimMind.Presentation.Prompt.WorldRules.Relationships>
-  <RimMind.Presentation.Prompt.WorldRules.Weather>- Weather and seasons impact survival</RimMind.Presentation.Prompt.WorldRules.Weather>
-  <RimMind.Presentation.Prompt.WorldRules.Medical>- Medical needs must be addressed promptly</RimMind.Presentation.Prompt.WorldRules.Medical>
+  <RimMind.Prompt.WorldRules.Header>Core rules:</RimMind.Prompt.WorldRules.Header>
+  <RimMind.Prompt.WorldRules.Survival>- Colonists must survive by managing food, shelter, and mood</RimMind.Prompt.WorldRules.Survival>
+  <RimMind.Prompt.WorldRules.Combat>- Combat is dangerous; avoid unnecessary fights</RimMind.Prompt.WorldRules.Combat>
+  <RimMind.Prompt.WorldRules.Relationships>- Relationships affect mood and productivity</RimMind.Prompt.WorldRules.Relationships>
+  <RimMind.Prompt.WorldRules.Weather>- Weather and seasons impact survival</RimMind.Prompt.WorldRules.Weather>
+  <RimMind.Prompt.WorldRules.Medical>- Medical needs must be addressed promptly</RimMind.Prompt.WorldRules.Medical>
   <!-- Pawn Description (NpcProfileBuilder) -->
-  <RimMind.Presentation.Prompt.PawnDesc.Name>Name: {0}</RimMind.Presentation.Prompt.PawnDesc.Name>
-  <RimMind.Presentation.Prompt.PawnDesc.Backstory>Backstory: {0}</RimMind.Presentation.Prompt.PawnDesc.Backstory>
-  <RimMind.Presentation.Prompt.PawnDesc.Traits>Traits: {0}</RimMind.Presentation.Prompt.PawnDesc.Traits>
-  <RimMind.Presentation.Prompt.PawnDesc.Skills>Skills: {0}</RimMind.Presentation.Prompt.PawnDesc.Skills>
+  <RimMind.Prompt.PawnDesc.Name>Name: {0}</RimMind.Prompt.PawnDesc.Name>
+  <RimMind.Prompt.PawnDesc.Backstory>Backstory: {0}</RimMind.Prompt.PawnDesc.Backstory>
+  <RimMind.Prompt.PawnDesc.Traits>Traits: {0}</RimMind.Prompt.PawnDesc.Traits>
+  <RimMind.Prompt.PawnDesc.Skills>Skills: {0}</RimMind.Prompt.PawnDesc.Skills>
   <!-- Command Descriptions (NpcProfileBuilder) -->
-  <RimMind.Presentation.Prompt.Command.ExpressEmotion>Express an emotion or feeling</RimMind.Presentation.Prompt.Command.ExpressEmotion>
-  <RimMind.Presentation.Prompt.Command.ChangeRelationship>Change relationship with another pawn</RimMind.Presentation.Prompt.Command.ChangeRelationship>
+  <RimMind.Prompt.Command.ExpressEmotion>Express an emotion or feeling</RimMind.Prompt.Command.ExpressEmotion>
+  <RimMind.Prompt.Command.ChangeRelationship>Change relationship with another pawn</RimMind.Prompt.Command.ChangeRelationship>
   <!-- L1-L3 ExtractXxx methods -->
-  <RimMind.Presentation.Prompt.Health.Healthy>Healthy</RimMind.Presentation.Prompt.Health.Healthy>
-  <RimMind.Presentation.Prompt.Mood.MentalBreak>Mental break: {0}</RimMind.Presentation.Prompt.Mood.MentalBreak>
-  <RimMind.Presentation.Prompt.Job.Idle>Idle</RimMind.Presentation.Prompt.Job.Idle>
-  <RimMind.Presentation.Prompt.Combat.Drafted>Drafted</RimMind.Presentation.Prompt.Combat.Drafted>
-  <RimMind.Presentation.Prompt.Combat.Fighting>Fighting: {0}</RimMind.Presentation.Prompt.Combat.Fighting>
-  <RimMind.Presentation.Prompt.Combat.NotInCombat>Not in combat</RimMind.Presentation.Prompt.Combat.NotInCombat>
-  <RimMind.Presentation.Prompt.Colony.Status>Pop: {0} Wealth: {1} Threats: {2}</RimMind.Presentation.Prompt.Colony.Status>
-  <RimMind.Presentation.Prompt.Target.Info>Target: {0}</RimMind.Presentation.Prompt.Target.Info>
+  <RimMind.Prompt.Health.Healthy>Healthy</RimMind.Prompt.Health.Healthy>
+  <RimMind.Prompt.Mood.MentalBreak>Mental break: {0}</RimMind.Prompt.Mood.MentalBreak>
+  <RimMind.Prompt.Job.Idle>Idle</RimMind.Prompt.Job.Idle>
+  <RimMind.Prompt.Combat.Drafted>Drafted</RimMind.Prompt.Combat.Drafted>
+  <RimMind.Prompt.Combat.Fighting>Fighting: {0}</RimMind.Prompt.Combat.Fighting>
+  <RimMind.Prompt.Combat.NotInCombat>Not in combat</RimMind.Prompt.Combat.NotInCombat>
+  <RimMind.Prompt.Colony.Status>Pop: {0} Wealth: {1} Threats: {2}</RimMind.Prompt.Colony.Status>
+  <RimMind.Prompt.Target.Info>Target: {0}</RimMind.Prompt.Target.Info>
   <!-- Agent Gizmo - Dialogue -->
-  <RimMind.Presentation.Agent.Gizmo.Dialogue>Chat</RimMind.Presentation.Agent.Gizmo.Dialogue>
-  <RimMind.Presentation.Agent.Gizmo.DialogueDesc>Chat with the AI-controlled pawn</RimMind.Presentation.Agent.Gizmo.DialogueDesc>
+  <RimMind.Agent.Gizmo.Dialogue>Chat</RimMind.Agent.Gizmo.Dialogue>
+  <RimMind.Agent.Gizmo.DialogueDesc>Chat with the AI-controlled pawn</RimMind.Agent.Gizmo.DialogueDesc>
   <!-- Flywheel autoApplyMode UI -->
-  <RimMind.Infrastructure.UI.FlywheelAutoApply>Flywheel: auto-apply parameter recommendations</RimMind.Infrastructure.UI.FlywheelAutoApply>
-  <RimMind.Infrastructure.UI.FlywheelAutoApply.Desc>When enabled, Flywheel automatically applies recommended context parameter adjustments</RimMind.Infrastructure.UI.FlywheelAutoApply.Desc>
-  <RimMind.Infrastructure.UI.FlywheelAutoApply.Off>Off</RimMind.Infrastructure.UI.FlywheelAutoApply.Off>
-  <RimMind.Infrastructure.UI.FlywheelAutoApply.LogOnly>Log Only</RimMind.Infrastructure.UI.FlywheelAutoApply.LogOnly>
-  <RimMind.Infrastructure.UI.FlywheelAutoApply.Apply>Apply with Log</RimMind.Infrastructure.UI.FlywheelAutoApply.Apply>
-  <RimMind.Infrastructure.UI.FlywheelConfidence>Confidence threshold: {0}</RimMind.Infrastructure.UI.FlywheelConfidence>
-  <RimMind.Infrastructure.UI.FlywheelConfidence.Desc>Auto-apply only when recommendation confidence reaches this threshold</RimMind.Infrastructure.UI.FlywheelConfidence.Desc>
+  <RimMind.UI.FlywheelAutoApply>Flywheel: auto-apply parameter recommendations</RimMind.UI.FlywheelAutoApply>
+  <RimMind.UI.FlywheelAutoApply.Desc>When enabled, Flywheel automatically applies recommended context parameter adjustments</RimMind.UI.FlywheelAutoApply.Desc>
+  <RimMind.UI.FlywheelAutoApply.Off>Off</RimMind.UI.FlywheelAutoApply.Off>
+  <RimMind.UI.FlywheelAutoApply.LogOnly>Log Only</RimMind.UI.FlywheelAutoApply.LogOnly>
+  <RimMind.UI.FlywheelAutoApply.Apply>Apply with Log</RimMind.UI.FlywheelAutoApply.Apply>
+  <RimMind.UI.FlywheelConfidence>Confidence threshold: {0}</RimMind.UI.FlywheelConfidence>
+  <RimMind.UI.FlywheelConfidence.Desc>Auto-apply only when recommendation confidence reaches this threshold</RimMind.UI.FlywheelConfidence.Desc>
   <RimMind.Application.Scenario.Dialogue>Dialogue scenario</RimMind.Application.Scenario.Dialogue>
   <RimMind.Application.Scenario.Decision>Decision scenario</RimMind.Application.Scenario.Decision>
   <RimMind.Application.Scenario.Personality>Personality evaluation scenario</RimMind.Application.Scenario.Personality>

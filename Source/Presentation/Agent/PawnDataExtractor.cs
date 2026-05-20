@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
 using Verse;
 
@@ -8,6 +11,13 @@ namespace RimMind.Presentation.Agent
 {
     public static class PawnDataExtractor
     {
+        private static ILogSink? _logSink;
+
+        public static void Initialize(ILogSink? logSink)
+        {
+            _logSink = logSink;
+        }
+
         public static PawnExtractedData Extract(Pawn pawn)
         {
             var result = new PawnExtractedData();
@@ -50,7 +60,7 @@ namespace RimMind.Presentation.Agent
                 if (pawn.Map != null)
                     result.SeasonLabel = pawn.Map.gameConditionManager?.ActiveConditions?.Select(c => c.Label)?.ToCommaList() ?? "";
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: SeasonLabel failed for {pawn.Name}: {ex.Message}"); }
             result.ColonistCount = pawn.Map?.mapPawns?.FreeColonistsCount ?? 0;
             result.ColonyWealth = pawn.Map?.wealthWatcher?.WealthTotal ?? 0f;
             result.ThreatCount = 0;
@@ -70,7 +80,7 @@ namespace RimMind.Presentation.Agent
                         if (gene != null && gene.def != null)
                             result.NotableGenes.Add(gene.def.label ?? gene.def.defName);
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Genes failed for {pawn.Name}: {ex.Message}"); }
 
             result.MoodThoughts = new List<MoodThoughtEntry>();
             try
@@ -84,7 +94,7 @@ namespace RimMind.Presentation.Agent
                                 Offset = thought.MoodOffset()
                             });
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: MoodThoughts failed for {pawn.Name}: {ex.Message}"); }
 
             result.Capacities = new List<CapacityEntry>();
             try
@@ -95,7 +105,7 @@ namespace RimMind.Presentation.Agent
                         result.Capacities.Add(new CapacityEntry { Label = capDef.label ?? capDef.defName, Level = level });
                 }
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Capacities failed for {pawn.Name}: {ex.Message}"); }
 
             result.WorkPriorities = new List<WorkPriorityEntry>();
             try
@@ -105,7 +115,7 @@ namespace RimMind.Presentation.Agent
                         if (wtd != null && pawn.workSettings.GetPriority(wtd) > 0)
                             result.WorkPriorities.Add(new WorkPriorityEntry { Label = wtd.labelShort ?? wtd.defName, Priority = pawn.workSettings.GetPriority(wtd) });
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: WorkPriorities failed for {pawn.Name}: {ex.Message}"); }
 
             result.ApparelLabels = new List<string>();
             try
@@ -115,7 +125,7 @@ namespace RimMind.Presentation.Agent
                         if (apparel != null)
                             result.ApparelLabels.Add(apparel.Label ?? apparel.def?.label ?? "");
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Apparel failed for {pawn.Name}: {ex.Message}"); }
 
             result.InventoryItems = new Dictionary<string, int>();
             try
@@ -132,7 +142,7 @@ namespace RimMind.Presentation.Agent
                                 result.InventoryItems[key] = count;
                         }
             }
-            catch { }
+            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Inventory failed for {pawn.Name}: {ex.Message}"); }
 
             if (pawn.skills?.skills != null)
                 foreach (var s in pawn.skills.skills)

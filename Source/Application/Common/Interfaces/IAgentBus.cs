@@ -6,6 +6,8 @@ namespace RimMind.Application.Common.Interfaces
 {
     public interface IAgentBus
     {
+        event Action? SubscribersCleared;
+
         string Subscribe<T>(Action<T> handler) where T : AgentBusEvent;
         void Subscribe<T>(string key, Action<T> handler) where T : AgentBusEvent;
         void Unsubscribe<T>(string key) where T : AgentBusEvent;

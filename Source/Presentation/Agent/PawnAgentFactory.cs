@@ -1,25 +1,23 @@
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnAgentFactory : IPawnAgentFactory, IAgentFactory
+    public class PawnAgentFactory : IPawnAgentFactory
     {
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;
 
-        public PawnAgentFactory(IAgentTickSettings? tickSettings = null, IAgentBus? agentBus = null)
+        public PawnAgentFactory(IAgentTickSettings? tickSettings, IAgentBus agentBus)
         {
             _tickSettings = tickSettings;
-            _agentBus = agentBus ?? RimMindServiceLocator.Get<IAgentBus>()!;
+            _agentBus = agentBus;
         }
 
         public IPawnAgent Create(Pawn pawn, IAgentBus agentBus)
         {
-            var tickSettings = _tickSettings ?? RimMindServiceLocator.Get<IAgentTickSettings>();
-            return new PawnAgent(pawn, tickSettings!, agentBus);
+            return new PawnAgent(pawn, _tickSettings!, agentBus);
         }
 
         public void SerializeAgent(ref IPawnAgent? agent, string label)
@@ -27,18 +25,6 @@ namespace RimMind.Presentation.Agent
             PawnAgent? concrete = agent as PawnAgent;
             Scribe_Deep.Look(ref concrete, label);
             agent = concrete;
-        }
-
-        IAgentControl IAgentFactory.CreateAgent(object pawn, IAgentBus agentBus)
-        {
-            return Create((Pawn)pawn, agentBus);
-        }
-
-        void IAgentFactory.SerializeAgent(ref IAgentControl? agent, string label)
-        {
-            IPawnAgent? pawnAgent = agent as IPawnAgent;
-            SerializeAgent(ref pawnAgent, label);
-            agent = pawnAgent;
         }
     }
 }

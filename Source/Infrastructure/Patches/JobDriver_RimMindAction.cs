@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Extension;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Events;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.Verse;
+using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 using Verse.AI;
 using RimMind.Domain.ValueObjects;
@@ -14,6 +14,15 @@ namespace RimMind.Infrastructure.Patches
 {
     public class JobDriver_RimMindAction : JobDriver
     {
+        private static IAgentActionBridge? _cachedBridge;
+        private static IAgentBus? _cachedAgentBus;
+
+        private static IAgentActionBridge? GetBridge()
+            => _cachedBridge ??= RimMindServiceLocator.Get<IAgentActionBridge>();
+
+        private static IAgentBus? GetAgentBus()
+            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
+
         private string ActionId => job.def.defName == "RimMind_GenericAction" ? (job.GetTarget(TargetIndex.A).Thing as Pawn)?.LabelShortCap ?? "unknown" : job.def.defName;
         private string EventId => job.loadID.ToString("x8");
 
@@ -34,7 +43,7 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                var bridge = RimMindServiceLocator.Get<IAgentActionBridge>();
+                var bridge = GetBridge();
                 if (bridge == null)
                 {
                     EndJobWith(JobCondition.Incompletable);
@@ -63,7 +72,7 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                RimMindServiceLocator.Get<IAgentBus>()?.Publish(new DecisionEvent(
+                GetAgentBus()?.Publish(new DecisionEvent(
                     $"NPC-{pawn.thingIDNumber}",
                     pawn.thingIDNumber,
                     "job_driven",

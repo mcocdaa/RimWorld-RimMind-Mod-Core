@@ -5,7 +5,7 @@ using RimMind.Domain.Enums;
 
 namespace RimMind.Application.Common.Interfaces.Agent
 {
-    public interface IAgentControl : IAgentInfo
+    public interface IAgentControl : IAgentInfo, IJobProvider
     {
         bool IsActive { get; }
         AgentModeId CurrentModeId { get; }

@@ -18,6 +18,7 @@ namespace RimMind.Core.ArchTests.PhaseG
             "Runtime",
             "Sensor",
             "Settings",
+            "UI",
         };
 
         [Fact]

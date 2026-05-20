@@ -41,8 +41,8 @@ namespace RimMind.Presentation.Runtime
             if (pawn == null) throw new System.ArgumentNullException(nameof(pawn));
             if (!_agents.TryGetValue(pawn.thingIDNumber, out var agent))
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
-                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                var factory = RimMindRuntime.Instance.GetService<IPawnAgentFactory>();
+                var agentBus = RimMindRuntime.Instance.GetService<IAgentBus>();
                 agent = factory!.Create(pawn, agentBus!);
                 agent.TransitionTo(AgentState.Active);
                 _agents[pawn.thingIDNumber] = agent;

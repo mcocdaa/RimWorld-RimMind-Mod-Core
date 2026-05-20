@@ -6,6 +6,7 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Runtime;
 
 namespace RimMind.Presentation.Context
 {
@@ -13,22 +14,28 @@ namespace RimMind.Presentation.Context
     {
         public static IHistoryManager? Instance
         {
-            get => RimMindServiceLocator.Get<IHistoryManager>();
+            get => RimMindRuntime.Instance.GetService<IHistoryManager>();
             private set
             {
                 if (value != null)
-                    RimMindServiceLocator.Register<IHistoryManager>(value);
+                    RimMindRuntime.Instance.RegisterService<IHistoryManager>(value);
             }
         }
 
         private readonly ConcurrentDictionary<string, List<HistoryEntry>> _histories =
             new ConcurrentDictionary<string, List<HistoryEntry>>();
         private readonly object _listLock = new object();
+        private readonly ITickProvider? _tickProvider;
 
         private const int MaxEntriesPerNpc = 200;
         private const int CompressThreshold = 150;
 
-        private static int CurrentTick => RimMindServiceLocator.Get<ITickProvider>()?.TicksGame ?? 0;
+        public HistoryManager(ITickProvider? tickProvider = null)
+        {
+            _tickProvider = tickProvider;
+        }
+
+        private int CurrentTick => _tickProvider?.TicksGame ?? RimMindRuntime.Instance.GetService<ITickProvider>()?.TicksGame ?? 0;
 
         public void AddTurn(string npcId, string userMessage, string assistantMessage, string? scenario = null)
         {

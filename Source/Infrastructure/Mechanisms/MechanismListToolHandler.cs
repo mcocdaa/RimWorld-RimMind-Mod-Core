@@ -1,9 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
@@ -20,11 +21,11 @@ namespace RimMind.Infrastructure.Mechanisms
         private readonly IMechanismMetadata _metadata;
         private readonly IJsonExtractor _jsonExtractor;
 
-        public MechanismListToolHandler(IMechanismReader reader, IMechanismMetadata metadata, IJsonExtractor? jsonExtractor = null)
+        public MechanismListToolHandler(IMechanismReader reader, IMechanismMetadata metadata, IJsonExtractor jsonExtractor)
         {
             _reader = reader;
             _metadata = metadata;
-            _jsonExtractor = jsonExtractor ?? RimMindServiceLocator.Get<IJsonExtractor>() ?? new FallbackJsonExtractor();
+            _jsonExtractor = jsonExtractor ?? new FallbackJsonExtractor();
             Definition = BuildDefinition(metadata);
         }
 
@@ -122,7 +123,10 @@ namespace RimMind.Infrastructure.Mechanisms
                     var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
                     return obj[propertyName]?.ToString();
                 }
-                catch { return null; }
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
     }

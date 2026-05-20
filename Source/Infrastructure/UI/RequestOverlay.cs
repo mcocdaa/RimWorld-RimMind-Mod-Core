@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Interfaces.Internal;
+
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -9,6 +10,15 @@ namespace RimMind.Infrastructure.UI
 {
     public static class RequestOverlay
     {
+        private static IOverlaySettings? _cachedOverlaySettings;
+        private static IWindowService? _cachedWindowService;
+
+        private static IOverlaySettings? GetOverlaySettings()
+            => _cachedOverlaySettings ??= RimMindServiceLocator.Get<IOverlaySettings>();
+
+        private static IWindowService? GetWindowService()
+            => _cachedWindowService ??= RimMindServiceLocator.Get<IWindowService>();
+
         private static readonly List<RequestEntry> _pending = new List<RequestEntry>();
         private static Vector2 _scrollPos = Vector2.zero;
         private static bool _isDragging;
@@ -42,7 +52,7 @@ namespace RimMind.Infrastructure.UI
         {
             if (Current.ProgramState != ProgramState.Playing) return;
 
-            var settings = RimMindServiceLocator.Get<IOverlaySettings>();
+            var settings = GetOverlaySettings();
             if (settings == null) return;
 
             bool currentlyEnabled = settings.RequestOverlayEnabled;
@@ -78,7 +88,7 @@ namespace RimMind.Infrastructure.UI
                 var resizeRect = new Rect(inRect.width - ResizeHandleSize, inRect.height - ResizeHandleSize,
                     ResizeHandleSize, ResizeHandleSize);
                 GUI.DrawTexture(resizeRect, TexUI.WinExpandWidget);
-                TooltipHandler.TipRegion(resizeRect, "RimMind.Infrastructure.UI.RequestOverlay.DragResize".Translate());
+                TooltipHandler.TipRegion(resizeRect, "RimMind.UI.RequestOverlay.DragResize".Translate());
             }
 
             GUI.EndGroup();
@@ -98,7 +108,7 @@ namespace RimMind.Infrastructure.UI
             {
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(contentRect, "RimMind.Infrastructure.UI.RequestOverlay.Empty".Translate());
+                Widgets.Label(contentRect, "RimMind.UI.RequestOverlay.Empty".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
@@ -129,7 +139,7 @@ namespace RimMind.Infrastructure.UI
                 Widgets.DrawBoxSolid(entryRect, new Color(0.12f, 0.12f, 0.16f, 0.7f));
 
                 string header = entry.systemBlocked
-                    ? "RimMind.Infrastructure.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
+                    ? "RimMind.UI.RequestOverlay.SystemBlocked".Translate(entry.title)
                     : entry.pawn is Pawn p
                         ? $"[{p.Name.ToStringShort}] {entry.title}"
                         : entry.title;
@@ -180,7 +190,7 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
             GUI.color = new Color(0.7f, 0.8f, 1f);
-            Widgets.Label(titleRect, "RimMind.Infrastructure.UI.RequestOverlay.Title".Translate());
+            Widgets.Label(titleRect, "RimMind.UI.RequestOverlay.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -191,9 +201,9 @@ namespace RimMind.Infrastructure.UI
             {
                 _temporarilyClosed = true;
             }
-            if (Widgets.ButtonText(openBtnRect, "RimMind.Infrastructure.UI.RequestOverlay.Details".Translate()))
+            if (Widgets.ButtonText(openBtnRect, "RimMind.UI.RequestOverlay.Details".Translate()))
             {
-                RimMindServiceLocator.Get<IWindowService>()?.OpenRequestLog();
+                GetWindowService()?.OpenRequestLog();
             }
         }
 
@@ -281,7 +291,7 @@ namespace RimMind.Infrastructure.UI
 
         private static void SavePositionToSettings()
         {
-            var s = RimMindServiceLocator.Get<IOverlaySettings>();
+            var s = GetOverlaySettings();
             if (s == null) return;
             s.RequestOverlayX = _windowRect.x;
             s.RequestOverlayY = _windowRect.y;

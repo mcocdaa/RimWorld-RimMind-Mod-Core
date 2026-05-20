@@ -2,7 +2,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
 
-namespace RimMind.Infrastructure.Verse
+namespace RimMind.Infrastructure.Services.Verse
 {
     public sealed class VerseLogSink : ILogSink
     {

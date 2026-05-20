@@ -19,6 +19,21 @@ namespace RimMind.Presentation.Agent
 {
     public class GameContextBuilder : IGameContextBuilder
     {
+        private static IContextCalibrationSettings? _calibration;
+        private static INpcManager? _npcManager;
+
+        public GameContextBuilder(IContextCalibrationSettings? calibration = null, INpcManager? npcManager = null)
+        {
+            if (calibration != null) _calibration = calibration;
+            if (npcManager != null) _npcManager = npcManager;
+        }
+
+        private static IContextCalibrationSettings? GetCalibration() => _calibration;
+
+        private static INpcManager? GetNpcManager() => _npcManager;
+
+        internal static void ResetCache() { _calibration = null; _npcManager = null; }
+
         public static string BuildMapContext(Map map, bool brief = false)
         {
             var entries = BuildMapContextEntries(map, brief);
@@ -36,9 +51,9 @@ namespace RimMind.Presentation.Agent
             var entries = new List<ContextEntry>();
             if (map == null) return entries;
 
-            var ctx = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context;
+            var ctx = GetCalibration()?.Context;
 
-            entries.Add(new ContextEntry("RimMind.Presentation.Prompt.MapStatusHeader".Translate()));
+            entries.Add(new ContextEntry("RimMind.Prompt.MapStatusHeader".Translate()));
 
             if (ctx.IncludeGameTime)
             {
@@ -48,7 +63,7 @@ namespace RimMind.Presentation.Agent
                 string dateStr = GenDate.DateFullStringAt(ticks, longLat);
                 int day = (int)(ticks / 60000L);
                 entries.Add(new ContextEntry(
-                    "RimMind.Presentation.Prompt.TimeFormat".Translate(dateStr, $"{hour:D2}"))
+                    "RimMind.Prompt.TimeFormat".Translate(dateStr, $"{hour:D2}"))
                 {
                     Metadata = new Dictionary<string, string>
                     {
@@ -68,11 +83,11 @@ namespace RimMind.Presentation.Agent
                 {
                     var names = colonists.Select(p => p.Name.ToStringShort);
                     string nameList = string.Join(", ", names);
-                    content = "RimMind.Presentation.Prompt.ColonistCount".Translate(count, nameList);
+                    content = "RimMind.Prompt.ColonistCount".Translate(count, nameList);
                 }
                 else
                 {
-                    content = "RimMind.Presentation.Prompt.ColonistCountBrief".Translate(count);
+                    content = "RimMind.Prompt.ColonistCountBrief".Translate(count);
                 }
                 entries.Add(new ContextEntry(content)
                 {
@@ -93,7 +108,7 @@ namespace RimMind.Presentation.Agent
                 {
                     var names = prisoners.Select(p => p.Name.ToStringShort);
                     string nameList = string.Join(", ", names);
-                    otherSb.AppendLine("RimMind.Presentation.Prompt.PrisonerCount".Translate(prisoners.Count, nameList));
+                    otherSb.AppendLine("RimMind.Prompt.PrisonerCount".Translate(prisoners.Count, nameList));
                 }
             }
 
@@ -101,14 +116,14 @@ namespace RimMind.Presentation.Agent
             {
                 float wealth = map.wealthWatcher.WealthTotal;
                 string threat = ThreatLabel(wealth);
-                otherSb.AppendLine("RimMind.Presentation.Prompt.WealthWithThreat".Translate($"{wealth:F0}", threat));
+                otherSb.AppendLine("RimMind.Prompt.WealthWithThreat".Translate($"{wealth:F0}", threat));
             }
 
             if (ctx.IncludeThreats)
             {
                 float wealth = map.wealthWatcher.WealthTotal;
                 string threat = ThreatLabel(wealth);
-                otherSb.AppendLine("RimMind.Presentation.Prompt.ThreatLevel".Translate(threat));
+                otherSb.AppendLine("RimMind.Prompt.ThreatLevel".Translate(threat));
             }
 
             if (ctx.IncludeFood)
@@ -123,13 +138,13 @@ namespace RimMind.Presentation.Agent
                         foodNutrition += map.resourceCounter.GetCount(def) * def.ingestible.CachedNutrition;
                     }
                 }
-                otherSb.AppendLine("RimMind.Presentation.Prompt.FoodStorage".Translate($"{foodNutrition:F0}"));
+                otherSb.AppendLine("RimMind.Prompt.FoodStorage".Translate($"{foodNutrition:F0}"));
             }
 
             if (ctx.IncludeSeason)
-                otherSb.Append("RimMind.Presentation.Prompt.Season".Translate(GenLocalDate.Season(map).Label()));
+                otherSb.Append("RimMind.Prompt.Season".Translate(GenLocalDate.Season(map).Label()));
             if (ctx.IncludeWeather)
-                otherSb.AppendLine("RimMind.Presentation.Prompt.Weather".Translate(map.weatherManager.curWeather.label));
+                otherSb.AppendLine("RimMind.Prompt.Weather".Translate(map.weatherManager.curWeather.label));
             else if (ctx.IncludeSeason)
                 otherSb.AppendLine();
 
@@ -145,48 +160,48 @@ namespace RimMind.Presentation.Agent
             if (pawn == null) return string.Empty;
 
             var data = PawnDataExtractor.Extract(pawn);
-            var ctx = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context;
+            var ctx = GetCalibration()?.Context;
             var sb = new StringBuilder();
-            sb.Append("RimMind.Presentation.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
+            sb.Append("RimMind.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
 
             var basics = new List<string>();
-            if (ctx.IncludeAge) basics.Add("RimMind.Presentation.Prompt.AgeFormat".Translate(data.Age));
+            if (ctx.IncludeAge) basics.Add("RimMind.Prompt.AgeFormat".Translate(data.Age));
             if (ctx.IncludeGender) basics.Add(data.GenderLabel);
             if (ctx.IncludeRace) basics.Add(data.RaceLabel);
             if (basics.Count > 0) sb.AppendLine(string.Join("  ", basics));
             else sb.AppendLine();
 
             if (ctx.IncludeGenes && data.NotableGenes.Count > 0)
-                sb.AppendLine("RimMind.Presentation.Prompt.Genes".Translate(string.Join(", ", data.NotableGenes)));
+                sb.AppendLine("RimMind.Prompt.Genes".Translate(string.Join(", ", data.NotableGenes)));
 
             if (ctx.IncludeBackstory && (data.ChildhoodTitle != null || data.AdulthoodTitle != null))
             {
                 var parts = new List<string>();
                 if (data.ChildhoodTitle != null)
-                    parts.Add("RimMind.Presentation.Prompt.Childhood".Translate(data.ChildhoodTitle));
+                    parts.Add("RimMind.Prompt.Childhood".Translate(data.ChildhoodTitle));
                 if (data.AdulthoodTitle != null)
-                    parts.Add("RimMind.Presentation.Prompt.Adulthood".Translate(data.AdulthoodTitle));
+                    parts.Add("RimMind.Prompt.Adulthood".Translate(data.AdulthoodTitle));
                 if (parts.Count > 0)
-                    sb.AppendLine("RimMind.Presentation.Prompt.Backstory".Translate(string.Join("  ", parts)));
+                    sb.AppendLine("RimMind.Prompt.Backstory".Translate(string.Join("  ", parts)));
             }
 
             if (ctx.IncludeIdeology && data.IdeologyName != null)
-                sb.AppendLine("RimMind.Presentation.Prompt.IdeologyFormat".Translate(data.IdeologyName, data.IdeologyMemes));
+                sb.AppendLine("RimMind.Prompt.IdeologyFormat".Translate(data.IdeologyName, data.IdeologyMemes));
 
             if (ctx.IncludeMood && data.MoodString != null)
             {
                 if (data.InMentalState)
-                    sb.AppendLine("RimMind.Presentation.Prompt.MoodBreak".Translate(data.MoodString, data.MentalStateInspectLine));
+                    sb.AppendLine("RimMind.Prompt.MoodBreak".Translate(data.MoodString, data.MentalStateInspectLine));
                 else if (data.Downed)
-                    sb.AppendLine("RimMind.Presentation.Prompt.MoodDowned".Translate(data.MoodString));
+                    sb.AppendLine("RimMind.Prompt.MoodDowned".Translate(data.MoodString));
                 else
-                    sb.AppendLine("RimMind.Presentation.Prompt.MoodPercent".Translate(data.MoodString, $"{data.MoodPercent:F0}"));
+                    sb.AppendLine("RimMind.Prompt.MoodPercent".Translate(data.MoodString, $"{data.MoodPercent:F0}"));
             }
 
             if (ctx.IncludeMoodThoughts && data.MoodThoughts.Count > 0)
             {
                 var factors = data.MoodThoughts.Select(t => $"{t.Label}({t.Offset:+0;-0})");
-                sb.AppendLine("RimMind.Presentation.Prompt.MoodFactors".Translate(string.Join(", ", factors)));
+                sb.AppendLine("RimMind.Prompt.MoodFactors".Translate(string.Join(", ", factors)));
             }
 
             if (ctx.IncludeHealth && data.Hediffs.Count > 0)
@@ -195,17 +210,17 @@ namespace RimMind.Presentation.Agent
                 foreach (var h in data.Hediffs)
                 {
                     if (!h.IsBad || h.Severity < 0.05f || !h.Visible) continue;
-                    string partLabel = h.PartLabel ?? "RimMind.Presentation.Prompt.FullBody".Translate();
+                    string partLabel = h.PartLabel ?? "RimMind.Prompt.FullBody".Translate();
                     notable.Add($"{partLabel}: {h.HediffLabel}");
                 }
                 if (notable.Count > 0)
-                    sb.AppendLine("RimMind.Presentation.Prompt.HealthIssues".Translate(string.Join(", ", notable.Take(8))));
+                    sb.AppendLine("RimMind.Prompt.HealthIssues".Translate(string.Join(", ", notable.Take(8))));
             }
 
             if (ctx.IncludeCapacities && data.Capacities.Count > 0)
             {
                 var low = data.Capacities.Select(c => $"{c.Label}{c.Level * 100f:F0}%");
-                sb.AppendLine("RimMind.Presentation.Prompt.Capacities".Translate(string.Join(", ", low)));
+                sb.AppendLine("RimMind.Prompt.Capacities".Translate(string.Join(", ", low)));
             }
 
             if (ctx.IncludeSkills && data.Skills.Count > 0)
@@ -215,33 +230,33 @@ namespace RimMind.Presentation.Agent
                     .Select(s => $"{s.Key}({s.Value})")
                     .ToList();
                 if (skills.Count > 0)
-                    sb.AppendLine("RimMind.Presentation.Prompt.Skills".Translate(string.Join("  ", skills)));
+                    sb.AppendLine("RimMind.Prompt.Skills".Translate(string.Join("  ", skills)));
             }
 
             if (ctx.IncludeCurrentJob)
             {
                 string jobLabel = data.CurrentJobReport
                     ?? data.CurrentJobDefLabel
-                    ?? "RimMind.Presentation.Prompt.None".Translate();
-                sb.AppendLine("RimMind.Presentation.Prompt.CurrentJob".Translate(jobLabel));
+                    ?? "RimMind.Prompt.None".Translate();
+                sb.AppendLine("RimMind.Prompt.CurrentJob".Translate(jobLabel));
             }
 
             if (ctx.IncludeWorkPriorities && data.WorkPriorities.Count > 0)
             {
-                sb.AppendLine("RimMind.Presentation.Prompt.WorkPriorities".Translate(
+                sb.AppendLine("RimMind.Prompt.WorkPriorities".Translate(
                     string.Join("  ", data.WorkPriorities.Select(e => $"{e.Label}({e.Priority})"))));
             }
 
             if (ctx.IncludeTraits && !string.IsNullOrEmpty(data.TraitLabels))
-                sb.AppendLine("RimMind.Presentation.Prompt.Traits".Translate(data.TraitLabels));
+                sb.AppendLine("RimMind.Prompt.Traits".Translate(data.TraitLabels));
 
             if (ctx.IncludeEquipment)
             {
                 var parts = new List<string>();
                 if (data.WeaponLabel != null)
-                    parts.Add("RimMind.Presentation.Prompt.Weapon".Translate(data.WeaponLabel));
+                    parts.Add("RimMind.Prompt.Weapon".Translate(data.WeaponLabel));
                 if (data.ApparelLabels.Count > 0)
-                    parts.Add("RimMind.Presentation.Prompt.Apparel".Translate(string.Join(", ", data.ApparelLabels)));
+                    parts.Add("RimMind.Prompt.Apparel".Translate(string.Join(", ", data.ApparelLabels)));
                 if (parts.Count > 0)
                     sb.AppendLine(string.Join("  ", parts));
             }
@@ -256,37 +271,37 @@ namespace RimMind.Presentation.Agent
                         string label = def?.LabelCap ?? kv.Key;
                         return kv.Value > 1 ? $"{label}×{kv.Value}" : label;
                     });
-                sb.AppendLine("RimMind.Presentation.Prompt.Inventory".Translate(string.Join(", ", itemStrs)));
+                sb.AppendLine("RimMind.Prompt.Inventory".Translate(string.Join(", ", itemStrs)));
             }
 
             if (ctx.IncludeLocation && data.HasMap)
             {
                 int temp = Mathf.RoundToInt(data.Temperature);
-                sb.AppendLine("RimMind.Presentation.Prompt.Location".Translate(data.RoomLabel, $"{temp}"));
+                sb.AppendLine("RimMind.Prompt.Location".Translate(data.RoomLabel, $"{temp}"));
             }
 
             if (ctx.IncludeRelations && data.Relations.Count > 0)
             {
                 var relParts = data.Relations.Select(r => $"{r.RelationLabel}({r.OtherName})");
-                sb.AppendLine("RimMind.Presentation.Prompt.Relations".Translate(string.Join(", ", relParts)));
+                sb.AppendLine("RimMind.Prompt.Relations".Translate(string.Join(", ", relParts)));
             }
 
             if (ctx.IncludeCombatStatus)
             {
                 if (data.InCombat)
                 {
-                    string targetLabel = data.EnemyTargetLabel ?? "RimMind.Presentation.Prompt.Unknown".Translate();
-                    sb.AppendLine("RimMind.Presentation.Prompt.InCombat".Translate(targetLabel));
+                    string targetLabel = data.EnemyTargetLabel ?? "RimMind.Prompt.Unknown".Translate();
+                    sb.AppendLine("RimMind.Prompt.InCombat".Translate(targetLabel));
                 }
                 if (data.Drafted)
-                    sb.AppendLine("RimMind.Presentation.Prompt.Drafted".Translate());
+                    sb.AppendLine("RimMind.Prompt.Drafted".Translate());
             }
 
             if (ctx.IncludeSurroundings && pawn.Map != null)
             {
                 string surroundings = BuildSurroundings(pawn);
                 if (!string.IsNullOrEmpty(surroundings))
-                    sb.AppendLine("RimMind.Presentation.Prompt.Surroundings".Translate(surroundings));
+                    sb.AppendLine("RimMind.Prompt.Surroundings".Translate(surroundings));
             }
 
             return sb.ToString().TrimEnd();
@@ -294,8 +309,8 @@ namespace RimMind.Presentation.Agent
 
         private static string BuildSurroundings(Pawn pawn, int? radius = null, int? maxItems = null)
         {
-            int r = radius ?? (RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.EnvironmentScanRadius ?? 5);
-            int m = maxItems ?? (RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.EnvironmentMaxItems ?? 8);
+            int r = radius ?? (GetCalibration()?.Context?.EnvironmentScanRadius ?? 5);
+            int m = maxItems ?? (GetCalibration()?.Context?.EnvironmentMaxItems ?? 8);
             var map = pawn.Map;
             var buildings = new List<string>();
             var items = new Dictionary<string, int>();
@@ -341,44 +356,44 @@ namespace RimMind.Presentation.Agent
 
             var parts = new List<string>();
             if (buildings.Count > 0)
-                parts.Add("RimMind.Presentation.Prompt.SurroundingsBuildings".Translate(string.Join(", ", buildings.Distinct().Take(5))));
+                parts.Add("RimMind.Prompt.SurroundingsBuildings".Translate(string.Join(", ", buildings.Distinct().Take(5))));
             if (items.Count > 0)
             {
                 var itemStrs = items.OrderByDescending(kv => kv.Value)
                     .Take(m)
                     .Select(kv => $"{DefDatabase<ThingDef>.GetNamedSilentFail(kv.Key)?.LabelCap ?? kv.Key}×{kv.Value}");
-                parts.Add("RimMind.Presentation.Prompt.SurroundingsItems".Translate(string.Join(", ", itemStrs)));
+                parts.Add("RimMind.Prompt.SurroundingsItems".Translate(string.Join(", ", itemStrs)));
             }
             if (animals.Count > 0)
-                parts.Add("RimMind.Presentation.Prompt.SurroundingsAnimals".Translate(string.Join(", ", animals.Distinct().Take(4))));
+                parts.Add("RimMind.Prompt.SurroundingsAnimals".Translate(string.Join(", ", animals.Distinct().Take(4))));
 
             return parts.Count > 0 ? string.Join("  ", parts) : string.Empty;
         }
 
         private static string ThreatLabel(float wealth)
         {
-            float high = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.ThreatThresholdHigh ?? 200000f;
-            float medium = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.ThreatThresholdMedium ?? 100000f;
-            float low = RimMindServiceLocator.Get<IContextCalibrationSettings>()?.Context?.ThreatThresholdLow ?? 50000f;
+            float high = GetCalibration()?.Context?.ThreatThresholdHigh ?? 200000f;
+            float medium = GetCalibration()?.Context?.ThreatThresholdMedium ?? 100000f;
+            float low = GetCalibration()?.Context?.ThreatThresholdLow ?? 50000f;
 
             float threatScale = 1f;
-            try { threatScale = Find.Storyteller?.difficulty?.threatScale ?? 1f; } catch { }
+            try { threatScale = Find.Storyteller?.difficulty?.threatScale ?? 1f; } catch (System.Exception) { /* Storyteller may be null during early init */ }
             if (threatScale <= 0f) threatScale = 1f;
 
             string tier = ThreatClassifier.ClassifyThreatTier(wealth, high, medium, low, threatScale);
             return tier switch
             {
-                "Extreme" => "RimMind.Presentation.Prompt.Threat.Extreme".Translate(),
-                "High"    => "RimMind.Presentation.Prompt.Threat.High".Translate(),
-                "Medium"  => "RimMind.Presentation.Prompt.Threat.Medium".Translate(),
-                _         => "RimMind.Presentation.Prompt.Threat.Low".Translate()
+                "Extreme" => "RimMind.Prompt.Threat.Extreme".Translate(),
+                "High"    => "RimMind.Prompt.Threat.High".Translate(),
+                "Medium"  => "RimMind.Prompt.Threat.Medium".Translate(),
+                _         => "RimMind.Prompt.Threat.Low".Translate()
             };
         }
 
         public string CollectBasicGameState(string npcId)
         {
             var sb = new StringBuilder();
-            var pawnObj = RimMindServiceLocator.Get<INpcManager>()?.FindPawnByNpcId(npcId);
+            var pawnObj = GetNpcManager()?.FindPawnByNpcId(npcId);
             var pawn = pawnObj as Pawn;
 
             if (pawn != null)
@@ -425,17 +440,17 @@ namespace RimMind.Presentation.Agent
             sb.Append(data.Name + "  ");
 
             var basics = new List<string>();
-            basics.Add("RimMind.Presentation.Prompt.AgeFormat".Translate(data.Age));
+            basics.Add("RimMind.Prompt.AgeFormat".Translate(data.Age));
             basics.Add(data.GenderLabel);
             basics.Add(data.RaceLabel);
             sb.AppendLine(string.Join("  ", basics));
 
             if (data.MoodString != null)
             {
-                string moodLabel = data.InMentalState ? "RimMind.Presentation.Prompt.CompactMentalBreak".Translate()
-                    : data.Downed ? "RimMind.Presentation.Prompt.CompactDowned".Translate()
+                string moodLabel = data.InMentalState ? "RimMind.Prompt.CompactMentalBreak".Translate()
+                    : data.Downed ? "RimMind.Prompt.CompactDowned".Translate()
                     : $"{data.MoodPercent:F0}%";
-                sb.AppendLine("RimMind.Presentation.Prompt.CompactMood".Translate(moodLabel));
+                sb.AppendLine("RimMind.Prompt.CompactMood".Translate(moodLabel));
             }
 
             if (data.Hediffs.Count > 0)
@@ -444,32 +459,32 @@ namespace RimMind.Presentation.Agent
                 foreach (var h in data.Hediffs)
                 {
                     if (!h.IsBad || h.Severity < 0.05f || !h.Visible) continue;
-                    string partLabel = h.PartLabel ?? "RimMind.Presentation.Prompt.FullBody".Translate();
+                    string partLabel = h.PartLabel ?? "RimMind.Prompt.FullBody".Translate();
                     notable.Add($"{partLabel}:{h.HediffLabel}");
                     if (notable.Count >= 3) break;
                 }
                 if (notable.Count > 0)
-                    sb.AppendLine("RimMind.Presentation.Prompt.CompactHealth".Translate(string.Join(", ", notable)));
+                    sb.AppendLine("RimMind.Prompt.CompactHealth".Translate(string.Join(", ", notable)));
             }
 
             string jobLabel = data.CurrentJobReport
                 ?? data.CurrentJobDefLabel
-                ?? "RimMind.Presentation.Prompt.None".Translate();
-            sb.AppendLine("RimMind.Presentation.Prompt.CompactJob".Translate(jobLabel));
+                ?? "RimMind.Prompt.None".Translate();
+            sb.AppendLine("RimMind.Prompt.CompactJob".Translate(jobLabel));
 
             if (data.HasMap)
             {
                 int temp = Mathf.RoundToInt(data.Temperature);
-                sb.AppendLine("RimMind.Presentation.Prompt.CompactLocation".Translate(data.RoomLabel, $"{temp}"));
+                sb.AppendLine("RimMind.Prompt.CompactLocation".Translate(data.RoomLabel, $"{temp}"));
             }
 
             if (data.WeaponLabel != null)
-                sb.AppendLine("RimMind.Presentation.Prompt.CompactWeapon".Translate(data.WeaponLabel));
+                sb.AppendLine("RimMind.Prompt.CompactWeapon".Translate(data.WeaponLabel));
 
             if (data.Drafted)
-                sb.AppendLine("RimMind.Presentation.Prompt.Drafted".Translate());
+                sb.AppendLine("RimMind.Prompt.Drafted".Translate());
             if (data.EnemyTargetLabel != null)
-                sb.AppendLine("RimMind.Presentation.Prompt.InCombat".Translate(data.EnemyTargetLabel));
+                sb.AppendLine("RimMind.Prompt.InCombat".Translate(data.EnemyTargetLabel));
 
             return sb.ToString().TrimEnd();
         }
@@ -562,7 +577,7 @@ namespace RimMind.Presentation.Agent
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
             if (!data.HasMap) return "";
-            return "RimMind.Presentation.Prompt.Colony.Status".Translate(data.ColonistCount, $"{data.ColonyWealth:F0}", data.ThreatCount);
+            return "RimMind.Prompt.Colony.Status".Translate(data.ColonistCount, $"{data.ColonyWealth:F0}", data.ThreatCount);
         }
 
         public static string ExtractHealth(Pawn pawn)
@@ -574,7 +589,7 @@ namespace RimMind.Presentation.Agent
                 .Select(h => h.HediffLabel)
                 .Take(5)
                 .ToList();
-            return notable.Count > 0 ? string.Join(", ", notable) : "RimMind.Presentation.Prompt.Health.Healthy".Translate();
+            return notable.Count > 0 ? string.Join(", ", notable) : "RimMind.Prompt.Health.Healthy".Translate();
         }
 
         public static string ExtractMood(Pawn pawn)
@@ -583,7 +598,7 @@ namespace RimMind.Presentation.Agent
             var data = PawnDataExtractor.Extract(pawn);
             if (data.MoodString == null) return "";
             if (data.InMentalState)
-                return "RimMind.Presentation.Prompt.Mood.MentalBreak".Translate(data.MentalStateInspectLine ?? "");
+                return "RimMind.Prompt.Mood.MentalBreak".Translate(data.MentalStateInspectLine ?? "");
             return $"{data.MoodPercent:F0}%";
         }
 
@@ -591,7 +606,7 @@ namespace RimMind.Presentation.Agent
         {
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
-            return data.CurrentJobReport ?? data.CurrentJobDefLabel ?? "RimMind.Presentation.Prompt.Job.Idle".Translate();
+            return data.CurrentJobReport ?? data.CurrentJobDefLabel ?? "RimMind.Prompt.Job.Idle".Translate();
         }
 
         public static string ExtractCombatStatus(Pawn pawn)
@@ -599,10 +614,10 @@ namespace RimMind.Presentation.Agent
             if (pawn == null) return "";
             var data = PawnDataExtractor.Extract(pawn);
             var parts = new List<string>();
-            if (data.Drafted) parts.Add("RimMind.Presentation.Prompt.Combat.Drafted".Translate());
+            if (data.Drafted) parts.Add("RimMind.Prompt.Combat.Drafted".Translate());
             if (data.EnemyTargetLabel != null)
-                parts.Add("RimMind.Presentation.Prompt.Combat.Fighting".Translate(data.EnemyTargetLabel));
-            return parts.Count > 0 ? string.Join(" | ", parts) : "RimMind.Presentation.Prompt.Combat.NotInCombat".Translate();
+                parts.Add("RimMind.Prompt.Combat.Fighting".Translate(data.EnemyTargetLabel));
+            return parts.Count > 0 ? string.Join(" | ", parts) : "RimMind.Prompt.Combat.NotInCombat".Translate();
         }
 
         public static string ExtractTargetInfo(Pawn pawn)
@@ -613,7 +628,7 @@ namespace RimMind.Presentation.Agent
             string label = data.EnemyTargetHpPercent.HasValue
                 ? $"{data.EnemyTargetLabel} (HP:{data.EnemyTargetHpPercent.Value:F0}%)"
                 : data.EnemyTargetLabel;
-            return "RimMind.Presentation.Prompt.Target.Info".Translate(label);
+            return "RimMind.Prompt.Target.Info".Translate(label);
         }
     }
 }

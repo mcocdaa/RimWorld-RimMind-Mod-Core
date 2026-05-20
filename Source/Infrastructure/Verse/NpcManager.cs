@@ -6,6 +6,7 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Events;
+
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
@@ -15,6 +16,10 @@ namespace RimMind.Infrastructure.Verse
         private ConcurrentDictionary<string, NpcProfile> _registry = new ConcurrentDictionary<string, NpcProfile>();
         private readonly ConcurrentDictionary<int, Pawn> _pawnIndex = new ConcurrentDictionary<int, Pawn>();
         private readonly HashSet<int> _activeAgentPawnIds = new HashSet<int>();
+        private IAgentBus? _cachedAgentBus;
+
+        private IAgentBus? GetAgentBus()
+            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
 
         public static INpcManager? Instance
         {
@@ -79,7 +84,7 @@ namespace RimMind.Infrastructure.Verse
             if (string.IsNullOrEmpty(npcId)) return;
             if (_registry.TryRemove(npcId, out var profile))
             {
-                RimMindServiceLocator.Get<IAgentBus>()?.Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
+                GetAgentBus()?.Publish(new AgentLifecycleEvent(npcId, 0, "Alive", "Dead"));
             }
         }
 

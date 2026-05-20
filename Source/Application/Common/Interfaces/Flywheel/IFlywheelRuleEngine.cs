@@ -6,5 +6,6 @@ namespace RimMind.Application.Common.Interfaces.Flywheel
     public interface IFlywheelRuleEngine
     {
         void Analyze(List<TelemetryRecord> records);
+        List<ParameterRecommendation> Evaluate(Dictionary<string, float> metrics);
     }
 }

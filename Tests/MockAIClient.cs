@@ -47,5 +47,7 @@ namespace RimMind.Presentation.Tests
             var factory = _responses.Dequeue();
             return Task.FromResult(factory(request));
         }
+
+        public void Dispose() { }
     }
 }

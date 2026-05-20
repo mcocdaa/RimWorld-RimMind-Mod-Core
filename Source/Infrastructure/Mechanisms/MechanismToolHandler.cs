@@ -1,9 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
@@ -23,14 +23,14 @@ namespace RimMind.Infrastructure.Mechanisms
         private readonly MechanismOperationType _operation;
         private readonly IJsonExtractor _jsonExtractor;
 
-        public MechanismToolHandler(IMechanismReader reader, IMechanismWriter writer, IMechanismTrigger trigger, IMechanismMetadata metadata, MechanismOperationType operation, IJsonExtractor? jsonExtractor = null)
+        public MechanismToolHandler(IMechanismReader reader, IMechanismWriter writer, IMechanismTrigger trigger, IMechanismMetadata metadata, MechanismOperationType operation, IJsonExtractor jsonExtractor)
         {
             _reader = reader;
             _writer = writer;
             _trigger = trigger;
             _metadata = metadata;
             _operation = operation;
-            _jsonExtractor = jsonExtractor ?? RimMindServiceLocator.Get<IJsonExtractor>() ?? new FallbackJsonExtractor();
+            _jsonExtractor = jsonExtractor ?? new FallbackJsonExtractor();
             Definition = BuildDefinition(metadata, operation);
         }
 
@@ -155,7 +155,7 @@ namespace RimMind.Infrastructure.Mechanisms
                 }
                 return null;
             }
-            catch
+            catch (Exception)
             {
                 return null;
             }
@@ -326,7 +326,10 @@ namespace RimMind.Infrastructure.Mechanisms
                     var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
                     return obj[propertyName]?.ToString();
                 }
-                catch { return null; }
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
     }

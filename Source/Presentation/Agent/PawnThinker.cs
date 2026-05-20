@@ -22,7 +22,7 @@ namespace RimMind.Presentation.Agent
         private readonly IAgentTickSettings? _tickSettings;
         private int _lastThinkTick;
         private int _thinkCooldownTicks;
-        private bool _thinking;
+        private volatile bool _thinking;
 
         public PawnThinker(IPawnAgent agent, IAgentTickSettings tickSettings)
         {

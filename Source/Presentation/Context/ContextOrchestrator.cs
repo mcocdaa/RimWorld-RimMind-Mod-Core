@@ -24,7 +24,7 @@ namespace RimMind.Presentation.Context
         private bool _disposed;
 
         private readonly IHistoryManager _historyManager;
-        private readonly INpcManager _npcManager;
+        private readonly INpcManager? _npcManager;
         private readonly IContextCacheManager _cacheManager;
         private readonly IContextDiffTracker _diffTracker;
         private readonly IContextLayerBuilder _layerBuilder;
@@ -37,7 +37,7 @@ namespace RimMind.Presentation.Context
 
         public ContextOrchestrator(
             IHistoryManager historyManager,
-            INpcManager npcManager,
+            INpcManager? npcManager,
             IContextCacheManager cacheManager,
             IContextDiffTracker diffTracker,
             IContextLayerBuilder layerBuilder,
@@ -104,7 +104,7 @@ namespace RimMind.Presentation.Context
                 : (scenarioMeta?.DefaultBudget > 0
                     ? scenarioMeta.DefaultBudget
                     : (_settingsProvider?.Context?.ContextBudget > 0
-                        ? _settingsProvider!.Context!.ContextBudget
+                        ? _settingsProvider.Context.ContextBudget
                         : 0.6f));
             var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
 
@@ -217,7 +217,7 @@ namespace RimMind.Presentation.Context
             {
                 var translationService = _translationService;
                 string queryContent = !string.IsNullOrEmpty(request.SpeakerName)
-                    ? translationService?.Translate("RimMind.Presentation.Prompt.Dialogue.SpeakerSays", request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
+                    ? translationService?.Translate("RimMind.Prompt.Dialogue.SpeakerSays", request.SpeakerName!, PromptSanitizer.SanitizeUserInput(request.CurrentQuery!))
                         ?? $"[{request.SpeakerName}]: {PromptSanitizer.SanitizeUserInput(request.CurrentQuery!)}"
                     : PromptSanitizer.SanitizeUserInput(request.CurrentQuery!);
                 messages.Add(new ChatMessage { Role = "user", Content = queryContent, LayerTag = "L4" });
@@ -229,7 +229,7 @@ namespace RimMind.Presentation.Context
                 string scenarioLabel = !string.IsNullOrEmpty(request.Scenario)
                     ? request.Scenario! : "general";
                 var translationService = _translationService;
-                string autoAwaitContent = translationService?.Translate("RimMind.Presentation.Prompt.AutoAwait", scenarioLabel)
+                string autoAwaitContent = translationService?.Translate("RimMind.Prompt.AutoAwait", scenarioLabel)
                     ?? $"[AutoAwait: {scenarioLabel}]";
                 messages.Add(new ChatMessage { Role = "user", Content = autoAwaitContent });
             }

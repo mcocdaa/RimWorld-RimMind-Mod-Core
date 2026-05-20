@@ -1,6 +1,8 @@
 using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Presentation.Perception;
 using RimMind.Presentation.Runtime;
@@ -12,9 +14,6 @@ namespace RimMind.Presentation
     {
         public static class Bus
         {
-            [Obsolete("Use GetAgentBus() instead")]
-            public static IAgentBus GetEventBus() => RimMindRuntime.Instance.AgentBus;
-
             public static IAgentBus GetAgentBus() => RimMindRuntime.Instance.AgentBus;
 
             public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f)
@@ -34,6 +33,9 @@ namespace RimMind.Presentation
 
             public static IAIClient? GetPlayer2Client()
                 => RimMindRuntime.Instance.GetPlayer2Client();
+
+            public static IStorageDriver? GetStorageDriver()
+                => RimMindRuntime.Instance.StorageDriverFactory?.GetDriver();
         }
     }
 }

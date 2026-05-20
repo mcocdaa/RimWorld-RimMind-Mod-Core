@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
@@ -16,18 +15,16 @@ namespace RimMind.Application.Features.Pipeline.AI
         public int Order => 500;
         public string Id => "AIClientInvoke";
 
-        private readonly Func<IAIClient?> _clientFactory;
         private readonly ILogSink? _log;
 
-        public ClientInvokeMiddleware(Func<IAIClient?> clientFactory, ILogSink? log = null)
+        public ClientInvokeMiddleware(ILogSink? log = null)
         {
-            _clientFactory = clientFactory;
             _log = log;
         }
 
         public async Task InvokeAsync(AIRequestContext context, MiddlewareDelegate<AIRequestContext> next)
         {
-            var client = _clientFactory();
+            var client = context.Client;
             if (client == null)
             {
                 context.Response = new AIResponse

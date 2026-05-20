@@ -22,7 +22,7 @@ namespace RimMind.Application.Features.Flywheel
             InitializeDefaults();
         }
 
-        public int TotalBudget => 0;
+        public int TotalBudget => _parameters.TryGetValue("ContextBudget", out var val) ? (int)(val * 4000) : 4000;
 
         public float Get(string key)
         {

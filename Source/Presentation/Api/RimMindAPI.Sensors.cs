@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Presentation.Settings;
@@ -20,3 +21,4 @@ namespace RimMind.Presentation
         }
     }
 }
+#pragma warning restore CS0618

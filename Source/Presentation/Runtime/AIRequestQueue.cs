@@ -21,10 +21,10 @@ namespace RimMind.Presentation.Runtime
         public int TotalQueuedCount => _queue.Count;
         public bool IsPaused => _paused;
 
-        public AIRequestQueue()
+        public AIRequestQueue(IQueueSettings? queueSettings = null)
         {
-            _maxConcurrent = RimMindServiceLocator.Get<IQueueSettings>()?.MaxConcurrentRequests ?? 3;
-            _processInterval = RimMindServiceLocator.Get<IQueueSettings>()?.QueueProcessInterval ?? 60;
+            _maxConcurrent = queueSettings?.MaxConcurrentRequests ?? 3;
+            _processInterval = queueSettings?.QueueProcessInterval ?? 60;
         }
 
         public void Enqueue(AIRequest request, Action<AIResponse> onComplete, IAIClient client)

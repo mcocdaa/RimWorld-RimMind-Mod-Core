@@ -54,7 +54,13 @@ namespace RimMind.Application.Features.Flywheel
             foreach (var kvp in byMetric)
             {
                 if (kvp.Value.Count > 0)
-                    aggregates[$"{kvp.Key}_avg"] = kvp.Value.Count > 0 ? kvp.Value[kvp.Value.Count - 1] : 0f;
+                {
+                    var sum = 0f;
+                    foreach (var v in kvp.Value) sum += v;
+                    aggregates[$"{kvp.Key}_avg"] = sum / kvp.Value.Count;
+                    aggregates[$"{kvp.Key}_last"] = kvp.Value[kvp.Value.Count - 1];
+                    aggregates[$"{kvp.Key}_count"] = kvp.Value.Count;
+                }
             }
             return aggregates;
         }

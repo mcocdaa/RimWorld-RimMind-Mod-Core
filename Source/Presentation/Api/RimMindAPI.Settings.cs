@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -11,7 +12,14 @@ namespace RimMind.Presentation
     {
         public static class Settings
         {
-            public static bool IsConfigured() => RimMindServiceLocator.Get<IApiCredentialSettings>()?.IsConfigured == true;
+            private static ISettingsProvider? GetSettingsProvider()
+                => RimMindRuntime.Instance?.GetSettingsProvider();
+
+            public static bool IsConfigured() => GetSettingsProvider()?.IsConfigured == true;
+
+            public static IContextSettings? ContextSettings => GetSettingsProvider()?.Context;
+
+            public static bool DebugLogging => GetSettingsProvider()?.DebugLogging == true;
 
             internal static IHistoryManager GetHistoryManager() => RimMindRuntime.Instance.HistoryManager;
             public static IContextEngine GetContextEngine() => RimMindRuntime.Instance.ContextEngine;

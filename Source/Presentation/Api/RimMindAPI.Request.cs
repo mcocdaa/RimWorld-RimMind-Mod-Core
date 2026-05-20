@@ -25,7 +25,7 @@ namespace RimMind.Presentation
                 var client = Bus.GetClient();
                 if (client == null)
                 {
-                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
+                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("No AI client available for RequestImmediate")));
                     return;
                 }
                 RimMindRuntime.Instance.Queue.EnqueueImmediate(request, response => onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(response)), client);
@@ -33,10 +33,10 @@ namespace RimMind.Presentation
 
             public static void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<Result<AIResponse, RimMindError>> onComplete, List<StructuredTool>? tools = null)
             {
-                var s = RimMindServiceLocator.Get<ISettingsProvider>();
+                var s = RimMindRuntime.Instance?.GetSettingsProvider();
                 if (s?.IsConfigured != true)
                 {
-                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
+                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("AI client not configured")));
                     return;
                 }
 
@@ -49,7 +49,7 @@ namespace RimMind.Presentation
                 var client = Bus.GetClient();
                 if (client == null)
                 {
-                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok(request.RequestId, "", 0)));
+                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("No AI client available for RequestStructuredAsync")));
                     return;
                 }
 
@@ -61,7 +61,7 @@ namespace RimMind.Presentation
             {
                 if (RimMindRuntime.Instance.IsShutdown)
                 {
-                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Ok(AIResponse.Ok($"Structured_{request.NpcId}", "", 0)));
+                    onComplete?.Invoke(Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal("Runtime is shutdown")));
                     return;
                 }
 
@@ -74,7 +74,7 @@ namespace RimMind.Presentation
                     Temperature = snapshot.Temperature,
                     RequestId = $"Structured_{request.NpcId}",
                     ModId = request.Scenario.ToString(),
-                    ExpireAtTicks = Find.TickManager.TicksGame + (RimMindServiceLocator.Get<ISettingsProvider>()?.RequestExpireTicks ?? 30000),
+                    ExpireAtTicks = Find.TickManager.TicksGame + (RimMindRuntime.Instance?.GetSettingsProvider()?.RequestExpireTicks ?? 30000),
                     UseJsonMode = true,
                     Priority = AIRequestPriority.Normal,
                 };

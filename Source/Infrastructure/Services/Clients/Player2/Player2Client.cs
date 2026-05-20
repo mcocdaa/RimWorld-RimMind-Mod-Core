@@ -14,6 +14,7 @@ using RimMind.Application.Common.Helpers;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using Newtonsoft.Json;
+
 using RimWorld;
 using UnityEngine.Networking;
 using Verse;
@@ -29,6 +30,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly bool _isLocalConnection;
         private readonly ISettingsProvider _settings;
         private readonly ILogSink? _logSink;
+        private readonly IAIDebugLog? _aiDebugLog;
 
         private static DateTime _lastHealthCheck = DateTime.MinValue;
         private static volatile bool _healthCheckActive;
@@ -40,12 +42,14 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
         private string CurrentApiUrl => _isLocalConnection ? LocalUrl : RemoteUrl;
 
-        private Player2Client(string apiKey, bool isLocal, ISettingsProvider settings)
+        private Player2Client(string apiKey, bool isLocal, ISettingsProvider settings,
+            ILogSink? logSink, IAIDebugLog? aiDebugLog)
         {
             _apiKey = apiKey;
             _isLocalConnection = isLocal;
             _settings = settings;
-            _logSink = RimMindServiceLocator.Get<ILogSink>();
+            _logSink = logSink;
+            _aiDebugLog = aiDebugLog;
 
             if (!_healthCheckActive && !string.IsNullOrEmpty(apiKey) && !isLocal)
             {
@@ -59,37 +63,45 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
         }
 
-        public static async Task<Player2Client> CreateAsync(ISettingsProvider settings)
+        public static async Task<Player2Client> CreateAsync(ISettingsProvider settings,
+            ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null)
         {
             try
             {
-                string? localKey = await TryGetLocalPlayer2Key();
+                string? localKey = await TryGetLocalPlayer2Key(logSink);
                 if (!string.IsNullOrEmpty(localKey))
                 {
-                    RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground("[RimMind-Core] Player2 local app detected.");
+                    logSink?.LogFromBackground("[RimMind-Core] Player2 local app detected.");
                     ShowNotification("RimMind.Infrastructure.Player2.LocalDetected");
-                    return new Player2Client(localKey!, isLocal: true, settings);
+                    return new Player2Client(localKey!, isLocal: true, settings, logSink, aiDebugLog);
                 }
 
                 if (!string.IsNullOrEmpty(settings.ApiKey))
                 {
-                    RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
-                    return new Player2Client(settings.ApiKey, isLocal: false, settings);
+                    logSink?.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
+                    return new Player2Client(settings.ApiKey, isLocal: false, settings, logSink, aiDebugLog);
                 }
 
                 ShowNotification("RimMind.Infrastructure.Player2.LocalNotFound");
-                return new Player2Client(string.Empty, isLocal: false, settings);
+                return new Player2Client(string.Empty, isLocal: false, settings, logSink, aiDebugLog);
             }
             catch (Exception ex)
             {
-                RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
-                return new Player2Client(string.Empty, isLocal: false, settings);
+                logSink?.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
+                return new Player2Client(string.Empty, isLocal: false, settings, logSink, aiDebugLog);
             }
         }
 
         public bool IsConfigured() => !string.IsNullOrEmpty(_apiKey);
 
         public bool IsLocalEndpoint => _isLocalConnection;
+
+        public void Dispose()
+        {
+            // Player2Client uses a shared static health check CTS;
+            // individual disposal does not stop the health check loop.
+            // Use StopHealthCheck() to halt it globally.
+        }
 
         public async Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
         {
@@ -127,7 +139,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 response.HttpStatusCode = httpStatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
+                _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return Result<AIResponse, RimMindError>.Ok(response);
             }
             catch (TaskCanceledException)
@@ -218,7 +230,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 "player2-game-key", GameClientId, connectTimeout: connectTimeout);
         }
 
-        private static async Task<string?> TryGetLocalPlayer2Key()
+        private static async Task<string?> TryGetLocalPlayer2Key(ILogSink? logSink)
         {
             try
             {
@@ -232,7 +244,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                         await Task.Delay(50);
                     }
                     if (healthRequest.result != UnityWebRequest.Result.Success)
-                        return null!;
+                        return null;
                 }
 
                 using (var loginRequest = new UnityWebRequest($"{LocalUrl}/v1/login/web/{GameClientId}", "POST"))
@@ -255,16 +267,16 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                         loginRequest.downloadHandler.text);
                     if (response != null && !string.IsNullOrEmpty(response.P2Key))
                     {
-                        RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
+                        logSink?.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
                         return response.P2Key;
                     }
-                    return null!;
+                    return null;
                 }
             }
             catch (Exception ex)
             {
-                RimMindServiceLocator.Get<ILogSink>()?.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
-                return null!;
+                logSink?.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
+                return null;
             }
         }
 
@@ -420,9 +432,9 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
         public static float CachedJoulesBalance => _cachedJoulesBalance;
 
-        public static void RefreshJoulesBalance()
+        public static void RefreshJoulesBalance(ISettingsProvider? settingsProvider = null)
         {
-            var s = RimMindServiceLocator.Get<ISettingsProvider>();
+            var s = settingsProvider ?? RimMindServiceLocator.Get<ISettingsProvider>();
             if (s == null || ProviderHelper.RequiresApiKey(s.Provider)) return;
 
             Task.Run(async () =>

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Application.Common.Interfaces.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Domain.Enums;
@@ -11,10 +12,12 @@ namespace RimMind.Infrastructure.Mechanisms
     {
         private readonly ConcurrentDictionary<string, IGameMechanism> _mechanisms = new();
         private readonly IToolRegistry? _toolRegistry;
+        private readonly IJsonExtractor? _jsonExtractor;
 
-        public GameMechanismRegistry(IToolRegistry? toolRegistry = null)
+        public GameMechanismRegistry(IToolRegistry? toolRegistry = null, IJsonExtractor? jsonExtractor = null)
         {
             _toolRegistry = toolRegistry;
+            _jsonExtractor = jsonExtractor;
         }
 
         public void Register(IGameMechanism mechanism)
@@ -26,13 +29,13 @@ namespace RimMind.Infrastructure.Mechanisms
             {
                 foreach (var op in mechanism.SupportedOperations)
                 {
-                    var handler = new MechanismToolHandler(mechanism, mechanism, mechanism, mechanism, op);
+                    var handler = new MechanismToolHandler(mechanism, mechanism, mechanism, mechanism, op, _jsonExtractor!);
                     _toolRegistry.Register(handler);
                 }
 
                 if (mechanism.SupportedOperations.Contains(MechanismOperationType.List))
                 {
-                    var listHandler = new MechanismListToolHandler(mechanism, mechanism);
+                    var listHandler = new MechanismListToolHandler(mechanism, mechanism, _jsonExtractor!);
                     _toolRegistry.Register(listHandler);
                 }
             }

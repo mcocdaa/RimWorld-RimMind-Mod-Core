@@ -1,11 +1,12 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Infrastructure.Verse;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Infrastructure.Verse;
+
 using UnityEngine;
 using Verse;
 
@@ -20,6 +21,19 @@ namespace RimMind.Infrastructure.UI
         private Vector2 _scrollPosition;
         private float _lastContentHeight;
         private const int MaxHistoryRounds = 20;
+
+        private IHistoryManager? _cachedHistoryManager;
+        private ISettingsProvider? _cachedSettingsProvider;
+        private IContextEngine? _cachedContextEngine;
+
+        private IHistoryManager? GetHistoryManager()
+            => _cachedHistoryManager ??= RimMindServiceLocator.Get<IHistoryManager>();
+
+        private ISettingsProvider? GetSettingsProvider()
+            => _cachedSettingsProvider ??= RimMindServiceLocator.Get<ISettingsProvider>();
+
+        private IContextEngine? GetContextEngine()
+            => _cachedContextEngine ??= RimMindServiceLocator.Get<IContextEngine>();
 
         public override Vector2 InitialSize => new Vector2(500f, 500f);
 
@@ -36,7 +50,7 @@ namespace RimMind.Infrastructure.UI
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            string title = $"{_pawn.LabelShortCap} - {"RimMind.Infrastructure.UI.AgentDialogue.Title".Translate()}";
+            string title = $"{_pawn.LabelShortCap} - {"RimMind.UI.AgentDialogue.Title".Translate()}";
             Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), title);
             Text.Font = GameFont.Small;
 
@@ -53,7 +67,7 @@ namespace RimMind.Infrastructure.UI
             _inputText = Widgets.TextField(inputRect, _inputText);
             bool inputFocused = GUI.GetNameOfFocusedControl() == "AgentDialogueInput";
 
-            if (Widgets.ButtonText(sendRect, "RimMind.Infrastructure.UI.AgentDialogue.Send".Translate()))
+            if (Widgets.ButtonText(sendRect, "RimMind.UI.AgentDialogue.Send".Translate()))
             {
                 SendMessage();
             }
@@ -67,7 +81,7 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawHistory(Rect rect)
         {
-            var history = RimMindServiceLocator.Get<IHistoryManager>()?.GetHistory(_npcId, MaxHistoryRounds);
+            var history = GetHistoryManager()?.GetHistory(_npcId, MaxHistoryRounds);
 
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
 
@@ -90,10 +104,10 @@ namespace RimMind.Infrastructure.UI
                 foreach (var (role, content) in history)
                 {
                     string prefix = role == "user"
-                        ? "RimMind.Infrastructure.UI.AgentDialogue.PlayerLabel".Translate() + ": "
-                        : "RimMind.Infrastructure.UI.AgentDialogue.AgentLabel".Translate() + ": ";
+                        ? "RimMind.UI.AgentDialogue.PlayerLabel".Translate() + ": "
+                        : "RimMind.UI.AgentDialogue.AgentLabel".Translate() + ": ";
                     string displayContent = content;
-                    if (role == "assistant" && content == "RimMind.Infrastructure.UI.AgentDialogue.Thinking".Translate())
+                    if (role == "assistant" && content == "RimMind.UI.AgentDialogue.Thinking".Translate())
                         displayContent = content;
                     string line = prefix + displayContent;
                     float height = Text.CalcHeight(line, contentRect.width - 10f) + 4f;
@@ -122,13 +136,13 @@ namespace RimMind.Infrastructure.UI
             string message = _inputText.Trim();
             _inputText = "";
 
-            string thinkingText = "RimMind.Infrastructure.UI.AgentDialogue.Thinking".Translate();
-            RimMindServiceLocator.Get<IHistoryManager>()?.AddTurn(_npcId, message, thinkingText, "Dialogue");
+            string thinkingText = "RimMind.UI.AgentDialogue.Thinking".Translate();
+            GetHistoryManager()?.AddTurn(_npcId, message, thinkingText, "Dialogue");
 
             var npcId = _npcId;
             _agent.ForceThink();
 
-            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
+            var settings = GetSettingsProvider();
             var request = new ContextRequest
             {
                 NpcId = _agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
@@ -139,7 +153,7 @@ namespace RimMind.Infrastructure.UI
                 Temperature = settings?.DefaultTemperature ?? 0.7f,
             };
 
-            var engine = RimMindServiceLocator.Get<IContextEngine>();
+            var engine = GetContextEngine();
             var snapshot = engine.BuildSnapshot(request);
             var driver = RimMind.Infrastructure.Persistence.StorageDriverFactory.GetDriver();
 
@@ -150,7 +164,7 @@ namespace RimMind.Infrastructure.UI
                     var result = await driver.ChatAsync(snapshot.NpcId, snapshot.CurrentQuery ?? "", null);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        var hm = RimMindServiceLocator.Get<IHistoryManager>();
+                        var hm = GetHistoryManager();
                         var currentHistory = hm.GetHistory(npcId, MaxHistoryRounds);
                         if (currentHistory != null)
                         {

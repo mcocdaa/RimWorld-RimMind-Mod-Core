@@ -3,6 +3,7 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Flywheel;
 using RimMind.Domain.ValueObjects;
+
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
@@ -10,9 +11,26 @@ namespace RimMind.Infrastructure.Verse
     public class FlywheelGameComponent : GameComponent
     {
         private int _lastAnalysisTick;
+        private IContextCalibrationSettings? _calibrationSettings;
+        private ITelemetryCollector? _telemetryCollector;
+        private IFlywheelRuleEngine? _ruleEngine;
 
-        private int AnalysisIntervalTicks =>
-            RimMindServiceLocator.Get<IContextCalibrationSettings>()?.ContextCalibrateInterval ?? 10000;
+        private void EnsureCached()
+        {
+            if (_calibrationSettings != null) return;
+            _calibrationSettings = RimMindServiceLocator.Get<IContextCalibrationSettings>();
+            _telemetryCollector = RimMindServiceLocator.Get<ITelemetryCollector>();
+            _ruleEngine = RimMindServiceLocator.Get<IFlywheelRuleEngine>();
+        }
+
+        private int AnalysisIntervalTicks
+        {
+            get
+            {
+                EnsureCached();
+                return _calibrationSettings?.ContextCalibrateInterval ?? 10000;
+            }
+        }
 
         public FlywheelGameComponent() : base() { }
         public FlywheelGameComponent(Game game) : base() { }
@@ -34,7 +52,8 @@ namespace RimMind.Infrastructure.Verse
             base.ExposeData();
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                RimMindServiceLocator.Get<ITelemetryCollector>()?.Flush();
+                EnsureCached();
+                _telemetryCollector?.Flush();
             }
         }
 
@@ -57,11 +76,10 @@ namespace RimMind.Infrastructure.Verse
 
         private void RunPeriodicAnalysis()
         {
-            var telemetry = RimMindServiceLocator.Get<ITelemetryCollector>();
-            var records = telemetry?.GetRecentRecords(100);
+            EnsureCached();
+            var records = _telemetryCollector?.GetRecentRecords(100);
             if (records == null || records.Count == 0) return;
-            var ruleEngine = RimMindServiceLocator.Get<IFlywheelRuleEngine>();
-            ruleEngine?.Analyze(records);
+            _ruleEngine?.Analyze(records);
         }
     }
 }

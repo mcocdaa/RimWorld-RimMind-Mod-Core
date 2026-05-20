@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,10 @@ namespace RimMind.Infrastructure.Verse
 
         private readonly Queue<AIDebugEntry> _entries = new Queue<AIDebugEntry>(MaxEntries);
         private readonly ConcurrentQueue<AIDebugEntry> _pendingEntries = new ConcurrentQueue<AIDebugEntry>();
+        private IAIModelSettings? _cachedModelSettings;
+
+        private IAIModelSettings? GetModelSettings()
+            => _cachedModelSettings ??= RimMindServiceLocator.Get<IAIModelSettings>();
 
         public static IAIDebugLog? Instance => RimMindServiceLocator.Get<IAIDebugLog>();
 
@@ -65,7 +70,7 @@ namespace RimMind.Infrastructure.Verse
             _pendingEntries.Enqueue(new AIDebugEntry
             {
                 Source = request.RequestId ?? "",
-                ModelName = RimMindServiceLocator.Get<IAIModelSettings>()?.ModelName ?? "",
+                ModelName = GetModelSettings()?.ModelName ?? "",
                 FullSystemPrompt = request.Messages != null
                     ? BuildLayeredText(request.Messages, "system")
                     : (request.SystemPrompt ?? ""),

@@ -10,9 +10,14 @@ namespace RimMind.Application.Common.Helpers
     {
         private static readonly string FallbackProvider = "openai";
 
+        /// <summary>
+        /// Set by Composition Root at startup. Eliminates the need for direct SL.Get fallback.
+        /// </summary>
+        public static IExtensionRegistry<IAIClientFactory>? DefaultRegistry { get; set; }
+
         public static IReadOnlyList<string> GetAllProviderIds(IExtensionRegistry<IAIClientFactory>? registry = null)
         {
-            registry ??= RimMindServiceLocator.Get<IExtensionRegistry<IAIClientFactory>>();
+            registry ??= DefaultRegistry;
             if (registry == null || registry.All.Count == 0)
                 return new List<string> { FallbackProvider };
             return registry.All.Select(f => f.ProviderId).ToList();
@@ -27,14 +32,14 @@ namespace RimMind.Application.Common.Helpers
         public static bool IsProviderRegistered(string providerId, IExtensionRegistry<IAIClientFactory>? registry = null)
         {
             if (string.IsNullOrEmpty(providerId)) return false;
-            registry ??= RimMindServiceLocator.Get<IExtensionRegistry<IAIClientFactory>>();
+            registry ??= DefaultRegistry;
             return registry?.FindById(providerId) != null;
         }
 
         public static bool RequiresApiKey(string providerId, IExtensionRegistry<IAIClientFactory>? registry = null)
         {
             if (string.IsNullOrEmpty(providerId)) return true;
-            registry ??= RimMindServiceLocator.Get<IExtensionRegistry<IAIClientFactory>>();
+            registry ??= DefaultRegistry;
             var factory = registry?.FindById(providerId);
             return factory?.RequiresApiKey ?? true;
         }

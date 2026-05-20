@@ -1,6 +1,6 @@
-﻿using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Abstractions;
 
-namespace RimMind.Infrastructure.Verse
+namespace RimMind.Infrastructure.Services.Verse
 {
     public sealed class VerseThreadChecker : IThreadChecker
     {

@@ -10,7 +10,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
     internal sealed class DispatchMiddleware : IMiddleware<BusPublishContext>
     {
         public string Name => "BusDispatch";
-        public int Order => 100;
+        public int Order => 200;
         public string Id => "BusDispatch";
 
         private readonly Action<AgentBusEvent> _dispatch;

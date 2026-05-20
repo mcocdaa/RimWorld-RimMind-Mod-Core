@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Behaviours;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Client;
@@ -26,10 +27,10 @@ using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Registry;
-using RimMind.Infrastructure.Services.Clients.OpenAI;
-using RimMind.Infrastructure.Services.Clients.Player2;
+using RimMind.Infrastructure;
+using RimMind.Infrastructure.Persistence;
 using RimMind.Infrastructure.UI;
-using RimMind.Infrastructure.Verse;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.Llm;
@@ -50,8 +51,6 @@ namespace RimMind.Presentation.Runtime
             ?? throw new InvalidOperationException("[RimMind-Core] RimMindRuntime not initialized. Call Initialize() first.");
 
         public IAgentBus AgentBus { get; internal set; }
-        [Obsolete("Use AgentBus instead")]
-        public IAgentBus EventBus { get; internal set; }
         public IContextEngine ContextEngine { get; internal set; }
         public IHistoryManager HistoryManager { get; internal set; }
         public IClientManager ClientManager { get; internal set; }
@@ -63,6 +62,7 @@ namespace RimMind.Presentation.Runtime
         public ITelemetryCollector Telemetry { get; private set; }
         public IToolRegistry ToolRegistry { get; private set; }
         public IGameMechanismRegistry MechanismRegistry { get; private set; }
+        public IStorageDriverFactory? StorageDriverFactory { get; private set; }
         public int MaxToolCallDepth { get; set; } = 3;
         private IPipeline<AIRequestContext>? _aiRequestPipeline;
         public IPipeline<AIRequestContext> AIRequestPipeline => _aiRequestPipeline!;
@@ -78,20 +78,24 @@ namespace RimMind.Presentation.Runtime
 
         private readonly ConcurrentDictionary<Type, object> _registries = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners = new ConcurrentDictionary<string, IParameterTuner>();
+#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
         private readonly ConcurrentDictionary<string, ISensorProvider> _sensorProviders = new ConcurrentDictionary<string, ISensorProvider>();
+#pragma warning restore CS0618
 
         private AgentBusCoreSubscriber? _coreSubscriber;
         private volatile Func<Pawn, AgentIdentity?>? _agentIdentityProvider;
         private volatile IAgentActionBridge _agentActionBridge = Application.Common.Defaults.NullAgentActionBridge.Instance;
         private volatile bool _isShutdown;
 
-        private readonly ISettingsProvider? _settingsProvider;
-        private readonly ILogSink? _logSink;
-        private readonly IThreadChecker? _threadChecker;
-        private readonly ITickProvider? _tickProvider;
+        private ISettingsProvider? _settingsProvider;
+        private ILogSink? _logSink;
+        private IThreadChecker? _threadChecker;
+        private ITickProvider? _tickProvider;
 
         public IReadOnlyList<IParameterTuner> ParameterTunersList => _parameterTuners.Values.ToList();
+#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
         public IReadOnlyList<ISensorProvider> SensorProvidersList => _sensorProviders.Values.ToList();
+#pragma warning restore CS0618
 
         public Func<Pawn, AgentIdentity?>? AgentIdentityProvider => _agentIdentityProvider;
         public IAgentActionBridge AgentActionBridge => _agentActionBridge;
@@ -100,21 +104,25 @@ namespace RimMind.Presentation.Runtime
         private RimMindRuntime()
         {
             _settingsProvider = RimMindServiceLocator.Get<ISettingsProvider>();
-            _logSink = RimMindServiceLocator.Get<ILogSink>();
-            _threadChecker = RimMindServiceLocator.Get<IThreadChecker>();
-            _tickProvider = RimMindServiceLocator.Get<ITickProvider>();
 
             Application.DependencyInjection.AddApplicationServices(
                 _settingsProvider);
             Infrastructure.DependencyInjection.AddInfrastructureServices();
 
+            _logSink = RimMindServiceLocator.Get<ILogSink>();
+            _threadChecker = RimMindServiceLocator.Get<IThreadChecker>();
+            _tickProvider = RimMindServiceLocator.Get<ITickProvider>();
+
+            PawnDataExtractor.Initialize(_logSink);
+
             var providerRegistry = new ProviderRegistry();
             RimMindServiceLocator.Register<IProviderRegistry>(providerRegistry);
 
-            var historyManager = new HistoryManager();
+            var historyManager = new HistoryManager(_tickProvider);
             RimMindServiceLocator.Register<IHistoryManager>(historyManager);
 
-            var clientManager = new ClientManager();
+            var clientManager = new ClientManager(_settingsProvider,
+                GetExtensionRegistry<IAIClientFactory>());
             RimMindServiceLocator.Register<IClientManager>(clientManager);
 
             var sensorManager = new SensorManager();
@@ -123,12 +131,14 @@ namespace RimMind.Presentation.Runtime
             var overlayService = new OverlayService();
             RimMindServiceLocator.Register<IOverlayService>(overlayService);
 
-            RimMindServiceLocator.Register<IWindowService>(new WindowService());
+            // WindowService and AgentActiveChecker now registered in Infrastructure DI
+            // IWindowService and IAgentActiveChecker are available via ServiceLocator
 
             AgentBus = RimMindServiceLocator.Get<IAgentBus>()!;
             var busImpl = AgentBus as AgentBusImpl;
             _aiRequestPipeline = AIRequestPipelineFactory.Build(
                 _settingsProvider!,
+                _logSink,
                 GetExtensionRegistry<IMiddleware<AIRequestContext>>());
 
             _npcChatPipeline = NpcChatPipelineFactory.Build(
@@ -145,13 +155,14 @@ namespace RimMind.Presentation.Runtime
                 GetExtensionRegistry<IMiddleware<BusPublishContext>>());
             busImpl?.SetPipeline(_busPublishPipeline);
 
-            ProviderRegistry = RimMindServiceLocator.Get<IProviderRegistry>()!;
-            HistoryManager = RimMindServiceLocator.Get<IHistoryManager>()!;
-            ClientManager = RimMindServiceLocator.Get<IClientManager>()!;
+            ProviderRegistry = providerRegistry;
+            HistoryManager = historyManager;
+            ClientManager = clientManager;
             AudioPlayer = RimMindServiceLocator.Get<IAudioPlayer>()!;
-            OverlayService = RimMindServiceLocator.Get<IOverlayService>()!;
+            OverlayService = overlayService;
             ToolRegistry = RimMindServiceLocator.Get<IToolRegistry>()!;
             MechanismRegistry = RimMindServiceLocator.Get<IGameMechanismRegistry>()!;
+            StorageDriverFactory = RimMindServiceLocator.Get<IStorageDriverFactory>();
             Telemetry = RimMindServiceLocator.Get<ITelemetryCollector>()!;
             QueueImpl = RimMindServiceLocator.Get<IAIRequestQueue>()!;
 
@@ -161,17 +172,15 @@ namespace RimMind.Presentation.Runtime
             var layerBuilder = new ContextLayerBuilder(keyProvider, _logSink);
             var budgetScheduler = new BudgetScheduler();
 
+            // NpcManager is a GameComponent — Verse instantiates it automatically.
+            // It self-registers into RimMindServiceLocator via its constructor.
             var npcManager = RimMindServiceLocator.Get<INpcManager>();
-            if (npcManager == null)
-            {
-                npcManager = new NpcManager(Current.Game);
-            }
             var translationService = RimMindServiceLocator.Get<ITranslationService>();
             var flywheelParameterStore = RimMindServiceLocator.Get<IFlywheelParameterStore>();
 
             ContextEngine = new ContextOrchestrator(
                 HistoryManager,
-                npcManager!,
+                npcManager,
                 cacheManager,
                 diffTracker,
                 layerBuilder,
@@ -183,19 +192,15 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IContextEngine>(ContextEngine);
             RimMindServiceLocator.Register<IContextKeyProvider>(keyProvider);
 
-            var agentActiveChecker = new AgentActiveChecker();
-            RimMindServiceLocator.Register<IAgentActiveChecker>(agentActiveChecker);
-
-#pragma warning disable CS0618
-            EventBus = AgentBus;
-#pragma warning restore CS0618
+            // AgentActiveChecker now registered in Infrastructure DI
 
             RimMindServiceLocator.Register<IRimMindRuntime>(this);
 
             var pawnAgentFactory = new PawnAgentFactory(null, AgentBus);
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
-            RimMindServiceLocator.Register<IAgentFactory>(pawnAgentFactory);
-            RimMindServiceLocator.Register<IGameContextBuilder>(new GameContextBuilder());
+            RimMindServiceLocator.Register<IGameContextBuilder>(new GameContextBuilder(
+                RimMindServiceLocator.Get<IContextCalibrationSettings>(),
+                npcManager));
 
             var responseDispatcher = new ResponseDispatcher(AgentBus);
             RimMindServiceLocator.Register<IResponseDispatcher>(responseDispatcher);
@@ -203,13 +208,46 @@ namespace RimMind.Presentation.Runtime
             var contextKeyRegistry = new ContextKeyRegistryAdapter();
             RimMindServiceLocator.Register<IContextKeyRegistry>(contextKeyRegistry);
 
+            ContextKeyRegistry.Initialize(_logSink, translationService, keyProvider, npcManager);
+
             RimMindServiceLocator.Register(GetExtensionRegistry<ISettingsTab>());
-            RimMindServiceLocator.Register(GetExtensionRegistry<IModCooldown>());
 
             var clientFactoryRegistry = GetExtensionRegistry<IAIClientFactory>();
-            clientFactoryRegistry.Register(new OpenAIClientFactory());
-            clientFactoryRegistry.Register(new Player2ClientFactory());
+            var aiDebugLog = RimMindServiceLocator.Get<IAIDebugLog>();
+            var openAISettings = RimMindServiceLocator.Get<IOpenAISettings>();
+            Infrastructure.DependencyInjection.RegisterBuiltinClientFactories(clientFactoryRegistry, _logSink, aiDebugLog, openAISettings);
             RimMindServiceLocator.Register(clientFactoryRegistry);
+
+            // Set ProviderHelper default registry (Composition Root wiring)
+            Application.Common.Helpers.ProviderHelper.DefaultRegistry = clientFactoryRegistry;
+
+            // Initialize Infrastructure static caches with resolved dependencies
+            var gameContextBuilder = RimMindServiceLocator.Get<IGameContextBuilder>();
+            RimMind.Infrastructure.Persistence.StorageDriverFactory.Initialize(
+                _settingsProvider as IApiCredentialSettings,
+                HistoryManager,
+                ClientManager,
+                npcManager,
+                _logSink,
+                _settingsProvider,
+                ContextEngine,
+                gameContextBuilder,
+                responseDispatcher);
+
+            RimMindCoreDebugActions.Initialize(
+                _settingsProvider,
+                QueueImpl,
+                ClientManager,
+                aiDebugLog,
+                keyProvider,
+                ContextEngine,
+                ProviderRegistry,
+                contextKeyRegistry,
+                flywheelParameterStore,
+                Telemetry,
+                AgentBus,
+                HistoryManager,
+                npcManager);
 
         }
 
@@ -231,7 +269,7 @@ namespace RimMind.Presentation.Runtime
             _isShutdown = true;
             (Telemetry as IDisposable)?.Dispose();
             ContextEngine.Dispose();
-            Player2Client.StopHealthCheck();
+            RimMindServiceLocator.Get<IPlayer2Lifecycle>()?.StopHealthCheck();
         }
 
         public static void ResetInstance()
@@ -250,6 +288,9 @@ namespace RimMind.Presentation.Runtime
                     _instance._agentActionBridge = Application.Common.Defaults.NullAgentActionBridge.Instance;
                 }
                 RimMindServiceLocator.Reset();
+                ContextKeyRegistry.ResetCache();
+                ContextKeyRegistry.Clear();
+                GameContextBuilder.ResetCache();
                 _instance = null;
             }
         }
@@ -258,6 +299,25 @@ namespace RimMind.Presentation.Runtime
         {
             return (IExtensionRegistry<T>)_registries.GetOrAdd(typeof(T),
                 _ => new ExtensionRegistry<T>());
+        }
+
+        public void AddMiddleware<TContext>(IMiddleware<TContext> middleware) where TContext : IPipelineContext
+        {
+            if (middleware == null) return;
+            bool added = false;
+            if (_aiRequestPipeline is MutablePipeline<AIRequestContext> aiPipe && middleware is IMiddleware<AIRequestContext> aiMw)
+            { aiPipe.Use(aiMw); added = true; }
+            else if (_npcChatPipeline is MutablePipeline<NpcChatContext> npcPipe && middleware is IMiddleware<NpcChatContext> npcMw)
+            { npcPipe.Use(npcMw); added = true; }
+            else if (_contextBuildPipeline is MutablePipeline<ContextBuildContext> ctxPipe && middleware is IMiddleware<ContextBuildContext> ctxMw)
+            { ctxPipe.Use(ctxMw); added = true; }
+            else if (_busPublishPipeline is MutablePipeline<BusPublishContext> busPipe && middleware is IMiddleware<BusPublishContext> busMw)
+            { busPipe.Use(busMw); added = true; }
+
+            if (!added)
+            {
+                _logSink?.Warning($"[RimMindRuntime] AddMiddleware: no pipeline found for TContext={typeof(TContext).Name}, middleware={middleware.Name}");
+            }
         }
 
         public void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
@@ -277,12 +337,14 @@ namespace RimMind.Presentation.Runtime
         public void RegisterParameterTuner(IParameterTuner tuner)
             => _parameterTuners[tuner.TunerId] = tuner;
 
+#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
         public void RegisterSensorProvider(ISensorProvider provider)
         {
             _sensorProviders[provider.SensorId] = provider;
             var sensorManager = RimMindServiceLocator.Get<ISensorManager>() as Sensor.SensorManager;
             sensorManager?.RegisterProvider(provider);
         }
+#pragma warning restore CS0618
 
         public void UnregisterSensorProvider(string sensorId)
         {
@@ -295,6 +357,11 @@ namespace RimMind.Presentation.Runtime
         public IAIClient? GetClient() => ClientManager.GetClient();
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
         public IAIClient? GetPlayer2Client() => ClientManager.GetPlayer2Client();
+        public ISettingsProvider? GetSettingsProvider() => _settingsProvider;
+
+        public T? GetService<T>() where T : class => RimMindServiceLocator.Get<T>();
+
+        public void RegisterService<T>(T instance) where T : class => RimMindServiceLocator.Register<T>(instance);
 
         private void RegisterBuiltinModes()
         {

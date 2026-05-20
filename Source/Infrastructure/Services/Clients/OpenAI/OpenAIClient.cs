@@ -28,16 +28,23 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
         private readonly IOpenAISettings _settings;
         private readonly ILogSink? _logSink;
+        private readonly IAIDebugLog? _aiDebugLog;
 
-        public OpenAIClient(IOpenAISettings settings)
+        public OpenAIClient(IOpenAISettings settings, ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null)
         {
             _settings = settings;
-            _logSink = RimMindServiceLocator.Get<ILogSink>();
+            _logSink = logSink;
+            _aiDebugLog = aiDebugLog;
         }
 
         public bool IsConfigured() => _settings.IsConfigured();
 
         public bool IsLocalEndpoint => IsLoopbackEndpoint(_settings.ApiEndpoint);
+
+        public void Dispose()
+        {
+            _formatCapabilityCache.Clear();
+        }
 
         private static bool IsLoopbackEndpoint(string endpoint)
         {
@@ -124,7 +131,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 response.HttpStatusCode = httpStatusCode;
                 response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
                 response.Priority = request.Priority;
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
+                _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return Result<AIResponse, RimMindError>.Ok(response);
             }
             catch (HttpHelper.HttpException ex)
@@ -270,7 +277,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                         _logSink?.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
                 }
 
-                RimMindServiceLocator.Get<IAIDebugLog>()?.Record(request, response, (int)sw.ElapsedMilliseconds);
+                _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return Result<AIResponse, RimMindError>.Ok(response);
             }
             catch (HttpHelper.HttpException ex)

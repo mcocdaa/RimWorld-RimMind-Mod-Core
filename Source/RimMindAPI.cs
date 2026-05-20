@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Presentation.Settings;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
@@ -18,7 +19,7 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Agent;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Runtime;
 using Verse;
 using System;
@@ -91,14 +92,14 @@ namespace RimMind.Presentation
         internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => Settings.GetEmbeddingSnapshotStore();
         public static ITelemetryCollector Telemetry => Settings.Telemetry;
 
+#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
         public static void RegisterSensorProvider(ISensorProvider provider) => Sensors.RegisterSensorProvider(provider);
         public static void UnregisterSensorProvider(string sensorId) => Sensors.UnregisterSensorProvider(sensorId);
         public static IReadOnlyList<ISensorProvider> SensorProviders => Sensors.SensorProviders;
+#pragma warning restore CS0618
 
         public static IAudioPlayer AudioPlayer => Audio.AudioPlayer;
 
-        [Obsolete("Use GetAgentBus() instead")]
-        public static IAgentBus GetEventBus() => Bus.GetEventBus();
         public static IAgentBus GetAgentBus() => Bus.GetAgentBus();
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f) => Bus.PublishPerception(pawnId, type, content, importance);
         public static void RegisterPendingRequest(UIRequestEntry entry) => Bus.RegisterPendingRequest(entry);
@@ -108,9 +109,16 @@ namespace RimMind.Presentation
         public static IAIClient? GetPlayer2Client() => Bus.GetPlayer2Client();
 
         public static string? GetNpcForMap(Map map)
-            => RimMindServiceLocator.Get<INpcManager>()?.GetNpcForMap(map);
+            => RimMindRuntime.Instance.GetService<INpcManager>()?.GetNpcForMap(map);
 
         public static bool IsAgentActive(string thingId)
-            => RimMindServiceLocator.Get<IAgentActiveChecker>()?.IsAgentActive(thingId) == true;
+            => RimMindRuntime.Instance.GetService<IAgentActiveChecker>()?.IsAgentActive(thingId) == true;
+
+        /// <summary>
+        /// Add a middleware to the corresponding pipeline based on TContext type.
+        /// Supported context types: AIRequestContext, NpcChatContext, ContextBuildContext, BusPublishContext.
+        /// </summary>
+        public static void AddMiddleware<TContext>(IMiddleware<TContext> middleware) where TContext : IPipelineContext
+            => RimMindRuntime.Instance.AddMiddleware(middleware);
     }
 }

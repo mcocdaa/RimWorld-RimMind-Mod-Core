@@ -58,7 +58,7 @@ namespace RimMind.Presentation.Agent
             Pawn = pawn ?? throw new ArgumentNullException(nameof(pawn));
             _tickSettings = tickSettings;
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
-            Identity = new AgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
+            Identity = new SerializableAgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
             _perceiver = new PawnPerceiver(this);
             _thinker = new PawnThinker(this, _tickSettings);
             _actor = new PawnActor(this);
@@ -108,6 +108,8 @@ namespace RimMind.Presentation.Agent
         {
             return _actor.ConsumePendingJob();
         }
+
+        object? IJobProvider.ConsumePendingJob() => ConsumePendingJob();
 
         public void SetPendingJob(Verse.AI.Job job)
         {
@@ -162,7 +164,9 @@ namespace RimMind.Presentation.Agent
             }
         }
 
-        public void ResubscribeEvents() { }
+        public void ResubscribeEvents()
+        {
+        }
 
         public void Cleanup()
         {

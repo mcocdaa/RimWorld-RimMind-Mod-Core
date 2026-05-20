@@ -3,11 +3,16 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 
+
 namespace RimMind.Infrastructure.Verse
 {
     public class AIRequestQueueGameComponent : GameComponent
     {
         private readonly IAIRequestQueueTickable _impl;
+        private IAgentBus? _cachedAgentBus;
+
+        private IAgentBus? GetAgentBus()
+            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
 
         public AIRequestQueueGameComponent() : base()
         {
@@ -20,7 +25,7 @@ namespace RimMind.Infrastructure.Verse
                 else Log.Message(msg);
             };
             _impl.FlushBackgroundQueue = () =>
-                RimMindServiceLocator.Get<IAgentBus>()?.FlushBackgroundQueue();
+                GetAgentBus()?.FlushBackgroundQueue();
         }
 
         public override void GameComponentTick()

@@ -26,6 +26,10 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly string _gameId;
         private readonly INpcManager _npcManager;
         private readonly ILogSink? _logSink;
+        private readonly IContextEngine? _contextEngine;
+        private readonly ISettingsProvider? _settingsProvider;
+        private readonly IGameContextBuilder? _gameContextBuilder;
+        private readonly IResponseDispatcher? _responseDispatcher;
 
         private readonly List<LocalMemoryEntry> _localMemoryIndex = new List<LocalMemoryEntry>();
         private readonly object _indexLock = new object();
@@ -44,12 +48,19 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         public bool SupportsCommands => true;
         public bool SupportsStructuredOutput => true;
 
-        public Player2StorageDriver(Player2Client client, INpcManager npcManager)
+        public Player2StorageDriver(Player2Client client, INpcManager npcManager,
+            ILogSink? logSink = null, IContextEngine? contextEngine = null,
+            ISettingsProvider? settingsProvider = null, IGameContextBuilder? gameContextBuilder = null,
+            IResponseDispatcher? responseDispatcher = null)
         {
             _client = client;
             _npcManager = npcManager;
             _gameId = Player2Client.GameClientId;
-            _logSink = RimMindServiceLocator.Get<ILogSink>();
+            _logSink = logSink;
+            _contextEngine = contextEngine;
+            _settingsProvider = settingsProvider;
+            _gameContextBuilder = gameContextBuilder;
+            _responseDispatcher = responseDispatcher;
         }
 
         public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
@@ -161,20 +172,19 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             {
                 if (string.IsNullOrEmpty(gameStateInfo))
                 {
-                    var engine = RimMindServiceLocator.Get<IContextEngine>();
-                    if (engine != null)
+                    if (_contextEngine != null)
                     {
                         var request = new ContextRequest
                         {
                             NpcId = npcId,
                             Scenario = ScenarioIds.Dialogue,
-                            Budget = RimMindServiceLocator.Get<ISettingsProvider>()?.Context?.ContextBudget ?? 0.6f,
+                            Budget = _settingsProvider?.Context?.ContextBudget ?? 0.6f,
                             CurrentQuery = message,
-                            MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
-                            Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
+                            MaxTokens = _settingsProvider?.MaxTokens ?? 800,
+                            Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
                             Map = Find.CurrentMap,
                         };
-                        var snapshot = engine.BuildSnapshot(request);
+                        var snapshot = _contextEngine.BuildSnapshot(request);
                         var sb = new StringBuilder();
                         foreach (var msg in snapshot.Messages)
                         {
@@ -185,7 +195,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     }
                     else
                     {
-                        gameStateInfo = RimMindServiceLocator.Get<IGameContextBuilder>()?.CollectBasicGameState(npcId) ?? "";
+                        gameStateInfo = _gameContextBuilder?.CollectBasicGameState(npcId) ?? "";
                     }
                 }
 
@@ -220,8 +230,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
                 CurrentQuery = gameStateInfo != null ? $"{message}\n\n[Game State]\n{gameStateInfo}" : message,
-                MaxTokens = RimMindServiceLocator.Get<ISettingsProvider>()?.MaxTokens ?? 800,
-                Temperature = RimMindServiceLocator.Get<ISettingsProvider>()?.DefaultTemperature ?? 0.7f,
+                MaxTokens = _settingsProvider?.MaxTokens ?? 800,
+                Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
             };
             snapshot.AddMessage(new ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
 
@@ -382,8 +392,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (!AutoDispatch) return;
             try
             {
-                var dispatcher = RimMindServiceLocator.Get<IResponseDispatcher>();
-                dispatcher?.DispatchChatResponse(npcId, System.Guid.NewGuid().ToString());
+                _responseDispatcher?.DispatchChatResponse(npcId, System.Guid.NewGuid().ToString());
             }
             catch (System.Exception ex)
             {

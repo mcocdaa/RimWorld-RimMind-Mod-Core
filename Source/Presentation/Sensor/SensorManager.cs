@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Sensor;
@@ -57,7 +58,7 @@ namespace RimMind.Presentation.Sensor
                     }
                     _lastSenseTick[provider.SensorId.GetHashCode() ^ pawn.thingIDNumber] = now;
                 }
-                catch { }
+                catch (Exception ex) { Log.Warning($"[RimMind] SensorManager.Tick: provider '{provider.SensorId}' failed: {ex.Message}"); }
             }
         }
 
@@ -89,7 +90,7 @@ namespace RimMind.Presentation.Sensor
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex) { Log.Warning($"[RimMind] SensorManager.GetAgentTools: provider '{provider.SensorId}' failed: {ex.Message}"); }
             }
             return tools;
         }

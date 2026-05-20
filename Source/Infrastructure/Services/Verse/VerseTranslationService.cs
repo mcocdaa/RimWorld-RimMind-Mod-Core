@@ -3,7 +3,7 @@ using Verse;
 
 #pragma warning disable CS0618
 
-namespace RimMind.Infrastructure.Verse
+namespace RimMind.Infrastructure.Services.Verse
 {
     public sealed class VerseTranslationService : ITranslationService
     {
