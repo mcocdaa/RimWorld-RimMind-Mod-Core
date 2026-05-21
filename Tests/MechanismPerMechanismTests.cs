@@ -499,6 +499,7 @@ namespace RimMind.Presentation.Tests
         private class PerMechanismStub : IGameMechanism
         {
             string IExtension.Id => MechanismId;
+            string IExtension.OwnerModId => "Test";
             public string MechanismId { get; }
             public MechanismScope Scope { get; }
             public MechanismRisk Risk { get; }

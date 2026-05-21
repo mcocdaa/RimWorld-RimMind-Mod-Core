@@ -9,6 +9,7 @@ namespace RimMind.Application.Common.Defaults
         public static readonly NullAgentActionBridge Instance = new NullAgentActionBridge();
 
         public string Id => "null-agent-action-bridge";
+        public string OwnerModId => "RimMindCore";
 
         public void ExecuteAction(string npcId, string actionName, string[]? args = null) { }
         public bool CanExecute(string npcId, string actionName) => false;

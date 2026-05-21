@@ -15,6 +15,8 @@ namespace RimMind.Infrastructure.Verse
         private ITelemetryCollector? _telemetryCollector;
         private IFlywheelRuleEngine? _ruleEngine;
 
+        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
+        // EnsureCached() guard pattern: resolves once on first access, then uses cached fields.
         private void EnsureCached()
         {
             if (_calibrationSettings != null) return;

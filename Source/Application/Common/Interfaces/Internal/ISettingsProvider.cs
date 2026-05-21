@@ -7,5 +7,6 @@ namespace RimMind.Application.Common.Interfaces.Internal
         IDebugSettings, IOverlaySettings, IPromptSettings, IFlywheelSettings,
         IContextSettings
     {
+        IContextSettings Context { get; }
     }
 }

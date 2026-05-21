@@ -17,6 +17,8 @@ namespace RimMind.Infrastructure.Patches
         private static IAgentActionBridge? _cachedBridge;
         private static IAgentBus? _cachedAgentBus;
 
+        // [Framework-Forced SL] Verse JobDriver requires parameterless constructor.
+        // Lazy-cached SL.Get is the only viable pattern; cannot use constructor injection.
         private static IAgentActionBridge? GetBridge()
             => _cachedBridge ??= RimMindServiceLocator.Get<IAgentActionBridge>();
 

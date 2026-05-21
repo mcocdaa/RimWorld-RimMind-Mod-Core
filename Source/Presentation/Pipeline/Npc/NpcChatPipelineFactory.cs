@@ -2,6 +2,7 @@ using RimMind.Application.Common.Behaviours;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Features.Pipeline.Npc;
 
 namespace RimMind.Presentation.Pipeline.Npc
 {

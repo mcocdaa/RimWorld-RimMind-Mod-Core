@@ -25,7 +25,7 @@ namespace RimMind.Infrastructure.Persistence
         private readonly IHistoryManager _historyManager;
         private readonly ISettingsProvider? _settingsProvider;
         private readonly IClientManager? _clientManager;
-        private readonly IContextEngine? _contextEngine;
+        private readonly IContextBuilder? _contextEngine;
         private readonly string _keyPrefix;
 
         public bool IsRemote => false;
@@ -35,7 +35,7 @@ namespace RimMind.Infrastructure.Persistence
         public bool SupportsStructuredOutput => true;
 
         public LocalStorageDriver(IHistoryManager historyManager, string keyPrefix = "core",
-            ISettingsProvider? settingsProvider = null, IClientManager? clientManager = null, IContextEngine? contextEngine = null)
+            ISettingsProvider? settingsProvider = null, IClientManager? clientManager = null, IContextBuilder? contextEngine = null)
         {
             _historyManager = historyManager;
             _keyPrefix = keyPrefix + ":";

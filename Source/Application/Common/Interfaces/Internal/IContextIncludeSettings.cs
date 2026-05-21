@@ -1,6 +1,9 @@
 namespace RimMind.Application.Common.Interfaces.Internal
 {
-    public interface IContextIncludeSettings
+    /// <summary>
+    /// Pawn-related include settings: personal attributes, skills, health, mood, etc.
+    /// </summary>
+    public interface IPawnIncludeSettings
     {
         bool IncludeRace { get; set; }
         bool IncludeAge { get; set; }
@@ -23,13 +26,35 @@ namespace RimMind.Application.Common.Interfaces.Internal
         bool IncludeGenes { get; set; }
         bool IncludeSurroundings { get; set; }
         bool IncludeCombatStatus { get; set; }
+    }
+
+    /// <summary>
+    /// Map environment include settings: time, season, weather.
+    /// </summary>
+    public interface IMapIncludeSettings
+    {
         bool IncludeGameTime { get; set; }
+        bool IncludeSeason { get; set; }
+        bool IncludeWeather { get; set; }
+    }
+
+    /// <summary>
+    /// Colony status include settings: colonists, wealth, food, threats.
+    /// </summary>
+    public interface IColonyIncludeSettings
+    {
         bool IncludeColonistCount { get; set; }
         bool IncludeColonistNames { get; set; }
         bool IncludeWealth { get; set; }
         bool IncludeFood { get; set; }
-        bool IncludeSeason { get; set; }
-        bool IncludeWeather { get; set; }
         bool IncludeThreats { get; set; }
+    }
+
+    /// <summary>
+    /// Composite interface combining all include settings sub-interfaces.
+    /// Maintains backward compatibility with existing code.
+    /// </summary>
+    public interface IContextIncludeSettings : IPawnIncludeSettings, IMapIncludeSettings, IColonyIncludeSettings
+    {
     }
 }

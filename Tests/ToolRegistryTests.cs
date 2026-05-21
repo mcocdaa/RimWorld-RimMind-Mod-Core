@@ -13,6 +13,7 @@ namespace RimMind.Presentation.Tests
         private class StubToolHandler : IToolHandler
         {
             public string Id => Definition.Id;
+            public string OwnerModId => "Test";
             public ToolDefinition Definition { get; }
             public StubToolHandler(string id, string description = "", string category = "general")
             {

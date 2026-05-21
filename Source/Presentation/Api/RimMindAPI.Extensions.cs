@@ -20,6 +20,12 @@ namespace RimMind.Presentation
             public static IExtensionRegistry<T> Get<T>() where T : class, IExtension
                 => RimMindRuntime.Instance.GetExtensionRegistry<T>();
 
+            public static int UnregisterByOwner<T>(string ownerModId) where T : class, IExtension
+            {
+                var registry = Get<T>();
+                return registry?.UnregisterByOwner(ownerModId) ?? 0;
+            }
+
             public static bool ShouldSkipDialogue(Pawn pawn, string trigger)
                 => Get<ISkipCheck>().All
                     .Where(s => s.Kind == SkipCheckKind.Dialogue)

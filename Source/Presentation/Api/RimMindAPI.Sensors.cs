@@ -1,24 +1,11 @@
-#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
-using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Extension;
-using RimMind.Presentation.Settings;
-using System.Collections.Generic;
-
 namespace RimMind.Presentation
 {
     public static partial class RimMindAPI
     {
         public static class Sensors
         {
-            public static void RegisterSensorProvider(ISensorProvider provider)
-                => RimMindRuntime.Instance.RegisterSensorProvider(provider);
-
-            public static void UnregisterSensorProvider(string sensorId)
-                => RimMindRuntime.Instance.UnregisterSensorProvider(sensorId);
-
-            public static IReadOnlyList<ISensorProvider> SensorProviders
-                => RimMindRuntime.Instance.SensorProvidersList;
+            // ISensorProvider removed — no implementations existed.
+            // Kept as partial class stub to preserve API surface structure.
         }
     }
 }
-#pragma warning restore CS0618

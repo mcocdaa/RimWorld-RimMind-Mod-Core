@@ -1,26 +1,15 @@
 using System;
-using RimMind.Application.Common.Models.Context;
-using RimMind.Domain.Common;
-using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Common.Interfaces.Context
 {
-    public interface IContextEngine : IDisposable
+    /// <summary>
+    /// Composite interface aggregating all context engine concerns.
+    /// Inherit from a sub-interface when only a subset of functionality is needed:
+    ///   <see cref="IContextBuilder"/>      — snapshot building and scheduler access
+    ///   <see cref="IContextCache"/>        — cache queries and reset
+    ///   <see cref="IContextInvalidation"/> — invalidation notifications
+    /// </summary>
+    public interface IContextEngine : IContextBuilder, IContextCache, IContextInvalidation, IDisposable
     {
-        [ThreadAffinity(ThreadAffinityKind.MainOnly)]
-        ContextSnapshot? BuildSnapshot(ContextRequest request);
-        int GetL0CacheCount();
-        int GetL1BlockCacheCount();
-        int GetDiffStoreCount();
-        int GetEmbedCacheCount();
-        void ResetCaches();
-        void TouchCache(string cacheKey);
-        void RemoveL0CacheForNpc(string npcId);
-        void InvalidateLayer(string npcId, ContextLayer layer);
-        void InvalidateKey(string npcId, string key);
-        void UpdateBaseline(string npcId);
-        void InvalidateNpc(string npcId);
-        IBudgetScheduler? GetScheduler();
-        EmbeddingSnapshotStore? GetEmbeddingSnapshotStore();
     }
 }

@@ -4,6 +4,7 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Features.Pipeline.AI;
 
 namespace RimMind.Presentation.Pipeline.AI
 {
@@ -17,6 +18,7 @@ namespace RimMind.Presentation.Pipeline.AI
         }
 
         public string Id => Name;
+        public string OwnerModId => "RimMindCore";
         public string Name => nameof(ShortCircuitMiddleware);
         public int Order => 0;
 

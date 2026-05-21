@@ -22,6 +22,7 @@ namespace RimMind.Tests.Pipeline.AI
         }
 
         public string Id => "AITestErrorMiddleware";
+        public string OwnerModId => "Test";
         public string Name => "AITestErrorMiddleware";
         public int Order => 100;
 
@@ -38,6 +39,7 @@ namespace RimMind.Tests.Pipeline.AI
         public int InvokeCount { get; private set; }
 
         public string Id => "AITestSuccessMiddleware";
+        public string OwnerModId => "Test";
         public string Name => "AITestSuccessMiddleware";
         public int Order => 100;
 
@@ -52,6 +54,7 @@ namespace RimMind.Tests.Pipeline.AI
     internal sealed class AITestThrowMiddleware : IMiddleware<AIRequestContext>
     {
         public string Id => "AITestThrowMiddleware";
+        public string OwnerModId => "Test";
         public string Name => "AITestThrowMiddleware";
         public int Order => 100;
 

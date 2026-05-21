@@ -18,9 +18,10 @@ namespace RimMind.Application.Features.Agent.Modes;
 internal sealed class ReactiveAgentMode : IAgentMode
 {
     public AgentModeId ModeId => AgentModeId.Reactive;
-    public string DisplayName => "Reactive";
-    public string Description => "Responds to perception events only";
-    public string Id => ModeId.Value;
+        public string DisplayName => "Reactive";
+        public string Description => "Responds to perception events only";
+        public string Id => ModeId.Value;
+        public string OwnerModId => "RimMindCore";
 
     public bool IsApplicable(IAgentInfo agent)
         => agent.State == AgentState.Active;

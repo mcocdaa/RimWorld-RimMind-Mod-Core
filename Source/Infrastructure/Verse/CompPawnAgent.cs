@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.Agent; // Structural exception: CompPawnAgent (Verse ThingComp) needs IPawnAgentFactory/IPawnAgent
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -23,14 +24,16 @@ namespace RimMind.Infrastructure.Verse
     {
         public IAgentControl? Agent { get; internal set; }
 
-        private IAgentFactory? _cachedFactory;
+        private IPawnAgentFactory? _cachedFactory;
         private IAgentBus? _cachedAgentBus;
         private IWindowService? _cachedWindowService;
 
         private Pawn Pawn => (Pawn)parent;
 
-        private IAgentFactory? GetFactory()
-            => _cachedFactory ??= RimMindServiceLocator.Get<IAgentFactory>();
+        // [Framework-Forced SL] Verse ThingComp requires parameterless constructor.
+        // Lazy-cached SL.Get is the only viable pattern; cannot use constructor injection.
+        private IPawnAgentFactory? GetFactory()
+            => _cachedFactory ??= RimMindServiceLocator.Get<IPawnAgentFactory>();
 
         private IAgentBus? GetAgentBus()
             => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
@@ -45,7 +48,7 @@ namespace RimMind.Infrastructure.Verse
             {
                 var factory = GetFactory();
                 if (factory != null)
-                    Agent = factory.CreateAgent(Pawn, GetAgentBus()!);
+                    Agent = factory.Create(Pawn, GetAgentBus()!);
             }
         }
 
@@ -61,22 +64,22 @@ namespace RimMind.Infrastructure.Verse
             var factory = GetFactory();
             if (factory != null)
             {
-                var agent = Agent;
-                factory.SerializeAgent(ref agent, "pawnAgent");
-                Agent = agent;
+                IPawnAgent? pawnAgent = Agent as IPawnAgent;
+                factory.SerializeAgent(ref pawnAgent, "pawnAgent");
+                Agent = pawnAgent;
             }
 
             if (Agent == null && parent is Pawn pawn)
             {
                 if (factory != null)
-                    Agent = factory.CreateAgent(pawn, GetAgentBus()!);
+                    Agent = factory.Create(pawn, GetAgentBus()!);
             }
 
             if (Agent != null && !Agent.IsPawnValid)
             {
                 Agent.Cleanup();
                 if (factory != null)
-                    Agent = factory.CreateAgent(Pawn, GetAgentBus()!);
+                    Agent = factory.Create(Pawn, GetAgentBus()!);
             }
 
         }

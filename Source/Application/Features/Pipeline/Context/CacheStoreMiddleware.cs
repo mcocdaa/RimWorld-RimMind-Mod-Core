@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Context
         public string Name => "ContextCacheStore";
         public int Order => 900;
         public string Id => "ContextCacheStore";
+        public string OwnerModId => "RimMindCore";
 
         private readonly IContextCacheManager _cache;
         private readonly ILogSink? _log;

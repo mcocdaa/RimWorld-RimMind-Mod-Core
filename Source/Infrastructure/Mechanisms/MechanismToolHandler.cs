@@ -35,6 +35,7 @@ namespace RimMind.Infrastructure.Mechanisms
         }
 
         public string Id => Definition.Id;
+        public string OwnerModId => "RimMindCore";
         public ToolDefinition Definition { get; }
 
         public async Task<Result<ToolResult, RimMindError>> ExecuteAsync(ToolCallArgs args, CancellationToken ct)

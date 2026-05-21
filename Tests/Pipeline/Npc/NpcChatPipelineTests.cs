@@ -27,6 +27,7 @@ namespace RimMind.Tests.Pipeline.Npc
         }
 
         public string Id => _name;
+        public string OwnerModId => "Test";
         public string Name => _name;
         public int Order => _order;
 

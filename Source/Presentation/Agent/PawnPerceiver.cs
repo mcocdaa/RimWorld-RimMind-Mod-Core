@@ -11,9 +11,15 @@ namespace RimMind.Presentation.Agent
 {
     public class PawnPerceiver
     {
+        private const int DefaultPerceptionInterval = 150;
+        private const float MoodImportance = 0.3f;
+        private const float HediffSeverityThreshold = 0.5f;
+        private const float HealthImportance = 0.7f;
+        private const float CombatImportance = 0.8f;
+
         private readonly IPawnAgent _agent;
         private int _lastPerceptionTick;
-        private int _perceptionInterval = 150;
+        private int _perceptionInterval = DefaultPerceptionInterval;
 
         public PawnPerceiver(IPawnAgent agent)
         {
@@ -48,13 +54,13 @@ namespace RimMind.Presentation.Agent
             {
                 foreach (var hediff in pawn.health.hediffSet.hediffs)
                 {
-                    if (hediff != null && hediff.Visible && hediff.Severity > 0.5f)
+                    if (hediff != null && hediff.Visible && hediff.Severity > HediffSeverityThreshold)
                     {
                         _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
                         {
                             PerceptionType = "health",
                             Content = $"Health issue: {hediff.Label}",
-                            Importance = 0.7f,
+                            Importance = HealthImportance,
                             Tick = Find.TickManager.TicksGame
                         });
                     }
@@ -67,7 +73,7 @@ namespace RimMind.Presentation.Agent
                 {
                     PerceptionType = "combat",
                     Content = "Currently drafted for combat",
-                    Importance = 0.8f,
+                    Importance = CombatImportance,
                     Tick = Find.TickManager.TicksGame
                 });
             }

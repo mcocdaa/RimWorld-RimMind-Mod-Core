@@ -18,6 +18,8 @@ namespace RimMind.Presentation.Agent
 {
     public class PawnThinker
     {
+        private const int DefaultThinkCooldownTicks = 30000;
+
         private readonly IPawnAgent _agent;
         private readonly IAgentTickSettings? _tickSettings;
         private int _lastThinkTick;
@@ -28,7 +30,7 @@ namespace RimMind.Presentation.Agent
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _tickSettings = tickSettings;
-            _thinkCooldownTicks = _tickSettings?.ThinkCooldownTicks ?? 30000;
+            _thinkCooldownTicks = _tickSettings?.ThinkCooldownTicks ?? DefaultThinkCooldownTicks;
         }
 
         public bool IsThinking => _thinking;

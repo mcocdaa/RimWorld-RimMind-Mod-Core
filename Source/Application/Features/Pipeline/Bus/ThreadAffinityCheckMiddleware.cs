@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusThreadAffinity";
         public int Order => 50;
         public string Id => "BusThreadAffinity";
+        public string OwnerModId => "RimMindCore";
 
         private readonly IThreadChecker? _threadChecker;
         private readonly ILogSink? _log;

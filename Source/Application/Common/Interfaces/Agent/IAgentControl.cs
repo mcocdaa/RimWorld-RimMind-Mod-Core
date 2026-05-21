@@ -1,25 +1,15 @@
-using RimMind.Application.Common.Interfaces.Agent.Modes;
-using RimMind.Application.Common.Models.Agent;
-using RimMind.Domain.Agent.Modes;
-using RimMind.Domain.Enums;
-
 namespace RimMind.Application.Common.Interfaces.Agent
 {
-    public interface IAgentControl : IAgentInfo, IJobProvider
+    /// <summary>
+    /// Composite interface aggregating all agent concerns.
+    /// Inherit from a sub-interface when only a subset of functionality is needed:
+    ///   <see cref="IAgentState"/>     — read-only state queries
+    ///   <see cref="IAgentLifecycle"/> — lifecycle control (tick, transition, cleanup)
+    ///   <see cref="IAgentBehavior"/>  — behavior recording
+    ///   <see cref="IAgentInfo"/>      — identity and basic info
+    ///   <see cref="IJobProvider"/>    — pending job consumption
+    /// </summary>
+    public interface IAgentControl : IAgentState, IAgentLifecycle, IAgentBehavior, IAgentInfo, IJobProvider
     {
-        bool IsActive { get; }
-        AgentModeId CurrentModeId { get; }
-        IAgentMode CurrentMode { get; }
-        bool IsPawnValid { get; }
-        string GetDebugInfo();
-
-        void Tick();
-        bool TransitionTo(AgentState newState);
-        void ForceThink();
-        void SwitchMode(AgentModeId modeId);
-        bool RemoveGoal(string goalDescription);
-        void RecordBehavior(BehaviorRecordDto record);
-        void Cleanup();
-        void ResubscribeEvents();
     }
 }

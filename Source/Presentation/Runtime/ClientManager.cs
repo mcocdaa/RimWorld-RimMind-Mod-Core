@@ -58,7 +58,7 @@ namespace RimMind.Presentation.Runtime
         {
             var s = GetSettings();
             if (s == null) return null;
-            if (ProviderHelper.RequiresApiKey(s.Provider)) return null;
+            if (AIProviderRegistry.RequiresApiKey(s.Provider)) return null;
 
             if (_player2Client != null) return _player2Client;
             _player2Client = CreateClient(s);

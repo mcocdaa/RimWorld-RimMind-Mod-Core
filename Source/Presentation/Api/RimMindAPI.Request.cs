@@ -7,7 +7,7 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Queue;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation;
-using RimMind.Presentation.Pipeline.AI;
+using RimMind.Application.Features.Pipeline.AI;
 using RimMind.Presentation.Runtime;
 using System;
 using System.Collections.Generic;

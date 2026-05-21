@@ -18,9 +18,11 @@ namespace RimMind.Infrastructure.Verse
         private readonly HashSet<int> _activeAgentPawnIds = new HashSet<int>();
         private IAgentBus? _cachedAgentBus;
 
+        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
         private IAgentBus? GetAgentBus()
             => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
 
+        // [Framework-Forced SL] Static accessor for Verse-instantiated GameComponent.
         public static INpcManager? Instance
         {
             get => RimMindServiceLocator.Get<INpcManager>();

@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Context
         public string Name => "ContextBuildTelemetry";
         public int Order => int.MinValue;
         public string Id => "ContextBuildTelemetry";
+        public string OwnerModId => "RimMindCore";
 
         private readonly ILogSink? _log;
 

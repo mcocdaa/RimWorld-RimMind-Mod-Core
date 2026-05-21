@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Npc
         public string Name => "NpcChatRetry";
         public int Order => 800;
         public string Id => "NpcChatRetry";
+        public string OwnerModId => "RimMindCore";
 
         private readonly int _maxRetries;
         private readonly ILogSink? _log;

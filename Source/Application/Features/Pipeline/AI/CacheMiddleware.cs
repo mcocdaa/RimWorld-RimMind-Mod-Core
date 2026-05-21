@@ -10,6 +10,7 @@ namespace RimMind.Application.Features.Pipeline.AI
         public string Name => "AICache";
         public int Order => 100;
         public string Id => "AICache";
+        public string OwnerModId => "RimMindCore";
 
         private readonly ILogSink? _log;
 

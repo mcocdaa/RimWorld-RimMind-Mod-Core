@@ -94,7 +94,7 @@ namespace RimMind.Application.Common.Models.Client
         public string Description { get; set; } = "";
     }
 
-    public static class HttpHelper
+    public static class HttpTransport
     {
         public class HttpException : Exception
         {

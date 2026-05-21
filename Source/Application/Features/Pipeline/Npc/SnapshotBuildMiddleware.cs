@@ -11,11 +11,12 @@ namespace RimMind.Application.Features.Pipeline.Npc
         public string Name => "NpcSnapshotBuild";
         public int Order => 200;
         public string Id => "NpcSnapshotBuild";
+        public string OwnerModId => "RimMindCore";
 
-        private readonly IContextEngine? _contextEngine;
+        private readonly IContextBuilder? _contextEngine;
         private readonly ILogSink? _log;
 
-        public SnapshotBuildMiddleware(IContextEngine? contextEngine = null, ILogSink? log = null)
+        public SnapshotBuildMiddleware(IContextBuilder? contextEngine = null, ILogSink? log = null)
         {
             _contextEngine = contextEngine;
             _log = log;

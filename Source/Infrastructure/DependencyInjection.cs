@@ -20,9 +20,30 @@ using Verse;
 
 namespace RimMind.Infrastructure
 {
+    /// <summary>
+    /// Holds references to all services created by AddInfrastructureServices.
+    /// Allows the Composition Root to use direct references instead of resolving back from ServiceLocator.
+    /// </summary>
+    public sealed class InfrastructureServiceBag
+    {
+        public IAudioPlayer AudioPlayer { get; init; } = null!;
+        public ITickProvider TickProvider { get; init; } = null!;
+        public IThreadChecker ThreadChecker { get; init; } = null!;
+        public IPathProvider PathProvider { get; init; } = null!;
+        public ILogSink LogSink { get; init; } = null!;
+        public ITranslationService TranslationService { get; init; } = null!;
+        public IGameMechanismRegistry MechanismRegistry { get; init; } = null!;
+        public IWindowService WindowService { get; init; } = null!;
+        public IAgentActiveChecker AgentActiveChecker { get; init; } = null!;
+        public IPlayer2Lifecycle Player2Lifecycle { get; init; } = null!;
+        public IStorageDriverFactory StorageDriverFactory { get; init; } = null!;
+    }
+
     public static class DependencyInjection
     {
-        public static void AddInfrastructureServices()
+        public static InfrastructureServiceBag AddInfrastructureServices(
+            IToolRegistry toolRegistry, IJsonExtractor jsonExtractor,
+            ISettingsProvider? settingsProvider = null)
         {
             var audioPlayer = new NullAudioPlayer();
             RimMindServiceLocator.Register<IAudioPlayer>(audioPlayer);
@@ -42,23 +63,36 @@ namespace RimMind.Infrastructure
             var translationService = new VerseTranslationService();
             RimMindServiceLocator.Register<ITranslationService>(translationService);
 
-            var toolRegistry = RimMindServiceLocator.Get<IToolRegistry>();
-            var jsonExtractor = RimMindServiceLocator.Get<IJsonExtractor>();
             var mechanismRegistry = new GameMechanismRegistry(toolRegistry, jsonExtractor);
             RimMindServiceLocator.Register<IGameMechanismRegistry>(mechanismRegistry);
             RimMindServiceLocator.Register(mechanismRegistry);
 
-            // UI Services
-            RimMindServiceLocator.Register<IWindowService>(new WindowService());
+            var windowService = new WindowService();
+            RimMindServiceLocator.Register<IWindowService>(windowService);
 
-            // Agent Services
-            RimMindServiceLocator.Register<IAgentActiveChecker>(new AgentActiveChecker());
+            var agentActiveChecker = new AgentActiveChecker();
+            RimMindServiceLocator.Register<IAgentActiveChecker>(agentActiveChecker);
 
-            // Player2 Lifecycle
-            RimMindServiceLocator.Register<IPlayer2Lifecycle>(new Player2LifecycleService());
+            var player2Lifecycle = new Player2LifecycleService(settingsProvider);
+            RimMindServiceLocator.Register<IPlayer2Lifecycle>(player2Lifecycle);
 
-            // Storage Driver Factory
-            RimMindServiceLocator.Register<IStorageDriverFactory>(new StorageDriverFactoryService());
+            var storageDriverFactory = new StorageDriverFactoryService();
+            RimMindServiceLocator.Register<IStorageDriverFactory>(storageDriverFactory);
+
+            return new InfrastructureServiceBag
+            {
+                AudioPlayer = audioPlayer,
+                TickProvider = tickProvider,
+                ThreadChecker = threadChecker,
+                PathProvider = pathProvider,
+                LogSink = logSink,
+                TranslationService = translationService,
+                MechanismRegistry = mechanismRegistry,
+                WindowService = windowService,
+                AgentActiveChecker = agentActiveChecker,
+                Player2Lifecycle = player2Lifecycle,
+                StorageDriverFactory = storageDriverFactory
+            };
         }
 
         public static void AddGameDependentServices()

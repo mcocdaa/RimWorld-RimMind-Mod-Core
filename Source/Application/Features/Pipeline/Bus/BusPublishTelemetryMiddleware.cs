@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusPublishTelemetry";
         public int Order => int.MinValue;
         public string Id => "BusPublishTelemetry";
+        public string OwnerModId => "RimMindCore";
 
         private readonly ILogSink? _log;
 

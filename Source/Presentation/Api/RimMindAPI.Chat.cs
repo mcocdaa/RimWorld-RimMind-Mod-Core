@@ -3,7 +3,7 @@ using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Agent;
-using RimMind.Presentation.Pipeline.Npc;
+using RimMind.Application.Features.Pipeline.Npc;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Extension;
 using Verse;

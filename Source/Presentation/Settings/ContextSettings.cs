@@ -71,147 +71,147 @@ namespace RimMind.Presentation.Settings
         float IContextEnvironmentSettings.MoodDiffThreshold => moodDiffThreshold;
         float IContextEnvironmentSettings.TemperatureDiffThreshold => temperatureDiffThreshold;
 
-        bool IContextIncludeSettings.IncludeRace
+        bool IPawnIncludeSettings.IncludeRace
         {
             get => IncludeRace;
             set => IncludeRace = value;
         }
-        bool IContextIncludeSettings.IncludeAge
+        bool IPawnIncludeSettings.IncludeAge
         {
             get => IncludeAge;
             set => IncludeAge = value;
         }
-        bool IContextIncludeSettings.IncludeGender
+        bool IPawnIncludeSettings.IncludeGender
         {
             get => IncludeGender;
             set => IncludeGender = value;
         }
-        bool IContextIncludeSettings.IncludeBackstory
+        bool IPawnIncludeSettings.IncludeBackstory
         {
             get => IncludeBackstory;
             set => IncludeBackstory = value;
         }
-        bool IContextIncludeSettings.IncludeIdeology
+        bool IPawnIncludeSettings.IncludeIdeology
         {
             get => IncludeIdeology;
             set => IncludeIdeology = value;
         }
-        bool IContextIncludeSettings.IncludeTraits
+        bool IPawnIncludeSettings.IncludeTraits
         {
             get => IncludeTraits;
             set => IncludeTraits = value;
         }
-        bool IContextIncludeSettings.IncludeSkills
+        bool IPawnIncludeSettings.IncludeSkills
         {
             get => IncludeSkills;
             set => IncludeSkills = value;
         }
-        int IContextIncludeSettings.MinSkillLevel
+        int IPawnIncludeSettings.MinSkillLevel
         {
             get => MinSkillLevel;
             set => MinSkillLevel = value;
         }
-        bool IContextIncludeSettings.IncludeHealth
+        bool IPawnIncludeSettings.IncludeHealth
         {
             get => IncludeHealth;
             set => IncludeHealth = value;
         }
-        bool IContextIncludeSettings.IncludeCapacities
+        bool IPawnIncludeSettings.IncludeCapacities
         {
             get => IncludeCapacities;
             set => IncludeCapacities = value;
         }
-        bool IContextIncludeSettings.IncludeMood
+        bool IPawnIncludeSettings.IncludeMood
         {
             get => IncludeMood;
             set => IncludeMood = value;
         }
-        bool IContextIncludeSettings.IncludeMoodThoughts
+        bool IPawnIncludeSettings.IncludeMoodThoughts
         {
             get => IncludeMoodThoughts;
             set => IncludeMoodThoughts = value;
         }
-        bool IContextIncludeSettings.IncludeCurrentJob
+        bool IPawnIncludeSettings.IncludeCurrentJob
         {
             get => IncludeCurrentJob;
             set => IncludeCurrentJob = value;
         }
-        bool IContextIncludeSettings.IncludeWorkPriorities
+        bool IPawnIncludeSettings.IncludeWorkPriorities
         {
             get => IncludeWorkPriorities;
             set => IncludeWorkPriorities = value;
         }
-        bool IContextIncludeSettings.IncludeEquipment
+        bool IPawnIncludeSettings.IncludeEquipment
         {
             get => IncludeEquipment;
             set => IncludeEquipment = value;
         }
-        bool IContextIncludeSettings.IncludeInventory
+        bool IPawnIncludeSettings.IncludeInventory
         {
             get => IncludeInventory;
             set => IncludeInventory = value;
         }
-        bool IContextIncludeSettings.IncludeLocation
+        bool IPawnIncludeSettings.IncludeLocation
         {
             get => IncludeLocation;
             set => IncludeLocation = value;
         }
-        bool IContextIncludeSettings.IncludeRelations
+        bool IPawnIncludeSettings.IncludeRelations
         {
             get => IncludeRelations;
             set => IncludeRelations = value;
         }
-        bool IContextIncludeSettings.IncludeGenes
+        bool IPawnIncludeSettings.IncludeGenes
         {
             get => IncludeGenes;
             set => IncludeGenes = value;
         }
-        bool IContextIncludeSettings.IncludeSurroundings
+        bool IPawnIncludeSettings.IncludeSurroundings
         {
             get => IncludeSurroundings;
             set => IncludeSurroundings = value;
         }
-        bool IContextIncludeSettings.IncludeCombatStatus
+        bool IPawnIncludeSettings.IncludeCombatStatus
         {
             get => IncludeCombatStatus;
             set => IncludeCombatStatus = value;
         }
-        bool IContextIncludeSettings.IncludeGameTime
+        bool IMapIncludeSettings.IncludeGameTime
         {
             get => IncludeGameTime;
             set => IncludeGameTime = value;
         }
-        bool IContextIncludeSettings.IncludeColonistCount
+        bool IColonyIncludeSettings.IncludeColonistCount
         {
             get => IncludeColonistCount;
             set => IncludeColonistCount = value;
         }
-        bool IContextIncludeSettings.IncludeColonistNames
+        bool IColonyIncludeSettings.IncludeColonistNames
         {
             get => IncludeColonistNames;
             set => IncludeColonistNames = value;
         }
-        bool IContextIncludeSettings.IncludeWealth
+        bool IColonyIncludeSettings.IncludeWealth
         {
             get => IncludeWealth;
             set => IncludeWealth = value;
         }
-        bool IContextIncludeSettings.IncludeFood
+        bool IColonyIncludeSettings.IncludeFood
         {
             get => IncludeFood;
             set => IncludeFood = value;
         }
-        bool IContextIncludeSettings.IncludeSeason
+        bool IMapIncludeSettings.IncludeSeason
         {
             get => IncludeSeason;
             set => IncludeSeason = value;
         }
-        bool IContextIncludeSettings.IncludeWeather
+        bool IMapIncludeSettings.IncludeWeather
         {
             get => IncludeWeather;
             set => IncludeWeather = value;
         }
-        bool IContextIncludeSettings.IncludeThreats
+        bool IColonyIncludeSettings.IncludeThreats
         {
             get => IncludeThreats;
             set => IncludeThreats = value;

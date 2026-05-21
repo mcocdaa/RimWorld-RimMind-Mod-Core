@@ -1,9 +1,18 @@
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Internal;
 
 namespace RimMind.Infrastructure.Services.Clients.Player2
 {
     internal sealed class Player2LifecycleService : IPlayer2Lifecycle
     {
+        private readonly ISettingsProvider? _settingsProvider;
+
+        public Player2LifecycleService(ISettingsProvider? settingsProvider = null)
+        {
+            _settingsProvider = settingsProvider;
+        }
+
         public void StopHealthCheck()
         {
             Player2Client.StopHealthCheck();
@@ -16,7 +25,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
         public void RefreshBalance()
         {
-            Player2Client.RefreshJoulesBalance();
+            Player2Client.RefreshJoulesBalance(_settingsProvider);
         }
 
         public float CachedBalance => Player2Client.CachedJoulesBalance;

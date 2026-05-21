@@ -6,14 +6,27 @@ using RimMind.Application.Common.Interfaces.Internal;
 
 namespace RimMind.Application.Common.Helpers
 {
-    public static class ProviderHelper
+    public static class AIProviderRegistry
     {
         private static readonly string FallbackProvider = "openai";
 
+        private static IExtensionRegistry<IAIClientFactory>? _defaultRegistry;
+        private static bool _defaultRegistrySet;
+
         /// <summary>
         /// Set by Composition Root at startup. Eliminates the need for direct SL.Get fallback.
+        /// Can only be assigned once; subsequent assignments are silently ignored.
         /// </summary>
-        public static IExtensionRegistry<IAIClientFactory>? DefaultRegistry { get; set; }
+        public static IExtensionRegistry<IAIClientFactory>? DefaultRegistry
+        {
+            get => _defaultRegistry;
+            set
+            {
+                if (_defaultRegistrySet) return;
+                _defaultRegistry = value;
+                _defaultRegistrySet = true;
+            }
+        }
 
         public static IReadOnlyList<string> GetAllProviderIds(IExtensionRegistry<IAIClientFactory>? registry = null)
         {

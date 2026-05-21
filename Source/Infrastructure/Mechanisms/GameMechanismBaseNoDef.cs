@@ -16,6 +16,7 @@ namespace RimMind.Infrastructure.Mechanisms
     public abstract class GameMechanismBaseNoDef : IGameMechanism
     {
         string IExtension.Id => MechanismId;
+        string IExtension.OwnerModId => "RimMindCore";
         public abstract string MechanismId { get; }
         public abstract MechanismScope Scope { get; }
         public abstract MechanismRisk Risk { get; }

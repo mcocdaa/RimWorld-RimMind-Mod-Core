@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RimMind.Infrastructure.Services.Clients
 {
-    internal static class HttpHelper
+    internal static class HttpTransport
     {
         private static readonly HttpClient _http = new HttpClient();
 

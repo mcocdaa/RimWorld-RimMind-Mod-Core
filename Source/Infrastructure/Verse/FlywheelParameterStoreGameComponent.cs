@@ -13,6 +13,8 @@ namespace RimMind.Infrastructure.Verse
         public FlywheelParameterStoreGameComponent() : base() { }
         public FlywheelParameterStoreGameComponent(global::Verse.Game game) : base() { }
 
+        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
+        // Lazy-cached SL.Get is the only viable pattern.
         public IFlywheelParameterStore Store => _store ??= RimMindServiceLocator.Get<IFlywheelParameterStore>()!;
 
         public override void ExposeData()

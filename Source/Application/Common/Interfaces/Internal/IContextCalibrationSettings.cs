@@ -4,6 +4,5 @@ namespace RimMind.Application.Common.Interfaces.Internal
     {
         int ContextCalibrateInterval { get; set; }
         int ContextDiffLifetimeTicks { get; set; }
-        IContextSettings Context { get; }
     }
 }

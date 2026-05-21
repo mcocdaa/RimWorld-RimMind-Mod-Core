@@ -18,6 +18,7 @@ namespace RimMind.Presentation.Tests
         private class ListStubMechanism : IGameMechanism
         {
             string IExtension.Id => MechanismId;
+            string IExtension.OwnerModId => "Test";
             public string MechanismId { get; init; } = "pawn.test";
             public MechanismScope Scope { get; init; } = MechanismScope.Pawn;
             public MechanismRisk Risk { get; init; } = MechanismRisk.Safe;

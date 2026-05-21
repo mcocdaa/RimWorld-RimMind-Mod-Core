@@ -24,16 +24,17 @@ namespace RimMind.Infrastructure.UI
 
         private IHistoryManager? _cachedHistoryManager;
         private ISettingsProvider? _cachedSettingsProvider;
-        private IContextEngine? _cachedContextEngine;
+        private IContextBuilder? _cachedContextEngine;
 
+        // Route through ServiceLocator (Application layer) instead of RimMindRuntime (Presentation layer)
         private IHistoryManager? GetHistoryManager()
             => _cachedHistoryManager ??= RimMindServiceLocator.Get<IHistoryManager>();
 
         private ISettingsProvider? GetSettingsProvider()
             => _cachedSettingsProvider ??= RimMindServiceLocator.Get<ISettingsProvider>();
 
-        private IContextEngine? GetContextEngine()
-            => _cachedContextEngine ??= RimMindServiceLocator.Get<IContextEngine>();
+        private IContextBuilder? GetContextEngine()
+            => _cachedContextEngine ??= RimMindServiceLocator.Get<IContextBuilder>();
 
         public override Vector2 InitialSize => new Vector2(500f, 500f);
 

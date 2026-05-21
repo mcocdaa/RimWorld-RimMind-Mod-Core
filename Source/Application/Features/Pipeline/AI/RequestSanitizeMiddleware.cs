@@ -10,6 +10,7 @@ namespace RimMind.Application.Features.Pipeline.AI
         public string Name => "AIRequestSanitize";
         public int Order => 50;
         public string Id => "AIRequestSanitize";
+        public string OwnerModId => "RimMindCore";
 
         private readonly ILogSink? _log;
 

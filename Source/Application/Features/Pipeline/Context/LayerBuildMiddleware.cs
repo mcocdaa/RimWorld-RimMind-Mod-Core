@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Context
         public string Name => "ContextLayerBuild";
         public int Order => 300;
         public string Id => "ContextLayerBuild";
+        public string OwnerModId => "RimMindCore";
 
         private readonly IContextLayerBuilder _layerBuilder;
         private readonly ILogSink? _log;

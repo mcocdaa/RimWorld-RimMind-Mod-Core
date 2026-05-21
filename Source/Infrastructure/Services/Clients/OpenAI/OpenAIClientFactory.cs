@@ -19,6 +19,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
         }
 
         public string Id => AIProviders.OpenAI;
+        public string OwnerModId => "RimMindCore";
         public string ProviderId => AIProviders.OpenAI;
         public bool RequiresApiKey => true;
 

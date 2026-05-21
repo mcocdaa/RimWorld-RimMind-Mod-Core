@@ -21,6 +21,7 @@ namespace RimMind.Presentation
     public class RimMindCoreMod : Mod
     {
         public static RimMindCoreSettings Settings { get; private set; } = null!;
+        private static ISettingsProvider? _cachedSettingsProvider;
 
         public RimMindCoreMod(ModContentPack content) : base(content)
         {
@@ -30,7 +31,12 @@ namespace RimMind.Presentation
 
             Settings = GetSettings<RimMindCoreSettings>();
             var sp = new SettingsProvider(Settings);
+            _cachedSettingsProvider = sp;
             RimMindServiceLocator.Register<ISettingsProvider>(sp);
+            RimMindServiceLocator.Register<IContextSettings>(sp);
+            RimMindServiceLocator.Register<IContextBudgetSettings>(sp);
+            RimMindServiceLocator.Register<IContextIncludeSettings>(sp);
+            RimMindServiceLocator.Register<IContextEnvironmentSettings>(sp);
             RimMindServiceLocator.Register<IAIModelSettings>(sp);
             RimMindServiceLocator.Register<IApiCredentialSettings>(sp);
             RimMindServiceLocator.Register<ICircuitBreakerSettings>(sp);
@@ -43,7 +49,7 @@ namespace RimMind.Presentation
             RimMindServiceLocator.Register<IFlywheelSettings>(sp);
             RimMindServiceLocator.Register<IOpenAISettings>(Settings);
 
-            RimMindRuntime.Initialize();
+            RimMindRuntime.Initialize(sp, Settings);
 
             if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
             {
@@ -65,9 +71,11 @@ namespace RimMind.Presentation
 
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
 
+            // Route through RimMindRuntime facade instead of direct ServiceLocator access
+            var runtime = RimMindRuntime.Instance;
             ScenarioRegistry.RegisterCoreScenarios(
-                RimMindServiceLocator.Get<ITranslationService>(),
-                RimMindServiceLocator.Get<ILogSink>());
+                runtime.GetService<ITranslationService>(),
+                runtime.GetService<ILogSink>());
             RelevanceTable.RegisterCoreRelevance();
             ContextKeyRegistry.RegisterCoreKeys();
         }
@@ -76,7 +84,7 @@ namespace RimMind.Presentation
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
-            RimMindCoreSettingsUI.Draw(inRect, RimMindServiceLocator.Get<ISettingsProvider>()!);
+            RimMindCoreSettingsUI.Draw(inRect, _cachedSettingsProvider!);
         }
     }
 
@@ -85,6 +93,7 @@ namespace RimMind.Presentation
         private readonly RimMindCoreSettings _settings;
         public CoreOverlayToggle(RimMindCoreSettings settings) { _settings = settings; }
         public string Id => "request_overlay";
+        public string OwnerModId => "RimMindCore";
         public bool IsActive => _settings.requestOverlayEnabled;
         public void Toggle()
         {

@@ -9,7 +9,7 @@ using VersePawn = Verse.Pawn;
 
 namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
 {
-    public static class JobActionHandlers
+    public static class JobActionDispatcher
     {
         public static Result<bool, RimMindError> HandleAssignWork(VersePawn pawn, MechanismWriteArgs args)
         {

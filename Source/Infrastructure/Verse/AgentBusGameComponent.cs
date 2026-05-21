@@ -14,6 +14,8 @@ namespace RimMind.Infrastructure.Verse
 
         public AgentBusGameComponent(Game game) : base() { }
 
+        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
+        // EnsureCached() guard pattern: resolves once on first access, then uses cached fields.
         private void EnsureCached()
         {
             if (_agentBus != null) return;

@@ -38,39 +38,39 @@ namespace RimMind.Presentation
         }
 
         /// <summary>
-        /// Facade for JSON-related operations: JsonHelpers, JsonRepairHelper, JsonTagExtractor.
+        /// Facade for JSON-related operations: JsonExtractorUtils, JsonRepairer, JsonTagExtractor.
         /// Sub-mods should use this instead of directly referencing
         /// RimMind.Application.Features.Json.
         /// </summary>
         public static class Json
         {
-            // ── JsonHelpers ──
+            // ── JsonExtractorUtils ──
 
             public static string Serialize(object obj, bool pretty = false)
-                => JsonHelpers.Serialize(obj, pretty);
+                => JsonExtractorUtils.Serialize(obj, pretty);
 
             public static T? Deserialize<T>(string json) where T : class
-                => JsonHelpers.Deserialize<T>(json);
+                => JsonExtractorUtils.Deserialize<T>(json);
 
             public static T? Deserialize<T>(string json, T defaultValue) where T : class
-                => JsonHelpers.Deserialize<T>(json, defaultValue);
+                => JsonExtractorUtils.Deserialize<T>(json, defaultValue);
 
             public static bool TryDeserialize<T>(string json, out T? result) where T : class
-                => JsonHelpers.TryDeserialize<T>(json, out result);
+                => JsonExtractorUtils.TryDeserialize<T>(json, out result);
 
             public static string? ExtractString(string json, string propertyName)
-                => JsonHelpers.ExtractString(json, propertyName);
+                => JsonExtractorUtils.ExtractString(json, propertyName);
 
             public static int? ExtractNullableInt(string json, string propertyName)
-                => JsonHelpers.ExtractNullableInt(json, propertyName);
+                => JsonExtractorUtils.ExtractNullableInt(json, propertyName);
 
-            // ── JsonRepairHelper ──
+            // ── JsonRepairer ──
 
             public static string? TryRepairJson(string input)
-                => JsonRepairHelper.TryRepair(input);
+                => JsonRepairer.TryRepair(input);
 
             public static string? TryRepairTruncatedJson(string input)
-                => JsonRepairHelper.TryRepairTruncatedJson(input);
+                => JsonRepairer.TryRepairTruncatedJson(input);
 
             // ── JsonTagExtractor ──
 

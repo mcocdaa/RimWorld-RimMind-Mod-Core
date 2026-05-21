@@ -3,6 +3,7 @@ using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Pipeline.Context;
 
 namespace RimMind.Presentation.Pipeline.Context
 {

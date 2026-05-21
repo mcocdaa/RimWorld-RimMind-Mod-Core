@@ -11,11 +11,14 @@ namespace RimMind.Infrastructure.Verse
         private readonly IAIRequestQueueTickable _impl;
         private IAgentBus? _cachedAgentBus;
 
+        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
         private IAgentBus? GetAgentBus()
             => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
 
         public AIRequestQueueGameComponent() : base()
         {
+            // [Framework-Forced SL] Resolving in constructor is acceptable for GameComponent
+            // since Verse creates instances before RimMindRuntime finishes initialization.
             _impl = RimMindServiceLocator.Get<IAIRequestQueueTickable>()
                 ?? throw new System.InvalidOperationException("IAIRequestQueueTickable not available.");
             _impl.CurrentTick = Find.TickManager.TicksGame;

@@ -23,56 +23,56 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void TransientExceptionChecker_HttpException5xx_IsTransient()
         {
-            var ex = new HttpHelper.HttpException(500, "Internal Server Error");
+            var ex = new HttpTransport.HttpException(500, "Internal Server Error");
             Assert.True(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException502_IsTransient()
         {
-            var ex = new HttpHelper.HttpException(502, "Bad Gateway");
+            var ex = new HttpTransport.HttpException(502, "Bad Gateway");
             Assert.True(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException503_IsTransient()
         {
-            var ex = new HttpHelper.HttpException(503, "Service Unavailable");
+            var ex = new HttpTransport.HttpException(503, "Service Unavailable");
             Assert.True(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException4xx_IsNotTransient()
         {
-            var ex = new HttpHelper.HttpException(400, "Bad Request");
+            var ex = new HttpTransport.HttpException(400, "Bad Request");
             Assert.False(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException401_IsNotTransient()
         {
-            var ex = new HttpHelper.HttpException(401, "Unauthorized");
+            var ex = new HttpTransport.HttpException(401, "Unauthorized");
             Assert.False(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException403_IsNotTransient()
         {
-            var ex = new HttpHelper.HttpException(403, "Forbidden");
+            var ex = new HttpTransport.HttpException(403, "Forbidden");
             Assert.False(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException404_IsNotTransient()
         {
-            var ex = new HttpHelper.HttpException(404, "Not Found");
+            var ex = new HttpTransport.HttpException(404, "Not Found");
             Assert.False(TransientExceptionChecker.IsTransient(ex));
         }
 
         [Fact]
         public void TransientExceptionChecker_HttpException429_IsNotTransient()
         {
-            var ex = new HttpHelper.HttpException(429, "Too Many Requests");
+            var ex = new HttpTransport.HttpException(429, "Too Many Requests");
             Assert.False(TransientExceptionChecker.IsTransient(ex));
         }
 
@@ -100,7 +100,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void TransientExceptionChecker_HttpException600_IsNotTransient()
         {
-            var ex = new HttpHelper.HttpException(600, "Non-standard");
+            var ex = new HttpTransport.HttpException(600, "Non-standard");
             Assert.False(TransientExceptionChecker.IsTransient(ex));
         }
 

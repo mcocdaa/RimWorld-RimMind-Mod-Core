@@ -17,6 +17,7 @@ namespace RimMind.Presentation.Tests
         private class StubToolHandler : IToolHandler
         {
             public string Id => Definition.Id;
+            public string OwnerModId => "Test";
             public ToolDefinition Definition { get; }
             private readonly string _resultContent;
             private readonly bool _returnError;

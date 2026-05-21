@@ -6,7 +6,7 @@ namespace RimMind.Application.Features.Json
     {
         public string? ExtractString(string json, string propertyName)
         {
-            return JsonHelpers.ExtractString(json, propertyName);
+            return JsonExtractorUtils.ExtractString(json, propertyName);
         }
     }
 }

@@ -108,7 +108,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
             {
                 bool isLocal = IsLoopbackEndpoint(_settings.ApiEndpoint);
                 float connectTimeout = isLocal ? 300f : 60f;
-                (string responseText, long httpStatusCode) = await HttpHelper.PostAsync(
+                (string responseText, long httpStatusCode) = await HttpTransport.PostAsync(
                     endpoint, json, $"Bearer {_settings.ApiKey}", connectTimeout: connectTimeout);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
@@ -134,7 +134,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return Result<AIResponse, RimMindError>.Ok(response);
             }
-            catch (HttpHelper.HttpException ex)
+            catch (HttpTransport.HttpException ex)
             {
                 sw.Stop();
                 _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
@@ -225,7 +225,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
             {
                 bool isLocal = IsLoopbackEndpoint(_settings.ApiEndpoint);
                 float connectTimeout = isLocal ? 300f : 60f;
-                (string responseText, long httpStatusCode) = await HttpHelper.PostAsync(
+                (string responseText, long httpStatusCode) = await HttpTransport.PostAsync(
                     endpoint, json, $"Bearer {_settings.ApiKey}", connectTimeout: connectTimeout);
                 var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
                 string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
@@ -280,7 +280,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
                 return Result<AIResponse, RimMindError>.Ok(response);
             }
-            catch (HttpHelper.HttpException ex)
+            catch (HttpTransport.HttpException ex)
             {
                 sw.Stop();
                 _logSink?.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);

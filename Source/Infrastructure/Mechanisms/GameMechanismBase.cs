@@ -19,6 +19,7 @@ namespace RimMind.Infrastructure.Mechanisms
         where TDef : Def, new()
     {
         string IExtension.Id => MechanismId;
+        string IExtension.OwnerModId => "RimMindCore";
         public abstract string MechanismId { get; }
         public abstract MechanismScope Scope { get; }
         public abstract MechanismRisk Risk { get; }

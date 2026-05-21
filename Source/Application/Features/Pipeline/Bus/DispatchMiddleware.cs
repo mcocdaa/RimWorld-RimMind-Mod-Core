@@ -12,6 +12,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusDispatch";
         public int Order => 200;
         public string Id => "BusDispatch";
+        public string OwnerModId => "RimMindCore";
 
         private readonly Action<AgentBusEvent> _dispatch;
         private readonly ILogSink? _log;

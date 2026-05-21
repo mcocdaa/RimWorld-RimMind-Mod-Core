@@ -26,7 +26,7 @@ namespace RimMind.Infrastructure.UI
         private static IClientManager? _clientManager;
         private static IAIDebugLog? _debugLog;
         private static IContextKeyProvider? _contextKeyProvider;
-        private static IContextEngine? _contextEngine;
+        private static IContextBuilder? _contextEngine;
         private static IProviderRegistry? _providerRegistry;
         private static IContextKeyRegistry? _contextKeyRegistry;
         private static IFlywheelParameterStore? _flywheelParameterStore;
@@ -44,7 +44,7 @@ namespace RimMind.Infrastructure.UI
             IClientManager? clientManager,
             IAIDebugLog? debugLog,
             IContextKeyProvider? contextKeyProvider,
-            IContextEngine? contextEngine,
+            IContextBuilder? contextEngine,
             IProviderRegistry? providerRegistry,
             IContextKeyRegistry? contextKeyRegistry,
             IFlywheelParameterStore? flywheelParameterStore,

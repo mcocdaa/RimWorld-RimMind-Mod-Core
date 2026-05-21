@@ -8,7 +8,6 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Interfaces.Pipeline;
-using RimMind.Presentation.Settings;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Client;
@@ -91,12 +90,6 @@ namespace RimMind.Presentation
         internal static IBudgetScheduler? GetContextScheduler() => Settings.GetContextScheduler();
         internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => Settings.GetEmbeddingSnapshotStore();
         public static ITelemetryCollector Telemetry => Settings.Telemetry;
-
-#pragma warning disable CS0618 // ISensorProvider is dead code (no implementations) but kept for public API surface
-        public static void RegisterSensorProvider(ISensorProvider provider) => Sensors.RegisterSensorProvider(provider);
-        public static void UnregisterSensorProvider(string sensorId) => Sensors.UnregisterSensorProvider(sensorId);
-        public static IReadOnlyList<ISensorProvider> SensorProviders => Sensors.SensorProviders;
-#pragma warning restore CS0618
 
         public static IAudioPlayer AudioPlayer => Audio.AudioPlayer;
 

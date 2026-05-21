@@ -14,6 +14,7 @@ namespace RimMind.Application.Features.Pipeline.AI
         public string Name => "AIClientInvoke";
         public int Order => 500;
         public string Id => "AIClientInvoke";
+        public string OwnerModId => "RimMindCore";
 
         private readonly ILogSink? _log;
 

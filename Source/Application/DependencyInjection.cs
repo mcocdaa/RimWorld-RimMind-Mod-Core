@@ -15,9 +15,24 @@ using RimMind.Application.Features.Tools;
 
 namespace RimMind.Application
 {
+    /// <summary>
+    /// Holds references to all services created by AddApplicationServices.
+    /// Allows the Composition Root to use direct references instead of resolving back from ServiceLocator.
+    /// </summary>
+    public sealed class ApplicationServiceBag
+    {
+        public IAgentBus AgentBus { get; init; } = null!;
+        public IToolRegistry ToolRegistry { get; init; } = null!;
+        public IFlywheelParameterStore ParameterStore { get; init; } = null!;
+        public IFlywheelRuleEngine RuleEngine { get; init; } = null!;
+        public IAIRequestQueue Queue { get; init; } = null!;
+        public IJsonExtractor JsonExtractor { get; init; } = null!;
+        public ITelemetryCollector Telemetry { get; init; } = null!;
+    }
+
     public static class DependencyInjection
     {
-        public static void AddApplicationServices(ISettingsProvider? settingsProvider = null)
+        public static ApplicationServiceBag AddApplicationServices(ISettingsProvider? settingsProvider = null)
         {
             var agentBus = new AgentBusImpl();
             RimMindServiceLocator.Register<IAgentBus>(agentBus);
@@ -43,6 +58,17 @@ namespace RimMind.Application
             var telemetry = new FlywheelTelemetryCollector();
             RimMindServiceLocator.Register<ITelemetryCollector>(telemetry);
             RimMindServiceLocator.Register(telemetry);
+
+            return new ApplicationServiceBag
+            {
+                AgentBus = agentBus,
+                ToolRegistry = toolRegistry,
+                ParameterStore = parameterStore,
+                RuleEngine = ruleEngine,
+                Queue = queue,
+                JsonExtractor = jsonExtractor,
+                Telemetry = telemetry
+            };
         }
     }
 }

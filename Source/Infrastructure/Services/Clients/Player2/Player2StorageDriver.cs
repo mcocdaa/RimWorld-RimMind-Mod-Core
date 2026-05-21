@@ -26,7 +26,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly string _gameId;
         private readonly INpcManager _npcManager;
         private readonly ILogSink? _logSink;
-        private readonly IContextEngine? _contextEngine;
+        private readonly IContextBuilder? _contextEngine;
         private readonly ISettingsProvider? _settingsProvider;
         private readonly IGameContextBuilder? _gameContextBuilder;
         private readonly IResponseDispatcher? _responseDispatcher;
@@ -49,7 +49,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         public bool SupportsStructuredOutput => true;
 
         public Player2StorageDriver(Player2Client client, INpcManager npcManager,
-            ILogSink? logSink = null, IContextEngine? contextEngine = null,
+            ILogSink? logSink = null, IContextBuilder? contextEngine = null,
             ISettingsProvider? settingsProvider = null, IGameContextBuilder? gameContextBuilder = null,
             IResponseDispatcher? responseDispatcher = null)
         {

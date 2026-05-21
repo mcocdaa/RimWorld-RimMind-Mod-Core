@@ -65,14 +65,14 @@ namespace RimMind.Infrastructure.Mechanisms.Pawn.Job
 
             var result = args.Action switch
             {
-                "assign_work" => JobActionHandlers.HandleAssignWork(pawn, args),
-                "move_to" => JobActionHandlers.HandleMoveTo(pawn, args),
-                "eat_food" => JobActionHandlers.HandleEatFood(pawn, args),
-                "force_rest" => JobActionHandlers.HandleForceRest(pawn, args),
-                "tend_pawn" => JobActionHandlers.HandleTendPawn(pawn, args),
-                "rescue_pawn" => JobActionHandlers.HandleRescuePawn(pawn, args),
-                "arrest_pawn" => JobActionHandlers.HandleArrestPawn(pawn, args),
-                "cancel_job" => JobActionHandlers.HandleCancelJob(pawn, args),
+                "assign_work" => JobActionDispatcher.HandleAssignWork(pawn, args),
+                "move_to" => JobActionDispatcher.HandleMoveTo(pawn, args),
+                "eat_food" => JobActionDispatcher.HandleEatFood(pawn, args),
+                "force_rest" => JobActionDispatcher.HandleForceRest(pawn, args),
+                "tend_pawn" => JobActionDispatcher.HandleTendPawn(pawn, args),
+                "rescue_pawn" => JobActionDispatcher.HandleRescuePawn(pawn, args),
+                "arrest_pawn" => JobActionDispatcher.HandleArrestPawn(pawn, args),
+                "cancel_job" => JobActionDispatcher.HandleCancelJob(pawn, args),
                 _ => Result<bool, RimMindError>.Err(RimMindErrors.InvalidAction(MechanismId, args.Action))
             };
 

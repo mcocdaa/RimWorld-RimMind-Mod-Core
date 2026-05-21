@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
@@ -15,14 +14,13 @@ using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using Newtonsoft.Json;
 
-using RimWorld;
-using UnityEngine.Networking;
-using Verse;
-
 namespace RimMind.Infrastructure.Services.Clients.Player2
 {
     public partial class Player2Client : IAIClient
     {
+        private const float LocalConnectTimeout = 300f;
+        private const float RemoteConnectTimeout = 60f;
+
         public const string GameClientId = "019a8368-b00b-72bc-b367-2825079dc6fb";
         private const string LocalUrl = "http://localhost:4315";
 
@@ -31,10 +29,6 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly ISettingsProvider _settings;
         private readonly ILogSink? _logSink;
         private readonly IAIDebugLog? _aiDebugLog;
-
-        private static DateTime _lastHealthCheck = DateTime.MinValue;
-        private static volatile bool _healthCheckActive;
-        private static CancellationTokenSource _healthCheckCts = new CancellationTokenSource();
 
         private string RemoteUrl => string.IsNullOrWhiteSpace(_settings.Player2RemoteUrl)
             ? "https://api.player2.game"
@@ -51,16 +45,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             _logSink = logSink;
             _aiDebugLog = aiDebugLog;
 
-            if (!_healthCheckActive && !string.IsNullOrEmpty(apiKey) && !isLocal)
-            {
-                if (_healthCheckCts.IsCancellationRequested)
-                {
-                    _healthCheckCts.Dispose();
-                    _healthCheckCts = new CancellationTokenSource();
-                }
-                _healthCheckActive = true;
-                StartHealthCheckLoop();
-            }
+            InitiateHealthCheckIfNeeded();
         }
 
         public static async Task<Player2Client> CreateAsync(ISettingsProvider settings,
@@ -148,7 +133,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 _logSink?.LogFromBackground($"[RimMind-Core] Player2 request cancelled ({request.RequestId})", isWarning: true);
                 return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
             }
-            catch (HttpHelper.HttpException ex)
+            catch (HttpTransport.HttpException ex)
             {
                 sw.Stop();
                 _logSink?.LogFromBackground($"[RimMind-Core] Player2 request failed ({request.RequestId}): {ex.Message}", isWarning: true);
@@ -225,415 +210,9 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private async Task<(string text, long statusCode)> PostAsync(string url, string jsonBody)
         {
             bool isLocal = _isLocalConnection;
-            float connectTimeout = isLocal ? 300f : 60f;
-            return await HttpHelper.PostAsync(url, jsonBody, $"Bearer {_apiKey}",
+            float connectTimeout = isLocal ? LocalConnectTimeout : RemoteConnectTimeout;
+            return await HttpTransport.PostAsync(url, jsonBody, $"Bearer {_apiKey}",
                 "player2-game-key", GameClientId, connectTimeout: connectTimeout);
-        }
-
-        private static async Task<string?> TryGetLocalPlayer2Key(ILogSink? logSink)
-        {
-            try
-            {
-                using (var healthRequest = UnityWebRequest.Get($"{LocalUrl}/v1/health"))
-                {
-                    healthRequest.timeout = 2;
-                    var healthOp = healthRequest.SendWebRequest();
-                    while (!healthOp.isDone)
-                    {
-                        if (Current.Game == null) return null;
-                        await Task.Delay(50);
-                    }
-                    if (healthRequest.result != UnityWebRequest.Result.Success)
-                        return null;
-                }
-
-                using (var loginRequest = new UnityWebRequest($"{LocalUrl}/v1/login/web/{GameClientId}", "POST"))
-                {
-                    loginRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes("{}"));
-                    loginRequest.downloadHandler = new DownloadHandlerBuffer();
-                    loginRequest.SetRequestHeader("Content-Type", "application/json");
-                    loginRequest.timeout = 3;
-
-                    var loginOp = loginRequest.SendWebRequest();
-                    while (!loginOp.isDone)
-                    {
-                        if (Current.Game == null) return null;
-                        await Task.Delay(50);
-                    }
-                    if (loginRequest.result != UnityWebRequest.Result.Success)
-                        return null!;
-
-                    var response = JsonConvert.DeserializeObject<Player2LocalLoginResponse>(
-                        loginRequest.downloadHandler.text);
-                    if (response != null && !string.IsNullOrEmpty(response.P2Key))
-                    {
-                        logSink?.LogFromBackground("[RimMind-Core] Player2 local app authenticated successfully.");
-                        return response.P2Key;
-                    }
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                logSink?.LogFromBackground($"[RimMind-Core] Local Player2 detection failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        private static void ShowNotification(string messageKey)
-        {
-            LongEventHandler.ExecuteWhenFinished(() =>
-            {
-                try
-                {
-                    string text = messageKey.Translate();
-                    Messages.Message(text,
-                        messageKey.Contains("LocalDetected")
-                            ? MessageTypeDefOf.PositiveEvent
-                            : MessageTypeDefOf.CautionInput);
-                }
-                catch (Exception ex) { RimMindErrors.Warn($"[RimMind-Core] Failed to show notification: {ex.Message}"); }
-            });
-        }
-
-        private async Task StartHealthCheckLoopAsync()
-        {
-            try
-            {
-                while (_healthCheckActive && Current.Game != null)
-                {
-                    await Task.Delay(60000, _healthCheckCts.Token);
-                    if (_healthCheckActive) await EnsureHealthCheck(force: true);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception ex)
-            {
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2 health check loop crashed: {ex.Message}", isWarning: true);
-                _healthCheckActive = false;
-            }
-        }
-
-        private void StartHealthCheckLoop()
-        {
-            _ = StartHealthCheckLoopAsync();
-        }
-
-        private async Task EnsureHealthCheck(bool force = false)
-        {
-            if (_isLocalConnection || string.IsNullOrEmpty(_apiKey)) return;
-            if (!force && (DateTime.Now - _lastHealthCheck).TotalSeconds < 60) return;
-
-            try
-            {
-                using var webRequest = UnityWebRequest.Get($"{CurrentApiUrl}/v1/health");
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-                webRequest.SetRequestHeader("player2-game-key", GameClientId);
-
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone)
-                {
-                    if (Current.Game == null) return;
-                    await Task.Delay(100);
-                }
-
-                _lastHealthCheck = DateTime.Now;
-                if (webRequest.responseCode != 200)
-                    _logSink?.LogFromBackground(
-                        $"[RimMind-Core] Player2 health check failed: {webRequest.responseCode}", isWarning: true);
-            }
-            catch (Exception ex)
-            {
-                _logSink?.LogFromBackground(
-                    $"[RimMind-Core] Player2 health check exception: {ex.Message}", isWarning: true);
-            }
-        }
-
-        public static void StopHealthCheck()
-        {
-            _healthCheckActive = false;
-            _healthCheckCts.Cancel();
-        }
-
-        public static void CheckPlayer2StatusAndNotify()
-        {
-            Task.Run(async () =>
-            {
-                bool isAvailable = await IsPlayer2LocalAppAvailableAsync();
-                LongEventHandler.ExecuteWhenFinished(() =>
-                {
-                    Messages.Message(
-                        isAvailable
-                            ? "RimMind.Infrastructure.Player2.LocalDetected".Translate()
-                            : "RimMind.Infrastructure.Player2.LocalNotFound".Translate(),
-                        isAvailable ? MessageTypeDefOf.PositiveEvent : MessageTypeDefOf.CautionInput);
-                });
-            });
-        }
-
-        private static async Task<bool> IsPlayer2LocalAppAvailableAsync()
-        {
-            try
-            {
-                using var webRequest = UnityWebRequest.Get($"{LocalUrl}/v1/health");
-                webRequest.timeout = 2;
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone)
-                {
-                    if (Current.Game == null) return false;
-                    await Task.Delay(50);
-                }
-                return webRequest.responseCode == 200;
-            }
-            catch (Exception ex) { RimMindErrors.Warn($"[RimMind-Core] Player2 local availability check failed: {ex.Message}"); return false; }
-        }
-
-        public async Task<float> GetJoulesBalanceAsync()
-        {
-            if (string.IsNullOrEmpty(_apiKey)) return -1f;
-
-            try
-            {
-                string endpoint = $"{CurrentApiUrl}/v1/balance";
-                using var webRequest = UnityWebRequest.Get(endpoint);
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-                webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = 10;
-
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone)
-                {
-                    if (Current.Game == null) return -1f;
-                    await Task.Delay(100);
-                }
-
-                if (webRequest.result == UnityWebRequest.Result.ConnectionError ||
-                    webRequest.result == UnityWebRequest.Result.ProtocolError)
-                    return -1f;
-
-                var balance = JsonConvert.DeserializeObject<Player2JoulesBalance>(
-                    webRequest.downloadHandler.text);
-                return balance?.Balance ?? -1f;
-            }
-            catch (Exception ex)
-            {
-                RimMindErrors.Warn($"[RimMind-Core] GetJoulesBalanceAsync failed: {ex.Message}");
-                return -1f;
-            }
-        }
-
-        private static volatile float _cachedJoulesBalance = -1f;
-        private static DateTime _lastBalanceCheck = DateTime.MinValue;
-        private static readonly object _balanceLock = new object();
-
-        public static float CachedJoulesBalance => _cachedJoulesBalance;
-
-        public static void RefreshJoulesBalance(ISettingsProvider? settingsProvider = null)
-        {
-            var s = settingsProvider ?? RimMindServiceLocator.Get<ISettingsProvider>();
-            if (s == null || ProviderHelper.RequiresApiKey(s.Provider)) return;
-
-            Task.Run(async () =>
-            {
-                var client = await CreateAsync(s);
-                if (client?.IsConfigured() == true)
-                {
-                    float balance = await client.GetJoulesBalanceAsync();
-                    lock (_balanceLock)
-                    {
-                        _cachedJoulesBalance = balance;
-                        _lastBalanceCheck = DateTime.Now;
-                    }
-                }
-            });
-        }
-
-        public async Task<RawResponse> SendRawAsync(string path, string jsonBody)
-        {
-            return await SendRawRequestAsync(path, "POST", jsonBody);
-        }
-
-        public async Task<RawResponse> GetRawAsync(string path)
-        {
-            return await SendRawRequestAsync(path, "GET", null);
-        }
-
-        public async Task<RawResponse> DeleteRawAsync(string path)
-        {
-            return await SendRawRequestAsync(path, "DELETE", null);
-        }
-
-        private async Task<RawResponse> SendRawRequestAsync(string path, string method, string? jsonBody)
-        {
-            string endpoint = $"{CurrentApiUrl}{path}";
-            try
-            {
-                using var webRequest = new UnityWebRequest(endpoint, method);
-                if (jsonBody != null)
-                    webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonBody));
-                else if (method == "POST")
-                    webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes("{}"));
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Content-Type", "application/json");
-                webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-                webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = 30;
-
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone) { if (Current.Game == null) { return RawResponse.Err(RimMindErrors.ClientTransient("Game exiting")); } await Task.Delay(50); }
-
-                string? content = webRequest.downloadHandler?.text;
-                bool ok = webRequest.result != UnityWebRequest.Result.ConnectionError
-                          && webRequest.result != UnityWebRequest.Result.ProtocolError;
-                if (ok) return RawResponse.Ok(content);
-                return RawResponse.Err(RimMindErrors.ClientTransient(webRequest.error));
-            }
-            catch (System.Exception ex) { return RawResponse.Err(RimMindErrors.ClientTransient(ex.Message, ex)); }
-        }
-    }
-
-    public class RawResponse
-    {
-        private readonly Result<string?, RimMindError> _result;
-
-        public string? Content => _result.TryGetValue(out var value) ? value : null;
-        public bool IsOk => _result.IsOk;
-        public RimMindError? Error => _result.TryGetError(out var err) ? err : null;
-
-        private RawResponse(Result<string?, RimMindError> result)
-        {
-            _result = result;
-        }
-
-        public static RawResponse Ok(string? content) => new RawResponse(Result<string?, RimMindError>.Ok(content));
-        public static RawResponse Err(RimMindError error) => new RawResponse(Result<string?, RimMindError>.Err(error));
-    }
-
-    public partial class Player2Client
-    {
-        public async Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
-        {
-            try
-            {
-                var messages = new List<Player2MessageDto>();
-                if (request.Messages != null && request.Messages.Count > 0)
-                    messages = request.Messages.Select(m => new Player2MessageDto { Role = m.Role, Content = m.Content }).ToList();
-                else
-                {
-                    if (!string.IsNullOrEmpty(request.SystemPrompt))
-                        messages.Add(new Player2MessageDto { Role = "system", Content = request.SystemPrompt });
-                    messages.Add(new Player2MessageDto { Role = "user", Content = request.UserPrompt });
-                }
-
-                messages = MergeConsecutiveSameRole(messages);
-
-                var body = new Dictionary<string, object?>
-                {
-                    ["model"] = "default",
-                    ["messages"] = messages,
-                    ["max_tokens"] = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
-                    ["temperature"] = request.Temperature,
-                };
-
-                if (!string.IsNullOrEmpty(jsonSchema))
-                {
-                    body["response_format"] = new
-                    {
-                        type = "json_schema",
-                        json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(jsonSchema!) },
-                    };
-                }
-
-                if (tools != null && tools.Count > 0)
-                {
-                    var toolList = new List<object>();
-                    foreach (var t in tools)
-                    {
-                        toolList.Add(new
-                        {
-                            type = "function",
-                            function = new
-                            {
-                                name = t.Name,
-                                description = t.Description,
-                                parameters = t.Parameters != null ? JsonConvert.DeserializeObject(t.Parameters) : new { type = "object", properties = new { } },
-                            },
-                        });
-                    }
-                    body["tools"] = toolList;
-                    if (tools.Any(t => t.ToolChoice == "required"))
-                        body["tool_choice"] = "required";
-                    else
-                        body["tool_choice"] = "auto";
-                }
-
-                string json = JsonConvert.SerializeObject(body, Formatting.None,
-                    new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-
-                string endpoint = $"{CurrentApiUrl}/v1/chat/completions";
-                using var webRequest = new UnityWebRequest(endpoint, "POST");
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-                webRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                webRequest.downloadHandler = new DownloadHandlerBuffer();
-                webRequest.SetRequestHeader("Content-Type", "application/json");
-                webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
-                webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = _isLocalConnection ? 300 : 60;
-
-                var asyncOp = webRequest.SendWebRequest();
-                while (!asyncOp.isDone)
-                {
-                    if (Current.Game == null)
-                        return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-                    await Task.Delay(100);
-                }
-
-                if (webRequest.result == UnityWebRequest.Result.ConnectionError ||
-                    webRequest.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    string errBody = webRequest.downloadHandler?.text ?? webRequest.error ?? "Unknown error";
-                    return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(errBody));
-                }
-
-                var dto = JsonConvert.DeserializeObject<Player2ResponseDto>(webRequest.downloadHandler.text);
-                string? content = dto?.Choices?.FirstOrDefault()?.Message?.Content;
-                int tokens = dto?.Usage?.TotalTokens ?? 0;
-                int promptTokens = dto?.Usage?.PromptTokens ?? 0;
-                int completionTokens = dto?.Usage?.CompletionTokens ?? 0;
-                int cachedTokens = dto?.Usage?.PromptTokensDetails?.CachedTokens ?? 0;
-                var toolCalls = dto?.Choices?.FirstOrDefault()?.Message?.ToolCalls;
-                var response = new AIResponse
-                {
-                    Content = content ?? "",
-                    RequestId = request.RequestId,
-                    TokensUsed = tokens,
-                    PromptTokens = promptTokens,
-                    CompletionTokens = completionTokens,
-                    CachedTokens = cachedTokens,
-                    State = AIRequestState.Completed,
-                };
-                if (toolCalls != null && toolCalls.Count > 0)
-                {
-                    response.ToolCallsJson = JsonConvert.SerializeObject(toolCalls);
-                }
-                return Result<AIResponse, RimMindError>.Ok(response);
-            }
-            catch (TaskCanceledException)
-            {
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-            }
-            catch (HttpHelper.HttpException ex)
-            {
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
-            }
-            catch (System.Exception ex)
-            {
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"Player2 structured request failed: {ex.Message}", ex));
-            }
         }
     }
 }

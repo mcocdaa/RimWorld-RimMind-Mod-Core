@@ -20,6 +20,15 @@ namespace RimMind.Presentation.Context
 {
     public class ContextOrchestrator : IContextEngine
     {
+        private const float DefaultContextBudget = 0.6f;
+        private const int DefaultTotalBudget = 4000;
+        private const int DefaultReserveForOutput = 800;
+        private const int DefaultBriefLimit = 200;
+        private const int CjkCharacterThreshold = 0x2E80;
+        private const float TokenEstimateOther = 4.0f;
+        private const float TokenEstimateCjk = 1.5f;
+        private const float TokenEstimateOverhead = 0.5f;
+
         private bool _needsFullRebuild = true;
         private bool _disposed;
 
@@ -87,48 +96,39 @@ namespace RimMind.Presentation.Context
             var pawn = _npcManager?.FindPawnByNpcId(request.NpcId);
             if (pawn == null && request.Map != null)
                 pawn = _npcManager?.FindProxyPawnForMap((Verse.Map)request.Map!);
-            var allKeys = ContextKeyRegistry.GetAll();
 
-            var scenarioMeta = ScenarioRegistry.Get(request.Scenario ?? ScenarioIds.Dialogue);
-
-            var excludeSet = new HashSet<string>();
-            if (scenarioMeta?.DefaultExcludeKeys != null)
-                excludeSet.UnionWith(scenarioMeta.DefaultExcludeKeys);
-            if (request.ExcludeKeys != null)
-                excludeSet.UnionWith(request.ExcludeKeys);
-
-            var filteredKeys = allKeys.Where(k => !excludeSet.Contains(k.Key)).ToList();
-
-            float budget = request.Budget > 0
-                ? request.Budget
-                : (scenarioMeta?.DefaultBudget > 0
-                    ? scenarioMeta.DefaultBudget
-                    : (_settingsProvider?.Context?.ContextBudget > 0
-                        ? _settingsProvider.Context.ContextBudget
-                        : 0.6f));
-            var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
-
-            var allScheduledKeys = schedule.L0Keys.Concat(schedule.L1Keys)
-                .Concat(schedule.L2Keys).Concat(schedule.L3Keys).Concat(schedule.L5Keys)
-                .Select(k => k.Key).ToArray();
-            var scheduledKeySet = new HashSet<string>(allScheduledKeys);
-            var trimmedKeyNames = filteredKeys.Where(k => !scheduledKeySet.Contains(k.Key))
-                .Select(k => k.Key).ToArray();
-            snapshot.IncludedKeys = allScheduledKeys;
-            snapshot.TrimmedKeys = trimmedKeyNames;
+            var (schedule, filteredKeys, budget) = ScheduleBudget(request, scenario, pawn);
+            PopulateSnapshotKeys(snapshot, schedule, filteredKeys);
             snapshot.BudgetValue = budget;
-
-            foreach (var key in schedule.L2Keys.Concat(schedule.L3Keys).Concat(schedule.L5Keys))
-            {
-                if (key.CurrentScore > 0)
-                    snapshot.KeyScores[key.Key] = key.CurrentScore;
-            }
-
-            if (_diffTracker.TryGetDiffStore(request.NpcId, out var diffs))
-                snapshot.DiffCount = diffs.Count;
 
             var messages = new List<ChatMessage>();
 
+            BuildL0Layer(request, schedule, pawn, snapshot, messages);
+            BuildL1Layer(request, schedule, pawn, snapshot, messages);
+            BuildL2Layer(request, schedule, pawn, snapshot, messages);
+            BuildL3Layer(request, schedule, pawn, snapshot, messages);
+            BuildL5Layer(schedule, pawn, snapshot, messages);
+            BuildConversationHistory(request, schedule, scenario, messages, snapshot);
+
+            snapshot.SetMessages(messages);
+            snapshot.Meta.TotalTokens = snapshot.Meta.L0Tokens + snapshot.Meta.L1Tokens +
+                snapshot.Meta.L2Tokens + snapshot.Meta.L3Tokens + snapshot.Meta.L4Tokens + snapshot.Meta.L5Tokens;
+            snapshot.EstimatedTokens = snapshot.Meta.TotalTokens;
+
+            ApplyBudgetTrim(snapshot);
+
+            snapshot._commitPayload = new CommitPayload
+            {
+                FilteredKeys = filteredKeys,
+                Schedule = schedule,
+                Pawn = pawn
+            };
+
+            return snapshot;
+        }
+
+        private void BuildL0Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
+        {
             long l0Start = DateTime.Now.Ticks;
             var l0Msg = _layerBuilder.BuildL0(request.NpcId, request.Scenario ?? ScenarioIds.Dialogue, schedule.L0Keys, pawn, _cacheManager);
             if (l0Msg != null)
@@ -138,7 +138,10 @@ namespace RimMind.Presentation.Context
                 snapshot.Meta.L0Tokens = EstimateTokens(l0Msg.Content);
             }
             snapshot.LatencyByLayerMs["L0"] = (DateTime.Now.Ticks - l0Start) / TimeSpan.TicksPerMillisecond;
+        }
 
+        private void BuildL1Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
+        {
             long l1Start = DateTime.Now.Ticks;
             var l1Msg = _layerBuilder.BuildL1(request.NpcId, schedule.L1Keys, pawn, _cacheManager, _diffTracker);
             if (l1Msg != null)
@@ -162,7 +165,10 @@ namespace RimMind.Presentation.Context
                 l1DiffMsg.LayerTag = "L1";
                 messages.Add(l1DiffMsg);
             }
+        }
 
+        private void BuildL2Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
+        {
             long l2Start = DateTime.Now.Ticks;
             var l2Msg = _layerBuilder.BuildContextLayer(schedule.L2Keys, pawn);
             if (l2Msg != null)
@@ -178,7 +184,10 @@ namespace RimMind.Presentation.Context
                 snapshot.Meta.L2Tokens = EstimateTokens(l2Msg.Content);
             }
             snapshot.LatencyByLayerMs["L2"] = (DateTime.Now.Ticks - l2Start) / TimeSpan.TicksPerMillisecond;
+        }
 
+        private void BuildL3Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
+        {
             long l3Start = DateTime.Now.Ticks;
             var l3Msg = _layerBuilder.BuildContextLayer(schedule.L3Keys, pawn);
             if (l3Msg != null)
@@ -194,7 +203,10 @@ namespace RimMind.Presentation.Context
                 snapshot.Meta.L3Tokens = EstimateTokens(l3Msg.Content);
             }
             snapshot.LatencyByLayerMs["L3"] = (DateTime.Now.Ticks - l3Start) / TimeSpan.TicksPerMillisecond;
+        }
 
+        private void BuildL5Layer(BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
+        {
             long l5Start = DateTime.Now.Ticks;
             var l5Msg = _layerBuilder.BuildL5(schedule.L5Keys, pawn);
             if (l5Msg != null)
@@ -204,7 +216,10 @@ namespace RimMind.Presentation.Context
                 snapshot.Meta.L5Tokens = EstimateTokens(l5Msg.Content);
             }
             snapshot.LatencyByLayerMs["L5"] = (DateTime.Now.Ticks - l5Start) / TimeSpan.TicksPerMillisecond;
+        }
 
+        private void BuildConversationHistory(ContextRequest request, BudgetAllocation schedule, string scenario, List<ChatMessage> messages, ContextSnapshot snapshot)
+        {
             int maxRounds = schedule.MaxHistoryRounds;
             var history = _historyManager.GetHistory(request.NpcId, maxRounds, scenario);
             foreach (var (role, content) in history)
@@ -233,33 +248,64 @@ namespace RimMind.Presentation.Context
                     ?? $"[AutoAwait: {scenarioLabel}]";
                 messages.Add(new ChatMessage { Role = "user", Content = autoAwaitContent });
             }
+        }
 
-            snapshot.SetMessages(messages);
-            snapshot.Meta.TotalTokens = snapshot.Meta.L0Tokens + snapshot.Meta.L1Tokens +
-                snapshot.Meta.L2Tokens + snapshot.Meta.L3Tokens + snapshot.Meta.L4Tokens + snapshot.Meta.L5Tokens;
-            snapshot.EstimatedTokens = snapshot.Meta.TotalTokens;
+        private (BudgetAllocation schedule, List<KeyMeta> filteredKeys, float budget) ScheduleBudget(ContextRequest request, string scenario, object? pawn)
+        {
+            var allKeys = ContextKeyRegistry.GetAll();
 
-            ApplyBudgetTrim(snapshot);
+            var scenarioMeta = ScenarioRegistry.Get(request.Scenario ?? ScenarioIds.Dialogue);
 
-            snapshot._commitPayload = new CommitPayload
+            var excludeSet = new HashSet<string>();
+            if (scenarioMeta?.DefaultExcludeKeys != null)
+                excludeSet.UnionWith(scenarioMeta.DefaultExcludeKeys);
+            if (request.ExcludeKeys != null)
+                excludeSet.UnionWith(request.ExcludeKeys);
+
+            var filteredKeys = allKeys.Where(k => !excludeSet.Contains(k.Key)).ToList();
+
+            float budget = request.Budget > 0
+                ? request.Budget
+                : (scenarioMeta?.DefaultBudget > 0
+                    ? scenarioMeta.DefaultBudget
+                    : (_settingsProvider?.Context?.ContextBudget > 0
+                        ? _settingsProvider.Context.ContextBudget
+                        : DefaultContextBudget));
+            var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
+
+            return (schedule, filteredKeys, budget);
+        }
+
+        private void PopulateSnapshotKeys(ContextSnapshot snapshot, BudgetAllocation schedule, List<KeyMeta> filteredKeys)
+        {
+            var allScheduledKeys = schedule.L0Keys.Concat(schedule.L1Keys)
+                .Concat(schedule.L2Keys).Concat(schedule.L3Keys).Concat(schedule.L5Keys)
+                .Select(k => k.Key).ToArray();
+            var scheduledKeySet = new HashSet<string>(allScheduledKeys);
+            var trimmedKeyNames = filteredKeys.Where(k => !scheduledKeySet.Contains(k.Key))
+                .Select(k => k.Key).ToArray();
+            snapshot.IncludedKeys = allScheduledKeys;
+            snapshot.TrimmedKeys = trimmedKeyNames;
+
+            foreach (var key in schedule.L2Keys.Concat(schedule.L3Keys).Concat(schedule.L5Keys))
             {
-                FilteredKeys = filteredKeys,
-                Schedule = schedule,
-                Pawn = pawn
-            };
+                if (key.CurrentScore > 0)
+                    snapshot.KeyScores[key.Key] = key.CurrentScore;
+            }
 
-            return snapshot;
+            if (_diffTracker.TryGetDiffStore(snapshot.NpcId, out var diffs))
+                snapshot.DiffCount = diffs.Count;
         }
 
         private void ApplyBudgetTrim(ContextSnapshot snapshot)
         {
             if (snapshot.Messages == null || snapshot.Messages.Count == 0) return;
 
-            int totalBudget = _flywheelParameterStore?.TotalBudget ?? 4000;
+            int totalBudget = _flywheelParameterStore?.TotalBudget ?? DefaultTotalBudget;
             int reserveForOutput = _settingsProvider?.MaxTokens > 0
                 ? _settingsProvider!.MaxTokens
-                : 800;
-            float budgetRatio = _settingsProvider?.Context?.ContextBudget ?? 0.6f;
+                : DefaultReserveForOutput;
+            float budgetRatio = _settingsProvider?.Context?.ContextBudget ?? DefaultContextBudget;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;
 
@@ -313,7 +359,7 @@ namespace RimMind.Presentation.Context
         private string CompressToBrief(string content)
         {
             if (string.IsNullOrEmpty(content)) return content;
-            const int briefLimitFallback = 200;
+            const int briefLimitFallback = DefaultBriefLimit;
             int briefLimit = _settingsProvider?.Context?.ContextBriefLimit ?? briefLimitFallback;
             if (content.Length <= briefLimit) return content;
             int cut = briefLimit;
@@ -327,10 +373,10 @@ namespace RimMind.Presentation.Context
             int cjk = 0, other = 0;
             foreach (char c in text)
             {
-                if (c > 0x2E80) cjk++;
+                if (c > CjkCharacterThreshold) cjk++;
                 else other++;
             }
-            return (int)(other / 4.0 + cjk / 1.5 + 0.5);
+            return (int)(other / TokenEstimateOther + cjk / TokenEstimateCjk + TokenEstimateOverhead);
         }
 
         public int GetL0CacheCount() => _cacheManager.GetL0CacheCount();

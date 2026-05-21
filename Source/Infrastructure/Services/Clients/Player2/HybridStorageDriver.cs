@@ -30,7 +30,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         public HybridStorageDriver(Player2Client client, IHistoryManager historyManager,
             INpcManager npcManager, ILogSink? logSink = null,
             ISettingsProvider? settingsProvider = null, IClientManager? clientManager = null,
-            IContextEngine? contextEngine = null, IGameContextBuilder? gameContextBuilder = null,
+            IContextBuilder? contextEngine = null, IGameContextBuilder? gameContextBuilder = null,
             IResponseDispatcher? responseDispatcher = null)
         {
             _local = new LocalStorageDriver(historyManager, settingsProvider: settingsProvider,

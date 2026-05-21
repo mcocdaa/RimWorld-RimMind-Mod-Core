@@ -13,6 +13,7 @@ namespace RimMind.Application.Features.Pipeline.AI
         public string Name => "AIRetry";
         public int Order => 800;
         public string Id => "AIRetry";
+        public string OwnerModId => "RimMindCore";
 
         private readonly int _maxRetries;
         private readonly TimeSpan _delay;

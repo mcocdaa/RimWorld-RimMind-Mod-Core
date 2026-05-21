@@ -17,9 +17,11 @@ namespace RimMind.Infrastructure.Verse
         private readonly ConcurrentQueue<AIDebugEntry> _pendingEntries = new ConcurrentQueue<AIDebugEntry>();
         private IAIModelSettings? _cachedModelSettings;
 
+        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
         private IAIModelSettings? GetModelSettings()
             => _cachedModelSettings ??= RimMindServiceLocator.Get<IAIModelSettings>();
 
+        // [Framework-Forced SL] Static accessor for Verse-instantiated GameComponent.
         public static IAIDebugLog? Instance => RimMindServiceLocator.Get<IAIDebugLog>();
 
         public AIDebugLog(Game game)

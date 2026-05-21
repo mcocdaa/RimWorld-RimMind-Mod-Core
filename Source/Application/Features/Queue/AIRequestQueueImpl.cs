@@ -15,6 +15,13 @@ namespace RimMind.Application.Features.Queue
 {
     public class AIRequestQueueImpl : IAIRequestQueueTickable
     {
+        private const long TicksPerMillisecond = 16L;
+        private const int kCircuitBreakerFailureThreshold = 5;
+        private const int kCircuitBreakerOpenDurationSec = 60;
+        private const int kMaxCacheEntries = 100;
+        private const float kMoodDiffThreshold = 5f;
+        private const float kTemperatureDiffThreshold = 5f;
+
         private static AIRequestQueueImpl? _instance;
 
         private readonly ConcurrentQueue<(AIResponse response, Action<AIResponse> callback)> _results
@@ -227,7 +234,7 @@ namespace RimMind.Application.Features.Queue
                 }
                 catch (OperationCanceledException) { response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
                 catch (Exception ex) { LogSink?.LogFromBackground($"[RimMind-Core] Execute threw for {tracked.Request.RequestId}: {ex.Message}", isWarning: true); response = AIResponse.Ok(tracked.Request.RequestId, "", 0); }
-                long queueWaitMs = (tracked.StartedProcessingAtTick > 0 && tracked.EnqueuedAtTick > 0) ? (tracked.StartedProcessingAtTick - tracked.EnqueuedAtTick) * 16L : 0;
+                long queueWaitMs = (tracked.StartedProcessingAtTick > 0 && tracked.EnqueuedAtTick > 0) ? (tracked.StartedProcessingAtTick - tracked.EnqueuedAtTick) * TicksPerMillisecond : 0;
                 response.QueueWaitMs = queueWaitMs; response.Priority = tracked.Request.Priority;
                 lock (_queueLock)
                 {
@@ -244,7 +251,7 @@ namespace RimMind.Application.Features.Queue
             lock (_queueLock)
             {
                 if (_activeRequests.Count == 0) return;
-                int now = CurrentTick; int timeoutMs = Settings.RequestTimeoutMs; int timeoutTicks = timeoutMs / 16;
+                int now = CurrentTick; int timeoutMs = Settings.RequestTimeoutMs; int timeoutTicks = timeoutMs / (int)TicksPerMillisecond;
                 var timedOut = new List<TrackedRequest>();
                 foreach (var kvp in _activeRequests) { if (kvp.Value.StartedProcessingAtTick > 0 && now - kvp.Value.StartedProcessingAtTick > timeoutTicks) timedOut.Add(kvp.Value); }
                 foreach (var tracked in timedOut)
@@ -314,13 +321,13 @@ namespace RimMind.Application.Features.Queue
             public float DefaultTemperature { get => 0.7f; set { } }
             public bool ForceJsonMode { get => true; set { } }
             public string ModelName { get => ""; set { } }
-            public string Provider { get => ProviderHelper.GetDefaultProviderId(); set { } }
+            public string Provider { get => AIProviderRegistry.GetDefaultProviderId(); set { } }
             public string ApiKey { get => ""; set { } }
             public string ApiEndpoint { get => ""; set { } }
             public string Player2RemoteUrl { get => ""; set { } }
             public bool DebugLogging { get => false; set { } }
-            public int CircuitBreakerFailureThreshold => 5;
-            public int CircuitBreakerOpenDurationSec => 60;
+            public int CircuitBreakerFailureThreshold => kCircuitBreakerFailureThreshold;
+            public int CircuitBreakerOpenDurationSec => kCircuitBreakerOpenDurationSec;
             public int ContextCalibrateInterval { get => 10000; set { } }
             public int ContextDiffLifetimeTicks { get => 36000; set { } }
             public bool IsConfigured => false;
@@ -336,35 +343,35 @@ namespace RimMind.Application.Features.Queue
             public float AutoApplyConfidenceThreshold { get => 0.8f; set { } }
             public bool IsOpenAIConfigured() => false;
 
-            bool IContextIncludeSettings.IncludeRace { get => Context.IncludeRace; set => Context.IncludeRace = value; }
-            bool IContextIncludeSettings.IncludeAge { get => Context.IncludeAge; set => Context.IncludeAge = value; }
-            bool IContextIncludeSettings.IncludeGender { get => Context.IncludeGender; set => Context.IncludeGender = value; }
-            bool IContextIncludeSettings.IncludeBackstory { get => Context.IncludeBackstory; set => Context.IncludeBackstory = value; }
-            bool IContextIncludeSettings.IncludeIdeology { get => Context.IncludeIdeology; set => Context.IncludeIdeology = value; }
-            bool IContextIncludeSettings.IncludeTraits { get => Context.IncludeTraits; set => Context.IncludeTraits = value; }
-            bool IContextIncludeSettings.IncludeSkills { get => Context.IncludeSkills; set => Context.IncludeSkills = value; }
-            int IContextIncludeSettings.MinSkillLevel { get => Context.MinSkillLevel; set => Context.MinSkillLevel = value; }
-            bool IContextIncludeSettings.IncludeHealth { get => Context.IncludeHealth; set => Context.IncludeHealth = value; }
-            bool IContextIncludeSettings.IncludeCapacities { get => Context.IncludeCapacities; set => Context.IncludeCapacities = value; }
-            bool IContextIncludeSettings.IncludeMood { get => Context.IncludeMood; set => Context.IncludeMood = value; }
-            bool IContextIncludeSettings.IncludeMoodThoughts { get => Context.IncludeMoodThoughts; set => Context.IncludeMoodThoughts = value; }
-            bool IContextIncludeSettings.IncludeCurrentJob { get => Context.IncludeCurrentJob; set => Context.IncludeCurrentJob = value; }
-            bool IContextIncludeSettings.IncludeWorkPriorities { get => Context.IncludeWorkPriorities; set => Context.IncludeWorkPriorities = value; }
-            bool IContextIncludeSettings.IncludeEquipment { get => Context.IncludeEquipment; set => Context.IncludeEquipment = value; }
-            bool IContextIncludeSettings.IncludeInventory { get => Context.IncludeInventory; set => Context.IncludeInventory = value; }
-            bool IContextIncludeSettings.IncludeLocation { get => Context.IncludeLocation; set => Context.IncludeLocation = value; }
-            bool IContextIncludeSettings.IncludeRelations { get => Context.IncludeRelations; set => Context.IncludeRelations = value; }
-            bool IContextIncludeSettings.IncludeGenes { get => Context.IncludeGenes; set => Context.IncludeGenes = value; }
-            bool IContextIncludeSettings.IncludeSurroundings { get => Context.IncludeSurroundings; set => Context.IncludeSurroundings = value; }
-            bool IContextIncludeSettings.IncludeCombatStatus { get => Context.IncludeCombatStatus; set => Context.IncludeCombatStatus = value; }
-            bool IContextIncludeSettings.IncludeGameTime { get => Context.IncludeGameTime; set => Context.IncludeGameTime = value; }
-            bool IContextIncludeSettings.IncludeColonistCount { get => Context.IncludeColonistCount; set => Context.IncludeColonistCount = value; }
-            bool IContextIncludeSettings.IncludeColonistNames { get => Context.IncludeColonistNames; set => Context.IncludeColonistNames = value; }
-            bool IContextIncludeSettings.IncludeWealth { get => Context.IncludeWealth; set => Context.IncludeWealth = value; }
-            bool IContextIncludeSettings.IncludeFood { get => Context.IncludeFood; set => Context.IncludeFood = value; }
-            bool IContextIncludeSettings.IncludeSeason { get => Context.IncludeSeason; set => Context.IncludeSeason = value; }
-            bool IContextIncludeSettings.IncludeWeather { get => Context.IncludeWeather; set => Context.IncludeWeather = value; }
-            bool IContextIncludeSettings.IncludeThreats { get => Context.IncludeThreats; set => Context.IncludeThreats = value; }
+            bool IPawnIncludeSettings.IncludeRace { get => Context.IncludeRace; set => Context.IncludeRace = value; }
+            bool IPawnIncludeSettings.IncludeAge { get => Context.IncludeAge; set => Context.IncludeAge = value; }
+            bool IPawnIncludeSettings.IncludeGender { get => Context.IncludeGender; set => Context.IncludeGender = value; }
+            bool IPawnIncludeSettings.IncludeBackstory { get => Context.IncludeBackstory; set => Context.IncludeBackstory = value; }
+            bool IPawnIncludeSettings.IncludeIdeology { get => Context.IncludeIdeology; set => Context.IncludeIdeology = value; }
+            bool IPawnIncludeSettings.IncludeTraits { get => Context.IncludeTraits; set => Context.IncludeTraits = value; }
+            bool IPawnIncludeSettings.IncludeSkills { get => Context.IncludeSkills; set => Context.IncludeSkills = value; }
+            int IPawnIncludeSettings.MinSkillLevel { get => Context.MinSkillLevel; set => Context.MinSkillLevel = value; }
+            bool IPawnIncludeSettings.IncludeHealth { get => Context.IncludeHealth; set => Context.IncludeHealth = value; }
+            bool IPawnIncludeSettings.IncludeCapacities { get => Context.IncludeCapacities; set => Context.IncludeCapacities = value; }
+            bool IPawnIncludeSettings.IncludeMood { get => Context.IncludeMood; set => Context.IncludeMood = value; }
+            bool IPawnIncludeSettings.IncludeMoodThoughts { get => Context.IncludeMoodThoughts; set => Context.IncludeMoodThoughts = value; }
+            bool IPawnIncludeSettings.IncludeCurrentJob { get => Context.IncludeCurrentJob; set => Context.IncludeCurrentJob = value; }
+            bool IPawnIncludeSettings.IncludeWorkPriorities { get => Context.IncludeWorkPriorities; set => Context.IncludeWorkPriorities = value; }
+            bool IPawnIncludeSettings.IncludeEquipment { get => Context.IncludeEquipment; set => Context.IncludeEquipment = value; }
+            bool IPawnIncludeSettings.IncludeInventory { get => Context.IncludeInventory; set => Context.IncludeInventory = value; }
+            bool IPawnIncludeSettings.IncludeLocation { get => Context.IncludeLocation; set => Context.IncludeLocation = value; }
+            bool IPawnIncludeSettings.IncludeRelations { get => Context.IncludeRelations; set => Context.IncludeRelations = value; }
+            bool IPawnIncludeSettings.IncludeGenes { get => Context.IncludeGenes; set => Context.IncludeGenes = value; }
+            bool IPawnIncludeSettings.IncludeSurroundings { get => Context.IncludeSurroundings; set => Context.IncludeSurroundings = value; }
+            bool IPawnIncludeSettings.IncludeCombatStatus { get => Context.IncludeCombatStatus; set => Context.IncludeCombatStatus = value; }
+            bool IMapIncludeSettings.IncludeGameTime { get => Context.IncludeGameTime; set => Context.IncludeGameTime = value; }
+            bool IMapIncludeSettings.IncludeSeason { get => Context.IncludeSeason; set => Context.IncludeSeason = value; }
+            bool IMapIncludeSettings.IncludeWeather { get => Context.IncludeWeather; set => Context.IncludeWeather = value; }
+            bool IColonyIncludeSettings.IncludeColonistCount { get => Context.IncludeColonistCount; set => Context.IncludeColonistCount = value; }
+            bool IColonyIncludeSettings.IncludeColonistNames { get => Context.IncludeColonistNames; set => Context.IncludeColonistNames = value; }
+            bool IColonyIncludeSettings.IncludeWealth { get => Context.IncludeWealth; set => Context.IncludeWealth = value; }
+            bool IColonyIncludeSettings.IncludeFood { get => Context.IncludeFood; set => Context.IncludeFood = value; }
+            bool IColonyIncludeSettings.IncludeThreats { get => Context.IncludeThreats; set => Context.IncludeThreats = value; }
 
             float IContextBudgetSettings.ContextBudget { get => Context.ContextBudget; set => Context.ContextBudget = value; }
             int IContextBudgetSettings.ContextBriefLimit => Context.ContextBriefLimit;
@@ -393,9 +400,9 @@ namespace RimMind.Application.Features.Queue
             public float ThreatThresholdHigh => 200000f;
             public float ThreatThresholdMedium => 100000f;
             public float ThreatThresholdLow => 50000f;
-            public int MaxCacheEntries => 100;
-            public float MoodDiffThreshold => 5f;
-            public float TemperatureDiffThreshold => 5f;
+            public int MaxCacheEntries => kMaxCacheEntries;
+            public float MoodDiffThreshold => kMoodDiffThreshold;
+            public float TemperatureDiffThreshold => kTemperatureDiffThreshold;
             public bool IncludeRace { get => true; set { } }
             public bool IncludeAge { get => true; set { } }
             public bool IncludeGender { get => true; set { } }

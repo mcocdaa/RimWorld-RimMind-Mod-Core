@@ -17,6 +17,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         }
 
         public string Id => AIProviders.Player2;
+        public string OwnerModId => "RimMindCore";
         public string ProviderId => AIProviders.Player2;
         public bool RequiresApiKey => false;
 

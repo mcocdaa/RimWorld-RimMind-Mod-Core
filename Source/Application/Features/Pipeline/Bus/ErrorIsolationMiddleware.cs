@@ -11,6 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusErrorIsolation";
         public int Order => 90;
         public string Id => "BusErrorIsolation";
+        public string OwnerModId => "RimMindCore";
 
         private readonly ILogSink? _log;
 

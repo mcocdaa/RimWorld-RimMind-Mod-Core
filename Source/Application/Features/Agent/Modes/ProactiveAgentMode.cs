@@ -25,9 +25,10 @@ internal sealed class ProactiveAgentMode : IAgentMode
     }
 
     public AgentModeId ModeId => AgentModeId.Proactive;
-    public string DisplayName => "Proactive";
-    public string Description => "Periodically initiates decisions even without perception triggers";
-    public string Id => ModeId.Value;
+        public string DisplayName => "Proactive";
+        public string Description => "Periodically initiates decisions even without perception triggers";
+        public string Id => ModeId.Value;
+        public string OwnerModId => "RimMindCore";
 
     private const int ProactiveTickInterval = 60000;
 

@@ -25,7 +25,7 @@ namespace RimMind.Infrastructure.Persistence
         private static INpcManager? _npcManager;
         private static ILogSink? _logSink;
         private static ISettingsProvider? _settingsProvider;
-        private static IContextEngine? _contextEngine;
+        private static IContextBuilder? _contextEngine;
         private static IGameContextBuilder? _gameContextBuilder;
         private static IResponseDispatcher? _responseDispatcher;
 
@@ -39,7 +39,7 @@ namespace RimMind.Infrastructure.Persistence
             INpcManager? npcManager,
             ILogSink? logSink,
             ISettingsProvider? settingsProvider,
-            IContextEngine? contextEngine,
+            IContextBuilder? contextEngine,
             IGameContextBuilder? gameContextBuilder,
             IResponseDispatcher? responseDispatcher)
         {
@@ -67,7 +67,7 @@ namespace RimMind.Infrastructure.Persistence
 
                 _cachedProvider = s.Provider;
 
-                if (!ProviderHelper.RequiresApiKey(s.Provider))
+                if (!AIProviderRegistry.RequiresApiKey(s.Provider))
                 {
                     var client = _clientManager?.GetPlayer2Client() as Player2Client;
                     if (client != null && client.IsConfigured())

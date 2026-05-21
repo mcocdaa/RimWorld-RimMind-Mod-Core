@@ -5,6 +5,7 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Pipeline.AI;
 
 namespace RimMind.Presentation.Pipeline.AI
 {
@@ -18,6 +19,7 @@ namespace RimMind.Presentation.Pipeline.AI
         }
 
         public string Id => Name;
+        public string OwnerModId => "RimMindCore";
         public string Name => nameof(CircuitBreakerMiddleware);
         public int Order => 5;
 

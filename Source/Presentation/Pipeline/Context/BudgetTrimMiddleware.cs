@@ -3,21 +3,23 @@ using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Pipeline.Context;
 
 namespace RimMind.Presentation.Pipeline.Context
 {
     internal sealed class BudgetTrimMiddleware : IMiddleware<ContextBuildContext>
     {
         private readonly IAIModelSettings _modelSettings;
-        private readonly IContextCalibrationSettings _calibrationSettings;
+        private readonly IContextBudgetSettings _budgetSettings;
 
-        public BudgetTrimMiddleware(IAIModelSettings modelSettings, IContextCalibrationSettings calibrationSettings)
+        public BudgetTrimMiddleware(IAIModelSettings modelSettings, IContextBudgetSettings budgetSettings)
         {
             _modelSettings = modelSettings;
-            _calibrationSettings = calibrationSettings;
+            _budgetSettings = budgetSettings;
         }
 
         public string Id => Name;
+        public string OwnerModId => "RimMindCore";
         public string Name => nameof(BudgetTrimMiddleware);
         public int Order => 2;
 
@@ -29,7 +31,7 @@ namespace RimMind.Presentation.Pipeline.Context
 
             int totalBudget = 4000;
             int reserveForOutput = _modelSettings.MaxTokens > 0 ? _modelSettings.MaxTokens : 800;
-            float budgetRatio = _calibrationSettings.Context?.ContextBudget ?? 0.6f;
+            float budgetRatio = _budgetSettings.ContextBudget;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;
 

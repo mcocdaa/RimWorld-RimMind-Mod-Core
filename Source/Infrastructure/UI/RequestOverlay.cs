@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Models.UI;
-using RimMind.Application.Common.Interfaces.UI;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.UI;
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,8 +14,9 @@ namespace RimMind.Infrastructure.UI
         private static IOverlaySettings? _cachedOverlaySettings;
         private static IWindowService? _cachedWindowService;
 
+        // Route through ServiceLocator (Application layer) instead of RimMindRuntime (Presentation layer)
         private static IOverlaySettings? GetOverlaySettings()
-            => _cachedOverlaySettings ??= RimMindServiceLocator.Get<IOverlaySettings>();
+            => _cachedOverlaySettings ??= RimMindServiceLocator.Get<ISettingsProvider>() as IOverlaySettings;
 
         private static IWindowService? GetWindowService()
             => _cachedWindowService ??= RimMindServiceLocator.Get<IWindowService>();

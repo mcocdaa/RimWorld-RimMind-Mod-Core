@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimMind.Presentation.UI
 {
-    public static class SettingsUIHelper
+    public static class SettingsUIDrawer
     {
         public static void DrawSectionHeader(Listing_Standard listing, string label)
         {

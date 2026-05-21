@@ -58,7 +58,7 @@ namespace RimMind.Core.ArchTests.PhaseC
             @"Mechanisms\Pawn\Need\NeedMechanism.cs",
             @"Mechanisms\Map\Wealth\WealthMechanism.cs",
             @"Mechanisms\Pawn\Job\JobMechanism.cs",
-            @"Mechanisms\Pawn\Job\JobActionHandlers.cs",
+            @"Mechanisms\Pawn\Job\JobActionDispatcher.cs",
             @"Mechanisms\Pawn\Job\JobDocs.cs",
             @"Mechanisms\Pawn\Draft\DraftMechanism.cs",
             @"Mechanisms\Pawn\Work\WorkMechanism.cs",
