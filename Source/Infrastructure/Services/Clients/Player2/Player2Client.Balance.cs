@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.ValueObjects;
 using Newtonsoft.Json;
 using RimWorld;
@@ -13,8 +14,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 {
     public partial class Player2Client
     {
-        private const int BalanceQueryTimeoutSec = 10;
-        private const int BalancePollingDelayMs = 100;
+        private const int BalanceQueryTimeoutSec = RimMindDefaults.Player2BalanceQueryTimeout;
+        private const int BalancePollingDelayMs = RimMindDefaults.Player2BalancePollingDelay;
 
         private static volatile float _cachedJoulesBalance = -1f;
         private static DateTime _lastBalanceCheck = DateTime.MinValue;
@@ -33,7 +34,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
                 webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
                 webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = 10;
+                webRequest.timeout = RimMindDefaults.Player2BalanceQueryTimeout;
 
                 var asyncOp = webRequest.SendWebRequest();
                 while (!asyncOp.isDone)

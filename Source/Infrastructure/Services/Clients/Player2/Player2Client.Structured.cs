@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
@@ -84,14 +85,14 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 webRequest.SetRequestHeader("Content-Type", "application/json");
                 webRequest.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
                 webRequest.SetRequestHeader("player2-game-key", GameClientId);
-                webRequest.timeout = _isLocalConnection ? 300 : 60;
+                webRequest.timeout = _isLocalConnection ? RimMindDefaults.Player2StructuredTimeout : 60;
 
                 var asyncOp = webRequest.SendWebRequest();
                 while (!asyncOp.isDone)
                 {
                     if (Current.Game == null)
                         return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-                    await Task.Delay(100);
+                    await Task.Delay(RimMindDefaults.Player2StructuredPollingDelay);
                 }
 
                 if (webRequest.result == UnityWebRequest.Result.ConnectionError ||

@@ -40,10 +40,10 @@ namespace RimMind.Presentation.Agent
         string IAgentInfo.Label => Pawn?.Label ?? Identity.DisplayName;
         int IAgentInfo.GoalCount => GoalStack.TotalCount;
 
-        private readonly PawnPerceiver _perceiver;
-        private readonly PawnThinker _thinker;
-        private readonly PawnActor _actor;
-        private readonly PawnRecorder _recorder;
+        private IPawnPerceiver _perceiver;
+        private IPawnThinker _thinker;
+        private IPawnActor _actor;
+        private IPawnRecorder _recorder;
         private readonly List<BehaviorRecord> _behaviorHistory = new List<BehaviorRecord>();
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;
@@ -53,18 +53,29 @@ namespace RimMind.Presentation.Agent
 
         IReadOnlyList<BehaviorRecord> IPawnAgent.BehaviorHistory => _behaviorHistory;
 
-        public PawnAgent(Pawn pawn, IAgentTickSettings tickSettings, IAgentBus agentBus)
+        public PawnAgent(Pawn pawn, IAgentTickSettings tickSettings, IAgentBus agentBus,
+            IPawnPerceiver? perceiver = null, IPawnThinker? thinker = null,
+            IPawnActor? actor = null, IPawnRecorder? recorder = null)
         {
             Pawn = pawn ?? throw new ArgumentNullException(nameof(pawn));
             _tickSettings = tickSettings;
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _goalStack.SetAgentBus(_agentBus);
+            _perceiver = perceiver!;
+            _thinker = thinker!;
+            _actor = actor!;
+            _recorder = recorder!;
             Identity = new SerializableAgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
-            _perceiver = new PawnPerceiver(this);
-            _thinker = new PawnThinker(this, _tickSettings);
-            _actor = new PawnActor(this);
-            _recorder = new PawnRecorder(this);
             _tickInterval = _tickSettings?.AgentTickInterval ?? 150;
             _maxBehaviorHistory = _tickSettings?.BehaviorHistoryMax ?? 100;
+        }
+
+        internal void RebuildCollaborators(IPawnPerceiver perceiver, IPawnThinker thinker, IPawnActor actor, IPawnRecorder recorder)
+        {
+            _perceiver = perceiver ?? throw new ArgumentNullException(nameof(perceiver));
+            _thinker = thinker ?? throw new ArgumentNullException(nameof(thinker));
+            _actor = actor ?? throw new ArgumentNullException(nameof(actor));
+            _recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
         }
 
         public void Tick()
@@ -90,7 +101,15 @@ namespace RimMind.Presentation.Agent
         public bool TransitionTo(AgentState newState)
         {
             if (!AgentStateTransition.CanTransition(State, newState)) return false;
+            var previousState = State;
             State = newState;
+
+            _agentBus?.Publish(new AgentLifecycleEvent(
+                Identity.NpcId,
+                Pawn?.thingIDNumber ?? -1,
+                previousState.ToString(),
+                newState.ToString()));
+
             return true;
         }
 
@@ -166,12 +185,34 @@ namespace RimMind.Presentation.Agent
 
         public void ResubscribeEvents()
         {
+            // After save/load, collaborators are rebuilt by PawnAgentFactory.SerializeAgent,
+            // but event subscriptions held by external subscribers may be stale.
+            // Re-publish a lifecycle event so subscribers can re-associate this agent.
+            _agentBus?.Publish(new AgentLifecycleEvent(
+                Identity.NpcId,
+                Pawn?.thingIDNumber ?? -1,
+                AgentState.Dormant.ToString(),
+                State.ToString()));
         }
 
         public void Cleanup()
         {
             PerceptionBuffer.Clear();
             _behaviorHistory.Clear();
+        }
+
+        public void Destroy()
+        {
+            // Publish final lifecycle event before cleanup
+            if (State != AgentState.Terminated)
+                TransitionTo(AgentState.Terminated);
+
+            // Clean up resources
+            Cleanup();
+
+            // Note: AgentBus uses key-based subscriptions, but PawnAgent doesn't track its subscription keys.
+            // The AgentBus.ClearAllSubscribers() in AgentBusGameComponent handles full cleanup on game load.
+            // Individual agent unsubscription requires tracking subscription keys (future enhancement).
         }
 
         public string GetDebugInfo()
@@ -202,6 +243,30 @@ namespace RimMind.Presentation.Agent
             string _currentModeIdStr = _currentModeId.Value;
             Scribe_Values.Look(ref _currentModeIdStr, "currentModeId", AgentModeId.Reactive.Value);
             _currentModeId = AgentModeId.Normalize(_currentModeIdStr);
+        }
+
+        /// <summary>
+        /// Encapsulates Verse serialization type conversion (Scribe_Deep.Look requires concrete type).
+        /// Called by PawnAgentFactory.SerializeAgent to keep the cast internal to PawnAgent.
+        /// </summary>
+        internal static void Serialize(ref IPawnAgent? agent, string label, PawnAgentFactory factory)
+        {
+            PawnAgent? concrete = agent as PawnAgent;
+            Scribe_Deep.Look(ref concrete, label);
+            agent = concrete;
+
+            // After deserialization, collaborators are null — rebuild them
+            if (Scribe.mode == LoadSaveMode.LoadingVars && concrete != null)
+            {
+                concrete.RebuildCollaborators(
+                    new PawnPerceiver(concrete, factory.AgentBus),
+                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus),
+                    new PawnActor(concrete),
+                    new PawnRecorder(concrete, factory.AgentBus));
+
+                // Re-subscribe event bus so subscribers can re-associate this agent after save/load
+                concrete.ResubscribeEvents();
+            }
         }
     }
 }

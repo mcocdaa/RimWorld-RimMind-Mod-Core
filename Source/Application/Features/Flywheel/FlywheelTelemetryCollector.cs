@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Flywheel;
 
 namespace RimMind.Application.Features.Flywheel
@@ -12,7 +13,7 @@ namespace RimMind.Application.Features.Flywheel
         private readonly ConcurrentQueue<TelemetryRecord> _records
             = new ConcurrentQueue<TelemetryRecord>();
         private readonly ILogSink? _log;
-        private const int MaxRecords = 1000;
+        private const int MaxRecords = RimMindDefaults.TelemetryMaxRecords;
 
         public FlywheelTelemetryCollector(ILogSink? log = null) { _log = log; }
 
@@ -30,7 +31,7 @@ namespace RimMind.Application.Features.Flywheel
                 _records.TryDequeue(out _);
         }
 
-        public List<TelemetryRecord> GetRecent(int count = 100)
+        public List<TelemetryRecord> GetRecent(int count = RimMindDefaults.TelemetryRecordLimit)
         {
             var result = new List<TelemetryRecord>();
             foreach (var r in _records)
@@ -70,11 +71,12 @@ namespace RimMind.Application.Features.Flywheel
             while (_records.TryDequeue(out _)) { }
         }
 
+        [Obsolete("Placeholder - not yet implemented")]
         public void Flush()
         {
         }
 
-        public List<TelemetryRecord> GetRecentRecords(int count = 100) => GetRecent(count);
+        public List<TelemetryRecord> GetRecentRecords(int count = RimMindDefaults.TelemetryRecordLimit) => GetRecent(count);
 
         public void Dispose()
         {

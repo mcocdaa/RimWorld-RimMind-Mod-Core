@@ -5,6 +5,7 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
 
@@ -27,8 +28,8 @@ namespace RimMind.Presentation.Context
         private readonly object _listLock = new object();
         private readonly ITickProvider? _tickProvider;
 
-        private const int MaxEntriesPerNpc = 200;
-        private const int CompressThreshold = 150;
+        private const int MaxEntriesPerNpc = RimMindDefaults.MaxEntriesPerNpc;
+        private const int CompressThreshold = RimMindDefaults.HistoryCompressThreshold;
 
         public HistoryManager(ITickProvider? tickProvider = null)
         {

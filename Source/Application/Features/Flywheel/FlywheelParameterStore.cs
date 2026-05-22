@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Models;
 
 namespace RimMind.Application.Features.Flywheel
 {
@@ -22,7 +23,7 @@ namespace RimMind.Application.Features.Flywheel
             InitializeDefaults();
         }
 
-        public int TotalBudget => _parameters.TryGetValue("ContextBudget", out var val) ? (int)(val * 4000) : 4000;
+        public int TotalBudget => _parameters.TryGetValue("ContextBudget", out var val) ? (int)(val * RimMindDefaults.DefaultTotalBudget) : RimMindDefaults.DefaultTotalBudget;
 
         public float Get(string key)
         {
@@ -99,8 +100,15 @@ namespace RimMind.Application.Features.Flywheel
             }
         }
 
+        [Obsolete("Placeholder - not yet implemented")]
         public void FinalizeInit()
         {
+        }
+
+        public void RecordAction(string npcId, string actionType)
+        {
+            _log?.Message($"[Flywheel] RecordAction: NpcId={npcId}, ActionType={actionType}");
+            // Future: accumulate per-NPC action counts and adjust Alpha/W1/W2 adaptively.
         }
     }
 }

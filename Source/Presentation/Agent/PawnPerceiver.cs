@@ -1,29 +1,33 @@
 using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Enums;
+using RimMind.Domain.Events;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnPerceiver
+    public class PawnPerceiver : IPawnPerceiver
     {
-        private const int DefaultPerceptionInterval = 150;
-        private const float MoodImportance = 0.3f;
-        private const float HediffSeverityThreshold = 0.5f;
-        private const float HealthImportance = 0.7f;
-        private const float CombatImportance = 0.8f;
+        private const int DefaultPerceptionInterval = RimMindDefaults.AgentTickInterval;
+        private const float MoodImportance = RimMindDefaults.PerceptionLowThreshold;
+        private const float HediffSeverityThreshold = RimMindDefaults.PerceptionMediumThreshold;
+        private const float HealthImportance = RimMindDefaults.PerceptionHighThreshold;
+        private const float CombatImportance = RimMindDefaults.PerceptionCriticalThreshold;
 
         private readonly IPawnAgent _agent;
+        private readonly IAgentBus _agentBus;
         private int _lastPerceptionTick;
         private int _perceptionInterval = DefaultPerceptionInterval;
 
-        public PawnPerceiver(IPawnAgent agent)
+        public PawnPerceiver(IPawnAgent agent, IAgentBus agentBus)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+            _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
         }
 
         public void Tick()
@@ -45,7 +49,7 @@ namespace RimMind.Presentation.Agent
                 {
                     PerceptionType = "mood",
                     Content = $"Mood: {pawn.needs.mood.CurLevel:P0}",
-                    Importance = 0.3f,
+                    Importance = MoodImportance,
                     Tick = Find.TickManager.TicksGame
                 });
             }
@@ -77,6 +81,15 @@ namespace RimMind.Presentation.Agent
                     Tick = Find.TickManager.TicksGame
                 });
             }
+
+            // Publish PerceptionEvent so subscribers can react to perception changes
+            _agentBus.Publish(new PerceptionEvent(
+                _agent.Identity.NpcId,
+                _agent.Pawn?.thingIDNumber ?? -1,
+                "composite",
+                "Perception cycle completed",
+                0f,
+                Find.TickManager.TicksGame));
         }
     }
 }

@@ -7,7 +7,13 @@ namespace RimMind.Domain.Events
         Goal,
         Action,
         Lifecycle,
-        ModeChange
+        ModeChange,
+        InnerVoice,
+        Reflection,
+        ScheduleUpdate,
+        MoodThreshold,
+        NeedCritical,
+        MentalStateWarning
     }
 
     public class AgentBusEvent

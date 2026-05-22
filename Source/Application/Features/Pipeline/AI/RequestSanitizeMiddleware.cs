@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 
 namespace RimMind.Application.Features.Pipeline.AI
@@ -8,7 +9,7 @@ namespace RimMind.Application.Features.Pipeline.AI
     internal sealed class RequestSanitizeMiddleware : IMiddleware<AIRequestContext>
     {
         public string Name => "AIRequestSanitize";
-        public int Order => 50;
+        public int Order => RimMindDefaults.MiddlewareOrder.RequestSanitize;
         public string Id => "AIRequestSanitize";
         public string OwnerModId => "RimMindCore";
 

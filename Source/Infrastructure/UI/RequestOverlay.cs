@@ -16,7 +16,7 @@ namespace RimMind.Infrastructure.UI
 
         // Route through ServiceLocator (Application layer) instead of RimMindRuntime (Presentation layer)
         private static IOverlaySettings? GetOverlaySettings()
-            => _cachedOverlaySettings ??= RimMindServiceLocator.Get<ISettingsProvider>() as IOverlaySettings;
+            => _cachedOverlaySettings ??= RimMindServiceLocator.Get<IOverlaySettings>();
 
         private static IWindowService? GetWindowService()
             => _cachedWindowService ??= RimMindServiceLocator.Get<IWindowService>();

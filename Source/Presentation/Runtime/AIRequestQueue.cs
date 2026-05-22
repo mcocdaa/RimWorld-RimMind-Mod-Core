@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
+using RimMind.Application.Features.Queue;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Presentation.Runtime
@@ -11,6 +13,7 @@ namespace RimMind.Presentation.Runtime
     {
         private readonly List<QueuedRequest> _queue = new List<QueuedRequest>();
         private readonly List<TrackedRequest> _activeRequests = new List<TrackedRequest>();
+        private readonly CooldownTable _cooldowns = new CooldownTable();
         private int _activeCount;
         private int _maxConcurrent;
         private bool _paused;
@@ -24,7 +27,7 @@ namespace RimMind.Presentation.Runtime
         public AIRequestQueue(IQueueSettings? queueSettings = null)
         {
             _maxConcurrent = queueSettings?.MaxConcurrentRequests ?? 3;
-            _processInterval = queueSettings?.QueueProcessInterval ?? 60;
+            _processInterval = queueSettings?.QueueProcessInterval ?? RimMindDefaults.QueueProcessInterval;
         }
 
         public void Enqueue(AIRequest request, Action<AIResponse> onComplete, IAIClient client)
@@ -54,6 +57,7 @@ namespace RimMind.Presentation.Runtime
 
         public void ClearCooldown(string modId)
         {
+            _cooldowns.Clear(modId);
         }
 
         public void Tick()

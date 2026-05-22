@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.ValueObjects;
 using RimWorld;
 using UnityEngine.Networking;
@@ -11,10 +12,10 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 {
     public partial class Player2Client
     {
-        private const int HealthCheckIntervalMs = 60000;
-        private const int MinHealthCheckIntervalSec = 60;
+        private const int HealthCheckIntervalMs = RimMindDefaults.Player2HealthCheckIntervalMs;
+        private const int MinHealthCheckIntervalSec = RimMindDefaults.Player2MinHealthCheckIntervalSec;
         private const int LocalAvailabilityTimeoutSec = 2;
-        private const int HealthCheckPollingDelayMs = 100;
+        private const int HealthCheckPollingDelayMs = RimMindDefaults.HealthCheckPollingDelayMs;
 
         private static DateTime _lastHealthCheck = DateTime.MinValue;
         private static volatile bool _healthCheckActive;

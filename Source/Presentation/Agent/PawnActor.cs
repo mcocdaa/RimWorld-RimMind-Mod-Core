@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.Enums;
@@ -12,12 +13,12 @@ using Verse.AI;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnActor
+    public class PawnActor : IPawnActor
     {
         private readonly IPawnAgent _agent;
         private Verse.AI.Job? _pendingJob;
         private int _lastActionTick;
-        private int _actionCooldown = 300;
+        private int _actionCooldown = RimMindDefaults.DefaultActionCooldown;
 
         public PawnActor(IPawnAgent agent)
         {

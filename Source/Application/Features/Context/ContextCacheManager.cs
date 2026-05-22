@@ -31,7 +31,7 @@ namespace RimMind.Application.Features.Context
         public IReadOnlyDictionary<string, bool> PendingCacheEvents => _pendingCacheEvents;
         public EmbedCache EmbedCache => _embedCache;
 
-        public void TouchCache(string cacheKey) { }
+        public void TouchCache(string cacheKey) { /* Intentionally empty: reserved for future LRU cache eviction */ }
         public void RemoveL0CacheForNpc(string npcId)
         {
             foreach (var key in _l0Cache.Keys)
@@ -51,7 +51,7 @@ namespace RimMind.Application.Features.Context
                 lock (versions) { versions.Remove(key); }
             }
         }
-        public void UpdateBaseline(string npcId) { }
+        public void UpdateBaseline(string npcId) { /* Intentionally empty: reserved for future baseline auto-refresh */ }
         public void InvalidateNpc(string npcId)
         {
             RemoveL0CacheForNpc(npcId);

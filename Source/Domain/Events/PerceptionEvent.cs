@@ -5,7 +5,6 @@ namespace RimMind.Domain.Events
         public string PerceptionType = "";
         public string Content = "";
         public float Importance;
-        public new int Timestamp;
 
         public PerceptionEvent(string npcId, int pawnId, string perceptionType, string content, float importance = 0f, int timestamp = 0)
         {

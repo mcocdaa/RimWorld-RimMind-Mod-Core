@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 
 namespace RimMind.Application.Features.Pipeline.AI
@@ -8,7 +9,7 @@ namespace RimMind.Application.Features.Pipeline.AI
     internal sealed class CacheMiddleware : IMiddleware<AIRequestContext>
     {
         public string Name => "AICache";
-        public int Order => 100;
+        public int Order => RimMindDefaults.MiddlewareOrder.Cache;
         public string Id => "AICache";
         public string OwnerModId => "RimMindCore";
 

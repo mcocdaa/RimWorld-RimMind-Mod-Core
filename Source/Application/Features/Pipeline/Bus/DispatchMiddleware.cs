@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Events;
 
@@ -10,7 +11,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
     internal sealed class DispatchMiddleware : IMiddleware<BusPublishContext>
     {
         public string Name => "BusDispatch";
-        public int Order => 200;
+        public int Order => RimMindDefaults.MiddlewareOrder.Dispatch;
         public string Id => "BusDispatch";
         public string OwnerModId => "RimMindCore";
 

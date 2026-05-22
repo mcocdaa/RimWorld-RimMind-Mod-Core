@@ -25,7 +25,7 @@ namespace RimMind.Application.Common.Models.Client
             SystemPrompt = string.Empty;
             UserPrompt = string.Empty;
             Messages = null;
-            MaxTokens = 800;
+            MaxTokens = RimMindDefaults.MaxTokens;
             Temperature = 0.7f;
             RequestId = string.Empty;
             ModId = string.Empty;

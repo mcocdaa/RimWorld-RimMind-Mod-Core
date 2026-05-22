@@ -61,7 +61,6 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Reset();
             ContextKeyRegistry.ResetCache();
             ContextKeyRegistry.Clear();
-            GameContextBuilder.ResetCache();
         }
     }
 }

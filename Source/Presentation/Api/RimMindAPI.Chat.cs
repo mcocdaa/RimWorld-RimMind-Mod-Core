@@ -1,9 +1,11 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
+using RimMind.Application.Features.Pipeline.Npc;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Agent;
-using RimMind.Application.Features.Pipeline.Npc;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
@@ -41,7 +43,12 @@ namespace RimMind.Presentation
                 => RimMindRuntime.Instance.ContextEngine.BuildSnapshot(request);
 
             public static string BuildMapContext(Map map, bool brief = false)
-                => GameContextBuilder.BuildMapContext(map, brief);
+            {
+                var builder = RimMindServiceLocator.Get<IGameContextBuilder>();
+                if (builder is GameContextBuilder gcb)
+                    return gcb.BuildMapContextInstance(map, brief);
+                return "";
+            }
         }
     }
 }

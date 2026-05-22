@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
 using System;
@@ -25,11 +26,11 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly Player2Client _client;
         private readonly string _gameId;
         private readonly INpcManager _npcManager;
-        private readonly ILogSink? _logSink;
-        private readonly IContextBuilder? _contextEngine;
-        private readonly ISettingsProvider? _settingsProvider;
-        private readonly IGameContextBuilder? _gameContextBuilder;
-        private readonly IResponseDispatcher? _responseDispatcher;
+        private readonly ILogSink _logSink;
+        private readonly IContextBuilder _contextEngine;
+        private readonly ISettingsProvider _settingsProvider;
+        private readonly IGameContextBuilder _gameContextBuilder;
+        private readonly IResponseDispatcher _responseDispatcher;
 
         private readonly List<LocalMemoryEntry> _localMemoryIndex = new List<LocalMemoryEntry>();
         private readonly object _indexLock = new object();
@@ -48,19 +49,16 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         public bool SupportsCommands => true;
         public bool SupportsStructuredOutput => true;
 
-        public Player2StorageDriver(Player2Client client, INpcManager npcManager,
-            ILogSink? logSink = null, IContextBuilder? contextEngine = null,
-            ISettingsProvider? settingsProvider = null, IGameContextBuilder? gameContextBuilder = null,
-            IResponseDispatcher? responseDispatcher = null)
+        public Player2StorageDriver(Player2Client client, StorageDriverDependencies deps)
         {
             _client = client;
-            _npcManager = npcManager;
+            _npcManager = deps.NpcManager;
             _gameId = Player2Client.GameClientId;
-            _logSink = logSink;
-            _contextEngine = contextEngine;
-            _settingsProvider = settingsProvider;
-            _gameContextBuilder = gameContextBuilder;
-            _responseDispatcher = responseDispatcher;
+            _logSink = deps.LogSink;
+            _contextEngine = deps.ContextBuilder;
+            _settingsProvider = deps.SettingsProvider;
+            _gameContextBuilder = deps.GameContextBuilder;
+            _responseDispatcher = deps.ResponseDispatcher;
         }
 
         public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(string npcId, string message, string? context = null)
@@ -128,7 +126,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
         public bool IsNpcAlive(string npcId)
         {
-            return _npcManager?.IsNpcAlive(npcId) == true;
+            return _npcManager.IsNpcAlive(npcId) == true;
         }
 
         public async Task<Result<NpcChatResult, RimMindError>> ChatAsync(ContextSnapshot snapshot, CancellationToken ct = default)
@@ -161,7 +159,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             }
             catch (System.Exception ex)
             {
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
+                _logSink.LogFromBackground($"[RimMind-Core] Player2StorageDriver.ChatAsync failed for '{snapshot.NpcId}': {ex.Message}", isWarning: true);
                 return Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed(ex.Message, ex));
             }
         }
@@ -172,31 +170,24 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             {
                 if (string.IsNullOrEmpty(gameStateInfo))
                 {
-                    if (_contextEngine != null)
+                    var request = new ContextRequest
                     {
-                        var request = new ContextRequest
-                        {
-                            NpcId = npcId,
-                            Scenario = ScenarioIds.Dialogue,
-                            Budget = _settingsProvider?.Context?.ContextBudget ?? 0.6f,
-                            CurrentQuery = message,
-                            MaxTokens = _settingsProvider?.MaxTokens ?? 800,
-                            Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
-                            Map = Find.CurrentMap,
-                        };
-                        var snapshot = _contextEngine.BuildSnapshot(request);
-                        var sb = new StringBuilder();
-                        foreach (var msg in snapshot.Messages)
-                        {
-                            if (msg.Role == "system" && !string.IsNullOrEmpty(msg.Content))
-                                sb.AppendLine(msg.Content);
-                        }
-                        gameStateInfo = sb.ToString().TrimEnd();
-                    }
-                    else
+                        NpcId = npcId,
+                        Scenario = ScenarioIds.Dialogue,
+                        Budget = _settingsProvider.Context?.ContextBudget ?? RimMindDefaults.DefaultContextBudget,
+                        CurrentQuery = message,
+                        MaxTokens = _settingsProvider.MaxTokens,
+                        Temperature = _settingsProvider.DefaultTemperature,
+                        Map = Find.CurrentMap,
+                    };
+                    var snapshot = _contextEngine.BuildSnapshot(request);
+                    var sb = new StringBuilder();
+                    foreach (var msg in snapshot.Messages)
                     {
-                        gameStateInfo = _gameContextBuilder?.CollectBasicGameState(npcId) ?? "";
+                        if (msg.Role == "system" && !string.IsNullOrEmpty(msg.Content))
+                            sb.AppendLine(msg.Content);
                     }
+                    gameStateInfo = sb.ToString().TrimEnd();
                 }
 
                 var body = new
@@ -230,8 +221,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
                 CurrentQuery = gameStateInfo != null ? $"{message}\n\n[Game State]\n{gameStateInfo}" : message,
-                MaxTokens = _settingsProvider?.MaxTokens ?? 800,
-                Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
+                MaxTokens = _settingsProvider.MaxTokens,
+                Temperature = _settingsProvider.DefaultTemperature,
             };
             snapshot.AddMessage(new ChatMessage { Role = "user", Content = snapshot.CurrentQuery });
 
@@ -249,7 +240,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             yield return Result<NpcChatChunk, RimMindError>.Ok(new NpcChatChunk(npcId, chatResult.Message ?? "", chatResult.Emotion, isFinal: true));
         }
 
-        public async Task<Result<string, RimMindError>> GetHistoryAsync(string npcId, int limit = 50)
+        public async Task<Result<string, RimMindError>> GetHistoryAsync(string npcId, int limit = RimMindDefaults.StorageHistoryLimit)
         {
             try
             {
@@ -392,11 +383,11 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
             if (!AutoDispatch) return;
             try
             {
-                _responseDispatcher?.DispatchChatResponse(npcId, System.Guid.NewGuid().ToString());
+                _responseDispatcher.DispatchChatResponse(npcId, System.Guid.NewGuid().ToString());
             }
             catch (System.Exception ex)
             {
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}", isWarning: true);
+                _logSink.LogFromBackground($"[RimMind-Core] Player2StorageDriver: auto-dispatch failed for '{npcId}' - {ex.Message}", isWarning: true);
             }
         }
     }

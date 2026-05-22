@@ -43,8 +43,8 @@ namespace RimMind.Application.Features.Context
             return result;
         }
 
-        public void OnKeyUpdated(KeyMeta key) { }
-        public void Calibrate(List<KeyMeta> keys) { }
+        public void OnKeyUpdated(KeyMeta key) { /* Intentionally empty: reserved for future adaptive budget rebalancing */ }
+        public void Calibrate(List<KeyMeta> keys) { /* Intentionally empty: reserved for future auto-calibration */ }
         public void SetConfig(BudgetSchedulerConfig? config) { if (config != null) _config = config; }
         public BudgetSchedulerConfig GetConfig() => _config;
 

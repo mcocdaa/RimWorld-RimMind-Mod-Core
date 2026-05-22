@@ -8,8 +8,10 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Defaults;
 using RimMind.Application.Features.Agent.Modes;
+using RimMind.Application.Features.Agent.Reflection;
+using RimMind.Application.Features.Agent.Planning;
 using RimMind.Application.Features.Pipeline.AI;
 using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Pipeline.Context;
@@ -47,8 +49,10 @@ namespace RimMind.Presentation.Runtime
         {
             var tickProvider = _tickProvider
                 ?? throw new InvalidOperationException("ITickProvider not registered");
+            var reflectionStrategy = new DefaultReflectionStrategy(tickProvider);
+            var dailyPlanner = new DefaultDailyPlanner(tickProvider);
             modeRegistry.Register(new ReactiveAgentMode());
-            modeRegistry.Register(new ProactiveAgentMode(tickProvider));
+            modeRegistry.Register(new ProactiveAgentMode(tickProvider, reflectionStrategy, dailyPlanner));
         }
 
         public void RegisterCoreSubscribers()
@@ -101,7 +105,6 @@ namespace RimMind.Presentation.Runtime
 
         public void Reset()
         {
-            _coreSubscriber = null;
             _agentIdentityProvider = null;
             _agentActionBridge = Application.Common.Defaults.NullAgentActionBridge.Instance;
         }

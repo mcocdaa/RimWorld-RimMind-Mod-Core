@@ -7,7 +7,7 @@ namespace RimMind.Application.Common.Models.Context
         public float Budget = 0;
         public string? CurrentQuery;
         public string[]? ExcludeKeys;
-        public int MaxTokens = 800;
+        public int MaxTokens = RimMindDefaults.MaxTokens;
         public float Temperature = 0.7f;
         public object? Map;
         public string? SpeakerName;

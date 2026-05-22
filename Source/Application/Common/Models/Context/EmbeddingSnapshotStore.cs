@@ -20,7 +20,7 @@ namespace RimMind.Application.Common.Models.Context
         private readonly ConcurrentDictionary<string, List<EmbeddingSnapshotRecord>> _store
             = new ConcurrentDictionary<string, List<EmbeddingSnapshotRecord>>();
 
-        private const int MaxRecordsPerNpc = 500;
+        private const int MaxRecordsPerNpc = RimMindDefaults.EmbedMaxRecordsPerNpc;
 
         public void Record(EmbeddingSnapshotRecord record)
         {

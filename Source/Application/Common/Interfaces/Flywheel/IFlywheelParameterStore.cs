@@ -16,6 +16,7 @@ namespace RimMind.Application.Common.Interfaces.Flywheel
         (List<string> keys, List<float> values) GetSaveSnapshot();
         void LoadFromSnapshot(List<string> keys, List<float> values);
         void FinalizeInit();
+        void RecordAction(string npcId, string actionType);
         event Action<string, float>? OnParameterChanged;
     }
 }

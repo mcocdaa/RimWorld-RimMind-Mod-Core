@@ -3,6 +3,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
 using System;
@@ -81,7 +82,7 @@ namespace RimMind.Infrastructure.Persistence
                 Temperature = snapshot.Temperature,
                 RequestId = $"NpcChat_{snapshot.NpcId}_{Find.TickManager.TicksGame}",
                 ModId = "NpcChat",
-                ExpireAtTicks = Find.TickManager.TicksGame + (_settingsProvider?.RequestExpireTicks ?? 30000),
+                ExpireAtTicks = Find.TickManager.TicksGame + (_settingsProvider?.RequestExpireTicks ?? RimMindDefaults.RequestExpireTicks),
                 UseJsonMode = true,
                 Priority = AIRequestPriority.Normal,
             };
@@ -122,10 +123,10 @@ namespace RimMind.Infrastructure.Persistence
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = _settingsProvider?.Context?.ContextBudget ?? 0.6f,
+                Budget = _settingsProvider?.Context?.ContextBudget ?? RimMindDefaults.DefaultContextBudget,
                 CurrentQuery = message,
-                MaxTokens = _settingsProvider?.MaxTokens ?? 800,
-                Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
+                MaxTokens = _settingsProvider?.MaxTokens ?? RimMindDefaults.MaxTokens,
+                Temperature = _settingsProvider?.DefaultTemperature ?? RimMindDefaults.DefaultTemperature,
             };
             var snapshot = _contextEngine?.BuildSnapshot(request);
             if (snapshot == null)
@@ -139,10 +140,10 @@ namespace RimMind.Infrastructure.Persistence
             {
                 NpcId = npcId,
                 Scenario = ScenarioIds.Dialogue,
-                Budget = _settingsProvider?.Context?.ContextBudget ?? 0.6f,
+                Budget = _settingsProvider?.Context?.ContextBudget ?? RimMindDefaults.DefaultContextBudget,
                 CurrentQuery = message,
-                MaxTokens = _settingsProvider?.MaxTokens ?? 800,
-                Temperature = _settingsProvider?.DefaultTemperature ?? 0.7f,
+                MaxTokens = _settingsProvider?.MaxTokens ?? RimMindDefaults.MaxTokens,
+                Temperature = _settingsProvider?.DefaultTemperature ?? RimMindDefaults.DefaultTemperature,
             };
             var snapshot = _contextEngine?.BuildSnapshot(request);
             if (snapshot == null)
@@ -159,7 +160,7 @@ namespace RimMind.Infrastructure.Persistence
                 yield return Result<NpcChatChunk, RimMindError>.Err(result.Error);
         }
 
-        public Task<Result<string, RimMindError>> GetHistoryAsync(string npcId, int limit = 50)
+        public Task<Result<string, RimMindError>> GetHistoryAsync(string npcId, int limit = RimMindDefaults.StorageHistoryLimit)
         {
             var history = _historyManager.GetHistory(npcId, limit);
             if (history == null || history.Count == 0)

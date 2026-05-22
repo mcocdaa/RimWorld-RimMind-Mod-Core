@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces;
 using RimMind.Domain.Events;
-using RimMind.Presentation.Runtime;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -13,11 +12,24 @@ namespace RimMind.Presentation.Agent
         private const int MaxTotalGoals = 10;
 
         private readonly List<AgentGoal> _goals = new List<AgentGoal>();
+        private IAgentBus? _agentBus;
 
         private List<AgentGoal>? _activeGoalsCache;
         private int _version;
         private int _activeGoalsCacheVersion;
         private int _activeCount;
+
+        public AgentGoalStack() { }
+
+        public AgentGoalStack(IAgentBus agentBus)
+        {
+            _agentBus = agentBus;
+        }
+
+        internal void SetAgentBus(IAgentBus agentBus)
+        {
+            _agentBus = agentBus;
+        }
 
         public IReadOnlyList<AgentGoal> Goals => _goals;
         public IReadOnlyList<AgentGoal> ActiveGoals
@@ -54,7 +66,7 @@ namespace RimMind.Presentation.Agent
             _goals.Add(goal);
             BumpVersion();
             _goals.Sort((a, b) => b.Priority.CompareTo(a.Priority));
-            RimMindRuntime.Instance.AgentBus.Publish(new GoalEvent(
+            _agentBus?.Publish(new GoalEvent(
                 $"NPC-{pawnId}", pawnId, goal.Description, goal.Status.ToString(), goal.Category.ToString()));
             return true;
         }
@@ -67,7 +79,7 @@ namespace RimMind.Presentation.Agent
             if (goal.Status == GoalStatus.Active) _activeCount--;
             _goals.RemoveAt(idx);
             BumpVersion();
-            RimMindRuntime.Instance.AgentBus.Publish(new GoalEvent(
+            _agentBus?.Publish(new GoalEvent(
                 $"NPC-{pawnId}", pawnId, goal.Description, GoalStatus.Abandoned.ToString(), goal.Category.ToString()));
             PromoteProposed();
             return true;
@@ -84,7 +96,7 @@ namespace RimMind.Presentation.Agent
                     goal.Status = GoalStatus.Expired;
                     _goals.RemoveAt(i);
                     BumpVersion();
-                    RimMindRuntime.Instance.AgentBus.Publish(new GoalEvent(
+                    _agentBus?.Publish(new GoalEvent(
                         $"NPC-{pawnId}", pawnId, goal.Description, GoalStatus.Expired.ToString(), goal.Category.ToString()));
                 }
             }

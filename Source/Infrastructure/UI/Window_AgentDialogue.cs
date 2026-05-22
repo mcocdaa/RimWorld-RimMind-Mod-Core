@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
@@ -20,7 +21,7 @@ namespace RimMind.Infrastructure.UI
         private string _inputText = "";
         private Vector2 _scrollPosition;
         private float _lastContentHeight;
-        private const int MaxHistoryRounds = 20;
+        private const int MaxHistoryRounds = RimMindDefaults.MaxHistoryRounds;
 
         private IHistoryManager? _cachedHistoryManager;
         private ISettingsProvider? _cachedSettingsProvider;
@@ -148,10 +149,10 @@ namespace RimMind.Infrastructure.UI
             {
                 NpcId = _agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
                 Scenario = ScenarioIds.Dialogue,
-                Budget = 0.6f,
+                Budget = RimMindDefaults.DefaultContextBudget,
                 CurrentQuery = message,
-                MaxTokens = settings?.MaxTokens ?? 800,
-                Temperature = settings?.DefaultTemperature ?? 0.7f,
+                MaxTokens = settings?.MaxTokens ?? RimMindDefaults.MaxTokens,
+                Temperature = settings?.DefaultTemperature ?? RimMindDefaults.DefaultTemperature,
             };
 
             var engine = GetContextEngine();

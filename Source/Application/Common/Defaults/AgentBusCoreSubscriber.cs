@@ -2,7 +2,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Domain.Events;
 
-namespace RimMind.Application.Features.AgentBus;
+namespace RimMind.Application.Common.Defaults;
 
 internal sealed class AgentBusCoreSubscriber
 {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.ValueObjects;
 
@@ -13,7 +14,7 @@ namespace RimMind.Application.Common.Models.Context
         public List<StructuredTool>? Tools;
         public int EstimatedTokens;
         public ContextLayerMeta Meta = new ContextLayerMeta();
-        public int MaxTokens = 800;
+        public int MaxTokens = RimMindDefaults.MaxTokens;
         public float Temperature = 0.7f;
         public string? CurrentQuery;
         public string[] IncludedKeys = new string[0];

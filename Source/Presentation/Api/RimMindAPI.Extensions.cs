@@ -48,16 +48,22 @@ namespace RimMind.Presentation
 
             public static void TriggerDialogue(Pawn pawn, string context, Pawn? recipient = null)
             {
-                // IDialogueTrigger removed (dead interface, no implementations)
+                foreach (var trigger in Get<IDialogueTrigger>().All)
+                {
+                    trigger.Trigger(pawn, context, recipient);
+                }
             }
 
             public static void NotifyIncidentExecuted()
             {
-                // IIncidentExecutedListener removed (dead interface, no implementations)
+                foreach (var listener in Get<IIncidentExecutedListener>().All)
+                {
+                    listener.OnIncidentExecuted();
+                }
             }
 
             public static bool CanTriggerDialogue
-                => false;
+                => Get<IDialogueTrigger>()?.All.Any() == true;
 
             public static void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
                 => RimMindRuntime.Instance.RegisterAgentIdentityProvider(provider);

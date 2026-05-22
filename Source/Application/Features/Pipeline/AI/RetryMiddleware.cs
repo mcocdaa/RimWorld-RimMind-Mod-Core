@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
 
@@ -11,7 +12,7 @@ namespace RimMind.Application.Features.Pipeline.AI
     internal sealed class RetryMiddleware : IMiddleware<AIRequestContext>
     {
         public string Name => "AIRetry";
-        public int Order => 800;
+        public int Order => RimMindDefaults.MiddlewareOrder.Retry;
         public string Id => "AIRetry";
         public string OwnerModId => "RimMindCore";
 

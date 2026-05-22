@@ -4,7 +4,9 @@ namespace RimMind.Domain.ValueObjects
 {
     public class EmbedCache
     {
+        // Architecture limit: Domain layer cannot reference Application layer's RimMindDefaults. Value mirrors RimMindDefaults.EmbedMaxBlockEntries.
         private const int MaxBlockEntries = 200;
+        // Architecture limit: Domain layer cannot reference Application layer's RimMindDefaults. Value mirrors RimMindDefaults.EmbedMaxEntryItems.
         private const int MaxEntryItems = 500;
 
         private readonly object _sync = new object();

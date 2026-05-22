@@ -107,7 +107,6 @@ namespace RimMind.Presentation.Runtime
                 if (_instance != null) return;
                 _instance = new RimMindRuntime(settingsProvider, openAISettings);
                 _instance._extensionManager.RegisterBuiltinModes(_instance.GetExtensionRegistry<IAgentMode>());
-                _instance._extensionManager.RegisterCoreSubscribers();
                 Log.Message("[RimMind-Core] Runtime initialized");
             }
         }
@@ -132,8 +131,14 @@ namespace RimMind.Presentation.Runtime
 
         public IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension
         {
-            return (IExtensionRegistry<T>)_registries.GetOrAdd(typeof(T),
-                _ => new ExtensionRegistry<T>());
+            // Delegate to ServiceLocator to ensure single source of truth.
+            // Previously used _registries dict which created separate instances from CompositionRoot's SL,
+            // causing sub-Mod extensions to be invisible to Pipeline factories.
+            var existing = RimMindServiceLocator.Get<IExtensionRegistry<T>>();
+            if (existing != null) return existing;
+            var newRegistry = new ExtensionRegistry<T>();
+            RimMindServiceLocator.Register(newRegistry);
+            return newRegistry;
         }
 
         public void AddMiddleware<TContext>(IMiddleware<TContext> middleware) where TContext : IPipelineContext

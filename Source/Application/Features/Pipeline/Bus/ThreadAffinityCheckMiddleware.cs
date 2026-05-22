@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -26,7 +27,10 @@ namespace RimMind.Application.Features.Pipeline.Bus
         {
             if (_threadChecker != null && !_threadChecker.IsMainThread)
             {
-                _log?.Warning("[BusThreadAffinity] Bus publish called from non-main thread, deferring");
+                _log?.Warning("[BusThreadAffinity] Bus publish called from non-main thread — this may cause race conditions in RimWorld's single-threaded simulation");
+                throw new InvalidOperationException(
+                    "Bus publish must be called from the main thread. " +
+                    "Use LongEventHandler or QueueWorkItem to marshal to the main thread first.");
             }
             return next(context);
         }

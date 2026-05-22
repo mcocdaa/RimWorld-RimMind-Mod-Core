@@ -25,7 +25,7 @@ namespace RimMind.Infrastructure.Mechanisms
         {
             _reader = reader;
             _metadata = metadata;
-            _jsonExtractor = jsonExtractor ?? new FallbackJsonExtractor();
+            _jsonExtractor = jsonExtractor ?? new MechanismToolHelper.FallbackJsonExtractor();
             Definition = BuildDefinition(metadata);
         }
 
@@ -35,8 +35,8 @@ namespace RimMind.Infrastructure.Mechanisms
 
         public async Task<Result<ToolResult, RimMindError>> ExecuteAsync(ToolCallArgs args, CancellationToken ct)
         {
-            var pawnId = ExtractNullableInt(args.ArgumentsJson, "pawn_id");
-            var category = ExtractString(args.ArgumentsJson, "category");
+            var pawnId = MechanismToolHelper.ExtractNullableInt(_jsonExtractor, args.ArgumentsJson, "pawn_id");
+            var category = MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "category");
 
             var result = await _reader.ExecuteListAsync(pawnId, ct).ConfigureAwait(false);
 
@@ -104,31 +104,6 @@ namespace RimMind.Infrastructure.Mechanisms
                 ParametersSchema = JsonConvert.SerializeObject(schema),
                 Category = metadata.Scope.ToString().ToLowerInvariant()
             };
-        }
-
-        private string? ExtractString(string? json, string propertyName) => _jsonExtractor.ExtractString(json ?? "{}", propertyName);
-
-        private int? ExtractNullableInt(string? json, string propertyName)
-        {
-            var str = _jsonExtractor.ExtractString(json ?? "{}", propertyName);
-            return int.TryParse(str, out var val) ? val : (int?)null;
-        }
-
-        private sealed class FallbackJsonExtractor : IJsonExtractor
-        {
-            public string? ExtractString(string json, string propertyName)
-            {
-                if (string.IsNullOrEmpty(json)) return null;
-                try
-                {
-                    var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
-                    return obj[propertyName]?.ToString();
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
         }
     }
 }

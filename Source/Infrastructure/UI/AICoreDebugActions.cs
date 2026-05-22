@@ -9,6 +9,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using LudeonTK;
@@ -81,11 +82,11 @@ namespace RimMind.Infrastructure.UI
             {
                 SystemPrompt = "You are a test assistant. Always reply in JSON format.",
                 UserPrompt = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}",
-                MaxTokens = 60,
+                MaxTokens = RimMindDefaults.TestConnectionMaxTokens,
                 Temperature = 0f,
                 RequestId = "Debug_TestConnection",
                 ModId = "Debug",
-                ExpireAtTicks = Find.TickManager.TicksGame + 3600,
+                ExpireAtTicks = Find.TickManager.TicksGame + RimMindDefaults.LetterChoiceExpireTicks,
                 Priority = AIRequestPriority.High,
             };
 
@@ -310,8 +311,8 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  TotalBudget: {_flywheelParameterStore.TotalBudget}");
 
-            var recentRecords = _telemetryCollector?.GetRecentRecords(100);
-            sb.AppendLine($"  Telemetry records (recent 100): {recentRecords?.Count ?? 0}");
+            var recentRecords = _telemetryCollector?.GetRecentRecords(RimMindDefaults.TelemetryRecordLimit);
+            sb.AppendLine($"  Telemetry records (recent {RimMindDefaults.TelemetryRecordLimit}): {recentRecords?.Count ?? 0}");
 
             Log.Message(sb.ToString());
         }
@@ -379,7 +380,7 @@ namespace RimMind.Infrastructure.UI
                 sb.AppendLine($"  Last {recent.Count} entries:");
                 foreach (var (role, content) in recent)
                 {
-                    string preview = content.Length > 120 ? content.Substring(0, 120) + "..." : content;
+                    string preview = content.Length > RimMindDefaults.PreviewTruncateLength ? content.Substring(0, RimMindDefaults.PreviewTruncateLength) + "..." : content;
                     sb.AppendLine($"    [{role}] {preview}");
                 }
             }
@@ -412,8 +413,8 @@ namespace RimMind.Infrastructure.UI
                 sb.AppendLine($"  [{npc.NpcId}] Name={npc.Name} Commands={npc.Commands.Count}");
                 if (!string.IsNullOrEmpty(npc.CharacterDescription))
                 {
-                    string desc = npc.CharacterDescription.Length > 80
-                        ? npc.CharacterDescription.Substring(0, 80) + "..."
+                    string desc = npc.CharacterDescription.Length > RimMindDefaults.DescriptionTruncateLength
+                        ? npc.CharacterDescription.Substring(0, RimMindDefaults.DescriptionTruncateLength) + "..."
                         : npc.CharacterDescription;
                     sb.AppendLine($"    Desc: {desc}");
                 }

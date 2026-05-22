@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Models.Flywheel;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models;
 
 namespace RimMind.Application.Features.Flywheel
 {
@@ -32,7 +33,7 @@ namespace RimMind.Application.Features.Flywheel
 
             float avgTokens = totalTokens / records.Count;
             float budget = _store.Get("ContextBudget");
-            float ratio = avgTokens / (budget * 800);
+            float ratio = avgTokens / (budget * RimMindDefaults.MaxTokens);
 
             if (ratio > 0.9f)
             {
@@ -52,7 +53,7 @@ namespace RimMind.Application.Features.Flywheel
             if (metrics.TryGetValue("avg_tokens_used", out var avgTokens) && avgTokens > 0)
             {
                 float budget = _store.Get("ContextBudget");
-                float ratio = avgTokens / (budget * 800);
+                float ratio = avgTokens / (budget * RimMindDefaults.MaxTokens);
                 if (ratio > 0.9f)
                 {
                     recommendations.Add(new ParameterRecommendation

@@ -10,17 +10,13 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models;
 
 namespace RimMind.Application.Features.Queue
 {
     public class AIRequestQueueImpl : IAIRequestQueueTickable
     {
-        private const long TicksPerMillisecond = 16L;
-        private const int kCircuitBreakerFailureThreshold = 5;
-        private const int kCircuitBreakerOpenDurationSec = 60;
-        private const int kMaxCacheEntries = 100;
-        private const float kMoodDiffThreshold = 5f;
-        private const float kTemperatureDiffThreshold = 5f;
+        private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;
 
         private static AIRequestQueueImpl? _instance;
 
@@ -37,7 +33,7 @@ namespace RimMind.Application.Features.Queue
         private readonly ConcurrentDictionary<string, TrackedRequest> _requestIdToActive
             = new ConcurrentDictionary<string, TrackedRequest>();
 
-        private readonly CooldownTable _cooldowns = new CooldownTable();
+        private readonly QueueCircuitBreaker _circuitBreaker;
 
         private readonly ILogSink? _logSink;
 
@@ -73,6 +69,7 @@ namespace RimMind.Application.Features.Queue
         {
             _settingsFactory = settingsFactory;
             _logSink = logSink;
+            _circuitBreaker = new QueueCircuitBreaker(Settings, logSink);
             _instance = this;
         }
 
@@ -112,7 +109,7 @@ namespace RimMind.Application.Features.Queue
                 _isProcessingLocalRequest = false;
                 _isPaused = false;
             }
-            _cooldowns.ClearAll();
+            _circuitBreaker.ClearAllCooldowns();
         }
 
         public void CancelAllRequests() { _cts.Cancel(); _cts.Dispose(); _cts = new CancellationTokenSource(); }
@@ -169,7 +166,7 @@ namespace RimMind.Application.Features.Queue
             if (_isPaused) return;
             lock (_queueLock)
             {
-                var cooldownSnapshot = _cooldowns.GetSnapshot();
+                var cooldownSnapshot = _circuitBreaker.GetCooldownSnapshot();
                 var readyRequests = new List<(string modId, TrackedRequest tracked)>();
                 foreach (var kvp in _modQueues)
                 {
@@ -193,8 +190,8 @@ namespace RimMind.Application.Features.Queue
                     if (tracked.IsLocalEndpointSnapshot && _isProcessingLocalRequest) continue;
                     if (!_modQueues.TryGetValue(modId, out var queue) || queue.Count == 0 || queue[0] != tracked) continue;
                     queue.RemoveAt(0);
-                    int cooldownTicks = _cooldowns.GetModCooldownTicks(modId);
-                    _cooldowns.Set(modId, now + cooldownTicks);
+                    int cooldownTicks = _circuitBreaker.GetModCooldownTicks(modId);
+                    _circuitBreaker.SetCooldown(modId, now + cooldownTicks);
                     tracked.State = AIRequestState.Processing; tracked.StartedProcessingAtTick = now;
                     _activeRequests[tracked.TrackingId] = tracked; _requestIdToActive[tracked.Request.RequestId] = tracked;
                     if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = true;
@@ -208,7 +205,7 @@ namespace RimMind.Application.Features.Queue
         private void TryProcessModQueue(string modId, int now)
         {
             if (_isPaused) return;
-            if (_cooldowns.IsOnCooldown(modId, now)) return;
+            if (_circuitBreaker.IsOnCooldown(modId, now)) return;
             lock (_queueLock) { if (!_modQueues.TryGetValue(modId, out var q) || q.Count == 0) return; }
             ProcessAllQueues(now);
         }
@@ -292,150 +289,17 @@ namespace RimMind.Application.Features.Queue
         public int ActiveRequestCount => _activeRequests.Count;
         public bool IsLocalModelBusy => _isProcessingLocalRequest;
         public IReadOnlyList<TrackedRequest> GetActiveRequests() { lock (_queueLock) { return _activeRequests.Values.ToList(); } }
-        public int GetCooldownTicksLeft(string modId) => _cooldowns.GetCooldownTicksLeft(modId, CurrentTick);
+        public int GetCooldownTicksLeft(string modId) => _circuitBreaker.GetCooldownTicksLeft(modId, CurrentTick);
         public int GetQueueDepth(string modId) { lock (_queueLock) { return _modQueues.TryGetValue(modId, out var q) ? q.Count : 0; } }
-        public void ClearCooldown(string modId) => _cooldowns.Clear(modId);
-        public void ClearAllCooldowns() => _cooldowns.ClearAll();
+        public void ClearCooldown(string modId) => _circuitBreaker.ClearCooldown(modId);
+        public void ClearAllCooldowns() => _circuitBreaker.ClearAllCooldowns();
         public void ClearAllQueues() { lock (_queueLock) { foreach (var kvp in _modQueues) kvp.Value.Clear(); _modQueues.Clear(); } }
-        public IReadOnlyDictionary<string, int> GetAllCooldowns() => _cooldowns.GetAll();
+        public IReadOnlyDictionary<string, int> GetAllCooldowns() => _circuitBreaker.GetAllCooldowns();
         public IReadOnlyDictionary<string, int> GetAllQueueDepths() { lock (_queueLock) { var r = new Dictionary<string, int>(); foreach (var kvp in _modQueues) r[kvp.Key] = kvp.Value.Count; return r; } }
         public IReadOnlyList<TrackedRequest> GetQueuedRequests(string modId) { lock (_queueLock) { return _modQueues.TryGetValue(modId, out var q) ? q.ToList() : new List<TrackedRequest>(); } }
         public IReadOnlyList<TrackedRequest> GetAllQueuedRequests() { lock (_queueLock) { var r = new List<TrackedRequest>(); foreach (var kvp in _modQueues) r.AddRange(kvp.Value); return r; } }
         public int TotalQueuedCount { get { lock (_queueLock) { return _modQueues.Values.Sum(q => q.Count); } } }
         public void EnqueueLog(string msg, bool isWarning = false) => _pendingLogs.Enqueue((msg, isWarning));
         internal CancellationTokenSource GetCts() => _cts;
-
-        private sealed class DefaultSettingsProvider : ISettingsProvider
-        {
-            public int QueueProcessInterval { get => 60; set { } }
-            public int MaxConcurrentRequests { get => 4; set { } }
-            public int RequestTimeoutMs { get => 30000; set { } }
-            public int MaxRetryCount { get => 2; set { } }
-            public int RequestExpireTicks { get => 30000; set { } }
-            public int AgentTickInterval => 150;
-            public int BehaviorHistoryMax { get => 100; set { } }
-            public int ThinkCooldownTicks => 30000;
-            public int MaxToolCallDepth => 3;
-            public int DefaultModCooldownTicks { get => 3600; set { } }
-            public int MaxTokens { get => 800; set { } }
-            public float DefaultTemperature { get => 0.7f; set { } }
-            public bool ForceJsonMode { get => true; set { } }
-            public string ModelName { get => ""; set { } }
-            public string Provider { get => AIProviderRegistry.GetDefaultProviderId(); set { } }
-            public string ApiKey { get => ""; set { } }
-            public string ApiEndpoint { get => ""; set { } }
-            public string Player2RemoteUrl { get => ""; set { } }
-            public bool DebugLogging { get => false; set { } }
-            public int CircuitBreakerFailureThreshold => kCircuitBreakerFailureThreshold;
-            public int CircuitBreakerOpenDurationSec => kCircuitBreakerOpenDurationSec;
-            public int ContextCalibrateInterval { get => 10000; set { } }
-            public int ContextDiffLifetimeTicks { get => 36000; set { } }
-            public bool IsConfigured => false;
-            public IContextSettings Context => new DefaultContextSettings();
-            public bool RequestOverlayEnabled { get => true; set { } }
-            public float RequestOverlayX { get => 20f; set { } }
-            public float RequestOverlayY { get => 20f; set { } }
-            public float RequestOverlayW { get => 300f; set { } }
-            public float RequestOverlayH { get => 200f; set { } }
-            public string CustomPawnPrompt { get => ""; set { } }
-            public string CustomMapPrompt { get => ""; set { } }
-            public Domain.Enums.FlywheelAutoApplyMode AutoApplyMode { get => Domain.Enums.FlywheelAutoApplyMode.Off; set { } }
-            public float AutoApplyConfidenceThreshold { get => 0.8f; set { } }
-            public bool IsOpenAIConfigured() => false;
-
-            bool IPawnIncludeSettings.IncludeRace { get => Context.IncludeRace; set => Context.IncludeRace = value; }
-            bool IPawnIncludeSettings.IncludeAge { get => Context.IncludeAge; set => Context.IncludeAge = value; }
-            bool IPawnIncludeSettings.IncludeGender { get => Context.IncludeGender; set => Context.IncludeGender = value; }
-            bool IPawnIncludeSettings.IncludeBackstory { get => Context.IncludeBackstory; set => Context.IncludeBackstory = value; }
-            bool IPawnIncludeSettings.IncludeIdeology { get => Context.IncludeIdeology; set => Context.IncludeIdeology = value; }
-            bool IPawnIncludeSettings.IncludeTraits { get => Context.IncludeTraits; set => Context.IncludeTraits = value; }
-            bool IPawnIncludeSettings.IncludeSkills { get => Context.IncludeSkills; set => Context.IncludeSkills = value; }
-            int IPawnIncludeSettings.MinSkillLevel { get => Context.MinSkillLevel; set => Context.MinSkillLevel = value; }
-            bool IPawnIncludeSettings.IncludeHealth { get => Context.IncludeHealth; set => Context.IncludeHealth = value; }
-            bool IPawnIncludeSettings.IncludeCapacities { get => Context.IncludeCapacities; set => Context.IncludeCapacities = value; }
-            bool IPawnIncludeSettings.IncludeMood { get => Context.IncludeMood; set => Context.IncludeMood = value; }
-            bool IPawnIncludeSettings.IncludeMoodThoughts { get => Context.IncludeMoodThoughts; set => Context.IncludeMoodThoughts = value; }
-            bool IPawnIncludeSettings.IncludeCurrentJob { get => Context.IncludeCurrentJob; set => Context.IncludeCurrentJob = value; }
-            bool IPawnIncludeSettings.IncludeWorkPriorities { get => Context.IncludeWorkPriorities; set => Context.IncludeWorkPriorities = value; }
-            bool IPawnIncludeSettings.IncludeEquipment { get => Context.IncludeEquipment; set => Context.IncludeEquipment = value; }
-            bool IPawnIncludeSettings.IncludeInventory { get => Context.IncludeInventory; set => Context.IncludeInventory = value; }
-            bool IPawnIncludeSettings.IncludeLocation { get => Context.IncludeLocation; set => Context.IncludeLocation = value; }
-            bool IPawnIncludeSettings.IncludeRelations { get => Context.IncludeRelations; set => Context.IncludeRelations = value; }
-            bool IPawnIncludeSettings.IncludeGenes { get => Context.IncludeGenes; set => Context.IncludeGenes = value; }
-            bool IPawnIncludeSettings.IncludeSurroundings { get => Context.IncludeSurroundings; set => Context.IncludeSurroundings = value; }
-            bool IPawnIncludeSettings.IncludeCombatStatus { get => Context.IncludeCombatStatus; set => Context.IncludeCombatStatus = value; }
-            bool IMapIncludeSettings.IncludeGameTime { get => Context.IncludeGameTime; set => Context.IncludeGameTime = value; }
-            bool IMapIncludeSettings.IncludeSeason { get => Context.IncludeSeason; set => Context.IncludeSeason = value; }
-            bool IMapIncludeSettings.IncludeWeather { get => Context.IncludeWeather; set => Context.IncludeWeather = value; }
-            bool IColonyIncludeSettings.IncludeColonistCount { get => Context.IncludeColonistCount; set => Context.IncludeColonistCount = value; }
-            bool IColonyIncludeSettings.IncludeColonistNames { get => Context.IncludeColonistNames; set => Context.IncludeColonistNames = value; }
-            bool IColonyIncludeSettings.IncludeWealth { get => Context.IncludeWealth; set => Context.IncludeWealth = value; }
-            bool IColonyIncludeSettings.IncludeFood { get => Context.IncludeFood; set => Context.IncludeFood = value; }
-            bool IColonyIncludeSettings.IncludeThreats { get => Context.IncludeThreats; set => Context.IncludeThreats = value; }
-
-            float IContextBudgetSettings.ContextBudget { get => Context.ContextBudget; set => Context.ContextBudget = value; }
-            int IContextBudgetSettings.ContextBriefLimit => Context.ContextBriefLimit;
-            int IContextBudgetSettings.MaxCacheEntries => Context.MaxCacheEntries;
-            float IContextBudgetSettings.BudgetW1 { get => Context.BudgetW1; set => Context.BudgetW1 = value; }
-            float IContextBudgetSettings.BudgetW2 { get => Context.BudgetW2; set => Context.BudgetW2 = value; }
-
-            int IContextEnvironmentSettings.EnvironmentScanRadius => Context.EnvironmentScanRadius;
-            int IContextEnvironmentSettings.EnvironmentMaxItems => Context.EnvironmentMaxItems;
-            float IContextEnvironmentSettings.ThreatThresholdHigh => Context.ThreatThresholdHigh;
-            float IContextEnvironmentSettings.ThreatThresholdMedium => Context.ThreatThresholdMedium;
-            float IContextEnvironmentSettings.ThreatThresholdLow => Context.ThreatThresholdLow;
-            float IContextEnvironmentSettings.MoodDiffThreshold => Context.MoodDiffThreshold;
-            float IContextEnvironmentSettings.TemperatureDiffThreshold => Context.TemperatureDiffThreshold;
-
-            void IContextSettings.ApplyPreset(Domain.Enums.ContextPreset preset) => Context.ApplyPreset(preset);
-            void IContextSettings.ResetToDefault() => Context.ResetToDefault();
-        }
-
-        private sealed class DefaultContextSettings : IContextSettings
-        {
-            public float ContextBudget { get => 0.6f; set { } }
-            public int ContextBriefLimit => 200;
-            public int EnvironmentScanRadius => 5;
-            public int EnvironmentMaxItems => 8;
-            public float ThreatThresholdHigh => 200000f;
-            public float ThreatThresholdMedium => 100000f;
-            public float ThreatThresholdLow => 50000f;
-            public int MaxCacheEntries => kMaxCacheEntries;
-            public float MoodDiffThreshold => kMoodDiffThreshold;
-            public float TemperatureDiffThreshold => kTemperatureDiffThreshold;
-            public bool IncludeRace { get => true; set { } }
-            public bool IncludeAge { get => true; set { } }
-            public bool IncludeGender { get => true; set { } }
-            public bool IncludeBackstory { get => true; set { } }
-            public bool IncludeIdeology { get => false; set { } }
-            public bool IncludeTraits { get => true; set { } }
-            public bool IncludeSkills { get => true; set { } }
-            public int MinSkillLevel { get => 4; set { } }
-            public bool IncludeHealth { get => true; set { } }
-            public bool IncludeCapacities { get => true; set { } }
-            public bool IncludeMood { get => true; set { } }
-            public bool IncludeMoodThoughts { get => false; set { } }
-            public bool IncludeCurrentJob { get => true; set { } }
-            public bool IncludeWorkPriorities { get => true; set { } }
-            public bool IncludeEquipment { get => true; set { } }
-            public bool IncludeInventory { get => false; set { } }
-            public bool IncludeLocation { get => false; set { } }
-            public bool IncludeRelations { get => true; set { } }
-            public bool IncludeGenes { get => true; set { } }
-            public bool IncludeSurroundings { get => false; set { } }
-            public bool IncludeCombatStatus { get => true; set { } }
-            public bool IncludeGameTime { get => true; set { } }
-            public bool IncludeColonistCount { get => true; set { } }
-            public bool IncludeColonistNames { get => true; set { } }
-            public bool IncludeWealth { get => false; set { } }
-            public bool IncludeFood { get => true; set { } }
-            public bool IncludeSeason { get => true; set { } }
-            public bool IncludeWeather { get => true; set { } }
-            public bool IncludeThreats { get => true; set { } }
-            public float BudgetW1 { get => 0.4f; set { } }
-            public float BudgetW2 { get => 0.6f; set { } }
-            public void ApplyPreset(Domain.Enums.ContextPreset preset) { }
-            public void ResetToDefault() { }
-        }
     }
 }

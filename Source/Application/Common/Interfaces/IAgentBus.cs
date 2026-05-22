@@ -29,5 +29,11 @@ namespace RimMind.Application.Common.Interfaces
 
         [ThreadAffinity(ThreadAffinityKind.Any)]
         int GetBackgroundQueueCount();
+
+        /// <summary>
+        /// Delegate that dispatches an event to registered handlers.
+        /// Used by BusPublishPipeline to re-dispatch after middleware processing.
+        /// </summary>
+        Action<AgentBusEvent>? DispatchAction { get; }
     }
 }

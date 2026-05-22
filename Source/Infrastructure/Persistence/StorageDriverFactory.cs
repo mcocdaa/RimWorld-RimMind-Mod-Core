@@ -6,9 +6,8 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Helpers;
+using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.ValueObjects;
-using RimMind.Infrastructure.Services.Clients.Player2;
-using Verse;
 
 namespace RimMind.Infrastructure.Persistence
 {
@@ -22,12 +21,7 @@ namespace RimMind.Infrastructure.Persistence
         private static IApiCredentialSettings? _apiCredentialSettings;
         private static IHistoryManager? _historyManager;
         private static IClientManager? _clientManager;
-        private static INpcManager? _npcManager;
-        private static ILogSink? _logSink;
-        private static ISettingsProvider? _settingsProvider;
-        private static IContextBuilder? _contextEngine;
-        private static IGameContextBuilder? _gameContextBuilder;
-        private static IResponseDispatcher? _responseDispatcher;
+        private static StorageDriverDependencies? _deps;
 
         /// <summary>
         /// Inject all required dependencies. Called from RimMindRuntime after services are registered.
@@ -46,12 +40,11 @@ namespace RimMind.Infrastructure.Persistence
             _apiCredentialSettings = apiCredentialSettings;
             _historyManager = historyManager;
             _clientManager = clientManager;
-            _npcManager = npcManager;
-            _logSink = logSink;
-            _settingsProvider = settingsProvider;
-            _contextEngine = contextEngine;
-            _gameContextBuilder = gameContextBuilder;
-            _responseDispatcher = responseDispatcher;
+            _deps = (npcManager != null && logSink != null && contextEngine != null
+                && settingsProvider != null && gameContextBuilder != null && responseDispatcher != null)
+                ? new StorageDriverDependencies(npcManager, logSink, contextEngine,
+                    settingsProvider, gameContextBuilder, responseDispatcher)
+                : null;
         }
 
         public static IStorageDriver GetDriver()
@@ -60,7 +53,7 @@ namespace RimMind.Infrastructure.Persistence
             {
                 var s = _apiCredentialSettings;
                 var historyManager = _historyManager;
-                if (s == null || historyManager == null) return new LocalStorageDriver(historyManager!, settingsProvider: _settingsProvider, clientManager: _clientManager, contextEngine: _contextEngine);
+                if (s == null || historyManager == null) return new LocalStorageDriver(historyManager!, settingsProvider: _deps?.SettingsProvider, clientManager: _clientManager, contextEngine: _deps?.ContextBuilder);
 
                 if (_cachedDriver != null && _cachedProvider == s.Provider)
                     return _cachedDriver;
@@ -69,19 +62,16 @@ namespace RimMind.Infrastructure.Persistence
 
                 if (!AIProviderRegistry.RequiresApiKey(s.Provider))
                 {
-                    var client = _clientManager?.GetPlayer2Client() as Player2Client;
-                    if (client != null && client.IsConfigured())
+                    var hybridDriver = _clientManager?.TryCreateHybridStorageDriver(historyManager, _deps!);
+                    if (hybridDriver != null)
                     {
-                        _cachedDriver = new HybridStorageDriver(client, historyManager,
-                            _npcManager!, logSink: _logSink, settingsProvider: _settingsProvider,
-                            clientManager: _clientManager, contextEngine: _contextEngine,
-                            gameContextBuilder: _gameContextBuilder, responseDispatcher: _responseDispatcher);
+                        _cachedDriver = hybridDriver;
                         return _cachedDriver;
                     }
                     RimMindErrors.Warn("[RimMind-Core] Player2 client not available, falling back to LocalStorageDriver");
                 }
 
-                _cachedDriver = new LocalStorageDriver(historyManager, settingsProvider: _settingsProvider, clientManager: _clientManager, contextEngine: _contextEngine);
+                _cachedDriver = new LocalStorageDriver(historyManager, settingsProvider: _deps?.SettingsProvider, clientManager: _clientManager, contextEngine: _deps?.ContextBuilder);
                 return _cachedDriver;
             }
         }

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 
 namespace RimMind.Application.Features.Pipeline.Npc
@@ -9,7 +10,7 @@ namespace RimMind.Application.Features.Pipeline.Npc
     internal sealed class NpcChatRetryMiddleware : IMiddleware<NpcChatContext>
     {
         public string Name => "NpcChatRetry";
-        public int Order => 800;
+        public int Order => RimMindDefaults.MiddlewareOrder.NpcChatRetry;
         public string Id => "NpcChatRetry";
         public string OwnerModId => "RimMindCore";
 

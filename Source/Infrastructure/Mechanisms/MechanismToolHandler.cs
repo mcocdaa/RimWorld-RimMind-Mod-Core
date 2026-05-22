@@ -30,7 +30,7 @@ namespace RimMind.Infrastructure.Mechanisms
             _trigger = trigger;
             _metadata = metadata;
             _operation = operation;
-            _jsonExtractor = jsonExtractor ?? new FallbackJsonExtractor();
+            _jsonExtractor = jsonExtractor ?? new MechanismToolHelper.FallbackJsonExtractor();
             Definition = BuildDefinition(metadata, operation);
         }
 
@@ -100,7 +100,7 @@ namespace RimMind.Infrastructure.Mechanisms
                 }
                 case MechanismOperationType.List:
                 {
-                    var pawnId = ExtractInt(args.ArgumentsJson, "pawn_id");
+                    var pawnId = MechanismToolHelper.ExtractInt(_jsonExtractor, args.ArgumentsJson, "pawn_id");
                     var r = await _reader.ExecuteListAsync(pawnId, ct).ConfigureAwait(false);
                     return r.IsOk
                         ? Result<object?, RimMindError>.Ok(r.Value)
@@ -116,9 +116,9 @@ namespace RimMind.Infrastructure.Mechanisms
             return new MechanismReadArgs
             {
                 MechanismId = _metadata.MechanismId,
-                PawnId = ExtractInt(args.ArgumentsJson, "pawn_id"),
-                MapId = ExtractNullableInt(args.ArgumentsJson, "map_id"),
-                DefName = ExtractString(args.ArgumentsJson, "filter_def_name") ?? ExtractString(args.ArgumentsJson, "def_name"),
+                PawnId = MechanismToolHelper.ExtractInt(_jsonExtractor, args.ArgumentsJson, "pawn_id"),
+                MapId = MechanismToolHelper.ExtractNullableInt(_jsonExtractor, args.ArgumentsJson, "map_id"),
+                DefName = MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "filter_def_name") ?? MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "def_name"),
                 TraceId = args.TraceId
             };
         }
@@ -128,11 +128,11 @@ namespace RimMind.Infrastructure.Mechanisms
             return new MechanismWriteArgs
             {
                 MechanismId = _metadata.MechanismId,
-                PawnId = ExtractInt(args.ArgumentsJson, "pawn_id"),
-                MapId = ExtractNullableInt(args.ArgumentsJson, "map_id"),
-                DefName = ExtractString(args.ArgumentsJson, "def_name"),
-                Action = ExtractString(args.ArgumentsJson, "action") ?? _operation.ToString().ToLowerInvariant(),
-                ValueJson = ExtractString(args.ArgumentsJson, "value") ?? ExtractString(args.ArgumentsJson, "params"),
+                PawnId = MechanismToolHelper.ExtractInt(_jsonExtractor, args.ArgumentsJson, "pawn_id"),
+                MapId = MechanismToolHelper.ExtractNullableInt(_jsonExtractor, args.ArgumentsJson, "map_id"),
+                DefName = MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "def_name"),
+                Action = MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "action") ?? _operation.ToString().ToLowerInvariant(),
+                ValueJson = MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "value") ?? MechanismToolHelper.ExtractString(_jsonExtractor, args.ArgumentsJson, "params"),
                 TraceId = args.TraceId,
                 Params = ExtractParamsDictionary(args.ArgumentsJson)
             };
@@ -301,37 +301,6 @@ namespace RimMind.Infrastructure.Mechanisms
                 MechanismOperationType.Watch => "watch",
                 _ => operation.ToString().ToLowerInvariant()
             };
-        }
-
-        private string? ExtractString(string? json, string propertyName) => _jsonExtractor.ExtractString(json ?? "{}", propertyName);
-
-        private int ExtractInt(string? json, string propertyName)
-        {
-            var str = _jsonExtractor.ExtractString(json ?? "{}", propertyName);
-            return int.TryParse(str, out var val) ? val : 0;
-        }
-
-        private int? ExtractNullableInt(string? json, string propertyName)
-        {
-            var str = _jsonExtractor.ExtractString(json ?? "{}", propertyName);
-            return int.TryParse(str, out var val) ? val : (int?)null;
-        }
-
-        private sealed class FallbackJsonExtractor : IJsonExtractor
-        {
-            public string? ExtractString(string json, string propertyName)
-            {
-                if (string.IsNullOrEmpty(json)) return null;
-                try
-                {
-                    var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
-                    return obj[propertyName]?.ToString();
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using RimWorld;
@@ -11,8 +12,8 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 {
     public partial class Player2Client
     {
-        private const int RawRequestTimeoutSec = 30;
-        private const int RawRequestPollingDelayMs = 50;
+        private const int RawRequestTimeoutSec = RimMindDefaults.Player2RawRequestTimeout;
+        private const int RawRequestPollingDelayMs = RimMindDefaults.Player2RawRequestPollingDelay;
 
         public async Task<RawResponse> SendRawAsync(string path, string jsonBody)
         {

@@ -35,8 +35,8 @@ namespace RimMind.Application.Features.Context
             lock (list) { list.Add(diff); }
         }
 
-        public void MergeExpiredDiffs(string npcId, IContextCacheManager cacheManager) { }
-        public void UpdateKeyValues(string npcId, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager, IBudgetScheduler scheduler) { }
+        public void MergeExpiredDiffs(string npcId, IContextCacheManager cacheManager) { /* Intentionally empty: reserved for future diff compaction */ }
+        public void UpdateKeyValues(string npcId, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager, IBudgetScheduler scheduler) { /* Intentionally empty: reserved for future incremental diff tracking */ }
         public void StoreNumericValues(string npcId, Dictionary<string, float> values)
         {
             _keyLastNumericValues[npcId] = new Dictionary<string, float>(values);

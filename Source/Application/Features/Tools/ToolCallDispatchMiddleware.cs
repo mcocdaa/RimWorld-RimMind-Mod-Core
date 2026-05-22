@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Pipeline.AI;
@@ -21,7 +22,7 @@ namespace RimMind.Application.Features.Tools
     internal sealed class ToolCallDispatchMiddleware : IMiddleware<AIRequestContext>
     {
         public string Name => "ToolCallDispatch";
-        public int Order => 600;
+        public int Order => RimMindDefaults.MiddlewareOrder.ToolCallDispatch;
         public string Id => "ToolCallDispatch";
         public string OwnerModId => "RimMindCore";
 

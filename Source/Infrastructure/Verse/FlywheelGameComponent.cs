@@ -1,6 +1,7 @@
 using System;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Flywheel;
 using RimMind.Domain.ValueObjects;
 
@@ -30,7 +31,7 @@ namespace RimMind.Infrastructure.Verse
             get
             {
                 EnsureCached();
-                return _calibrationSettings?.ContextCalibrateInterval ?? 10000;
+                return _calibrationSettings?.ContextCalibrateInterval ?? RimMindDefaults.FlywheelCalibrateInterval;
             }
         }
 
@@ -79,7 +80,7 @@ namespace RimMind.Infrastructure.Verse
         private void RunPeriodicAnalysis()
         {
             EnsureCached();
-            var records = _telemetryCollector?.GetRecentRecords(100);
+            var records = _telemetryCollector?.GetRecentRecords(RimMindDefaults.TelemetryRecordLimit);
             if (records == null || records.Count == 0) return;
             _ruleEngine?.Analyze(records);
         }

@@ -13,6 +13,7 @@ namespace RimMind.Application.Common.Interfaces.Agent
         void ForceThink();
         void SwitchMode(AgentModeId modeId);
         void Cleanup();
+        void Destroy();
         void ResubscribeEvents();
     }
 }

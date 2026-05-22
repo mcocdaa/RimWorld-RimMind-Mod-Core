@@ -6,6 +6,7 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Prompt;
@@ -20,52 +21,45 @@ namespace RimMind.Presentation.Context
 {
     public class ContextOrchestrator : IContextEngine
     {
-        private const float DefaultContextBudget = 0.6f;
-        private const int DefaultTotalBudget = 4000;
-        private const int DefaultReserveForOutput = 800;
-        private const int DefaultBriefLimit = 200;
+        private const float DefaultContextBudget = RimMindDefaults.DefaultContextBudget;
+        private const int DefaultTotalBudget = RimMindDefaults.DefaultTotalBudget;
+        private const int DefaultReserveForOutput = RimMindDefaults.DefaultReserveForOutput;
+        private const int DefaultBriefLimit = RimMindDefaults.DefaultBriefLimit;
         private const int CjkCharacterThreshold = 0x2E80;
-        private const float TokenEstimateOther = 4.0f;
-        private const float TokenEstimateCjk = 1.5f;
-        private const float TokenEstimateOverhead = 0.5f;
+        private const float TokenEstimateOther = RimMindDefaults.TokenEstimateMultiplier;
+        private const float TokenEstimateCjk = RimMindDefaults.TokenEstimateDivider;
+        private const float TokenEstimateOverhead = RimMindDefaults.TokenEstimateMinRatio;
 
         private bool _needsFullRebuild = true;
         private bool _disposed;
 
         private readonly IHistoryManager _historyManager;
         private readonly INpcManager? _npcManager;
-        private readonly IContextCacheManager _cacheManager;
-        private readonly IContextDiffTracker _diffTracker;
-        private readonly IContextLayerBuilder _layerBuilder;
-        private readonly IBudgetScheduler _scheduler;
+        private readonly ContextBuildServices _buildServices;
         private readonly ISettingsProvider _settingsProvider;
         private readonly ITranslationService _translationService;
         private readonly IFlywheelParameterStore _flywheelParameterStore;
         private readonly ILogSink _logSink;
-        private readonly EmbeddingSnapshotStore _embeddingSnapshotStore = new EmbeddingSnapshotStore();
+        private readonly EmbeddingSnapshotStore _embeddingSnapshotStore;
 
         public ContextOrchestrator(
             IHistoryManager historyManager,
             INpcManager? npcManager,
-            IContextCacheManager cacheManager,
-            IContextDiffTracker diffTracker,
-            IContextLayerBuilder layerBuilder,
-            IBudgetScheduler scheduler,
+            ContextBuildServices buildServices,
             ISettingsProvider settingsProvider,
             ITranslationService translationService,
             IFlywheelParameterStore flywheelParameterStore,
-            ILogSink logSink)
+            ILogSink logSink,
+            EmbeddingSnapshotStore embeddingSnapshotStore)
         {
             _historyManager = historyManager;
             _npcManager = npcManager;
-            _cacheManager = cacheManager;
-            _diffTracker = diffTracker;
-            _layerBuilder = layerBuilder;
-            _scheduler = scheduler;
+            _buildServices = buildServices;
             _settingsProvider = settingsProvider;
             _translationService = translationService;
             _flywheelParameterStore = flywheelParameterStore;
             _logSink = logSink;
+            _embeddingSnapshotStore = embeddingSnapshotStore;
         }
 
         public ContextSnapshot? BuildSnapshot(ContextRequest request)
@@ -73,13 +67,13 @@ namespace RimMind.Presentation.Context
             if (_disposed) return null;
             string scenario = request.Scenario ?? ScenarioIds.Dialogue;
             string l0CacheKey = $"{request.NpcId}_{scenario}";
-            _cacheManager.TouchCache(l0CacheKey);
+            _buildServices.CacheManager.TouchCache(l0CacheKey);
             ContextKeyRegistry.CurrentScenario = scenario;
 
             if (_needsFullRebuild)
             {
-                _diffTracker.RemoveNpcKeyLastValues(request.NpcId);
-                _diffTracker.ClearNpcDiffs(request.NpcId);
+                _buildServices.DiffTracker.RemoveNpcKeyLastValues(request.NpcId);
+                _buildServices.DiffTracker.ClearNpcDiffs(request.NpcId);
                 _needsFullRebuild = false;
             }
 
@@ -130,7 +124,7 @@ namespace RimMind.Presentation.Context
         private void BuildL0Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
         {
             long l0Start = DateTime.Now.Ticks;
-            var l0Msg = _layerBuilder.BuildL0(request.NpcId, request.Scenario ?? ScenarioIds.Dialogue, schedule.L0Keys, pawn, _cacheManager);
+            var l0Msg = _buildServices.LayerBuilder.BuildL0(request.NpcId, request.Scenario ?? ScenarioIds.Dialogue, schedule.L0Keys, pawn, _buildServices.CacheManager);
             if (l0Msg != null)
             {
                 l0Msg.LayerTag = "L0";
@@ -143,7 +137,7 @@ namespace RimMind.Presentation.Context
         private void BuildL1Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
         {
             long l1Start = DateTime.Now.Ticks;
-            var l1Msg = _layerBuilder.BuildL1(request.NpcId, schedule.L1Keys, pawn, _cacheManager, _diffTracker);
+            var l1Msg = _buildServices.LayerBuilder.BuildL1(request.NpcId, schedule.L1Keys, pawn, _buildServices.CacheManager, _buildServices.DiffTracker);
             if (l1Msg != null)
             {
                 l1Msg.LayerTag = "L1";
@@ -159,7 +153,7 @@ namespace RimMind.Presentation.Context
                 if (mapEntries != null) snapshot.AddEntries(mapEntries);
             }
 
-            var l1DiffMsg = _layerBuilder.BuildDiffMessage(request.NpcId, ContextLayer.L1_Baseline, snapshot, _diffTracker);
+            var l1DiffMsg = _buildServices.LayerBuilder.BuildDiffMessage(request.NpcId, ContextLayer.L1_Baseline, snapshot, _buildServices.DiffTracker);
             if (l1DiffMsg != null)
             {
                 l1DiffMsg.LayerTag = "L1";
@@ -170,10 +164,10 @@ namespace RimMind.Presentation.Context
         private void BuildL2Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
         {
             long l2Start = DateTime.Now.Ticks;
-            var l2Msg = _layerBuilder.BuildContextLayer(schedule.L2Keys, pawn);
+            var l2Msg = _buildServices.LayerBuilder.BuildContextLayer(schedule.L2Keys, pawn);
             if (l2Msg != null)
             {
-                var l2DiffMsg = _layerBuilder.BuildDiffMessage(request.NpcId, ContextLayer.L2_Environment, snapshot, _diffTracker);
+                var l2DiffMsg = _buildServices.LayerBuilder.BuildDiffMessage(request.NpcId, ContextLayer.L2_Environment, snapshot, _buildServices.DiffTracker);
                 if (l2DiffMsg != null)
                 {
                     l2DiffMsg.LayerTag = "L2";
@@ -189,10 +183,10 @@ namespace RimMind.Presentation.Context
         private void BuildL3Layer(ContextRequest request, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
         {
             long l3Start = DateTime.Now.Ticks;
-            var l3Msg = _layerBuilder.BuildContextLayer(schedule.L3Keys, pawn);
+            var l3Msg = _buildServices.LayerBuilder.BuildContextLayer(schedule.L3Keys, pawn);
             if (l3Msg != null)
             {
-                var l3DiffMsg = _layerBuilder.BuildDiffMessage(request.NpcId, ContextLayer.L3_State, snapshot, _diffTracker);
+                var l3DiffMsg = _buildServices.LayerBuilder.BuildDiffMessage(request.NpcId, ContextLayer.L3_State, snapshot, _buildServices.DiffTracker);
                 if (l3DiffMsg != null)
                 {
                     l3DiffMsg.LayerTag = "L3";
@@ -208,7 +202,7 @@ namespace RimMind.Presentation.Context
         private void BuildL5Layer(BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
         {
             long l5Start = DateTime.Now.Ticks;
-            var l5Msg = _layerBuilder.BuildL5(schedule.L5Keys, pawn);
+            var l5Msg = _buildServices.LayerBuilder.BuildL5(schedule.L5Keys, pawn);
             if (l5Msg != null)
             {
                 l5Msg.LayerTag = "L5";
@@ -271,7 +265,7 @@ namespace RimMind.Presentation.Context
                     : (_settingsProvider?.Context?.ContextBudget > 0
                         ? _settingsProvider.Context.ContextBudget
                         : DefaultContextBudget));
-            var schedule = _scheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
+            var schedule = _buildServices.BudgetScheduler.Schedule(filteredKeys, request.Scenario ?? ScenarioIds.Dialogue, budget, request.CurrentQuery);
 
             return (schedule, filteredKeys, budget);
         }
@@ -293,7 +287,7 @@ namespace RimMind.Presentation.Context
                     snapshot.KeyScores[key.Key] = key.CurrentScore;
             }
 
-            if (_diffTracker.TryGetDiffStore(snapshot.NpcId, out var diffs))
+            if (_buildServices.DiffTracker.TryGetDiffStore(snapshot.NpcId, out var diffs))
                 snapshot.DiffCount = diffs.Count;
         }
 
@@ -379,18 +373,18 @@ namespace RimMind.Presentation.Context
             return (int)(other / TokenEstimateOther + cjk / TokenEstimateCjk + TokenEstimateOverhead);
         }
 
-        public int GetL0CacheCount() => _cacheManager.GetL0CacheCount();
-        public int GetL1BlockCacheCount() => _cacheManager.GetL1BlockCacheCount();
-        public int GetDiffStoreCount() => _diffTracker.GetDiffStoreCount();
-        public int GetEmbedCacheCount() => _cacheManager.GetEmbedCacheCount();
-        public void ResetCaches() { _cacheManager.Reset(); _diffTracker.Reset(); _needsFullRebuild = true; }
-        public void TouchCache(string cacheKey) => _cacheManager.TouchCache(cacheKey);
-        public void RemoveL0CacheForNpc(string npcId) => _cacheManager.RemoveL0CacheForNpc(npcId);
-        public void InvalidateLayer(string npcId, ContextLayer layer) => _cacheManager.InvalidateLayer(npcId, layer);
-        public void InvalidateKey(string npcId, string key) => _cacheManager.InvalidateKey(npcId, key);
-        public void UpdateBaseline(string npcId) { _cacheManager.UpdateBaseline(npcId); if (_diffTracker.TryGetDiffStore(npcId, out var diffs)) diffs.Clear(); }
-        public void InvalidateNpc(string npcId) { _cacheManager.InvalidateNpc(npcId); _diffTracker.ClearNpcDiffs(npcId); _diffTracker.RemoveNpcKeyLastValues(npcId); _historyManager.ClearHistory(npcId); _needsFullRebuild = true; }
-        public IBudgetScheduler? GetScheduler() => _scheduler;
+        public int GetL0CacheCount() => _buildServices.CacheManager.GetL0CacheCount();
+        public int GetL1BlockCacheCount() => _buildServices.CacheManager.GetL1BlockCacheCount();
+        public int GetDiffStoreCount() => _buildServices.DiffTracker.GetDiffStoreCount();
+        public int GetEmbedCacheCount() => _buildServices.CacheManager.GetEmbedCacheCount();
+        public void ResetCaches() { _buildServices.CacheManager.Reset(); _buildServices.DiffTracker.Reset(); _needsFullRebuild = true; }
+        public void TouchCache(string cacheKey) => _buildServices.CacheManager.TouchCache(cacheKey);
+        public void RemoveL0CacheForNpc(string npcId) => _buildServices.CacheManager.RemoveL0CacheForNpc(npcId);
+        public void InvalidateLayer(string npcId, ContextLayer layer) => _buildServices.CacheManager.InvalidateLayer(npcId, layer);
+        public void InvalidateKey(string npcId, string key) => _buildServices.CacheManager.InvalidateKey(npcId, key);
+        public void UpdateBaseline(string npcId) { _buildServices.CacheManager.UpdateBaseline(npcId); if (_buildServices.DiffTracker.TryGetDiffStore(npcId, out var diffs)) diffs.Clear(); }
+        public void InvalidateNpc(string npcId) { _buildServices.CacheManager.InvalidateNpc(npcId); _buildServices.DiffTracker.ClearNpcDiffs(npcId); _buildServices.DiffTracker.RemoveNpcKeyLastValues(npcId); _historyManager.ClearHistory(npcId); _needsFullRebuild = true; }
+        public IBudgetScheduler? GetScheduler() => _buildServices.BudgetScheduler;
         public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => _embeddingSnapshotStore;
         public void Dispose() { _disposed = true; }
     }

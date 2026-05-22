@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Events;
 using RimMind.Domain.Enums;
@@ -101,7 +102,7 @@ namespace RimMind.Infrastructure.Patches
                     Reason = "JobDriver completed",
                     Success = true,
                     ResultReason = "Completed via JobDriver",
-                    GoalProgressDelta = 0.1f,
+                    GoalProgressDelta = RimMindDefaults.GoalProgressDelta,
                     Timestamp = Find.TickManager.TicksGame,
                     ActionEventId = EventId,
                 });

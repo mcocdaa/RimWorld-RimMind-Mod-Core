@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using RimMind.Application.Common.Interfaces.Context;
@@ -23,10 +24,10 @@ namespace RimMind.Presentation.Agent
         private readonly MapContextBuilder _mapBuilder;
         private readonly INpcManager? _npcManager;
 
-        public GameContextBuilder(IContextSettings? contextSettings = null, INpcManager? npcManager = null)
+        public GameContextBuilder(PawnContextBuilder pawnBuilder, MapContextBuilder mapBuilder, INpcManager? npcManager = null)
         {
-            _pawnBuilder = new PawnContextBuilder(contextSettings);
-            _mapBuilder = new MapContextBuilder(contextSettings);
+            _pawnBuilder = pawnBuilder ?? throw new ArgumentNullException(nameof(pawnBuilder));
+            _mapBuilder = mapBuilder ?? throw new ArgumentNullException(nameof(mapBuilder));
             _npcManager = npcManager;
         }
 
@@ -54,35 +55,9 @@ namespace RimMind.Presentation.Agent
             return sb.ToString().TrimEnd();
         }
 
-        // --- Static facade methods (backward compatibility) ---
+        // --- Instance methods (replacing removed static facade) ---
 
-        private static GameContextBuilder? _default;
-
-        internal static void SetDefault(GameContextBuilder builder) => _default = builder;
-
-        private static GameContextBuilder Default
-        {
-            get
-            {
-                if (_default == null)
-                    _default = RimMindServiceLocator.Get<IGameContextBuilder>() as GameContextBuilder;
-                return _default!;
-            }
-        }
-
-        public static string BuildMapContext(Map map, bool brief = false) => Default._mapBuilder.BuildMapContext(map, brief);
-
-        public static List<ContextEntry> BuildMapContextEntries(Map map, bool brief = false) => Default._mapBuilder.BuildMapContextEntries(map, brief);
-
-        public static string BuildPawnContext(Pawn pawn) => Default._pawnBuilder.BuildPawnContext(pawn);
-
-        public static string BuildCompactPawnContext(Pawn pawn) => Default._pawnBuilder.BuildCompactPawnContext(pawn);
-
-        public static PromptSection BuildMapContextSection(Map map, bool brief = false) => Default._mapBuilder.BuildMapContextSection(map, brief);
-
-        public static PromptSection BuildPawnContextSection(Pawn pawn) => Default._pawnBuilder.BuildPawnContextSection(pawn);
-
-        public static PromptSection BuildCompactPawnContextSection(Pawn pawn) => Default._pawnBuilder.BuildCompactPawnContextSection(pawn);
+        public string BuildMapContextInstance(Map map, bool brief = false) => _mapBuilder.BuildMapContext(map, brief);
 
         // --- IContextKeyProvider ---
 
@@ -109,8 +84,6 @@ namespace RimMind.Presentation.Agent
         public string ExtractTargetInfo(object pawn) => pawn is Pawn p ? _pawnBuilder.ExtractTargetInfo(p) : "";
         public string ExtractTaskProgress(object pawn) => "";
 
-        // --- Cache reset ---
-
-        internal static void ResetCache() { _default = null; }
+        // --- Cache reset (no-op after static facade removal) ---
     }
 }

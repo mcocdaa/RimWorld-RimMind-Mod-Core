@@ -9,7 +9,7 @@ namespace RimMind.Application.Features.Pipeline.Npc
     internal sealed class SnapshotBuildMiddleware : IMiddleware<NpcChatContext>
     {
         public string Name => "NpcSnapshotBuild";
-        public int Order => 200;
+        public int Order => 5;
         public string Id => "NpcSnapshotBuild";
         public string OwnerModId => "RimMindCore";
 
@@ -22,13 +22,18 @@ namespace RimMind.Application.Features.Pipeline.Npc
             _log = log;
         }
 
-        public Task InvokeAsync(NpcChatContext context, MiddlewareDelegate<NpcChatContext> next)
+        public async Task InvokeAsync(NpcChatContext context, MiddlewareDelegate<NpcChatContext> next)
         {
-            if (_contextEngine != null)
+            if (context.Snapshot == null && _contextEngine != null)
             {
                 _log?.Message($"[SnapshotBuild] Building context snapshot for NPC {context.NpcId}");
+                context.Snapshot = _contextEngine.BuildSnapshot(context.Request);
+                if (context.Snapshot != null)
+                {
+                    _log?.Message($"[SnapshotBuild] Snapshot built for NPC {context.NpcId}, estimated {context.Snapshot.EstimatedTokens} tokens");
+                }
             }
-            return next(context);
+            await next(context);
         }
     }
 }

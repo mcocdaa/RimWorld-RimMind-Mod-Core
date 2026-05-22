@@ -36,6 +36,8 @@ namespace RimMind.Application.Features.AgentBus
             _pipeline = pipeline;
         }
 
+        public Action<AgentBusEvent>? DispatchAction => DispatchToHandlers;
+
         internal void DispatchToHandlers(AgentBusEvent evt)
         {
             if (evt == null) return;

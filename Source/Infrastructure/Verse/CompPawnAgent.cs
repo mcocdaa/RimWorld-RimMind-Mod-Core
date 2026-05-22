@@ -77,7 +77,7 @@ namespace RimMind.Infrastructure.Verse
 
             if (Agent != null && !Agent.IsPawnValid)
             {
-                Agent.Cleanup();
+                Agent.Destroy();
                 if (factory != null)
                     Agent = factory.Create(Pawn, GetAgentBus()!);
             }

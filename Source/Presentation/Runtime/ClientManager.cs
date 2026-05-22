@@ -1,10 +1,14 @@
 using System;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Helpers;
+using RimMind.Infrastructure.Services.Clients.Player2;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -69,6 +73,14 @@ namespace RimMind.Presentation.Runtime
         {
             DisposeClient(ref _client);
             DisposeClient(ref _player2Client);
+        }
+
+        public IStorageDriver? TryCreateHybridStorageDriver(IHistoryManager historyManager, StorageDriverDependencies deps)
+        {
+            var client = GetPlayer2Client() as Player2Client;
+            if (client != null && client.IsConfigured())
+                return new HybridStorageDriver(client, historyManager, deps, clientManager: this);
+            return null;
         }
 
         private IAIClient? CreateClient(ISettingsProvider s)

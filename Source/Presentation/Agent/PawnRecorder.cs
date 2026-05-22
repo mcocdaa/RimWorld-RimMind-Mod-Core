@@ -2,21 +2,23 @@ using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.Events;
-using RimMind.Presentation.Runtime;
 using Verse;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnRecorder
+    public class PawnRecorder : IPawnRecorder
     {
         private readonly IPawnAgent _agent;
+        private readonly IAgentBus _agentBus;
         private readonly List<BehaviorRecord> _history = new List<BehaviorRecord>();
-        private const int MaxHistory = 100;
+        private const int MaxHistory = RimMindDefaults.BehaviorHistoryMax;
 
-        public PawnRecorder(IPawnAgent agent)
+        public PawnRecorder(IPawnAgent agent, IAgentBus agentBus)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+            _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
         }
 
         public IReadOnlyList<BehaviorRecord> History => _history;
@@ -27,7 +29,7 @@ namespace RimMind.Presentation.Agent
             _history.Add(record);
             while (_history.Count > MaxHistory)
                 _history.RemoveAt(0);
-            RimMindRuntime.Instance.AgentBus.Publish(new ActionEvent(
+            _agentBus.Publish(new ActionEvent(
                 _agent.Identity.NpcId, _agent.Pawn?.thingIDNumber ?? 0,
                 record.Action, record.Success, record.Reason, Guid.NewGuid().ToString()));
         }

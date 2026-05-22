@@ -5,6 +5,7 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Features.Pipeline.AI;
 
 namespace RimMind.Presentation.Pipeline.AI
@@ -27,7 +28,7 @@ namespace RimMind.Presentation.Pipeline.AI
             ? _settings.CircuitBreakerFailureThreshold : 5;
         private TimeSpan OpenDuration => TimeSpan.FromSeconds(
             _settings.CircuitBreakerOpenDurationSec > 0
-            ? _settings.CircuitBreakerOpenDurationSec : 60);
+            ? _settings.CircuitBreakerOpenDurationSec : RimMindDefaults.CircuitBreakerOpenDurationSec);
 
         private enum CircuitState { Closed, Open, HalfOpen }
 

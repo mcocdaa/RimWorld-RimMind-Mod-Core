@@ -4,6 +4,7 @@ namespace RimMind.Domain.ValueObjects
 {
     public class ContextDiff
     {
+        // Architecture limit: Domain layer cannot reference Application layer's RimMindDefaults. Value mirrors RimMindDefaults.ContextDiffLifetimeTicks.
         public const int DefaultLifetimeTicks = 36000;
 
         public string Key = "";

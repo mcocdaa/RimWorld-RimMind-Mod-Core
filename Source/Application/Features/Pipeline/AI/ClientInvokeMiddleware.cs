@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.ValueObjects;
@@ -12,7 +13,7 @@ namespace RimMind.Application.Features.Pipeline.AI
     internal sealed class ClientInvokeMiddleware : IMiddleware<AIRequestContext>
     {
         public string Name => "AIClientInvoke";
-        public int Order => 500;
+        public int Order => RimMindDefaults.MiddlewareOrder.ClientInvoke;
         public string Id => "AIClientInvoke";
         public string OwnerModId => "RimMindCore";
 

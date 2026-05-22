@@ -22,9 +22,9 @@ namespace RimMind.Core.ArchTests.PhaseA
 
             var source = File.ReadAllText(pawnAgentFile!);
 
-            var constructorPattern = @"public\s+PawnAgent\s*\(\s*Pawn\s+pawn\s*,\s*IAgentTickSettings\s+tickSettings\s*,\s*IAgentBus\s+agentBus\s*\)";
+            var constructorPattern = @"public\s+PawnAgent\s*\(\s*Pawn\s+pawn\s*,\s*IAgentTickSettings\s+tickSettings\s*,\s*IAgentBus\s+agentBus";
             Regex.IsMatch(source, constructorPattern).Should().BeTrue(
-                "R-A2: PawnAgent constructor must accept (Pawn, IAgentTickSettings, IAgentBus). " +
+                "R-A2: PawnAgent constructor must accept (Pawn, IAgentTickSettings, IAgentBus, ...). " +
                 "Dependencies are injected via IPawnAgentFactory, not ServiceLocator.");
 
             var serviceLocatorPattern = @"RimMindServiceLocator\.Get";

@@ -1,3 +1,4 @@
+using System;
 using RimMind.Application.Common.Interfaces.Extension;
 
 namespace RimMind.Application.Features.Flywheel
@@ -19,6 +20,7 @@ namespace RimMind.Application.Features.Flywheel
             return true;
         }
 
+        [Obsolete("Placeholder - not yet implemented")]
         public void Tune(object config)
         {
         }

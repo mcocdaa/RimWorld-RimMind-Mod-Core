@@ -8,6 +8,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Helpers;
 using RimMind.Domain.Common;
@@ -22,7 +23,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private const float RemoteConnectTimeout = 60f;
 
         public const string GameClientId = "019a8368-b00b-72bc-b367-2825079dc6fb";
-        private const string LocalUrl = "http://localhost:4315";
+        private static string LocalUrl => $"http://localhost:{RimMindDefaults.Player2LocalPort}";
 
         private readonly string _apiKey;
         private readonly bool _isLocalConnection;

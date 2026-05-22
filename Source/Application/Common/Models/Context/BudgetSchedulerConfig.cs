@@ -9,6 +9,6 @@ namespace RimMind.Application.Common.Models.Context
         public float PromoteThreshold = 0.8f;
         public float DemoteThreshold = 0.2f;
         public float ContextBudget = 1.0f;
-        public int MaxCacheEntries = 200;
+        public int MaxCacheEntries = RimMindDefaults.MaxCacheEntries;
     }
 }

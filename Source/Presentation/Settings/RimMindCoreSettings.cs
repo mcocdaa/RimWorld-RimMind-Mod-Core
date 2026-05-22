@@ -3,6 +3,7 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Helpers;
+using RimMind.Application.Common.Models;
 using Verse;
 
 namespace RimMind.Presentation.Settings
@@ -20,9 +21,9 @@ namespace RimMind.Presentation.Settings
 
         public bool forceJsonMode = true;
 
-        public int maxTokens = 800;
+        public int maxTokens = RimMindDefaults.MaxTokens;
 
-        public float defaultTemperature = 0.7f;
+        public float defaultTemperature = RimMindDefaults.DefaultTemperature;
 
         public bool debugLogging = false;
 
@@ -31,9 +32,9 @@ namespace RimMind.Presentation.Settings
         public string customPawnPrompt = string.Empty;
         public string customMapPrompt = string.Empty;
 
-        public int contextDiffLifetimeTicks = 36000;
+        public int contextDiffLifetimeTicks = RimMindDefaults.ContextDiffLifetimeTicks;
 
-        public int contextCalibrateInterval = 10000;
+        public int contextCalibrateInterval = RimMindDefaults.FlywheelCalibrateInterval;
 
         public bool requestOverlayEnabled = true;
         public float requestOverlayX = 20f;
@@ -43,24 +44,24 @@ namespace RimMind.Presentation.Settings
 
         public int maxConcurrentRequests = 3;
         public int maxRetryCount = 2;
-        public int requestTimeoutMs = 120000;
+        public int requestTimeoutMs = RimMindDefaults.DefaultRequestTimeoutMs;
 
         public string telemetryDataPath = string.Empty;
         public string embeddingSnapshotPath = string.Empty;
         public string analysisReportPath = string.Empty;
         public FlywheelAutoApplyMode autoApplyMode = FlywheelAutoApplyMode.Off;
-        public float autoApplyConfidenceThreshold = 0.8f;
+        public float autoApplyConfidenceThreshold = RimMindDefaults.AutoApplyConfidenceThreshold;
 
-        public int thinkCooldownTicks = 30000;
-        public int agentTickInterval = 150;
+        public int thinkCooldownTicks = RimMindDefaults.ThinkCooldownTicks;
+        public int agentTickInterval = RimMindDefaults.AgentTickInterval;
         public int maxToolCallDepth = 3;
-        public int requestExpireTicks = 30000;
-        public int behaviorHistoryMax = 100;
-        public int queueProcessInterval = 60;
-        public int defaultModCooldownTicks = 3600;
+        public int requestExpireTicks = RimMindDefaults.RequestExpireTicks;
+        public int behaviorHistoryMax = RimMindDefaults.BehaviorHistoryMax;
+        public int queueProcessInterval = RimMindDefaults.QueueProcessInterval;
+        public int defaultModCooldownTicks = RimMindDefaults.DefaultModCooldownTicks;
 
-        public int circuitBreakerFailureThreshold = 5;
-        public int circuitBreakerOpenDurationSec = 60;
+        public int circuitBreakerFailureThreshold = RimMindDefaults.CircuitBreakerFailureThreshold;
+        public int circuitBreakerOpenDurationSec = RimMindDefaults.CircuitBreakerOpenDurationSec;
 
         string IOpenAISettings.ApiEndpoint => apiEndpoint;
         string IOpenAISettings.ModelName => modelName;
@@ -92,15 +93,15 @@ namespace RimMind.Presentation.Settings
             Scribe_Values.Look(ref modelName, "modelName", "deepseek-chat");
             Scribe_Values.Look(ref player2RemoteUrl, "player2RemoteUrl", "https://api.player2.game");
             Scribe_Values.Look(ref forceJsonMode, "forceJsonMode", true);
-            Scribe_Values.Look(ref maxTokens, "maxTokens", 800);
-            Scribe_Values.Look(ref defaultTemperature, "defaultTemperature", 0.7f);
+            Scribe_Values.Look(ref maxTokens, "maxTokens", RimMindDefaults.MaxTokens);
+            Scribe_Values.Look(ref defaultTemperature, "defaultTemperature", RimMindDefaults.DefaultTemperature);
             Scribe_Values.Look(ref debugLogging, "debugLogging", false);
             Scribe_Deep.Look(ref Context, "Context");
             Context ??= new ContextSettings();
             Scribe_Values.Look(ref customPawnPrompt, "customPawnPrompt", string.Empty);
             Scribe_Values.Look(ref customMapPrompt, "customMapPrompt", string.Empty);
-            Scribe_Values.Look(ref contextDiffLifetimeTicks, "contextDiffLifetimeTicks", 36000);
-            Scribe_Values.Look(ref contextCalibrateInterval, "contextCalibrateInterval", 10000);
+            Scribe_Values.Look(ref contextDiffLifetimeTicks, "contextDiffLifetimeTicks", RimMindDefaults.ContextDiffLifetimeTicks);
+            Scribe_Values.Look(ref contextCalibrateInterval, "contextCalibrateInterval", RimMindDefaults.FlywheelCalibrateInterval);
             Scribe_Values.Look(ref requestOverlayEnabled, "requestOverlayEnabled", true);
             Scribe_Values.Look(ref requestOverlayX, "requestOverlayX", 20f);
             Scribe_Values.Look(ref requestOverlayY, "requestOverlayY", 20f);
@@ -108,34 +109,34 @@ namespace RimMind.Presentation.Settings
             Scribe_Values.Look(ref requestOverlayH, "requestOverlayH", 200f);
             Scribe_Values.Look(ref maxConcurrentRequests, "maxConcurrentRequests", 3);
             Scribe_Values.Look(ref maxRetryCount, "maxRetryCount", 2);
-            Scribe_Values.Look(ref requestTimeoutMs, "requestTimeoutMs", 120000);
+            Scribe_Values.Look(ref requestTimeoutMs, "requestTimeoutMs", RimMindDefaults.DefaultRequestTimeoutMs);
             Scribe_Values.Look(ref telemetryDataPath, "telemetryDataPath", string.Empty);
             Scribe_Values.Look(ref embeddingSnapshotPath, "embeddingSnapshotPath", string.Empty);
             Scribe_Values.Look(ref analysisReportPath, "analysisReportPath", string.Empty);
             Scribe_Values.Look(ref autoApplyMode, "autoApplyMode", FlywheelAutoApplyMode.Off);
-            Scribe_Values.Look(ref autoApplyConfidenceThreshold, "autoApplyConfidenceThreshold", 0.8f);
-            Scribe_Values.Look(ref thinkCooldownTicks, "thinkCooldownTicks", 30000);
-            Scribe_Values.Look(ref agentTickInterval, "agentTickInterval", 150);
+            Scribe_Values.Look(ref autoApplyConfidenceThreshold, "autoApplyConfidenceThreshold", RimMindDefaults.AutoApplyConfidenceThreshold);
+            Scribe_Values.Look(ref thinkCooldownTicks, "thinkCooldownTicks", RimMindDefaults.ThinkCooldownTicks);
+            Scribe_Values.Look(ref agentTickInterval, "agentTickInterval", RimMindDefaults.AgentTickInterval);
             Scribe_Values.Look(ref maxToolCallDepth, "maxToolCallDepth", 3);
-            Scribe_Values.Look(ref requestExpireTicks, "requestExpireTicks", 30000);
-            Scribe_Values.Look(ref behaviorHistoryMax, "behaviorHistoryMax", 100);
-            Scribe_Values.Look(ref queueProcessInterval, "queueProcessInterval", 60);
-            Scribe_Values.Look(ref defaultModCooldownTicks, "defaultModCooldownTicks", 3600);
-            Scribe_Values.Look(ref circuitBreakerFailureThreshold, "circuitBreakerFailureThreshold", 5);
-            Scribe_Values.Look(ref circuitBreakerOpenDurationSec, "circuitBreakerOpenDurationSec", 60);
+            Scribe_Values.Look(ref requestExpireTicks, "requestExpireTicks", RimMindDefaults.RequestExpireTicks);
+            Scribe_Values.Look(ref behaviorHistoryMax, "behaviorHistoryMax", RimMindDefaults.BehaviorHistoryMax);
+            Scribe_Values.Look(ref queueProcessInterval, "queueProcessInterval", RimMindDefaults.QueueProcessInterval);
+            Scribe_Values.Look(ref defaultModCooldownTicks, "defaultModCooldownTicks", RimMindDefaults.DefaultModCooldownTicks);
+            Scribe_Values.Look(ref circuitBreakerFailureThreshold, "circuitBreakerFailureThreshold", RimMindDefaults.CircuitBreakerFailureThreshold);
+            Scribe_Values.Look(ref circuitBreakerOpenDurationSec, "circuitBreakerOpenDurationSec", RimMindDefaults.CircuitBreakerOpenDurationSec);
             Validate();
         }
 
         public void Validate()
         {
-            if (maxTokens < 100) maxTokens = 100;
+            if (maxTokens < RimMindDefaults.MinTokens) maxTokens = RimMindDefaults.MinTokens;
             defaultTemperature = Math.Clamp(defaultTemperature, 0.0f, 2.0f);
             if (maxConcurrentRequests < 1) maxConcurrentRequests = 1;
-            if (requestTimeoutMs < 1000) requestTimeoutMs = 1000;
-            if (thinkCooldownTicks < 60) thinkCooldownTicks = 60;
+            if (requestTimeoutMs < RimMindDefaults.MinRequestTimeout) requestTimeoutMs = RimMindDefaults.MinRequestTimeout;
+            if (thinkCooldownTicks < RimMindDefaults.MinQueueProcessInterval) thinkCooldownTicks = RimMindDefaults.MinQueueProcessInterval;
             if (agentTickInterval < 10) agentTickInterval = 10;
             if (maxToolCallDepth < 1) maxToolCallDepth = 1;
-            if (contextDiffLifetimeTicks < 600) contextDiffLifetimeTicks = 600;
+            if (contextDiffLifetimeTicks < RimMindDefaults.MinContextDiffLifetime) contextDiffLifetimeTicks = RimMindDefaults.MinContextDiffLifetime;
             if (circuitBreakerFailureThreshold < 1) circuitBreakerFailureThreshold = 1;
             if (circuitBreakerOpenDurationSec < 5) circuitBreakerOpenDurationSec = 5;
         }

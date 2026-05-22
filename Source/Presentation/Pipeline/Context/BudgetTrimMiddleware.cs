@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Pipeline.Context;
 
@@ -29,8 +30,8 @@ namespace RimMind.Presentation.Pipeline.Context
             if (snapshot == null || snapshot.Messages.Count == 0)
                 return next(context);
 
-            int totalBudget = 4000;
-            int reserveForOutput = _modelSettings.MaxTokens > 0 ? _modelSettings.MaxTokens : 800;
+            int totalBudget = RimMindDefaults.DefaultTotalBudget;
+            int reserveForOutput = _modelSettings.MaxTokens > 0 ? _modelSettings.MaxTokens : RimMindDefaults.DefaultReserveForOutput;
             float budgetRatio = _budgetSettings.ContextBudget;
             int available = (int)(totalBudget * budgetRatio) - reserveForOutput;
             if (available <= 0) available = totalBudget - reserveForOutput;

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace RimMind.Infrastructure.Verse
 {
     public class AIDebugLog : GameComponent, IAIDebugLog
     {
-        private const int MaxEntries = 200;
+        private const int MaxEntries = RimMindDefaults.DebugMaxEntries;
 
         private readonly Queue<AIDebugEntry> _entries = new Queue<AIDebugEntry>(MaxEntries);
         private readonly ConcurrentQueue<AIDebugEntry> _pendingEntries = new ConcurrentQueue<AIDebugEntry>();
@@ -21,8 +22,8 @@ namespace RimMind.Infrastructure.Verse
         private IAIModelSettings? GetModelSettings()
             => _cachedModelSettings ??= RimMindServiceLocator.Get<IAIModelSettings>();
 
-        // [Framework-Forced SL] Static accessor for Verse-instantiated GameComponent.
-        public static IAIDebugLog? Instance => RimMindServiceLocator.Get<IAIDebugLog>();
+        // NOTE: AIDebugLog.Instance static accessor removed (v8 audit: zero external callers).
+        // Use IAIDebugLog via constructor injection or RimMindServiceLocator.Get<IAIDebugLog>().
 
         public AIDebugLog(Game game)
         {

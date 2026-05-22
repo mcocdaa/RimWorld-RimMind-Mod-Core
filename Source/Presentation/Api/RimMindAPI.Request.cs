@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Tools;
@@ -74,7 +75,7 @@ namespace RimMind.Presentation
                     Temperature = snapshot.Temperature,
                     RequestId = $"Structured_{request.NpcId}",
                     ModId = request.Scenario.ToString(),
-                    ExpireAtTicks = Find.TickManager.TicksGame + (RimMindRuntime.Instance?.GetSettingsProvider()?.RequestExpireTicks ?? 30000),
+                    ExpireAtTicks = Find.TickManager.TicksGame + (RimMindRuntime.Instance?.GetSettingsProvider()?.RequestExpireTicks ?? RimMindDefaults.RequestExpireTicks),
                     UseJsonMode = true,
                     Priority = AIRequestPriority.Normal,
                 };
