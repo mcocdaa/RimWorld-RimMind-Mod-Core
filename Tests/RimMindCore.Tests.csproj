@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>RimMind.Tests</RootNamespace>
     <AssemblyName>RimMindCore.Tests</AssemblyName>
     <LangVersion>10.0</LangVersion>
@@ -50,11 +50,14 @@
     <Compile Include="MechanismListToolHandlerTests.cs" />
     <Compile Include="MechanismContractTests.cs" />
     <Compile Include="GameMechanismRegistryTests.cs" />
+    <Compile Include="Presentation\Agent\*.cs" />
+    <Compile Include="Infrastructure\Verse\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**;../Source/Domain/Common/NetStandardCompat.cs" />
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/GameMechanismRegistry.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHandler.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismListToolHandler.cs" />

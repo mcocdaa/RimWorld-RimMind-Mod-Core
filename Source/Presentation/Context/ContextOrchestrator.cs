@@ -600,8 +600,7 @@ namespace RimMind.Presentation.Context
                 Query = ctx.CurrentQuery,
                 UserPinnedKeys = new HashSet<string>()
             };
-            var schedule = (_buildServices.BudgetScheduler as BudgetScheduler)?.ScheduleWithContext(filteredKeys, sctx, budget)
-                ?? _buildServices.BudgetScheduler.Schedule(filteredKeys, scenario, budget, ctx.CurrentQuery);
+            var schedule = _buildServices.BudgetScheduler.ScheduleWithContext(filteredKeys, sctx, budget);
 
             return (schedule, filteredKeys, budget);
         }

@@ -42,6 +42,7 @@ namespace RimMind.Presentation.Agent
         private IThinkStrategy? _pendingStrategy;
         private IReadOnlyList<ToolDefinition>? _pendingAvailableTools;
         private int _pendingToolCallRound;
+        private string? _pendingTraceId;
 
         public PawnThinker(IPawnAgent agent, IAgentTickSettings tickSettings, IAgentBus agentBus)
         {
@@ -70,6 +71,7 @@ namespace RimMind.Presentation.Agent
             _hasPendingCallback = false;
             _requestSentTick = 0;
             _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
+            _pendingTraceId = null;
         }
 
         public void Tick()
@@ -173,6 +175,7 @@ namespace RimMind.Presentation.Agent
             _pendingStrategy = strategy;
             _pendingAvailableTools = availableTools;
             _pendingToolCallRound = toolCallRound;
+            _pendingTraceId = envelope.TraceId;
 
             RimMindAPI.Request.Send(envelope, (result, ctx) =>
             {
@@ -189,6 +192,9 @@ namespace RimMind.Presentation.Agent
         /// </summary>
         private void ProcessPendingCallback()
         {
+            var traceScope = _pendingTraceId != null
+                ? TraceContext.BeginScope(_pendingTraceId)
+                : null;
             try
             {
                 var result = _pendingResult;
@@ -269,6 +275,10 @@ namespace RimMind.Presentation.Agent
                 _thinking = false;
                 _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
                 Log.Error($"[Think] Error processing AI callback for {_agent.Identity.NpcId}: {ex}");
+            }
+            finally
+            {
+                traceScope?.Dispose();
             }
         }
 

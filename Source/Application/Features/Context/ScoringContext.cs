@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class ScoringContext
+    public sealed class ScoringContext
     {
         public string Scenario { get; init; } = string.Empty;
         public int NowTicks { get; init; }

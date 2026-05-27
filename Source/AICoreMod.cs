@@ -6,10 +6,10 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Json;
 using RimMind.Application.Features.Flywheel;
+using RimMind.Application.Features.Context;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.UI;
 using RimMind.Presentation.Runtime;
@@ -79,8 +79,7 @@ namespace RimMind.Presentation
                 runtime.GetService<ILogSink>());
 
             // L3: Use instance-based RelevanceTable
-            var relevanceTable = runtime.RelevanceTable as RelevanceTableImpl;
-            relevanceTable?.RegisterCoreRelevance();
+            runtime.RelevanceTable.RegisterCoreRelevance();
 
             // L3: Register Core context providers via new ContextProviderDef API
             CoreContextProviders.RegisterAll(

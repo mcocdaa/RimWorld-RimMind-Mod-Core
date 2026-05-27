@@ -6,8 +6,6 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Npc;
 
 namespace RimMind.IntegrationTests.Stubs
@@ -22,39 +20,39 @@ namespace RimMind.IntegrationTests.Stubs
 
         public bool SupportsNpcServerState => false;
 
-        public Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
+        public Task<Result<LlmResponse, RimMindError>> SendAsync(LlmRequestEnvelope envelope)
         {
-            var response = new AIResponse
+            var response = new LlmResponse
             {
                 Content = "test response",
                 TokensUsed = 10
             };
-            return Task.FromResult(Result<AIResponse, RimMindError>.Ok(response));
-        }
-
-        public Task<Result<LlmResponse, RimMindError>> SendAsync(LlmRequestEnvelope envelope)
-        {
-            throw new NotImplementedException("K3: LlmRequestEnvelope SendAsync");
+            return Task.FromResult(Result<LlmResponse, RimMindError>.Ok(response));
         }
 
         public Task<Result<LlmResponse, RimMindError>> SendStreamAsync(LlmRequestEnvelope envelope, Action<LlmChunk> onChunk, CancellationToken ct)
         {
-            throw new NotImplementedException("K3: SendStreamAsync");
+            var response = new LlmResponse
+            {
+                Content = "test stream response",
+                TokensUsed = 10
+            };
+            return Task.FromResult(Result<LlmResponse, RimMindError>.Ok(response));
         }
 
         public Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile)
         {
-            throw new NotImplementedException("K3: SpawnNpcAsync");
+            return Task.FromResult(Result<bool, RimMindError>.Ok(true));
         }
 
         public Task<Result<bool, RimMindError>> KillNpcAsync(string npcId)
         {
-            throw new NotImplementedException("K3: KillNpcAsync");
+            return Task.FromResult(Result<bool, RimMindError>.Ok(true));
         }
 
         public Task<Result<List<string>, RimMindError>> QueryNpcMemoriesAsync(string npcId, string query, int limit)
         {
-            throw new NotImplementedException("K3: QueryNpcMemoriesAsync");
+            return Task.FromResult(Result<List<string>, RimMindError>.Ok(new List<string>()));
         }
 
         public void Dispose() { }

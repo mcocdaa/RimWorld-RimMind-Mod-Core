@@ -15,7 +15,6 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Agent.Reflection;
 using RimMind.Application.Features.Agent.Planning;
-using RimMind.Application.Features.Pipeline.Bus;
 using Verse;
 
 namespace RimMind.Presentation.Runtime

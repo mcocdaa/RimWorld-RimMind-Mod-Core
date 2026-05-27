@@ -7,7 +7,6 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Domain.Common;
 using RimMind.Domain.Events;
 

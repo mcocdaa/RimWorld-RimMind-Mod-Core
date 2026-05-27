@@ -18,7 +18,6 @@ using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Registry;
 using Verse;
 

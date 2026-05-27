@@ -8,6 +8,7 @@ namespace RimMind.Application.Common.Interfaces.Context
         void RegisterBatch(string scenarioId, Dictionary<string, float> entries);
         bool Unregister(string scenarioId, string key);
         float GetRelevance(string scenarioId, string key);
+        void RegisterCoreRelevance();
         void Clear();
     }
 }

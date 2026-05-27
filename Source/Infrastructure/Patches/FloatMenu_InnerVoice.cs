@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using HarmonyLib;
-using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Infrastructure.UI;
-using RimMind.Presentation;
-using RimMind.Presentation.Runtime;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -20,7 +19,8 @@ namespace RimMind.Infrastructure.Patches
             if (pawn == null || !pawn.Spawned || pawn.Dead) return;
 
             // Only show for pawns that have a PawnAgent
-            var identity = RimMindAPI.Ext.GetAgentIdentity(pawn);
+            var identityProvider = RimMindServiceLocator.Get<IAgentIdentityProvider>();
+            var identity = identityProvider?.GetAgentIdentity(pawn);
             if (identity == null) return;
 
             var label = "RimMind.InnerVoice.Inject".Translate(pawn.LabelShort);

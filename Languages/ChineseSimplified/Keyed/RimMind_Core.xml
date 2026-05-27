@@ -341,6 +341,9 @@
   <!-- Agent Gizmo - Dialogue -->
   <RimMind.Agent.Gizmo.Dialogue>对话</RimMind.Agent.Gizmo.Dialogue>
   <RimMind.Agent.Gizmo.DialogueDesc>与 AI 接管的小人对话</RimMind.Agent.Gizmo.DialogueDesc>
+  <!-- Agent Gizmo - Mode Switch -->
+  <RimMind.Agent.Gizmo.Mode>模式: {0}</RimMind.Agent.Gizmo.Mode>
+  <RimMind.Agent.Gizmo.ModeDesc>切换小人行为模式（被动/主动）</RimMind.Agent.Gizmo.ModeDesc>
   <!-- Flywheel autoApplyMode UI -->
   <RimMind.UI.FlywheelAutoApply>自动应用参数建议</RimMind.UI.FlywheelAutoApply>
   <RimMind.UI.FlywheelAutoApply.Desc>开启后 Flywheel 自动应用推荐的上下文参数调整</RimMind.UI.FlywheelAutoApply.Desc>
@@ -380,4 +383,46 @@
   <RimMind.Settings.RemoteSync.PullFailed>拉取失败：{0}</RimMind.Settings.RemoteSync.PullFailed>
   <RimMind.Settings.RemoteSync.PushSuccess>推送成功。</RimMind.Settings.RemoteSync.PushSuccess>
   <RimMind.Settings.RemoteSync.PushFailed>推送失败：{0}</RimMind.Settings.RemoteSync.PushFailed>
+  <!-- Window_ToolCallDebug.cs -->
+  <RimMind.UI.ToolCallDebug.Title>ToolCall 调试</RimMind.UI.ToolCallDebug.Title>
+  <RimMind.UI.ToolCallDebug.Empty>无已注册工具</RimMind.UI.ToolCallDebug.Empty>
+  <RimMind.UI.ToolCallDebug.Id>ID: {0}</RimMind.UI.ToolCallDebug.Id>
+  <RimMind.UI.ToolCallDebug.Description>描述: {0}</RimMind.UI.ToolCallDebug.Description>
+  <RimMind.UI.ToolCallDebug.Schema>参数 Schema:</RimMind.UI.ToolCallDebug.Schema>
+  <RimMind.UI.ToolCallDebug.Input>JSON 参数:</RimMind.UI.ToolCallDebug.Input>
+  <RimMind.UI.ToolCallDebug.Execute>执行</RimMind.UI.ToolCallDebug.Execute>
+  <RimMind.UI.ToolCallDebug.Executing>执行中...</RimMind.UI.ToolCallDebug.Executing>
+  <RimMind.UI.ToolCallDebug.Result>结果:</RimMind.UI.ToolCallDebug.Result>
+  <RimMind.UI.ToolCallDebug.Success>成功 ({0}ms)</RimMind.UI.ToolCallDebug.Success>
+  <RimMind.UI.ToolCallDebug.Failed>失败 ({0}ms)</RimMind.UI.ToolCallDebug.Failed>
+  <RimMind.UI.ToolCallDebug.Category>分类: {0}</RimMind.UI.ToolCallDebug.Category>
+  <RimMind.UI.ToolCallDebug.SelectTool>从列表中选择工具</RimMind.UI.ToolCallDebug.SelectTool>
+  <!-- Window_MechanismStatus.cs -->
+  <RimMind.UI.MechanismStatus.Title>机制状态</RimMind.UI.MechanismStatus.Title>
+  <RimMind.UI.MechanismStatus.Empty>无已注册机制</RimMind.UI.MechanismStatus.Empty>
+  <RimMind.UI.MechanismStatus.Scope>作用域: {0}</RimMind.UI.MechanismStatus.Scope>
+  <RimMind.UI.MechanismStatus.Risk>风险: {0}</RimMind.UI.MechanismStatus.Risk>
+  <RimMind.UI.MechanismStatus.Operations>操作: {0}</RimMind.UI.MechanismStatus.Operations>
+  <RimMind.UI.MechanismStatus.ToolMapping>工具: {0}</RimMind.UI.MechanismStatus.ToolMapping>
+  <RimMind.UI.MechanismStatus.FilterScope>过滤作用域</RimMind.UI.MechanismStatus.FilterScope>
+  <RimMind.UI.MechanismStatus.FilterRisk>过滤风险</RimMind.UI.MechanismStatus.FilterRisk>
+  <RimMind.UI.MechanismStatus.All>全部</RimMind.UI.MechanismStatus.All>
+  <RimMind.UI.MechanismStatus.Registered>已注册</RimMind.UI.MechanismStatus.Registered>
+  <RimMind.UI.MechanismStatus.NoToolMapping>(无工具映射)</RimMind.UI.MechanismStatus.NoToolMapping>
+  <!-- Window_AgentModeDebug.cs -->
+  <RimMind.UI.AgentModeDebug.Title>智能体模式调试</RimMind.UI.AgentModeDebug.Title>
+  <RimMind.UI.AgentModeDebug.NoPawns>当前地图无智能体</RimMind.UI.AgentModeDebug.NoPawns>
+  <RimMind.UI.AgentModeDebug.Mode>模式: {0}</RimMind.UI.AgentModeDebug.Mode>
+  <RimMind.UI.AgentModeDebug.Active>活跃</RimMind.UI.AgentModeDebug.Active>
+  <RimMind.UI.AgentModeDebug.Inactive>未激活</RimMind.UI.AgentModeDebug.Inactive>
+  <RimMind.UI.AgentModeDebug.AllowedTools>允许工具: {0}</RimMind.UI.AgentModeDebug.AllowedTools>
+  <RimMind.UI.AgentModeDebug.ShouldThink>应思考: {0}</RimMind.UI.AgentModeDebug.ShouldThink>
+  <RimMind.UI.AgentModeDebug.SwitchMode>切换模式</RimMind.UI.AgentModeDebug.SwitchMode>
+  <RimMind.UI.AgentModeDebug.SelectPawn>选择一个小人</RimMind.UI.AgentModeDebug.SelectPawn>
+  <RimMind.UI.AgentModeDebug.History>模式变更历史</RimMind.UI.AgentModeDebug.History>
+  <RimMind.UI.AgentModeDebug.NoHistory>无模式变更记录</RimMind.UI.AgentModeDebug.NoHistory>
+  <RimMind.UI.AgentModeDebug.ModeChange>{0}: {1} → {2}</RimMind.UI.AgentModeDebug.ModeChange>
+  <RimMind.UI.AgentModeDebug.RegisteredModes>已注册模式</RimMind.UI.AgentModeDebug.RegisteredModes>
+  <RimMind.UI.AgentModeDebug.ModeEntry>{0} - {1}</RimMind.UI.AgentModeDebug.ModeEntry>
+  <RimMind.UI.AgentModeDebug.SwitchTo>切换至:</RimMind.UI.AgentModeDebug.SwitchTo>
 </LanguageData>

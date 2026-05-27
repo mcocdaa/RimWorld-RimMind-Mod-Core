@@ -8,7 +8,6 @@ using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Agent.Modes;
 using RimMind.Domain.Events;
-using RimMind.Infrastructure.Social;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -21,17 +20,17 @@ namespace RimMind.Presentation.Agent
     {
         private readonly IAgentBus _agentBus;
         private IDreamGenerator? _dreamGenerator;
-        private VerseDreamThoughtInjector? _dreamThoughtInjector;
-        private VerseTraitEvolver? _traitEvolver;
+        private IDreamThoughtInjector? _dreamThoughtInjector;
+        private ITraitEvolver? _traitEvolver;
 
         private IDreamGenerator? GetDreamGenerator()
             => _dreamGenerator ??= RimMindServiceLocator.Get<IDreamGenerator>();
 
-        private VerseDreamThoughtInjector? GetDreamThoughtInjector()
-            => _dreamThoughtInjector ??= RimMindServiceLocator.Get<VerseDreamThoughtInjector>();
+        private IDreamThoughtInjector? GetDreamThoughtInjector()
+            => _dreamThoughtInjector ??= RimMindServiceLocator.Get<IDreamThoughtInjector>();
 
-        private VerseTraitEvolver? GetTraitEvolver()
-            => _traitEvolver ??= RimMindServiceLocator.Get<VerseTraitEvolver>();
+        private ITraitEvolver? GetTraitEvolver()
+            => _traitEvolver ??= RimMindServiceLocator.Get<ITraitEvolver>();
 
         public ProactiveBehaviorExecutor(IAgentBus agentBus)
         {

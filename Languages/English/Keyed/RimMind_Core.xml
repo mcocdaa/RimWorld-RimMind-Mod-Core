@@ -341,6 +341,9 @@
   <!-- Agent Gizmo - Dialogue -->
   <RimMind.Agent.Gizmo.Dialogue>Chat</RimMind.Agent.Gizmo.Dialogue>
   <RimMind.Agent.Gizmo.DialogueDesc>Chat with the AI-controlled pawn</RimMind.Agent.Gizmo.DialogueDesc>
+  <!-- Agent Gizmo - Mode Switch -->
+  <RimMind.Agent.Gizmo.Mode>Mode: {0}</RimMind.Agent.Gizmo.Mode>
+  <RimMind.Agent.Gizmo.ModeDesc>Switch agent behavior mode (Reactive/Proactive)</RimMind.Agent.Gizmo.ModeDesc>
   <!-- Flywheel autoApplyMode UI -->
   <RimMind.UI.FlywheelAutoApply>Flywheel: auto-apply parameter recommendations</RimMind.UI.FlywheelAutoApply>
   <RimMind.UI.FlywheelAutoApply.Desc>When enabled, Flywheel automatically applies recommended context parameter adjustments</RimMind.UI.FlywheelAutoApply.Desc>
@@ -380,4 +383,46 @@
   <RimMind.Settings.RemoteSync.PullFailed>Pull failed: {0}</RimMind.Settings.RemoteSync.PullFailed>
   <RimMind.Settings.RemoteSync.PushSuccess>Push completed successfully.</RimMind.Settings.RemoteSync.PushSuccess>
   <RimMind.Settings.RemoteSync.PushFailed>Push failed: {0}</RimMind.Settings.RemoteSync.PushFailed>
+  <!-- Window_ToolCallDebug.cs -->
+  <RimMind.UI.ToolCallDebug.Title>ToolCall Debug</RimMind.UI.ToolCallDebug.Title>
+  <RimMind.UI.ToolCallDebug.Empty>No tools registered</RimMind.UI.ToolCallDebug.Empty>
+  <RimMind.UI.ToolCallDebug.Id>ID: {0}</RimMind.UI.ToolCallDebug.Id>
+  <RimMind.UI.ToolCallDebug.Description>Description: {0}</RimMind.UI.ToolCallDebug.Description>
+  <RimMind.UI.ToolCallDebug.Schema>Parameters Schema:</RimMind.UI.ToolCallDebug.Schema>
+  <RimMind.UI.ToolCallDebug.Input>JSON Parameters:</RimMind.UI.ToolCallDebug.Input>
+  <RimMind.UI.ToolCallDebug.Execute>Execute</RimMind.UI.ToolCallDebug.Execute>
+  <RimMind.UI.ToolCallDebug.Executing>Executing...</RimMind.UI.ToolCallDebug.Executing>
+  <RimMind.UI.ToolCallDebug.Result>Result:</RimMind.UI.ToolCallDebug.Result>
+  <RimMind.UI.ToolCallDebug.Success>Success ({0}ms)</RimMind.UI.ToolCallDebug.Success>
+  <RimMind.UI.ToolCallDebug.Failed>Failed ({0}ms)</RimMind.UI.ToolCallDebug.Failed>
+  <RimMind.UI.ToolCallDebug.Category>Category: {0}</RimMind.UI.ToolCallDebug.Category>
+  <RimMind.UI.ToolCallDebug.SelectTool>Select a tool from the list</RimMind.UI.ToolCallDebug.SelectTool>
+  <!-- Window_MechanismStatus.cs -->
+  <RimMind.UI.MechanismStatus.Title>Mechanism Status</RimMind.UI.MechanismStatus.Title>
+  <RimMind.UI.MechanismStatus.Empty>No mechanisms registered</RimMind.UI.MechanismStatus.Empty>
+  <RimMind.UI.MechanismStatus.Scope>Scope: {0}</RimMind.UI.MechanismStatus.Scope>
+  <RimMind.UI.MechanismStatus.Risk>Risk: {0}</RimMind.UI.MechanismStatus.Risk>
+  <RimMind.UI.MechanismStatus.Operations>Operations: {0}</RimMind.UI.MechanismStatus.Operations>
+  <RimMind.UI.MechanismStatus.ToolMapping>Tools: {0}</RimMind.UI.MechanismStatus.ToolMapping>
+  <RimMind.UI.MechanismStatus.FilterScope>Filter Scope</RimMind.UI.MechanismStatus.FilterScope>
+  <RimMind.UI.MechanismStatus.FilterRisk>Filter Risk</RimMind.UI.MechanismStatus.FilterRisk>
+  <RimMind.UI.MechanismStatus.All>All</RimMind.UI.MechanismStatus.All>
+  <RimMind.UI.MechanismStatus.Registered>Registered</RimMind.UI.MechanismStatus.Registered>
+  <RimMind.UI.MechanismStatus.NoToolMapping>(no tool mapping)</RimMind.UI.MechanismStatus.NoToolMapping>
+  <!-- Window_AgentModeDebug.cs -->
+  <RimMind.UI.AgentModeDebug.Title>Agent Mode Debug</RimMind.UI.AgentModeDebug.Title>
+  <RimMind.UI.AgentModeDebug.NoPawns>No agents on current map</RimMind.UI.AgentModeDebug.NoPawns>
+  <RimMind.UI.AgentModeDebug.Mode>Mode: {0}</RimMind.UI.AgentModeDebug.Mode>
+  <RimMind.UI.AgentModeDebug.Active>Active</RimMind.UI.AgentModeDebug.Active>
+  <RimMind.UI.AgentModeDebug.Inactive>Inactive</RimMind.UI.AgentModeDebug.Inactive>
+  <RimMind.UI.AgentModeDebug.AllowedTools>Allowed Tools: {0}</RimMind.UI.AgentModeDebug.AllowedTools>
+  <RimMind.UI.AgentModeDebug.ShouldThink>Should Think: {0}</RimMind.UI.AgentModeDebug.ShouldThink>
+  <RimMind.UI.AgentModeDebug.SwitchMode>Switch Mode</RimMind.UI.AgentModeDebug.SwitchMode>
+  <RimMind.UI.AgentModeDebug.SelectPawn>Select a pawn</RimMind.UI.AgentModeDebug.SelectPawn>
+  <RimMind.UI.AgentModeDebug.History>Mode Change History</RimMind.UI.AgentModeDebug.History>
+  <RimMind.UI.AgentModeDebug.NoHistory>No mode changes recorded</RimMind.UI.AgentModeDebug.NoHistory>
+  <RimMind.UI.AgentModeDebug.ModeChange>{0}: {1} → {2}</RimMind.UI.AgentModeDebug.ModeChange>
+  <RimMind.UI.AgentModeDebug.RegisteredModes>Registered Modes</RimMind.UI.AgentModeDebug.RegisteredModes>
+  <RimMind.UI.AgentModeDebug.ModeEntry>{0} - {1}</RimMind.UI.AgentModeDebug.ModeEntry>
+  <RimMind.UI.AgentModeDebug.SwitchTo>Switch to:</RimMind.UI.AgentModeDebug.SwitchTo>
 </LanguageData>

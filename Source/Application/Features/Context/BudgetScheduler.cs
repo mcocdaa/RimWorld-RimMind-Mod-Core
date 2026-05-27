@@ -75,7 +75,7 @@ namespace RimMind.Application.Features.Context
         /// <summary>
         /// Schedule overload that accepts a pre-built ScoringContext for testing and advanced scenarios.
         /// </summary>
-        internal BudgetAllocation ScheduleWithContext(List<KeyMeta> keys, ScoringContext sctx, float budget)
+        public BudgetAllocation ScheduleWithContext(List<KeyMeta> keys, ScoringContext sctx, float budget)
         {
             var result = new BudgetAllocation();
             if (keys == null || keys.Count == 0) return result;

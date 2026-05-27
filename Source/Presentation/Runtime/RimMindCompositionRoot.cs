@@ -16,6 +16,7 @@ using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Features.Agent.InnerVoice;
@@ -23,8 +24,8 @@ using RimMind.Application.Features.Agent.Psychology;
 using RimMind.Application.Features.Agent.Social;
 using RimMind.Infrastructure.Psychology;
 using RimMind.Application.Features.Context;
-using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Pipeline.Unified;
+using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Registry;
 using RimMind.Infrastructure;
 using RimMind.Infrastructure.Mechanisms;
@@ -45,6 +46,7 @@ using RimMind.Infrastructure.Mechanisms.Map.Wealth;
 using RimMind.Infrastructure.Mechanisms.World.Faction;
 using RimMind.Infrastructure.Mechanisms.World.Storyteller;
 using RimMind.Infrastructure.Mechanisms.World.ChoiceLetter;
+using RimMind.Infrastructure.Agent;
 using RimMind.Infrastructure.Social;
 using RimMind.Infrastructure.UI;
 using RimMind.Application.Common.Models.Agent;
@@ -53,6 +55,7 @@ using RimMind.Presentation.Context;
 using RimMind.Presentation.Llm;
 using RimMind.Presentation.Settings;
 using RimMind.Presentation.Sensor;
+using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -219,10 +222,7 @@ namespace RimMind.Presentation.Runtime
                 logSink,
                 infraBag.ThreadChecker,
                 GetExtensionRegistry<IMiddleware<BusPublishContext>>());
-            // SetPipeline is internal on AgentBusImpl — accessible within the same assembly.
-            // This is the only remaining 'as' cast for AgentBus; it cannot be moved to the
-            // IAgentBus interface because BusPublishContext lives in the Features layer.
-            (agentBus as AgentBusImpl)?.SetPipeline(busPublishPipeline);
+            agentBus.SetPipeline(busPublishPipeline);
 
             // Phase 5b: Build unified pipeline
             // L5: Create AIResponseAnalyzer for context feedback (RelevanceLearner created in Phase 3)
@@ -241,7 +241,12 @@ namespace RimMind.Presentation.Runtime
 
             // Phase 6: Create remaining Presentation services
 
-            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, infraBag.MechanismRegistry);
+            var actionExecutor = new MechanismActionExecutor(infraBag.MechanismRegistry);
+            RimMindServiceLocator.Register<IActionExecutor>(actionExecutor);
+
+            RimMindServiceLocator.Register<IAgentIdentityProvider>(new AgentIdentityProviderAdapter());
+
+            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor);
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
             var gameContextBuilder = new GameContextBuilder(
@@ -259,7 +264,7 @@ namespace RimMind.Presentation.Runtime
 
             // Register built-in RemoteSync settings tab
             var settingsTabRegistry = RimMindServiceLocator.Get<IExtensionRegistry<ISettingsTab>>();
-            settingsTabRegistry?.Register(new RimMind.Infrastructure.UI.RemoteSyncSettingsUI());
+            settingsTabRegistry?.Register(new RimMind.Presentation.UI.RemoteSyncSettingsUI());
 
             // Register restored extension interfaces with null defaults
             var modCooldownRegistry = new ExtensionRegistry<IModCooldown>();
@@ -319,13 +324,13 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IDreamGenerator>(dreamGenerator);
 
             var traitEvolver = new VerseTraitEvolver();
-            RimMindServiceLocator.Register(traitEvolver);
+            RimMindServiceLocator.Register<ITraitEvolver>(traitEvolver);
 
             var thoughtInjector = RimMindServiceLocator.Get<IThoughtInjector>();
             if (thoughtInjector != null)
             {
                 var dreamThoughtInjector = new VerseDreamThoughtInjector(thoughtInjector);
-                RimMindServiceLocator.Register(dreamThoughtInjector);
+                RimMindServiceLocator.Register<IDreamThoughtInjector>(dreamThoughtInjector);
             }
 
             RimMindCoreDebugActions.Initialize(
@@ -341,7 +346,9 @@ namespace RimMind.Presentation.Runtime
                 appBag.Telemetry,
                 agentBus,
                 historyManager,
-                npcManager);
+                npcManager,
+                appBag.ToolRegistry,
+                infraBag.MechanismRegistry);
 
             return new CompositionResult
             {
@@ -430,6 +437,17 @@ namespace RimMind.Presentation.Runtime
             registry.Register(new FactionMechanism());
             registry.Register(new StorytellerMechanism());
             registry.Register(new ChoiceLetterMechanism());
+        }
+
+        /// <summary>
+        /// Adapter that wraps RimMindRuntime.GetAgentIdentity as IAgentIdentityProvider.
+        /// Registered in ServiceLocator so Infrastructure patches can resolve agent identity
+        /// without depending on Presentation-layer RimMindAPI.Ext.
+        /// </summary>
+        private sealed class AgentIdentityProviderAdapter : IAgentIdentityProvider
+        {
+            public AgentIdentity? GetAgentIdentity(object pawn)
+                => RimMindRuntime.Instance.GetAgentIdentity((Pawn)pawn);
         }
     }
 }

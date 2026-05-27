@@ -1,11 +1,14 @@
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Domain.Enums;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Agent; // Structural exception: CompPawnAgent (Verse ThingComp) needs IPawnAgentFactory/IPawnAgent
+using RimMind.Presentation; // RimMindAPI.Modes for mode switch Gizmo
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -119,6 +122,34 @@ namespace RimMind.Infrastructure.Verse
                         GetWindowService()?.OpenAgentDialogue(Pawn);
                     },
                 };
+
+                var allModes = RimMindAPI.Modes?.All;
+                if (allModes != null && allModes.Count > 1)
+                {
+                    string currentModeName = Agent.CurrentMode?.DisplayName ?? (string)Agent.CurrentModeId;
+                    yield return new Command_Action
+                    {
+                        defaultLabel = "RimMind.Agent.Gizmo.Mode".Translate(currentModeName),
+                        defaultDesc = "RimMind.Agent.Gizmo.ModeDesc".Translate(),
+                        icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
+                        action = () =>
+                        {
+                            int currentIndex = -1;
+                            for (int i = 0; i < allModes.Count; i++)
+                            {
+                                if (allModes[i].ModeId == Agent.CurrentModeId)
+                                {
+                                    currentIndex = i;
+                                    break;
+                                }
+                            }
+                            int nextIndex = (currentIndex + 1) % allModes.Count;
+                            var nextMode = allModes[nextIndex];
+                            if (nextMode.IsApplicable(Agent))
+                                Agent.SwitchMode(nextMode.ModeId);
+                        },
+                    };
+                }
             }
 
             if (Prefs.DevMode)

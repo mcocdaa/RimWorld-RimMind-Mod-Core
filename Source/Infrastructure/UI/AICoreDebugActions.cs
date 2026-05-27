@@ -6,7 +6,9 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
@@ -34,6 +36,8 @@ namespace RimMind.Infrastructure.UI
         private static IAgentBus? _agentBus;
         private static IHistoryManager? _historyManager;
         private static INpcManager? _npcManager;
+        private static IToolRegistry? _toolRegistry;
+        private static IGameMechanismRegistry? _mechanismRegistry;
 
         /// <summary>
         /// Cache all service references. Called from RimMindRuntime after services are registered.
@@ -51,7 +55,9 @@ namespace RimMind.Infrastructure.UI
             ITelemetryCollector? telemetryCollector,
             IAgentBus? agentBus,
             IHistoryManager? historyManager,
-            INpcManager? npcManager)
+            INpcManager? npcManager,
+            IToolRegistry? toolRegistry,
+            IGameMechanismRegistry? mechanismRegistry)
         {
             _settingsProvider = settingsProvider;
             _requestQueue = requestQueue;
@@ -66,6 +72,8 @@ namespace RimMind.Infrastructure.UI
             _agentBus = agentBus;
             _historyManager = historyManager;
             _npcManager = npcManager;
+            _toolRegistry = toolRegistry;
+            _mechanismRegistry = mechanismRegistry;
         }
 
         [DebugAction("RimMind", "Test API Connection", actionType = DebugActionType.Action)]
@@ -444,6 +452,24 @@ namespace RimMind.Infrastructure.UI
             sb.AppendLine($"  IsConfigured: {s.IsConfigured}");
 
             Log.Message(sb.ToString());
+        }
+
+        [DebugAction("RimMind", "ToolCall Debug", actionType = DebugActionType.Action)]
+        public static void OpenToolCallDebug()
+        {
+            Find.WindowStack.Add(new Window_ToolCallDebug());
+        }
+
+        [DebugAction("RimMind", "Mechanism Status", actionType = DebugActionType.Action)]
+        public static void OpenMechanismStatus()
+        {
+            Find.WindowStack.Add(new Window_MechanismStatus());
+        }
+
+        [DebugAction("RimMind", "Agent Mode Debug", actionType = DebugActionType.Action)]
+        public static void OpenAgentModeDebug()
+        {
+            Find.WindowStack.Add(new Window_AgentModeDebug());
         }
     }
 }

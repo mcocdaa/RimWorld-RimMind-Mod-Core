@@ -1,4 +1,5 @@
 using System.Linq;
+using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Domain.Agent.Social;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
@@ -7,7 +8,7 @@ using Verse;
 
 namespace RimMind.Infrastructure.Social;
 
-public sealed class VerseTraitEvolver
+public sealed class VerseTraitEvolver : ITraitEvolver
 {
     public Result<TraitEvolutionRecord, RimMindError> ApplyTraitEvolution(int pawnId, TraitEvolutionRecord record)
     {

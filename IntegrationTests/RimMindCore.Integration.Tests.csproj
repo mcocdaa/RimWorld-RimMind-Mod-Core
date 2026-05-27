@@ -32,8 +32,13 @@
     <Compile Include="VerseStubs.cs" />
     <Compile Include="IntegrationStubs.cs" />
     <Compile Include="GlobalUsings.cs" />
+    <Compile Include="TestBase.cs" />
+    <Compile Include="TestWorld.cs" />
+    <Compile Include="TestWorldFixture.cs" />
     <Compile Include="Infrastructure\**\*.cs" />
     <Compile Include="Presentation\**\*.cs" />
+    <Compile Include="Mechanisms\**\*.cs" />
+    <Compile Include="Pipeline\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

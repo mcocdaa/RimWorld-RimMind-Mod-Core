@@ -1,10 +1,11 @@
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
+using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Domain.Agent.Social;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Infrastructure.Social;
 
-public sealed class VerseDreamThoughtInjector
+public sealed class VerseDreamThoughtInjector : IDreamThoughtInjector
 {
     private readonly IThoughtInjector _thoughtInjector;
 
