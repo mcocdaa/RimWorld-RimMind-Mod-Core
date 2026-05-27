@@ -17,8 +17,6 @@ namespace Verse
     {
         public int thingIDNumber;
         public bool Dead;
-        public Pawn_Name Name => new Pawn_Name();
-        public object jobs;
 
         public T? GetComp<T>() where T : ThingComp
         {
@@ -32,11 +30,6 @@ namespace Verse
         }
 
         private readonly List<ThingComp> _comps = new();
-    }
-
-    public class Pawn_Name
-    {
-        public string ToStringShort => "TestPawn";
     }
 
     /// <summary>Stub for Verse.ThingWithComps base class.</summary>
@@ -104,55 +97,4 @@ namespace Verse.AI
     public class Job { }
     public class JobQueue { }
     public class Pawn_JobTracker { public JobQueue jobQueue = new JobQueue(); }
-}
-
-namespace RimMind.Presentation.Agent
-{
-    using RimMind.Application.Common.Interfaces;
-    using RimMind.Application.Common.Interfaces.Agent;
-    using RimMind.Application.Common.Interfaces.Agent.Modes;
-    using Verse;
-
-    /// <summary>Stub for IExposable used in test compilation.</summary>
-    public interface IExposable { }
-
-    /// <summary>Stub for IPawnAgent used in test compilation.</summary>
-    public interface IPawnAgent : IAgentControl, IExposable
-    {
-        Verse.AI.Job? ConsumePendingJob();
-        void SetPendingJob(Verse.AI.Job job);
-    }
-
-    /// <summary>Stub for IPawnAgentFactory used in test compilation.</summary>
-    public interface IPawnAgentFactory
-    {
-        IPawnAgent? Create(Pawn pawn, IAgentBus? agentBus);
-        void SerializeAgent(ref IPawnAgent? agent, string label);
-    }
-}
-
-namespace RimMind.Presentation
-{
-    using RimMind.Application.Common.Interfaces.Agent.Modes;
-    using RimMind.Application.Common.Interfaces.Extension;
-
-    /// <summary>Stub for RimMindAPI used in test compilation.</summary>
-    public static partial class RimMindAPI
-    {
-        private static IExtensionRegistry<IAgentMode>? _modes;
-
-        public static IExtensionRegistry<IAgentMode>? Modes
-        {
-            get => _modes;
-            set => _modes = value;
-        }
-    }
-}
-
-namespace RimMind.Tests.Stubs
-{
-    internal static class TestTickProvider
-    {
-        public static int TicksGame => 0;
-    }
 }

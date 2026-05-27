@@ -13,11 +13,11 @@ namespace RimMind.Tests.ArchTests.PhaseP1
     /// </summary>
     public class P1_O1_LogSinkMigrationTests
     {
-        private static readonly string RepoRoot = Path.GetFullPath(
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        private static readonly string ProjectRoot = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
 
         private static readonly string AgentDir = Path.Combine(
-            RepoRoot, "RimMind-Core", "Source", "Presentation", "Agent");
+            ProjectRoot, "Source", "Presentation", "Agent");
 
         private static readonly string PawnThinkerPath = Path.Combine(AgentDir, "PawnThinker.cs");
         private static readonly string ProactiveExecutorPath = Path.Combine(AgentDir, "ProactiveBehaviorExecutor.cs");

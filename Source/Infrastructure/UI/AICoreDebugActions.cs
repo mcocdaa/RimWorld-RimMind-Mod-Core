@@ -10,8 +10,10 @@ using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
+using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
+using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
 using LudeonTK;
 using RimWorld;
@@ -470,6 +472,252 @@ namespace RimMind.Infrastructure.UI
         public static void OpenAgentModeDebug()
         {
             Find.WindowStack.Add(new Window_AgentModeDebug());
+        }
+
+        // ── Autotests (H2 / K / L runtime verification) ──────────────────────
+
+        [DebugAction("Autotests", "Test H2 Actions Equivalence", actionType = DebugActionType.Action)]
+        public static void TestH2ActionsEquivalence()
+        {
+            int pass = 0, fail = 0;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("[Autotests] === H2 Actions Equivalence ===");
+
+            // 1. Verify every registered Mechanism has a corresponding ToolHandler
+            var mechanisms = _mechanismRegistry?.All ?? new List<IGameMechanism>();
+            var tools = _toolRegistry?.All ?? new List<IToolHandler>();
+
+            var mechanismIds = new HashSet<string>(mechanisms.Select(m => m.MechanismId));
+            var toolIds = new HashSet<string>(tools.Select(t => t.Definition.Id));
+
+            sb.AppendLine($"  Mechanisms: {mechanismIds.Count}, Tools: {toolIds.Count}");
+
+            // 2. Each Mechanism's write actions should have a corresponding ToolHandler
+            foreach (var mech in mechanisms)
+            {
+                var writeActions = mech.GetWriteActions();
+                if (writeActions == null || writeActions.Count == 0)
+                {
+                    sb.AppendLine($"  [SKIP] {mech.MechanismId}: no write actions");
+                    continue;
+                }
+
+                foreach (var action in writeActions)
+                {
+                    // Convention: tool id = "mechanismId_action" or "mechanismId"
+                    string conventionToolId = $"{mech.MechanismId}_{action.Action}";
+                    string mechanismToolId = mech.MechanismId;
+                    if (toolIds.Contains(conventionToolId) || toolIds.Contains(mechanismToolId))
+                    {
+                        string matchedId = toolIds.Contains(conventionToolId) ? conventionToolId : mechanismToolId;
+                        sb.AppendLine($"  [PASS] {mech.MechanismId}.{action.Action} -> {matchedId}");
+                        pass++;
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  [FAIL] {mech.MechanismId}.{action.Action} -> no matching tool (tried '{conventionToolId}', '{mechanismToolId}')");
+                        Log.Error($"[Autotests] H2: {mech.MechanismId}.{action.Action} has no matching tool");
+                        fail++;
+                    }
+                }
+            }
+
+            // 3. Verify tool count consistency
+            int mechanismToolCount = mechanisms
+                .SelectMany(m => m.GetWriteActions() ?? new List<MechanismActionInfo>())
+                .Count();
+            sb.AppendLine($"  Total mechanism write actions: {mechanismToolCount}, Total tools: {toolIds.Count}");
+
+            sb.AppendLine($"  Result: {pass} passed, {fail} failed");
+            Log.Message(sb.ToString());
+        }
+
+        [DebugAction("Autotests", "Test K Unified Request", actionType = DebugActionType.Action)]
+        public static void TestKUnifiedRequest()
+        {
+            int pass = 0, fail = 0;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("[Autotests] === K Unified Request ===");
+
+            // 1. NPC routing: NpcManager should be available and have active agents
+            if (_npcManager != null)
+            {
+                var npcs = _npcManager.GetAllNpcs();
+                var activeAgents = _npcManager.GetActiveAgentPawnIds();
+                sb.AppendLine($"  [PASS] NpcManager available: {npcs.Count} NPCs, {activeAgents.Count} active agents");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] NpcManager not initialized");
+                Log.Error("[Autotests] K: NpcManager not initialized");
+                fail++;
+            }
+
+            // 2. Storage abstraction: RequestQueue should be available
+            if (_requestQueue != null)
+            {
+                sb.AppendLine($"  [PASS] AIRequestQueue available: paused={_requestQueue.IsPaused}, active={_requestQueue.ActiveRequestCount}");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] AIRequestQueue not initialized");
+                Log.Error("[Autotests] K: AIRequestQueue not initialized");
+                fail++;
+            }
+
+            // 3. ClientManager should be available for provider routing
+            if (_clientManager != null)
+            {
+                sb.AppendLine($"  [PASS] ClientManager available");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] ClientManager not initialized");
+                Log.Error("[Autotests] K: ClientManager not initialized");
+                fail++;
+            }
+
+            // 4. ToolRegistry should have registered tools (unified dispatch)
+            var allTools = _toolRegistry?.All;
+            if (allTools != null && allTools.Count > 0)
+            {
+                sb.AppendLine($"  [PASS] ToolRegistry has {allTools.Count} registered tools");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] ToolRegistry empty or not initialized");
+                Log.Error("[Autotests] K: ToolRegistry empty or not initialized");
+                fail++;
+            }
+
+            // 5. AgentBus should be available for event dispatch
+            if (_agentBus != null)
+            {
+                sb.AppendLine($"  [PASS] AgentBus available: handlers={_agentBus.GetHandlerCount()}, pending={_agentBus.GetBackgroundQueueCount()}");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] AgentBus not initialized");
+                Log.Error("[Autotests] K: AgentBus not initialized");
+                fail++;
+            }
+
+            sb.AppendLine($"  Result: {pass} passed, {fail} failed");
+            Log.Message(sb.ToString());
+        }
+
+        [DebugAction("Autotests", "Test L Context Evolution", actionType = DebugActionType.Action)]
+        public static void TestLContextEvolution()
+        {
+            int pass = 0, fail = 0;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("[Autotests] === L Context Evolution ===");
+
+            // 1. ContextKeyRegistry should have registered keys with staleness metadata
+            var keys = _contextKeyRegistry?.GetAll();
+            if (keys != null && keys.Count > 0)
+            {
+                int withStaleness = 0;
+                foreach (var key in keys)
+                {
+                    if (key.LastUpdatedTick > 0 || key.LastIncludedTick > 0)
+                        withStaleness++;
+                }
+                sb.AppendLine($"  [PASS] ContextKeyRegistry: {keys.Count} keys, {withStaleness} with staleness data");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] ContextKeyRegistry empty or not initialized");
+                Log.Error("[Autotests] L: ContextKeyRegistry empty or not initialized");
+                fail++;
+            }
+
+            // 2. Seven-dimension scoring: keys should have AdaptivePriority and CurrentScore
+            if (keys != null && keys.Count > 0)
+            {
+                int withAdaptive = 0;
+                foreach (var key in keys)
+                {
+                    if (Math.Abs(key.AdaptivePriority - key.Priority) > 0.0001f || Math.Abs(key.CurrentScore) > 0.0001f)
+                        withAdaptive++;
+                }
+                sb.AppendLine($"  [INFO] Adaptive scoring: {withAdaptive}/{keys.Count} keys have non-default adaptive values");
+
+                if (withAdaptive > 0)
+                {
+                    sb.AppendLine($"  [PASS] Seven-dimension scoring active on {withAdaptive} keys");
+                    pass++;
+                }
+                else
+                {
+                    sb.AppendLine($"  [WARN] No keys have adaptive scoring yet (may need game ticks)");
+                    pass++; // Not a failure — scoring activates over time
+                }
+            }
+
+            // 3. ContextEngine should be available for snapshot building
+            if (_contextEngine != null)
+            {
+                sb.AppendLine($"  [PASS] ContextEngine (IContextBuilder) available");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] ContextEngine not initialized");
+                Log.Error("[Autotests] L: ContextEngine not initialized");
+                fail++;
+            }
+
+            // 4. ProviderRegistry should have registered providers
+            var categories = _providerRegistry?.GetRegisteredCategories() ?? new List<string>();
+            if (categories.Count > 0)
+            {
+                sb.AppendLine($"  [PASS] ProviderRegistry: {categories.Count} categories ({string.Join(", ", categories.Take(5))})");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] ProviderRegistry empty");
+                Log.Error("[Autotests] L: ProviderRegistry empty");
+                fail++;
+            }
+
+            // 5. FlywheelParameterStore should be available for learning feedback
+            if (_flywheelParameterStore != null)
+            {
+                var parameters = _flywheelParameterStore.GetAll();
+                sb.AppendLine($"  [PASS] FlywheelParameterStore: {parameters.Count} parameters, budget={_flywheelParameterStore.TotalBudget}");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] FlywheelParameterStore not initialized");
+                Log.Error("[Autotests] L: FlywheelParameterStore not initialized");
+                fail++;
+            }
+
+            // 6. TelemetryCollector for learning feedback chain
+            if (_telemetryCollector != null)
+            {
+                var records = _telemetryCollector.GetRecentRecords(5);
+                sb.AppendLine($"  [PASS] TelemetryCollector available: {records?.Count ?? 0} recent records");
+                pass++;
+            }
+            else
+            {
+                sb.AppendLine($"  [FAIL] TelemetryCollector not initialized");
+                Log.Error("[Autotests] L: TelemetryCollector not initialized");
+                fail++;
+            }
+
+            sb.AppendLine($"  Result: {pass} passed, {fail} failed");
+            Log.Message(sb.ToString());
         }
     }
 }

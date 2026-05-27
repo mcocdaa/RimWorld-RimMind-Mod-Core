@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
+using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
@@ -24,6 +25,9 @@ namespace RimMind.Application.Common.Models.Pipeline
         // ToolCall agentic loop data
         public IReadOnlyList<ToolResult>? ToolCallResults { get; set; }
         public int ToolCallRound { get; set; }
+
+        // Agent mode context for mode-aware middleware
+        public AgentModeId AgentModeId { get; set; }
 
         public LlmRequestContext() : base() { }
 

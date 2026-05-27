@@ -126,7 +126,7 @@ namespace RimMind.Infrastructure.Verse
                 var allModes = RimMindAPI.Modes?.All;
                 if (allModes != null && allModes.Count > 1)
                 {
-                    string currentModeName = Agent.CurrentMode?.DisplayName ?? (string)Agent.CurrentModeId;
+                    string currentModeName = Agent.CurrentMode?.DisplayName ?? Agent.CurrentModeId.Value;
                     yield return new Command_Action
                     {
                         defaultLabel = "RimMind.Agent.Gizmo.Mode".Translate(currentModeName),
@@ -143,10 +143,19 @@ namespace RimMind.Infrastructure.Verse
                                     break;
                                 }
                             }
-                            int nextIndex = (currentIndex + 1) % allModes.Count;
-                            var nextMode = allModes[nextIndex];
-                            if (nextMode.IsApplicable(Agent))
-                                Agent.SwitchMode(nextMode.ModeId);
+
+                            // Cycle through modes to find next applicable one
+                            int nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % allModes.Count;
+                            for (int attempt = 0; attempt < allModes.Count; attempt++)
+                            {
+                                var candidate = allModes[nextIndex];
+                                if (candidate.IsApplicable(Agent))
+                                {
+                                    Agent.SwitchMode(candidate.ModeId);
+                                    break;
+                                }
+                                nextIndex = (nextIndex + 1) % allModes.Count;
+                            }
                         },
                     };
                 }
