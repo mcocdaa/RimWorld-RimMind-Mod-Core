@@ -60,6 +60,7 @@
   <RimMind.Agent.Gizmo.Activate>Activate Agent</RimMind.Agent.Gizmo.Activate>
   <RimMind.Agent.Gizmo.Deactivate>Deactivate Agent</RimMind.Agent.Gizmo.Deactivate>
   <RimMind.Agent.Gizmo.ToggleDesc>Toggle PawnAgent active state</RimMind.Agent.Gizmo.ToggleDesc>
+  <RimMind.Agent.Gizmo.AgentState>Agent: {0}</RimMind.Agent.Gizmo.AgentState>
   <RimMind.Agent.Gizmo.DevView>Dev: View Agent</RimMind.Agent.Gizmo.DevView>
   <RimMind.Agent.Gizmo.DevViewDesc>Dump Agent internal state to log</RimMind.Agent.Gizmo.DevViewDesc>
   <RimMind.Agent.State.Active>Active</RimMind.Agent.State.Active>
@@ -341,6 +342,8 @@
   <!-- Agent Gizmo - Dialogue -->
   <RimMind.Agent.Gizmo.Dialogue>Chat</RimMind.Agent.Gizmo.Dialogue>
   <RimMind.Agent.Gizmo.DialogueDesc>Chat with the AI-controlled pawn</RimMind.Agent.Gizmo.DialogueDesc>
+  <!-- Agent Mode Switch Notification -->
+  <RimMind.Agent.ModeChanged>{0} switched to {1} mode</RimMind.Agent.ModeChanged>
   <!-- Agent Gizmo - Mode Switch -->
   <RimMind.Agent.Gizmo.Mode>Mode: {0}</RimMind.Agent.Gizmo.Mode>
   <RimMind.Agent.Gizmo.ModeDesc>Switch agent behavior mode (Reactive/Proactive)</RimMind.Agent.Gizmo.ModeDesc>

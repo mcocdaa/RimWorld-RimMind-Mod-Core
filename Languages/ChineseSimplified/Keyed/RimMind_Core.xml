@@ -60,6 +60,7 @@
   <RimMind.Agent.Gizmo.Activate>激活 Agent</RimMind.Agent.Gizmo.Activate>
   <RimMind.Agent.Gizmo.Deactivate>停用 Agent</RimMind.Agent.Gizmo.Deactivate>
   <RimMind.Agent.Gizmo.ToggleDesc>切换 PawnAgent 的激活状态</RimMind.Agent.Gizmo.ToggleDesc>
+  <RimMind.Agent.Gizmo.AgentState>Agent: {0}</RimMind.Agent.Gizmo.AgentState>
   <RimMind.Agent.Gizmo.DevView>Dev: 查看 Agent</RimMind.Agent.Gizmo.DevView>
   <RimMind.Agent.Gizmo.DevViewDesc>在日志中输出 Agent 内部状态</RimMind.Agent.Gizmo.DevViewDesc>
   <RimMind.Agent.State.Active>激活</RimMind.Agent.State.Active>
@@ -341,6 +342,8 @@
   <!-- Agent Gizmo - Dialogue -->
   <RimMind.Agent.Gizmo.Dialogue>对话</RimMind.Agent.Gizmo.Dialogue>
   <RimMind.Agent.Gizmo.DialogueDesc>与 AI 接管的小人对话</RimMind.Agent.Gizmo.DialogueDesc>
+  <!-- Agent Mode Switch Notification -->
+  <RimMind.Agent.ModeChanged>{0} 切换为 {1} 模式</RimMind.Agent.ModeChanged>
   <!-- Agent Gizmo - Mode Switch -->
   <RimMind.Agent.Gizmo.Mode>模式: {0}</RimMind.Agent.Gizmo.Mode>
   <RimMind.Agent.Gizmo.ModeDesc>切换小人行为模式（被动/主动）</RimMind.Agent.Gizmo.ModeDesc>

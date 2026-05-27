@@ -12,6 +12,7 @@ using RimMind.Domain.Events;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimWorld;
 using Verse;
 using Verse.AI;
 
@@ -225,6 +226,10 @@ namespace RimMind.Presentation.Agent
             _currentModeId = modeId;
             LastThinkTick = null;
 
+            int timestamp = Find.TickManager?.TicksGame ?? 0;
+
+            Log.Message($"[RimMind] {Pawn?.Label ?? Identity.DisplayName} mode changed: {oldModeId.Value} -> {modeId.Value}");
+
             var bus = _agentBus;
             if (bus != null)
             {
@@ -232,7 +237,19 @@ namespace RimMind.Presentation.Agent
                     Identity.NpcId,
                     Pawn?.thingIDNumber ?? -1,
                     oldModeId.Value,
-                    modeId.Value));
+                    modeId.Value,
+                    timestamp));
+            }
+
+            if (Current.Game != null)
+            {
+                var pawnLabel = Pawn?.Label ?? Identity.DisplayName;
+                var newLabel = newMode.DisplayName;
+                Messages.Message(
+                    "RimMind.Agent.ModeChanged".Translate(pawnLabel, newLabel),
+                    Pawn,
+                    MessageTypeDefOf.SilentInput,
+                    historical: false);
             }
         }
 
