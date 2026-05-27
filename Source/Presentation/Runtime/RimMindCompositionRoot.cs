@@ -246,7 +246,7 @@ namespace RimMind.Presentation.Runtime
 
             RimMindServiceLocator.Register<IAgentIdentityProvider>(new AgentIdentityProviderAdapter());
 
-            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor);
+            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor, logSink);
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
             var gameContextBuilder = new GameContextBuilder(

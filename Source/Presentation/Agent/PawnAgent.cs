@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
@@ -51,6 +52,7 @@ namespace RimMind.Presentation.Agent
         private IPawnRecorder _recorder;
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;
+        private readonly ILogSink? _log;
         private int _lastTick;
         private int _tickInterval;
 
@@ -64,11 +66,13 @@ namespace RimMind.Presentation.Agent
 
         public PawnAgent(Pawn pawn, IAgentTickSettings tickSettings, IAgentBus agentBus,
             IPawnPerceiver? perceiver = null, IPawnThinker? thinker = null,
-            IPawnActor? actor = null, IPawnRecorder? recorder = null)
+            IPawnActor? actor = null, IPawnRecorder? recorder = null,
+            ILogSink? log = null)
         {
             Pawn = pawn ?? throw new ArgumentNullException(nameof(pawn));
             _tickSettings = tickSettings;
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _log = log;
             _goalStack.SetAgentBus(_agentBus);
             _perceiver = perceiver!;
             _thinker = thinker!;
@@ -228,7 +232,7 @@ namespace RimMind.Presentation.Agent
 
             int timestamp = Find.TickManager?.TicksGame ?? 0;
 
-            Log.Message($"[RimMind] {Pawn?.Label ?? Identity.DisplayName} mode changed: {oldModeId.Value} -> {modeId.Value}");
+            _log?.Message($"[RimMind] {Pawn?.Label ?? Identity.DisplayName} mode changed: {oldModeId.Value} -> {modeId.Value}");
 
             var bus = _agentBus;
             if (bus != null)
@@ -334,7 +338,7 @@ namespace RimMind.Presentation.Agent
             {
                 concrete.RebuildCollaborators(
                     new PawnPerceiver(concrete, factory.AgentBus),
-                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus),
+                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus, factory.LogSink),
                     new PawnActor(concrete, factory.ActionExecutor),
                     new PawnRecorder(concrete, factory.AgentBus));
 

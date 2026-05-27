@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -29,6 +30,7 @@ namespace RimMind.Presentation.Agent
         private readonly IAgentTickSettings? _tickSettings;
         private readonly ProactiveBehaviorExecutor _proactiveExecutor;
         private readonly ThinkContextEnricher _contextEnricher;
+        private readonly ILogSink? _log;
         private int _lastThinkTick;
         private int _thinkCooldownTicks;
         private volatile bool _thinking;
@@ -44,13 +46,14 @@ namespace RimMind.Presentation.Agent
         private int _pendingToolCallRound;
         private string? _pendingTraceId;
 
-        public PawnThinker(IPawnAgent agent, IAgentTickSettings tickSettings, IAgentBus agentBus)
+        public PawnThinker(IPawnAgent agent, IAgentTickSettings tickSettings, IAgentBus agentBus, ILogSink? log = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _tickSettings = tickSettings;
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _log = log;
             _thinkCooldownTicks = _tickSettings?.ThinkCooldownTicks ?? DefaultThinkCooldownTicks;
-            _proactiveExecutor = new ProactiveBehaviorExecutor(agentBus);
+            _proactiveExecutor = new ProactiveBehaviorExecutor(agentBus, log);
             _contextEnricher = new ThinkContextEnricher();
         }
 
@@ -91,7 +94,7 @@ namespace RimMind.Presentation.Agent
                 var elapsed = Find.TickManager.TicksGame - _requestSentTick;
                 if (elapsed > RimMindDefaults.ThinkRequestTimeoutTicks)
                 {
-                    Log.Warning($"[RimMind] Think request timeout for {_agent.Identity.NpcId} after {elapsed} ticks, resetting");
+                    _log?.Warning($"[RimMind] Think request timeout for {_agent.Identity.NpcId} after {elapsed} ticks, resetting");
                     _thinking = false;
                     _requestSentTick = 0;
                     _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
@@ -157,7 +160,7 @@ namespace RimMind.Presentation.Agent
             catch (Exception ex)
             {
                 _thinking = false;
-                Log.Error($"[Think] Unexpected error for {_agent.Identity.NpcId}: {ex}");
+                _log?.Error($"[Think] Unexpected error for {_agent.Identity.NpcId}: {ex}");
             }
         }
 
@@ -176,6 +179,7 @@ namespace RimMind.Presentation.Agent
             _pendingAvailableTools = availableTools;
             _pendingToolCallRound = toolCallRound;
             _pendingTraceId = envelope.TraceId;
+            var modeId = _agent.CurrentModeId;
 
             RimMindAPI.Request.Send(envelope, (result, ctx) =>
             {
@@ -183,6 +187,8 @@ namespace RimMind.Presentation.Agent
                 _pendingResult = result;
                 _pendingContext = ctx;
                 _hasPendingCallback = true;
+                if (ctx != null)
+                    ctx.AgentModeId = modeId;
             });
         }
 
@@ -207,7 +213,7 @@ namespace RimMind.Presentation.Agent
                 {
                     _thinking = false;
                     _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
-                    Log.Warning($"[Think] AI request failed: {result.Error}");
+                    _log?.Warning($"[Think] AI request failed: {result.Error}");
                     return;
                 }
 
@@ -219,7 +225,7 @@ namespace RimMind.Presentation.Agent
                 {
                     _thinking = false;
                     _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
-                    Log.Warning($"[Think] Parse failed: {decision.Error}");
+                    _log?.Warning($"[Think] Parse failed: {decision.Error}");
                     return;
                 }
 
@@ -274,7 +280,7 @@ namespace RimMind.Presentation.Agent
             {
                 _thinking = false;
                 _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
-                Log.Error($"[Think] Error processing AI callback for {_agent.Identity.NpcId}: {ex}");
+                _log?.Error($"[Think] Error processing AI callback for {_agent.Identity.NpcId}: {ex}");
             }
             finally
             {

@@ -42,14 +42,24 @@
     <Compile Include="ArchTests\PhaseL\*.cs" />
     <Compile Include="ArchTests\PhaseN\*.cs" />
     <Compile Include="ArchTests\PhaseO\*.cs" />
+    <Compile Include="ArchTests\PhaseP1\*.cs" />
     <Compile Include="Agent\*.cs" Exclude="Agent\PawnThinkerTimeoutTests.cs" />
     <Compile Include="Agent\PhaseO\*.cs" />
     <Compile Include="Domain\*.cs" />
+    <Compile Include="Domain\ValueObjects\*.cs" />
+    <Compile Include="Domain\Llm\*.cs" />
     <Compile Include="MechanismToolHandlerTests.cs" />
     <Compile Include="MechanismPerMechanismTests.cs" />
     <Compile Include="MechanismListToolHandlerTests.cs" />
     <Compile Include="MechanismContractTests.cs" />
     <Compile Include="GameMechanismRegistryTests.cs" />
+    <Compile Include="Application\Models\Pipeline\*.cs" />
+    <Compile Include="Application\Stubs\*.cs" />
+    <Compile Include="Application\Features\Agent\Social\*.cs" />
+    <Compile Include="Application\Features\Agent\Planning\*.cs" />
+    <Compile Include="Application\Features\Agent\Reflection\*.cs" />
+    <Compile Include="Application\Features\Agent\Psychology\*.cs" />
+    <Compile Include="Application\Features\Agent\InnerVoice\*.cs" />
     <Compile Include="Presentation\Agent\*.cs" />
     <Compile Include="Infrastructure\Verse\*.cs" />
   </ItemGroup>
@@ -57,11 +67,11 @@
   <ItemGroup>
     <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**;../Source/Domain/Common/NetStandardCompat.cs" />
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
-    <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/GameMechanismRegistry.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHandler.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismListToolHandler.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHelper.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
   </ItemGroup>
 
 </Project>

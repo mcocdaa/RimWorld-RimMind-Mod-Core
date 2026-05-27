@@ -8,7 +8,7 @@ namespace RimMind.Tests.Presentation.Agent
     /// <summary>
     /// Verifies that PawnAgent.SwitchMode:
     /// 1. Fills the timestamp in AgentModeChangedEvent (not default 0)
-    /// 2. Logs the mode change via Log.Message
+    /// 2. Logs the mode change via ILogSink.Message
     /// 3. Shows a player notification via Messages.Message
     /// 4. Guards the Messages.Message call with Current.Game null check
     ///
@@ -43,12 +43,12 @@ namespace RimMind.Tests.Presentation.Agent
         }
 
         [Fact]
-        public void SwitchMode_Logs_ModeChange_Via_LogMessage()
+        public void SwitchMode_Logs_ModeChange_Via_LogSink()
         {
             var source = ReadSource();
 
-            // SwitchMode should call Verse.Log.Message to log the mode change
-            Assert.Contains("Log.Message", source);
+            // SwitchMode should call _log?.Message to log the mode change (ILogSink, not Verse.Log)
+            Assert.Contains("_log?.Message", source);
         }
 
         [Fact]

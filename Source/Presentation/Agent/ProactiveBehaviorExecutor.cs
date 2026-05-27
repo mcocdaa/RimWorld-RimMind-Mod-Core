@@ -2,13 +2,12 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Features.Agent.Modes;
 using RimMind.Domain.Events;
-using Verse;
 
 namespace RimMind.Presentation.Agent
 {
@@ -19,6 +18,7 @@ namespace RimMind.Presentation.Agent
     internal sealed class ProactiveBehaviorExecutor
     {
         private readonly IAgentBus _agentBus;
+        private readonly ILogSink? _log;
         private IDreamGenerator? _dreamGenerator;
         private IDreamThoughtInjector? _dreamThoughtInjector;
         private ITraitEvolver? _traitEvolver;
@@ -32,14 +32,15 @@ namespace RimMind.Presentation.Agent
         private ITraitEvolver? GetTraitEvolver()
             => _traitEvolver ??= RimMindServiceLocator.Get<ITraitEvolver>();
 
-        public ProactiveBehaviorExecutor(IAgentBus agentBus)
+        public ProactiveBehaviorExecutor(IAgentBus agentBus, ILogSink? log = null)
         {
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _log = log;
         }
 
         public void ExecuteProactiveExtensions(IPawnAgent agent, IAgentMode mode, int pawnId)
         {
-            if (mode is not ProactiveAgentMode proactive) return;
+            if (mode is not IProactiveExtensions proactive) return;
 
             ExecuteReflection(proactive, agent);
             ExecutePlanning(proactive, agent);
@@ -47,33 +48,33 @@ namespace RimMind.Presentation.Agent
             ExecuteTraitEvolution(proactive, agent, pawnId);
         }
 
-        private void ExecuteReflection(ProactiveAgentMode proactive, IPawnAgent agent)
+        private void ExecuteReflection(IProactiveExtensions proactive, IPawnAgent agent)
         {
             if (proactive.ReflectionStrategy?.ShouldReflect(agent) != true) return;
             proactive.ReflectionStrategy.ReflectAsync(agent).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
-                    Log.Warning($"[Think] Reflection failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
+                    _log?.Warning($"[Think] Reflection failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
                     return;
                 }
                 if (t.IsCompletedSuccessfully && t.Result.IsOk && t.Result.Value.Count > 0)
-                    Log.Message($"[RimMind] Reflection: {agent.Identity.NpcId} generated {t.Result.Value.Count} insights");
+                    _log?.Message($"[RimMind] Reflection: {agent.Identity.NpcId} generated {t.Result.Value.Count} insights");
             }, TaskScheduler.Current);
         }
 
-        private void ExecutePlanning(ProactiveAgentMode proactive, IPawnAgent agent)
+        private void ExecutePlanning(IProactiveExtensions proactive, IPawnAgent agent)
         {
             if (proactive.DailyPlanner?.ShouldPlan(agent) != true) return;
             proactive.DailyPlanner.PlanAsync(agent).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
-                    Log.Warning($"[Think] Planning failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
+                    _log?.Warning($"[Think] Planning failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
                     return;
                 }
                 if (t.IsCompletedSuccessfully && t.Result.IsOk && t.Result.Value.Count > 0)
-                    Log.Message($"[RimMind] Planning: {agent.Identity.NpcId} generated {t.Result.Value.Count} schedule blocks");
+                    _log?.Message($"[RimMind] Planning: {agent.Identity.NpcId} generated {t.Result.Value.Count} schedule blocks");
             }, TaskScheduler.Current);
         }
 
@@ -85,7 +86,7 @@ namespace RimMind.Presentation.Agent
             {
                 if (t.IsFaulted)
                 {
-                    Log.Warning($"[Think] Dream generation failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
+                    _log?.Warning($"[Think] Dream generation failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
                     return;
                 }
                 if (t.IsCompletedSuccessfully && t.Result.IsOk)
@@ -98,7 +99,7 @@ namespace RimMind.Presentation.Agent
             }, TaskScheduler.Current);
         }
 
-        private void ExecuteTraitEvolution(ProactiveAgentMode proactive, IPawnAgent agent, int pawnId)
+        private void ExecuteTraitEvolution(IProactiveExtensions proactive, IPawnAgent agent, int pawnId)
         {
             var traitEngine = proactive.TraitEvolutionEngine;
             if (traitEngine?.ShouldEvolve(agent) != true) return;
@@ -106,7 +107,7 @@ namespace RimMind.Presentation.Agent
             {
                 if (t.IsFaulted)
                 {
-                    Log.Warning($"[Think] Trait evolution failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
+                    _log?.Warning($"[Think] Trait evolution failed for {agent.Identity.NpcId}: {t.Exception?.InnerException?.Message}");
                     return;
                 }
                 if (t.IsCompletedSuccessfully && t.Result.IsOk)
