@@ -1,10 +1,6 @@
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Interfaces.Extension;
-using RimMind.Application.Features.Context;
-using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Presentation.Context;
 using RimMind.Presentation.Runtime;
 using Verse;
 using System;
@@ -83,17 +79,6 @@ namespace RimMind.Presentation
             public static IReadOnlyList<IParameterTuner> ParameterTuners
                 => RimMindRuntime.Instance.ParameterTunersList;
 
-            public static void RegisterPawnContextProvider(string key, Func<Pawn, string?> provider, int priority = 8)
-            {
-                ContextKeyRegistry.Register(key, ContextLayer.L4_History, priority / 10f,
-                    pawnObj =>
-                    {
-                        var p = pawnObj as Pawn;
-                        if (p == null) return new List<ContextEntry>();
-                        var value = provider(p);
-                        return string.IsNullOrEmpty(value) ? new List<ContextEntry>() : new List<ContextEntry> { new ContextEntry(value) };
-                    }, "External");
-            }
         }
     }
 }

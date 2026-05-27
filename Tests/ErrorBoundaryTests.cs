@@ -137,17 +137,17 @@ namespace RimMind.Presentation.Tests
         }
 
         [Fact]
-        public void Result_NpcChatResult_Err_StoresMessage()
+        public void Result_LlmResponse_Err_StoresMessage()
         {
-            var result = Result<NpcChatResult, RimMindError>.Err(RimMindErrors.StorageDriverFailed("test error message"));
+            var result = Result<LlmResponse, RimMindError>.Err(RimMindErrors.RemoteBackendFailed("test error message"));
             Assert.True(result.IsErr);
             Assert.Equal("test error message", result.Error.Message);
         }
 
         [Fact]
-        public void Result_NpcChatResult_Ok_IsSuccess()
+        public void Result_LlmResponse_Ok_IsSuccess()
         {
-            var result = Result<NpcChatResult, RimMindError>.Ok(new NpcChatResult());
+            var result = Result<LlmResponse, RimMindError>.Ok(new LlmResponse());
             Assert.True(result.IsOk);
         }
     }

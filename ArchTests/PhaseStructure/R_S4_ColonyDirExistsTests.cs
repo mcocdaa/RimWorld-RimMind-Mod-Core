@@ -16,12 +16,12 @@ namespace RimMind.Core.ArchTests.PhaseStructure
                 "Colony/ 目录为 P1/P2 机制预留");
         }
 
-        [Fact(Skip = "AgentMode/ 目录为 I 阶段预留，尚未创建"), Trait("Phase", "Structure")]
+        [Fact, Trait("Phase", "Structure")]
         public void Application_AgentMode_Dir_Should_Exist()
         {
-            var agentModeDir = Path.Combine(SourceRoot, "Application", "Features", "AgentMode");
+            var agentModeDir = Path.Combine(SourceRoot, "Application", "Features", "Agent", "Modes");
             Directory.Exists(agentModeDir).Should().BeTrue(
-                "AgentMode/ 目录为 I 阶段预留");
+                "Agent/Modes/ directory must exist for I phase (IAgentMode + IThinkStrategy implementations)");
         }
 
         [Fact(Skip = "Pipeline/Unified/ 目录为 K 阶段预留，尚未创建"), Trait("Phase", "Structure")]

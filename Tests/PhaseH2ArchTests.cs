@@ -11,7 +11,7 @@ namespace RimMind.Presentation.Tests
             Path.Combine(TestContext.BasePath, "..", "..", "..", "..", ".."));
 
         private static readonly string ActionsSourceDir = Path.Combine(RepoRoot, "RimMind-Actions", "Source");
-        private static readonly string MechanismsDir = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Kernel", "Mechanisms");
+        private static readonly string MechanismsDir = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Infrastructure", "Mechanisms");
 
         private static IEnumerable<string> GetProductionCsFiles(string root)
         {
@@ -30,7 +30,7 @@ namespace RimMind.Presentation.Tests
                 ["world.storyteller"] = "IncidentDef",
             };
 
-            var runtimeFile = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Core", "Runtime", "RimMindRuntime.cs");
+            var runtimeFile = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Presentation", "Runtime", "RimMindRuntime.cs");
             Assert.True(File.Exists(runtimeFile), "RimMindRuntime.cs must exist");
             var runtimeContent = File.ReadAllText(runtimeFile);
 
@@ -260,7 +260,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void H2_RegisterAllMechanisms_InRuntime()
         {
-            var runtimeFile = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Core", "Runtime", "RimMindRuntime.cs");
+            var runtimeFile = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Presentation", "Runtime", "RimMindRuntime.cs");
             Assert.True(File.Exists(runtimeFile), "RimMindRuntime.cs must exist");
 
             var content = File.ReadAllText(runtimeFile);

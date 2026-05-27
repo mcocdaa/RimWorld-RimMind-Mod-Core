@@ -355,4 +355,29 @@
   <RimMind.Application.Scenario.Storyteller>叙事场景</RimMind.Application.Scenario.Storyteller>
   <RimMind.Application.Scenario.Memory>暗记忆生成场景</RimMind.Application.Scenario.Memory>
   <RimMind.UpgradeWarning>RimMind v2.0 包含破坏性变更。旧存档可能不完全兼容。AI 请求队列和部分内部结构已重组。建议开始新游戏以获得最佳体验。</RimMind.UpgradeWarning>
+  <!-- RemoteSyncSettingsUI.cs -->
+  <RimMind.Settings.Tab.RemoteSync>远程同步</RimMind.Settings.Tab.RemoteSync>
+  <RimMind.Settings.RemoteSync.NotAvailable>远程同步服务不可用。</RimMind.Settings.RemoteSync.NotAvailable>
+  <RimMind.Settings.RemoteSync.Section.AutoSync>自动同步</RimMind.Settings.RemoteSync.Section.AutoSync>
+  <RimMind.Settings.RemoteSync.AutoPull>加载时自动拉取</RimMind.Settings.RemoteSync.AutoPull>
+  <RimMind.Settings.RemoteSync.AutoPull.Desc>加载存档时自动从远程拉取数据。</RimMind.Settings.RemoteSync.AutoPull.Desc>
+  <RimMind.Settings.RemoteSync.AutoPush>变更时自动推送</RimMind.Settings.RemoteSync.AutoPush>
+  <RimMind.Settings.RemoteSync.AutoPush.Desc>本地数据变更时自动推送到远程存储。</RimMind.Settings.RemoteSync.AutoPush.Desc>
+  <RimMind.Settings.RemoteSync.Section.Granularity>同步粒度</RimMind.Settings.RemoteSync.Section.Granularity>
+  <RimMind.Settings.RemoteSync.SyncMemory>同步记忆</RimMind.Settings.RemoteSync.SyncMemory>
+  <RimMind.Settings.RemoteSync.SyncMemory.Desc>将智能体记忆数据纳入远程同步。</RimMind.Settings.RemoteSync.SyncMemory.Desc>
+  <RimMind.Settings.RemoteSync.SyncSettings>同步设置</RimMind.Settings.RemoteSync.SyncSettings>
+  <RimMind.Settings.RemoteSync.SyncSettings.Desc>将模组设置纳入远程同步。</RimMind.Settings.RemoteSync.SyncSettings.Desc>
+  <RimMind.Settings.RemoteSync.SyncAgentIdentity>同步智能体身份</RimMind.Settings.RemoteSync.SyncAgentIdentity>
+  <RimMind.Settings.RemoteSync.SyncAgentIdentity.Desc>将智能体身份和人格数据纳入远程同步。</RimMind.Settings.RemoteSync.SyncAgentIdentity.Desc>
+  <RimMind.Settings.RemoteSync.Section.Manual>手动操作</RimMind.Settings.RemoteSync.Section.Manual>
+  <RimMind.Settings.RemoteSync.NotConfigured>远程后端未配置。手动操作需要已配置的远程存储后端。</RimMind.Settings.RemoteSync.NotConfigured>
+  <RimMind.Settings.RemoteSync.ManualPull>从远程拉取</RimMind.Settings.RemoteSync.ManualPull>
+  <RimMind.Settings.RemoteSync.ManualPush>推送到远程</RimMind.Settings.RemoteSync.ManualPush>
+  <RimMind.Settings.RemoteSync.Pulling>正在拉取...</RimMind.Settings.RemoteSync.Pulling>
+  <RimMind.Settings.RemoteSync.Pushing>正在推送...</RimMind.Settings.RemoteSync.Pushing>
+  <RimMind.Settings.RemoteSync.PullSuccess>拉取成功。</RimMind.Settings.RemoteSync.PullSuccess>
+  <RimMind.Settings.RemoteSync.PullFailed>拉取失败：{0}</RimMind.Settings.RemoteSync.PullFailed>
+  <RimMind.Settings.RemoteSync.PushSuccess>推送成功。</RimMind.Settings.RemoteSync.PushSuccess>
+  <RimMind.Settings.RemoteSync.PushFailed>推送失败：{0}</RimMind.Settings.RemoteSync.PushFailed>
 </LanguageData>

@@ -158,6 +158,9 @@ namespace RimMind.Application.Common.Models
         /// <summary>Cooldown ticks between pawn think operations.</summary>
         public const int ThinkCooldownTicks = 30000;
 
+        /// <summary>Timeout in game ticks before a think request is considered lost (≈30 seconds at 60 tps).</summary>
+        public const int ThinkRequestTimeoutTicks = 1800;
+
         // History
         /// <summary>Maximum history entries per NPC.</summary>
         public const int MaxEntriesPerNpc = 200;
@@ -263,12 +266,20 @@ namespace RimMind.Application.Common.Models
         /// </summary>
         public static class MiddlewareOrder
         {
+            public const int ShortCircuit = 10;
+            public const int TraceContext = 20;
+            public const int NpcEnrich = 30;
+            public const int ContextBuild = 40;
+            public const int ContextFeedback = 45;
             public const int RequestSanitize = 50;
             public const int Cache = 100;
-            public const int Dispatch = 200;
-            public const int LayerBuild = 300;
+            public const int Telemetry = 200;
+            public const int CircuitBreaker = 300;
+            public const int UnifiedRetry = 400;
             public const int ClientInvoke = 500;
             public const int ToolCallDispatch = 600;
+            public const int Dispatch = 200;
+            public const int LayerBuild = 300;
             public const int Retry = 800;
             public const int NpcChatRetry = 800;
             public const int CacheStore = 900;

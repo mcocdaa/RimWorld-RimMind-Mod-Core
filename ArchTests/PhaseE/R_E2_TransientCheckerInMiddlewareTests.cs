@@ -16,12 +16,10 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         private static readonly HashSet<string> AllowedFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
-            @"Application\Features\Pipeline\AI\RetryMiddleware.cs",
+            @"Application\Features\Pipeline\Unified\RetryMiddleware.cs",
             @"Application\Common\Behaviours\CommonRetryMiddleware.cs",
             @"Application\Features\Pipeline\Npc\NpcChatRetryMiddleware.cs",
-            @"Presentation\Pipeline\Npc\NpcChatPipelineFactory.cs",
-            @"Presentation\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Presentation\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Application\Features\Pipeline\Unified\UnifiedRequestPipelineFactory.cs",
             @"Application\Features\Pipeline\Bus\BusPublishPipelineFactory.cs",
         };
 
@@ -124,7 +122,7 @@ namespace RimMind.Core.ArchTests.PhaseE
 
             var expectedMiddlewareFiles = new[]
             {
-                Path.Combine(sourceDir, "Application", "Features", "Pipeline", "AI", "RetryMiddleware.cs"),
+                Path.Combine(sourceDir, "Application", "Features", "Pipeline", "Unified", "RetryMiddleware.cs"),
             };
 
             foreach (var expected in expectedMiddlewareFiles)

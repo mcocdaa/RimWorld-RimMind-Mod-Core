@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Features.Queue;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
+using DomainAIRequestPriority = RimMind.Domain.Llm.AIRequestPriority;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -30,17 +33,36 @@ namespace RimMind.Presentation.Runtime
             _processInterval = queueSettings?.QueueProcessInterval ?? RimMindDefaults.QueueProcessInterval;
         }
 
-        public void Enqueue(AIRequest request, Action<AIResponse> onComplete, IAIClient client)
+        public void Enqueue(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> onComplete, IAIClient client)
         {
-            if (request == null) return;
-            _queue.Add(new QueuedRequest(request, onComplete, client));
+            if (envelope == null) return;
+            _queue.Add(new QueuedRequest(envelope, onComplete, client));
         }
 
-        public void EnqueueImmediate(AIRequest request, Action<AIResponse> onComplete, IAIClient client)
+        public void EnqueueImmediate(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> onComplete, IAIClient client)
         {
-            if (request == null) return;
-            request.Priority = AIRequestPriority.Immediate;
-            _queue.Insert(0, new QueuedRequest(request, onComplete, client));
+            if (envelope == null) return;
+            var immediateEnvelope = new LlmRequestEnvelope
+            {
+                RequestId = envelope.RequestId,
+                TraceId = envelope.TraceId,
+                ScenarioId = envelope.ScenarioId,
+                ModId = envelope.ModId,
+                Messages = envelope.Messages,
+                JsonSchema = envelope.JsonSchema,
+                Tools = envelope.Tools,
+                MaxTokens = envelope.MaxTokens,
+                Temperature = envelope.Temperature,
+                Priority = DomainAIRequestPriority.Immediate,
+                ExpireAtTicks = envelope.ExpireAtTicks,
+                MaxRetryCount = envelope.MaxRetryCount,
+                IsStreaming = envelope.IsStreaming,
+                OnStreamChunk = envelope.OnStreamChunk,
+                Ct = envelope.Ct,
+                NpcId = envelope.NpcId,
+                GameStateInfo = envelope.GameStateInfo,
+            };
+            _queue.Insert(0, new QueuedRequest(immediateEnvelope, onComplete, client));
         }
 
         public void PauseQueue() => _paused = true;
@@ -51,7 +73,7 @@ namespace RimMind.Presentation.Runtime
         {
             var result = new List<TrackedRequest>();
             foreach (var qr in _queue)
-                result.Add(new TrackedRequest(qr.Request.RequestId, qr.Request.ModId, qr.Request.Priority, "Queued"));
+                result.Add(new TrackedRequest(qr.Envelope.RequestId, qr.Envelope.ModId, qr.Envelope.Priority, "Queued"));
             return result;
         }
 
@@ -79,27 +101,35 @@ namespace RimMind.Presentation.Runtime
 
         private void ProcessRequest(QueuedRequest item)
         {
-            _activeRequests.Add(new TrackedRequest(item.Request.RequestId, item.Request.ModId, item.Request.Priority, "Active"));
-            item.Client.SendAsync(item.Request).ContinueWith(t =>
+            _activeRequests.Add(new TrackedRequest(item.Envelope.RequestId, item.Envelope.ModId, item.Envelope.Priority, "Active"));
+            item.Client.SendAsync(item.Envelope).ContinueWith(t =>
             {
                 _activeCount--;
-                _activeRequests.RemoveAll(r => r.RequestId == item.Request.RequestId);
-                if (t.IsCompletedSuccessfully && t.Result.IsOk && t.Result.Value != null)
-                    item.OnComplete(t.Result.Value);
+                _activeRequests.RemoveAll(r => r.RequestId == item.Envelope.RequestId);
+                if (t.IsCompletedSuccessfully && t.Result.IsOk)
+                {
+                    item.OnComplete(t.Result);
+                }
                 else
-                    item.OnComplete(AIResponse.Ok(item.Request.RequestId, "", 0));
+                {
+                    var errResult = t.Result.IsErr
+                        ? t.Result
+                        : Result<LlmResponse, RimMindError>.Err(
+                            new RimMindError(RimMindErrorCode.InternalError, "Unknown error"));
+                    item.OnComplete(errResult);
+                }
             });
         }
 
         private class QueuedRequest
         {
-            public AIRequest Request;
-            public Action<AIResponse> OnComplete;
+            public LlmRequestEnvelope Envelope;
+            public Action<Result<LlmResponse, RimMindError>> OnComplete;
             public IAIClient Client;
 
-            public QueuedRequest(AIRequest request, Action<AIResponse> onComplete, IAIClient client)
+            public QueuedRequest(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> onComplete, IAIClient client)
             {
-                Request = request;
+                Envelope = envelope;
                 OnComplete = onComplete;
                 Client = client;
             }

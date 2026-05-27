@@ -15,6 +15,12 @@ namespace RimMind.Application.Features.Flywheel
             = new ConcurrentDictionary<string, float>();
         private readonly ILogSink? _log;
 
+        /// <summary>L2: per-key priority overrides set by the flywheel tuning loop.</summary>
+        public Dictionary<string, float> KeyPriorityOverrides { get; set; } = new Dictionary<string, float>();
+
+        /// <summary>L2: per-key feedback scores from IRelevanceLearner (populated in L5).</summary>
+        public Dictionary<string, float> KeyFeedbackScores { get; set; } = new Dictionary<string, float>();
+
         public event Action<string, float>? OnParameterChanged;
 
         public FlywheelParameterStore(ILogSink? log = null)
@@ -68,8 +74,14 @@ namespace RimMind.Application.Features.Flywheel
         {
             _defaults["ContextBudget"] = 1.0f;
             _defaults["MaxCacheEntries"] = 200f;
-            _defaults["W1"] = 0.4f;
-            _defaults["W2"] = 0.6f;
+            _defaults["W1"] = 0.30f;
+            _defaults["W2"] = 0.25f;
+            _defaults["W3"] = 0.15f;
+            _defaults["W4"] = 0.10f;
+            _defaults["W5"] = 0.15f;
+            _defaults["W6"] = 0.05f;
+            _defaults["RecencyHalflife"] = 30000f;
+            _defaults["CooldownWindow"] = 5000f;
             _defaults["Alpha"] = 0.01f;
             _defaults["AlphaSmooth"] = 0.7f;
             _defaults["PromoteThreshold"] = 0.8f;
@@ -100,9 +112,48 @@ namespace RimMind.Application.Features.Flywheel
             }
         }
 
-        [Obsolete("Placeholder - not yet implemented")]
-        public void FinalizeInit()
+        public (List<string> keys, List<float> values) GetKeyPriorityOverridesSnapshot()
         {
+            var keys = new List<string>();
+            var values = new List<float>();
+            foreach (var kvp in KeyPriorityOverrides)
+            {
+                keys.Add(kvp.Key);
+                values.Add(kvp.Value);
+            }
+            return (keys, values);
+        }
+
+        public void LoadKeyPriorityOverridesSnapshot(List<string> keys, List<float> values)
+        {
+            KeyPriorityOverrides.Clear();
+            if (keys != null && values != null)
+            {
+                for (int i = 0; i < System.Math.Min(keys.Count, values.Count); i++)
+                    KeyPriorityOverrides[keys[i]] = values[i];
+            }
+        }
+
+        public (List<string> keys, List<float> values) GetKeyFeedbackScoresSnapshot()
+        {
+            var keys = new List<string>();
+            var values = new List<float>();
+            foreach (var kvp in KeyFeedbackScores)
+            {
+                keys.Add(kvp.Key);
+                values.Add(kvp.Value);
+            }
+            return (keys, values);
+        }
+
+        public void LoadKeyFeedbackScoresSnapshot(List<string> keys, List<float> values)
+        {
+            KeyFeedbackScores.Clear();
+            if (keys != null && values != null)
+            {
+                for (int i = 0; i < System.Math.Min(keys.Count, values.Count); i++)
+                    KeyFeedbackScores[keys[i]] = values[i];
+            }
         }
 
         public void RecordAction(string npcId, string actionType)

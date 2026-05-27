@@ -15,7 +15,10 @@ namespace RimMind.Application.Common.Interfaces.Flywheel
         Dictionary<string, float> GetDefaults();
         (List<string> keys, List<float> values) GetSaveSnapshot();
         void LoadFromSnapshot(List<string> keys, List<float> values);
-        void FinalizeInit();
+        (List<string> keys, List<float> values) GetKeyPriorityOverridesSnapshot();
+        void LoadKeyPriorityOverridesSnapshot(List<string> keys, List<float> values);
+        (List<string> keys, List<float> values) GetKeyFeedbackScoresSnapshot();
+        void LoadKeyFeedbackScoresSnapshot(List<string> keys, List<float> values);
         void RecordAction(string npcId, string actionType);
         event Action<string, float>? OnParameterChanged;
     }

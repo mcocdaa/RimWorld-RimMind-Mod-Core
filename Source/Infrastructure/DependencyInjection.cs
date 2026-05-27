@@ -6,11 +6,9 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
-using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Infrastructure.Mechanisms;
-using RimMind.Infrastructure.Persistence;
 using RimMind.Infrastructure.Services.Clients.OpenAI;
 using RimMind.Infrastructure.Services.Clients.Player2;
 using RimMind.Infrastructure.Services.Verse;
@@ -36,7 +34,6 @@ namespace RimMind.Infrastructure
         public IWindowService WindowService { get; init; } = null!;
         public IAgentActiveChecker AgentActiveChecker { get; init; } = null!;
         public IPlayer2Lifecycle Player2Lifecycle { get; init; } = null!;
-        public IStorageDriverFactory StorageDriverFactory { get; init; } = null!;
     }
 
     public static class DependencyInjection
@@ -76,9 +73,6 @@ namespace RimMind.Infrastructure
             var player2Lifecycle = new Player2LifecycleService(settingsProvider);
             RimMindServiceLocator.Register<IPlayer2Lifecycle>(player2Lifecycle);
 
-            var storageDriverFactory = new StorageDriverFactoryService();
-            RimMindServiceLocator.Register<IStorageDriverFactory>(storageDriverFactory);
-
             return new InfrastructureServiceBag
             {
                 AudioPlayer = audioPlayer,
@@ -90,8 +84,7 @@ namespace RimMind.Infrastructure
                 MechanismRegistry = mechanismRegistry,
                 WindowService = windowService,
                 AgentActiveChecker = agentActiveChecker,
-                Player2Lifecycle = player2Lifecycle,
-                StorageDriverFactory = storageDriverFactory
+                Player2Lifecycle = player2Lifecycle
             };
         }
 

@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Domain.Common;
+using RimMind.Domain.Llm;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Common.Interfaces.Internal
 {
     public interface IAIRequestQueue
     {
         [ThreadAffinity(ThreadAffinityKind.Any)]
-        void Enqueue(AIRequest request, Action<AIResponse> callback, IAIClient client);
-        void EnqueueImmediate(AIRequest request, Action<AIResponse> callback, IAIClient client);
+        void Enqueue(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> callback, IAIClient client);
+        void EnqueueImmediate(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> callback, IAIClient client);
         bool CancelRequest(string requestId);
         void CancelAllRequests();
         void PauseQueue();

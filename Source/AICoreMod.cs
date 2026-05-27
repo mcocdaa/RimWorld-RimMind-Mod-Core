@@ -2,17 +2,18 @@ using System;
 using HarmonyLib;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Context;
-using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Presentation.Runtime;
-using RimMind.Presentation.Settings;
 using RimMind.Application.Features.Json;
 using RimMind.Application.Features.Flywheel;
+using RimMind.Presentation.Context;
 using RimMind.Presentation.UI;
+using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;
 
@@ -76,8 +77,17 @@ namespace RimMind.Presentation
             ScenarioRegistry.RegisterCoreScenarios(
                 runtime.GetService<ITranslationService>(),
                 runtime.GetService<ILogSink>());
-            RelevanceTable.RegisterCoreRelevance();
-            ContextKeyRegistry.RegisterCoreKeys();
+
+            // L3: Use instance-based RelevanceTable
+            var relevanceTable = runtime.RelevanceTable as RelevanceTableImpl;
+            relevanceTable?.RegisterCoreRelevance();
+
+            // L3: Register Core context providers via new ContextProviderDef API
+            CoreContextProviders.RegisterAll(
+                runtime.ContextKeys,
+                runtime.GetService<ITranslationService>(),
+                runtime.GetService<IContextKeyProvider>(),
+                runtime.GetService<INpcManager>());
         }
 
         public override string SettingsCategory() => "RimMind";

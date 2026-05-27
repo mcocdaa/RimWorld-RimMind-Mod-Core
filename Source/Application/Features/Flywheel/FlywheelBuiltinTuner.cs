@@ -20,9 +20,5 @@ namespace RimMind.Application.Features.Flywheel
             return true;
         }
 
-        [Obsolete("Placeholder - not yet implemented")]
-        public void Tune(object config)
-        {
-        }
     }
 }

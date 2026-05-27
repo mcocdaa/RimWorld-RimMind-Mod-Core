@@ -6,7 +6,10 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Npc;
+using RimMind.Domain.Agent.Modes;
+using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
+using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
 using Verse;
 using Verse.AI;
@@ -16,13 +19,15 @@ namespace RimMind.Presentation.Agent
     public class PawnActor : IPawnActor
     {
         private readonly IPawnAgent _agent;
+        private readonly IActionExecutor? _actionExecutor;
         private Verse.AI.Job? _pendingJob;
         private int _lastActionTick;
         private int _actionCooldown = RimMindDefaults.DefaultActionCooldown;
 
-        public PawnActor(IPawnAgent agent)
+        public PawnActor(IPawnAgent agent, IActionExecutor? actionExecutor = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+            _actionExecutor = actionExecutor;
         }
 
         public bool HasPendingJob => _pendingJob != null;
@@ -49,8 +54,33 @@ namespace RimMind.Presentation.Agent
         public bool TryExecuteAction(string actionId, string? target = null)
         {
             if (string.IsNullOrEmpty(actionId)) return false;
+
+            if (_actionExecutor == null || !_actionExecutor.CanExecute(actionId))
+            {
+                _lastActionTick = Find.TickManager.TicksGame;
+                return false;
+            }
+
+            var decision = new AgentDecision(
+                ActionIntent: actionId,
+                Reason: "",
+                TargetPawnId: target,
+                Param: null);
+
+            var result = ExecuteDecision(decision);
             _lastActionTick = Find.TickManager.TicksGame;
-            return true;
+            return result.IsOk;
+        }
+
+        public Result<Unit, RimMindError> ExecuteDecision(AgentDecision decision)
+        {
+            if (decision == null)
+                return Result<Unit, RimMindError>.Err(RimMindErrors.Internal("AgentDecision is null"));
+
+            if (_actionExecutor == null)
+                return Result<Unit, RimMindError>.Err(RimMindErrors.Internal("IActionExecutor not available"));
+
+            return _actionExecutor.ExecuteDecision(decision, _agent.Pawn.thingIDNumber);
         }
     }
 }

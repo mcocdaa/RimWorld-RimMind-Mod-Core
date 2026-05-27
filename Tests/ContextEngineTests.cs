@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -14,7 +16,6 @@ using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Settings;
-using RimMind.Presentation.Context;
 using Verse;
 using Xunit;
 
@@ -33,6 +34,8 @@ namespace RimMind.Presentation.Tests
         private readonly RimMindCoreSettings? _originalSettings;
         private readonly IFlywheelParameterStore? _originalFlywheel;
         private readonly NpcManager _npcManager;
+        private readonly ContextKeyRegistryImpl _keyRegistry;
+        private readonly RelevanceTableImpl _relevanceTable;
 
         public ContextEngineTests()
         {
@@ -56,8 +59,10 @@ namespace RimMind.Presentation.Tests
             };
             var flywheel = new FlywheelParameterStore();
             flywheel.FinalizeInit();
+            _keyRegistry = new ContextKeyRegistryImpl();
+            _relevanceTable = new RelevanceTableImpl();
             ScenarioRegistry.RegisterCoreScenarios();
-            RelevanceTable.RegisterCoreRelevance();
+            _relevanceTable.RegisterCoreRelevance();
         }
 
         public void Dispose()
@@ -66,16 +71,17 @@ namespace RimMind.Presentation.Tests
             RimMindCoreMod.Settings = _originalSettings;
             if (_originalFlywheel != null)
                 RimMindServiceLocator.Register<IFlywheelParameterStore>(_originalFlywheel);
-            ContextKeyRegistry.Clear();
+            _keyRegistry.Clear();
             ScenarioRegistry.Clear();
-            RelevanceTable.Clear();
+            _relevanceTable.Clear();
             _npcManager.ClearPawnIndex();
             RimMindServiceLocator.Reset();
         }
 
         private void RegisterTestKey(string key, ContextLayer layer, float priority, string content)
         {
-            ContextKeyRegistry.Register(key, layer, priority, _ => new List<ContextEntry> { new ContextEntry(content) }, "Test");
+            _keyRegistry.Register(new ContextProviderDef(key, layer, priority,
+                async (ctx, ct) => content, "Test", stalenessTicks: 0));
         }
 
         private ContextRequest CreateRequest(string? scenario = null)
@@ -146,8 +152,8 @@ namespace RimMind.Presentation.Tests
         {
             int callCount = 0;
             string[] values = { "value_A", "value_B" };
-            ContextKeyRegistry.Register("changing_key", ContextLayer.L3_State, 0.5f,
-                _ => new List<ContextEntry> { new ContextEntry(values[callCount]) }, "Test");
+            _keyRegistry.Register(new ContextProviderDef("changing_key", ContextLayer.L3_State, 0.5f,
+                async (ctx, ct) => values[callCount], "Test", stalenessTicks: 0));
 
             var first = _engine.BuildSnapshot(CreateRequest());
             Assert.NotNull(first);
@@ -166,8 +172,8 @@ namespace RimMind.Presentation.Tests
         {
             int callCount = 0;
             string[] values = { "original", "updated" };
-            ContextKeyRegistry.Register("diff_key", ContextLayer.L3_State, 0.5f,
-                _ => new List<ContextEntry> { new ContextEntry(values[callCount]) }, "Test");
+            _keyRegistry.Register(new ContextProviderDef("diff_key", ContextLayer.L3_State, 0.5f,
+                async (ctx, ct) => values[callCount], "Test", stalenessTicks: 0));
 
             var first = _engine.BuildSnapshot(CreateRequest());
             Assert.NotNull(first);

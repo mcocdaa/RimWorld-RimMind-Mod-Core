@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
-using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Context;
+using RimMind.Presentation.Runtime;
 
 namespace RimMind.Presentation
 {
@@ -39,34 +37,11 @@ namespace RimMind.Presentation
             public static int GetScenarioBaseRounds(string scenarioId)
                 => ScenarioRegistry.GetBaseRounds(scenarioId);
 
-            // ── ContextKeyRegistry ──
+            // ── ContextKeyRegistry (instance-based via RimMindRuntime) ──
 
-            public static void RegisterContextKey(string key, ContextLayer layer, float priority,
-                Func<object, List<ContextEntry>> provider, string ownerMod,
-                bool isIndexable = false, float[]? keyEmbedding = null)
-                => ContextKeyRegistry.Register(key, layer, priority, provider, ownerMod,
-                    isIndexable, keyEmbedding);
-
-            public static bool UnregisterContextKey(string key)
-                => ContextKeyRegistry.Unregister(key);
-
-            public static string? CurrentScenario
-            {
-                get => ContextKeyRegistry.CurrentScenario;
-                set => ContextKeyRegistry.CurrentScenario = value ?? string.Empty;
-            }
-
-            public static string? CurrentSpeakerName
-            {
-                get => ContextKeyRegistry.CurrentSpeakerName;
-                set => ContextKeyRegistry.CurrentSpeakerName = value;
-            }
-
-            public static bool CurrentIsMonologue
-            {
-                get => ContextKeyRegistry.CurrentIsMonologue;
-                set => ContextKeyRegistry.CurrentIsMonologue = value;
-            }
+            public static IContextKeyRegistry ContextKeys => RimMindRuntime.Instance.ContextKeys;
+            public static IRelevanceTable RelevanceTable => RimMindRuntime.Instance.RelevanceTable;
+            public static IRelevanceLearner ContextLearner => RimMindRuntime.Instance.ContextLearner;
 
             // ── SchemaRegistry ──
 

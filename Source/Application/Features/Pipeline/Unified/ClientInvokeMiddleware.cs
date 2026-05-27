@@ -1,0 +1,108 @@
+using System;
+using RimMind.Application.Features.Llm;
+using System.Threading.Tasks;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
+using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Llm;
+using RimMind.Domain.ValueObjects;
+
+namespace RimMind.Application.Features.Pipeline.Unified
+{
+    internal sealed class ClientInvokeMiddleware : IMiddleware<LlmRequestContext>
+    {
+        public string Name => "UnifiedClientInvoke";
+        public int Order => RimMindDefaults.MiddlewareOrder.ClientInvoke;
+        public string Id => "UnifiedClientInvoke";
+        public string OwnerModId => "RimMindCore";
+
+        private readonly ILogSink? _log;
+
+        public ClientInvokeMiddleware(ILogSink? log = null)
+        {
+            _log = log;
+        }
+
+        public async Task InvokeAsync(LlmRequestContext context, MiddlewareDelegate<LlmRequestContext> next)
+        {
+            var client = context.Client;
+            if (client == null)
+            {
+                _log?.Warning("[UnifiedClientInvoke] No client available");
+                context.Result = Result<LlmResponse, RimMindError>.Err(
+                    RimMindErrors.ClientNotConfigured("UnifiedClientInvoke"));
+                context.ShortCircuit("NoClient");
+                return;
+            }
+
+            if (context.Envelope.IsStreaming && client.SupportsStreaming)
+            {
+                await InvokeStreamingAsync(context, client);
+            }
+            else
+            {
+                await InvokeNonStreamingAsync(context, client);
+            }
+
+            await next(context);
+        }
+
+        private async Task InvokeNonStreamingAsync(LlmRequestContext context, IAIClient client)
+        {
+            var result = await client.SendAsync(context.Envelope);
+            if (result.IsOk)
+            {
+                context.Result = result;
+            }
+            else
+            {
+                _log?.Warning($"[UnifiedClientInvoke] Error: {result.Error.Message}");
+                context.Result = result;
+            }
+        }
+
+        private async Task InvokeStreamingAsync(LlmRequestContext context, IAIClient client)
+        {
+            // Streaming: use SendStreamAsync with callback; the Result now carries the final LlmResponse
+            var aggregator = new ChunkAggregator(context.Envelope.RequestId);
+            var result = await client.SendStreamAsync(context.Envelope, chunk =>
+            {
+                aggregator.Append(chunk);
+            }, context.Ct);
+
+            if (result.IsErr)
+            {
+                _log?.Warning($"[UnifiedClientInvoke] Stream error: {result.Error.Message}");
+                aggregator.SetError(result.Error);
+                var errorResult = aggregator.BuildFinalResponse();
+                context.Result = errorResult;
+                return;
+            }
+
+            // Use the LlmResponse from the Result (authoritative), enriched with pipeline metadata
+            var response = result.Value;
+            var processingMs = (long)(DateTime.UtcNow - context.StartTimeUtc).TotalMilliseconds;
+            var enriched = new LlmResponse
+            {
+                RequestId = response.RequestId,
+                Content = response.Content,
+                ToolCallsJson = response.ToolCallsJson,
+                ReasoningContent = response.ReasoningContent,
+                TokensUsed = response.TokensUsed,
+                PromptTokens = response.PromptTokens,
+                CompletionTokens = response.CompletionTokens,
+                CachedTokens = response.CachedTokens,
+                State = response.State,
+                Priority = context.Envelope.Priority,
+                AttemptCount = context.RetryCount + 1,
+                QueueWaitMs = response.QueueWaitMs,
+                ProcessingMs = processingMs,
+                HttpStatusCode = response.HttpStatusCode,
+            };
+
+            context.Result = Result<LlmResponse, RimMindError>.Ok(enriched);
+        }
+    }
+}

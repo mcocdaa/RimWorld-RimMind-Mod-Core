@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Llm;
 using Verse;
 
 namespace RimMind.Presentation.Agent

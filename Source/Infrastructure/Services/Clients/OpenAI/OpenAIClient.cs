@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Npc;
+using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
 using Newtonsoft.Json;
 using Verse;
@@ -57,168 +59,20 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
             return false;
         }
 
-        public async Task<Result<AIResponse, RimMindError>> SendAsync(AIRequest request)
+        public bool SupportsStreaming => true;
+
+        public bool SupportsNpcServerState => false;
+
+        public async Task<Result<RimMind.Domain.Llm.LlmResponse, RimMindError>> SendAsync(RimMind.Domain.Llm.LlmRequestEnvelope envelope)
         {
-            if (!string.IsNullOrEmpty(request.JsonSchema) || (request.Tools != null && request.Tools.Count > 0))
-                return await SendStructuredAsync(request, request.JsonSchema, request.Tools);
+            if (!IsConfigured())
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured(nameof(OpenAIClient)));
 
-            bool wantFormat = _settings.ForceJsonMode && request.UseJsonMode;
-            string cacheKey = BuildCacheKey();
-
-            if (wantFormat && _formatCapabilityCache.TryGetValue(cacheKey, out string? cached))
-            {
-                if (cached == "none")
-                    wantFormat = false;
-            }
-
-            if (!wantFormat)
-            {
-                var noFormatResp = await SendAsyncInner(request, useResponseFormat: false);
-                if (noFormatResp.IsOk && wantFormat != (_settings.ForceJsonMode && request.UseJsonMode))
-                    _logSink?.LogFromBackground($"[RimMind-Core] Skipped json_object for {request.RequestId} (cached: endpoint doesn't support it)");
-                return noFormatResp;
-            }
-
-            var response = await SendAsyncInner(request, useResponseFormat: true);
-            if (response.IsOk)
-            {
-                _formatCapabilityCache[cacheKey] = "json_object";
-                return response;
-            }
-
-            if (IsResponseFormatError(response))
-            {
-                _logSink?.LogFromBackground($"[RimMind-Core] json_object not supported, retrying without response_format for {request.RequestId}", isWarning: true);
-                _formatCapabilityCache[cacheKey] = "none";
-                response = await SendAsyncInner(request, useResponseFormat: false);
-            }
-            return response;
-        }
-
-        private async Task<Result<AIResponse, RimMindError>> SendAsyncInner(AIRequest request, bool useResponseFormat)
-        {
             string endpoint = FormatEndpoint(_settings.ApiEndpoint);
-            string json = BuildRequestJson(request, useResponseFormat);
+            string json = BuildEnvelopeRequestJson(envelope);
 
             if (_settings.DebugLogging)
-                _logSink?.LogFromBackground($"[RimMind-Core] ?? {request.RequestId}\n{json}");
-
-            var sw = Stopwatch.StartNew();
-            try
-            {
-                bool isLocal = IsLoopbackEndpoint(_settings.ApiEndpoint);
-                float connectTimeout = isLocal ? 300f : 60f;
-                (string responseText, long httpStatusCode) = await HttpTransport.PostAsync(
-                    endpoint, json, $"Bearer {_settings.ApiKey}", connectTimeout: connectTimeout);
-                var parsed = JsonConvert.DeserializeObject<OpenAIResponseDto>(responseText);
-                string content = parsed?.choices?[0]?.message?.content ?? string.Empty;
-                string? reasoningContent = parsed?.choices?[0]?.message?.reasoning_content;
-                int tokens = parsed?.usage?.total_tokens ?? 0;
-                int promptTokens = parsed?.usage?.prompt_tokens ?? 0;
-                int completionTokens = parsed?.usage?.completion_tokens ?? 0;
-                int cachedTokens = parsed?.usage?.prompt_tokens_details?.cached_tokens ?? 0;
-                sw.Stop();
-
-                if (_settings.DebugLogging)
-                    _logSink?.LogFromBackground($"[RimMind-Core] ?? {request.RequestId} ({tokens} tok)\n{content}");
-
-                var response = AIResponse.Ok(request.RequestId, content, tokens);
-                response.ReasoningContent = reasoningContent;
-                response.PromptTokens = promptTokens;
-                response.CompletionTokens = completionTokens;
-                response.CachedTokens = cachedTokens;
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.HttpStatusCode = httpStatusCode;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
-                _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return Result<AIResponse, RimMindError>.Ok(response);
-            }
-            catch (HttpTransport.HttpException ex)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                var error = RimMindErrors.ClientTransient(ex.Message, ex);
-                return Result<AIResponse, RimMindError>.Err(error);
-            }
-            catch (TaskCanceledException ex)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Request cancelled ({request.RequestId}): {ex.Message}", isWarning: true);
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-            }
-            catch (Exception ex)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI request failed: {ex.Message}", ex));
-            }
-        }
-
-        public async Task<Result<AIResponse, RimMindError>> SendStructuredAsync(AIRequest request, string? jsonSchema, List<StructuredTool>? tools)
-        {
-            string endpoint = FormatEndpoint(_settings.ApiEndpoint);
-            string cacheKey = BuildCacheKey();
-
-            string[] formatModes = { "json_schema", "json_object", "none" };
-            int startIndex = 0;
-
-            if (_formatCapabilityCache.TryGetValue(cacheKey, out string? cachedBest))
-            {
-                for (int i = 0; i < formatModes.Length; i++)
-                {
-                    if (formatModes[i] == cachedBest)
-                    {
-                        startIndex = i;
-                        break;
-                    }
-                }
-                if (startIndex > 0)
-                    _logSink?.LogFromBackground($"[RimMind-Core] Using cached format '{cachedBest}' for {request.RequestId} (skipping {startIndex} unsupported mode(s))");
-            }
-
-            for (int i = startIndex; i < formatModes.Length; i++)
-            {
-                string mode = formatModes[i];
-                string? schema = mode == "json_schema" ? jsonSchema : null;
-
-                var response = await TrySendStructuredAsync(request, endpoint, schema, tools, mode);
-
-                if (response.IsOk)
-                {
-                    if (i > 0 || mode != "json_schema")
-                        _formatCapabilityCache[cacheKey] = mode;
-                    else
-                        _formatCapabilityCache[cacheKey] = "json_schema";
-                    return response;
-                }
-
-                if (IsResponseFormatError(response))
-                {
-                    _logSink?.LogFromBackground($"[RimMind-Core] Format '{mode}' not supported for {request.RequestId}, downgrading", isWarning: true);
-                    continue;
-                }
-
-                return response;
-            }
-
-            _formatCapabilityCache[cacheKey] = "none";
-            return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientPermanent("All response_format modes failed"));
-        }
-
-        public static bool IsResponseFormatError(Result<AIResponse, RimMindError> result)
-        {
-            if (!result.TryGetValue(out var response)) return false;
-            if (response.HttpStatusCode != 400 && response.HttpStatusCode != 422) return false;
-            return false;
-        }
-
-        private async Task<Result<AIResponse, RimMindError>> TrySendStructuredAsync(AIRequest request, string endpoint, string? jsonSchema, List<StructuredTool>? tools, string formatMode)
-        {
-            string json = BuildStructuredRequestJson(request, jsonSchema, tools, formatMode);
-
-            if (_settings.DebugLogging)
-                _logSink?.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} (format={formatMode})\n{json}");
+                _logSink?.LogFromBackground($"[RimMind-Core] >> {envelope.RequestId}\n{json}");
 
             var sw = Stopwatch.StartNew();
             try
@@ -238,23 +92,22 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 sw.Stop();
 
                 if (_settings.DebugLogging)
-                    _logSink?.LogFromBackground($"[RimMind-Core] ?? Structured {request.RequestId} ({tokens} tok)\n{content}");
+                    _logSink?.LogFromBackground($"[RimMind-Core] << {envelope.RequestId} ({tokens} tok)\n{content}");
 
-                var response = new AIResponse
+                var response = new RimMind.Domain.Llm.LlmResponse
                 {
+                    RequestId = envelope.RequestId,
                     Content = content,
                     ReasoningContent = reasoningContent,
-                    RequestId = request.RequestId,
                     TokensUsed = tokens,
                     PromptTokens = promptTokens,
                     CompletionTokens = completionTokens,
                     CachedTokens = cachedTokens,
-                    State = AIRequestState.Completed,
+                    State = RimMind.Domain.Llm.AIRequestState.Completed,
+                    Priority = envelope.Priority,
+                    ProcessingMs = sw.ElapsedMilliseconds,
+                    HttpStatusCode = httpStatusCode,
                 };
-                response.ProcessingMs = sw.ElapsedMilliseconds;
-                response.HttpStatusCode = httpStatusCode;
-                response.RequestPayloadBytes = Encoding.UTF8.GetByteCount(json);
-                response.Priority = request.Priority;
 
                 if (toolCallsDto != null && toolCallsDto.Count > 0)
                 {
@@ -268,36 +121,199 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                             arguments = tc.Function?.Arguments,
                         }
                     }).ToList();
-                    response.ToolCallsJson = JsonConvert.SerializeObject(converted);
-                }
-                else if (tools != null && tools.Count > 0 && !string.IsNullOrEmpty(content))
-                {
-                    _logSink?.LogFromBackground($"[RimMind-Core] No tool_calls in response (format={formatMode}), content length={content.Length} for {request.RequestId}");
-                    if (_settings.DebugLogging && content.Length > 0)
-                        _logSink?.LogFromBackground($"[RimMind-Core] Response content (no tool_calls): {content}");
+                    response = new RimMind.Domain.Llm.LlmResponse
+                    {
+                        RequestId = response.RequestId,
+                        Content = response.Content,
+                        ToolCallsJson = JsonConvert.SerializeObject(converted),
+                        ReasoningContent = response.ReasoningContent,
+                        TokensUsed = response.TokensUsed,
+                        PromptTokens = response.PromptTokens,
+                        CompletionTokens = response.CompletionTokens,
+                        CachedTokens = response.CachedTokens,
+                        State = RimMind.Domain.Llm.AIRequestState.Completed,
+                        Priority = response.Priority,
+                        AttemptCount = response.AttemptCount,
+                        QueueWaitMs = response.QueueWaitMs,
+                        ProcessingMs = response.ProcessingMs,
+                        HttpStatusCode = response.HttpStatusCode,
+                    };
                 }
 
-                _aiDebugLog?.Record(request, response, (int)sw.ElapsedMilliseconds);
-                return Result<AIResponse, RimMindError>.Ok(response);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Ok(response);
             }
             catch (HttpTransport.HttpException ex)
             {
                 sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
+                _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
             }
             catch (TaskCanceledException)
             {
                 sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Structured request cancelled ({request.RequestId})", isWarning: true);
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Cancelled());
+                _logSink?.LogFromBackground($"[RimMind-Core] Request cancelled ({envelope.RequestId})", isWarning: true);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled());
             }
             catch (Exception ex)
             {
                 sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Structured request failed ({request.RequestId}): {ex.Message}", isWarning: true);
-                return Result<AIResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI structured request failed: {ex.Message}", ex));
+                _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI request failed: {ex.Message}", ex));
             }
+        }
+
+        public async Task<Result<RimMind.Domain.Llm.LlmResponse, RimMindError>> SendStreamAsync(RimMind.Domain.Llm.LlmRequestEnvelope envelope, Action<RimMind.Domain.Llm.LlmChunk> onChunk, CancellationToken ct)
+        {
+            if (!IsConfigured())
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured(nameof(OpenAIClient)));
+
+            string endpoint = FormatEndpoint(_settings.ApiEndpoint);
+            string json = BuildEnvelopeRequestJson(envelope, stream: true);
+
+            if (_settings.DebugLogging)
+                _logSink?.LogFromBackground($"[RimMind-Core] >> Stream {envelope.RequestId}\n{json}");
+
+            var contentBuilder = new StringBuilder();
+            var toolCallsBuilder = new StringBuilder();
+            string? reasoningContent = null;
+            int totalTokens = 0;
+            int promptTokens = 0;
+            int completionTokens = 0;
+            int cachedTokens = 0;
+
+            try
+            {
+                bool isLocal = IsLoopbackEndpoint(_settings.ApiEndpoint);
+                float connectTimeout = isLocal ? 300f : 60f;
+
+                using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, endpoint);
+                request.Content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
+                request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {_settings.ApiKey}");
+
+                using var httpClient = new System.Net.Http.HttpClient();
+                using var response = await httpClient.SendAsync(request, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, ct);
+                response.EnsureSuccessStatusCode();
+
+                using var stream = await response.Content.ReadAsStreamAsync();
+                using var reader = new System.IO.StreamReader(stream);
+
+                while (!reader.EndOfStream && !ct.IsCancellationRequested)
+                {
+                    string? line = await reader.ReadLineAsync();
+                    if (string.IsNullOrEmpty(line)) continue;
+                    if (!line.StartsWith("data: ")) continue;
+
+                    string data = line.Substring(6);
+                    if (data == "[DONE]") break;
+
+                    try
+                    {
+                        var chunk = JsonConvert.DeserializeObject<OpenAIStreamChunkDto>(data);
+                        if (chunk == null) continue;
+
+                        var delta = chunk.choices?[0]?.delta;
+                        if (delta == null) continue;
+
+                        if (delta.content != null)
+                        {
+                            contentBuilder.Append(delta.content);
+                            onChunk(new RimMind.Domain.Llm.LlmChunk
+                            {
+                                DeltaContent = delta.content,
+                            });
+                        }
+
+                        if (delta.reasoning_content != null)
+                        {
+                            reasoningContent += delta.reasoning_content;
+                            onChunk(new RimMind.Domain.Llm.LlmChunk
+                            {
+                                DeltaReasoningContent = delta.reasoning_content,
+                            });
+                        }
+
+                        if (delta.tool_calls != null)
+                        {
+                            foreach (var tc in delta.tool_calls)
+                            {
+                                if (tc.Function?.Arguments != null)
+                                    toolCallsBuilder.Append(tc.Function.Arguments);
+                            }
+                        }
+
+                        if (chunk.usage != null)
+                        {
+                            totalTokens = chunk.usage.total_tokens;
+                            promptTokens = chunk.usage.prompt_tokens;
+                            completionTokens = chunk.usage.completion_tokens;
+                            cachedTokens = chunk.usage.prompt_tokens_details?.cached_tokens ?? 0;
+
+                            onChunk(new RimMind.Domain.Llm.LlmChunk
+                            {
+                                DeltaPromptTokens = promptTokens,
+                                DeltaCompletionTokens = completionTokens,
+                                DeltaCachedTokens = cachedTokens,
+                            });
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Skip malformed SSE chunks
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                _logSink?.LogFromBackground($"[RimMind-Core] Stream cancelled ({envelope.RequestId})", isWarning: true);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled());
+            }
+            catch (HttpTransport.HttpException ex)
+            {
+                _logSink?.LogFromBackground($"[RimMind-Core] Stream failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
+            }
+            catch (Exception ex)
+            {
+                _logSink?.LogFromBackground($"[RimMind-Core] Stream failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
+                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI stream failed: {ex.Message}", ex));
+            }
+
+            var finalResponse = new RimMind.Domain.Llm.LlmResponse
+            {
+                RequestId = envelope.RequestId,
+                Content = contentBuilder.ToString(),
+                ToolCallsJson = toolCallsBuilder.Length > 0 ? toolCallsBuilder.ToString() : null,
+                ReasoningContent = reasoningContent,
+                TokensUsed = totalTokens,
+                PromptTokens = promptTokens,
+                CompletionTokens = completionTokens,
+                CachedTokens = cachedTokens,
+                State = RimMind.Domain.Llm.AIRequestState.Completed,
+                Priority = envelope.Priority,
+            };
+
+            onChunk(new RimMind.Domain.Llm.LlmChunk
+            {
+                IsLast = true,
+                FinalResponse = finalResponse,
+            });
+
+            return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Ok(finalResponse);
+        }
+
+        public Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile)
+        {
+            throw new NotSupportedException("OpenAI does not support NPC server-side state");
+        }
+
+        public Task<Result<bool, RimMindError>> KillNpcAsync(string npcId)
+        {
+            throw new NotSupportedException("OpenAI does not support NPC server-side state");
+        }
+
+        public Task<Result<List<string>, RimMindError>> QueryNpcMemoriesAsync(string npcId, string query, int limit)
+        {
+            throw new NotSupportedException("OpenAI does not support NPC server-side state");
         }
 
     }

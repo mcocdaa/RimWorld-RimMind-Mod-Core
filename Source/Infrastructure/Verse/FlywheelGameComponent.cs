@@ -53,11 +53,6 @@ namespace RimMind.Infrastructure.Verse
         public override void ExposeData()
         {
             base.ExposeData();
-            if (Scribe.mode == LoadSaveMode.Saving)
-            {
-                EnsureCached();
-                _telemetryCollector?.Flush();
-            }
         }
 
         public override void GameComponentTick()

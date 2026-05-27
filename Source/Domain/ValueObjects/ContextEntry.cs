@@ -4,6 +4,7 @@ namespace RimMind.Domain.ValueObjects
 {
     public class ContextEntry
     {
+        public string? SourceKey;
         public string Content = null!;
         public float[]? Embedding;
         public string? Tag;

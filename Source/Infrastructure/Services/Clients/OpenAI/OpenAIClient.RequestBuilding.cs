@@ -1,99 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Application.Common.Models.Client;
 using Newtonsoft.Json;
 
 namespace RimMind.Infrastructure.Services.Clients.OpenAI
 {
     public partial class OpenAIClient
     {
-        private string BuildRequestJson(AIRequest request, bool useResponseFormat = true)
-        {
-            List<MessageDto> messages = BuildMessages(request);
-
-            if (useResponseFormat)
-                EnsureJsonKeyword(messages);
-
-            var body = new OpenAIRequestDto
-            {
-                model = _settings.ModelName,
-                messages = messages,
-                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
-                temperature = request.Temperature,
-                stream = false,
-            };
-
-            if (useResponseFormat)
-                body.response_format = new ResponseFormatDto { type = "json_object" };
-
-            return JsonConvert.SerializeObject(body, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-        }
-
-        private string BuildStructuredRequestJson(AIRequest request, string? jsonSchema, List<StructuredTool>? tools, string formatMode = "json_schema")
-        {
-            List<MessageDto> messages = BuildMessages(request);
-
-            if (formatMode == "json_object")
-                EnsureJsonKeyword(messages);
-
-            var body = new OpenAIRequestDto
-            {
-                model = _settings.ModelName,
-                messages = messages,
-                max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _settings.MaxTokens,
-                temperature = request.Temperature,
-                stream = false,
-            };
-
-            if (formatMode == "json_schema" && !string.IsNullOrEmpty(jsonSchema))
-            {
-                body.response_format = new ResponseFormatDto
-                {
-                    type = "json_schema",
-                    json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(jsonSchema!) },
-                };
-            }
-            else if (formatMode == "json_object" && (_settings.ForceJsonMode || request.UseJsonMode))
-            {
-                body.response_format = new ResponseFormatDto { type = "json_object" };
-            }
-
-            if (tools != null && tools.Count > 0)
-            {
-                body.tools = new List<ToolDto>();
-                foreach (var t in tools)
-                {
-                    body.tools.Add(new ToolDto
-                    {
-                        Function = new ToolFunctionDto
-                        {
-                            Name = t.Name,
-                            Description = t.Description,
-                            Parameters = t.Parameters != null
-                                ? JsonConvert.DeserializeObject(t.Parameters)
-                                : new { type = "object", properties = new { } },
-                        },
-                    });
-                }
-                if (tools.Any(t => t.ToolChoice == "required"))
-                    body.tool_choice = "required";
-                else
-                    body.tool_choice = "auto";
-            }
-
-            return JsonConvert.SerializeObject(body, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-        }
-
-        private List<MessageDto> BuildMessages(AIRequest request)
+        private string BuildEnvelopeRequestJson(RimMind.Domain.Llm.LlmRequestEnvelope envelope, bool stream = false)
         {
             var messages = new List<MessageDto>();
 
-            if (request.Messages != null && request.Messages.Count > 0)
+            if (envelope.Messages != null && envelope.Messages.Count > 0)
             {
-                foreach (var m in request.Messages)
+                foreach (var m in envelope.Messages)
                 {
                     var dto = new MessageDto { role = m.Role, content = m.Content };
                     if (m.Role == "assistant" && !string.IsNullOrEmpty(m.ReasoningContent))
@@ -116,14 +36,50 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                     messages.Add(dto);
                 }
             }
-            else
+
+            var body = new OpenAIRequestDto
             {
-                if (!string.IsNullOrEmpty(request.SystemPrompt))
-                    messages.Add(new MessageDto { role = "system", content = request.SystemPrompt });
-                messages.Add(new MessageDto { role = "user", content = request.UserPrompt });
+                model = _settings.ModelName,
+                messages = messages,
+                max_tokens = envelope.MaxTokens > 0 ? envelope.MaxTokens : _settings.MaxTokens,
+                temperature = envelope.Temperature,
+                stream = stream,
+            };
+
+            if (!string.IsNullOrEmpty(envelope.JsonSchema))
+            {
+                body.response_format = new ResponseFormatDto
+                {
+                    type = "json_schema",
+                    json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(envelope.JsonSchema!) },
+                };
             }
 
-            return messages;
+            if (envelope.Tools != null && envelope.Tools.Count > 0)
+            {
+                body.tools = new List<ToolDto>();
+                foreach (var t in envelope.Tools)
+                {
+                    body.tools.Add(new ToolDto
+                    {
+                        Function = new ToolFunctionDto
+                        {
+                            Name = t.Name,
+                            Description = t.Description,
+                            Parameters = t.Parameters != null
+                                ? JsonConvert.DeserializeObject(t.Parameters)
+                                : new { type = "object", properties = new { } },
+                        },
+                    });
+                }
+                if (envelope.Tools.Any(t => t.ToolChoice == "required"))
+                    body.tool_choice = "required";
+                else
+                    body.tool_choice = "auto";
+            }
+
+            return JsonConvert.SerializeObject(body, Formatting.None,
+                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
         }
 
         private static void EnsureJsonKeyword(List<MessageDto> messages)

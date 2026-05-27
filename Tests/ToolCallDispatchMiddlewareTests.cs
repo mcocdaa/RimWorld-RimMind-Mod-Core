@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Domain.Common;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Features.Pipeline.AI;
@@ -45,6 +48,9 @@ namespace RimMind.Presentation.Tests
         {
             public string Id => "stub";
             public bool IsLocalEndpoint => false;
+            public bool IsConfigured() => true;
+            public bool SupportsStreaming => false;
+            public bool SupportsNpcServerState => false;
             private readonly AIResponse _response;
             private readonly bool _returnError;
             public int SendCount { get; private set; }
@@ -65,6 +71,33 @@ namespace RimMind.Presentation.Tests
                 }
                 return Task.FromResult(Result<AIResponse, RimMindError>.Ok(_response));
             }
+
+            public Task<Result<LlmResponse, RimMindError>> SendAsync(LlmRequestEnvelope envelope)
+            {
+                throw new NotImplementedException("K3: LlmRequestEnvelope SendAsync");
+            }
+
+            public Task<Result<LlmResponse, RimMindError>> SendStreamAsync(LlmRequestEnvelope envelope, Action<LlmChunk> onChunk, CancellationToken ct)
+            {
+                throw new NotImplementedException("K3: SendStreamAsync");
+            }
+
+            public Task<Result<bool, RimMindError>> SpawnNpcAsync(NpcProfile profile)
+            {
+                throw new NotImplementedException("K3: SpawnNpcAsync");
+            }
+
+            public Task<Result<bool, RimMindError>> KillNpcAsync(string npcId)
+            {
+                throw new NotImplementedException("K3: KillNpcAsync");
+            }
+
+            public Task<Result<List<string>, RimMindError>> QueryNpcMemoriesAsync(string npcId, string query, int limit)
+            {
+                throw new NotImplementedException("K3: QueryNpcMemoriesAsync");
+            }
+
+            public void Dispose() { }
         }
 
         private class StubToolRegistry : IToolRegistry

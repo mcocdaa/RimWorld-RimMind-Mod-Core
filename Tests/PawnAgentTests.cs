@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Domain.Agent.Modes;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Infrastructure.Services.Clients;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using Verse.AI;
@@ -318,6 +317,37 @@ namespace RimMind.Presentation.Tests
         {
             float delta = PawnAgent.ComputeGoalProgressDelta("unknown_action", true);
             Assert.Equal(0.1f, delta);
+        }
+
+        [Fact]
+        public void SwitchMode_ReactiveToProactive_Succeeds()
+        {
+            _agent.TransitionTo(AgentState.Active);
+            Assert.Equal(AgentModeId.Reactive, _agent.CurrentModeId);
+
+            _agent.SwitchMode(AgentModeId.Proactive);
+
+            Assert.Equal(AgentModeId.Proactive, _agent.CurrentModeId);
+        }
+
+        [Fact]
+        public void SwitchMode_SameMode_IsIdempotent()
+        {
+            _agent.TransitionTo(AgentState.Active);
+            var modeBefore = _agent.CurrentModeId;
+
+            _agent.SwitchMode(AgentModeId.Reactive); // Already Reactive
+
+            Assert.Equal(modeBefore, _agent.CurrentModeId);
+        }
+
+        [Fact]
+        public void SwitchMode_UnregisteredMode_ThrowsInvalidOperationException()
+        {
+            _agent.TransitionTo(AgentState.Active);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                _agent.SwitchMode(new AgentModeId("nonexistent.mode")));
         }
     }
 }

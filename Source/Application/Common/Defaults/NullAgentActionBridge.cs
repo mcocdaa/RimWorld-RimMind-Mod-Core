@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Extension;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Llm;
 
 namespace RimMind.Application.Common.Defaults
 {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models;
@@ -21,6 +22,7 @@ namespace RimMind.Presentation.Agent
 
         private readonly IPawnAgent _agent;
         private readonly IAgentBus _agentBus;
+        private readonly HashSet<string> _sensedHediffs = new HashSet<string>();
         private int _lastPerceptionTick;
         private int _perceptionInterval = DefaultPerceptionInterval;
 
@@ -43,6 +45,8 @@ namespace RimMind.Presentation.Agent
             var pawn = _agent.Pawn;
             if (pawn == null || pawn.Dead) return;
 
+            _sensedHediffs.Clear();
+
             if (pawn.needs?.mood != null)
             {
                 _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
@@ -58,7 +62,8 @@ namespace RimMind.Presentation.Agent
             {
                 foreach (var hediff in pawn.health.hediffSet.hediffs)
                 {
-                    if (hediff != null && hediff.Visible && hediff.Severity > HediffSeverityThreshold)
+                    if (hediff != null && hediff.Visible && hediff.Severity > HediffSeverityThreshold
+                        && _sensedHediffs.Add(hediff.def.defName))
                     {
                         _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
                         {
@@ -80,6 +85,68 @@ namespace RimMind.Presentation.Agent
                     Importance = CombatImportance,
                     Tick = Find.TickManager.TicksGame
                 });
+            }
+
+            // Needs perception: collect needs below 30%
+            if (pawn.needs?.AllNeeds != null)
+            {
+                foreach (var need in pawn.needs.AllNeeds)
+                {
+                    if (need != null && need.CurLevel < 0.3f)
+                    {
+                        var importance = (1f - need.CurLevel) * 0.8f;
+                        _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
+                        {
+                            PerceptionType = "need",
+                            Content = $"Need: {need.def.label} at {need.CurLevel:P0}",
+                            Importance = importance,
+                            Tick = Find.TickManager.TicksGame
+                        });
+                    }
+                }
+            }
+
+            // Social perception: nearby pawns with relationships
+            if (pawn.relations?.DirectRelations != null)
+            {
+                foreach (var rel in pawn.relations.DirectRelations)
+                {
+                    if (rel == null) continue;
+                    var other = rel.otherPawn;
+                    if (other == null || other == pawn || other.Dead) continue;
+                    if (other.Position.DistanceTo(pawn.Position) > 10) continue;
+
+                    _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
+                    {
+                        PerceptionType = "social",
+                        Content = $"Social: {other.Name?.ToStringFull ?? other.Label} ({rel.def.label})",
+                        Importance = 0.5f,
+                        Tick = Find.TickManager.TicksGame
+                    });
+                }
+            }
+
+            // Environment perception: extreme weather or temperature
+            var map = pawn.Map;
+            if (map != null)
+            {
+                var weather = map.weatherManager?.curWeather;
+                var temperature = GenTemperature.GetTemperatureForCell(pawn.Position, map);
+
+                bool isExtremeWeather = weather != null && weather.defName != "Clear";
+                bool isExtremeTemp = temperature < -10f || temperature > 45f;
+
+                if (isExtremeWeather || isExtremeTemp)
+                {
+                    var weatherLabel = weather?.label ?? "unknown";
+                    _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
+                    {
+                        PerceptionType = "environment",
+                        Content = $"Environment: {weatherLabel}, {temperature:F0}°C",
+                        Importance = 0.6f,
+                        Tick = Find.TickManager.TicksGame
+                    });
+                }
             }
 
             // Publish PerceptionEvent so subscribers can react to perception changes

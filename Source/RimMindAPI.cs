@@ -17,6 +17,7 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Runtime;
@@ -41,12 +42,11 @@ namespace RimMind.Presentation
 
         internal static void ResetForNewGame() => RimMindRuntime.ResetInstance();
 
-        public static void RequestImmediate(AIRequest request, Action<Result<AIResponse, RimMindError>> onComplete)
-            => Request.RequestImmediate(request, onComplete);
-        public static void RequestStructuredAsync(AIRequest request, string? jsonSchema, Action<Result<AIResponse, RimMindError>> onComplete, List<StructuredTool>? tools = null)
-            => Request.RequestStructuredAsync(request, jsonSchema, onComplete, tools);
-        public static void RequestStructured(ContextRequest request, string schema, Action<Result<AIResponse, RimMindError>> onComplete, List<StructuredTool>? tools = null)
-            => Request.RequestStructured(request, schema, onComplete, tools);
+        // === Unified Request API (K phase) ===
+        public static void Send(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> onComplete)
+            => Request.Send(envelope, onComplete);
+        public static Task<Result<LlmResponse, RimMindError>> SendAsync(LlmRequestEnvelope envelope)
+            => Request.SendAsync(envelope);
         public static void PauseQueue() => Request.PauseQueue();
         public static void ResumeQueue() => Request.ResumeQueue();
         public static int ActiveRequestCount => Request.ActiveRequestCount;
@@ -55,9 +55,6 @@ namespace RimMind.Presentation
         public static int TotalQueuedCount => Request.TotalQueuedCount;
         public static void ClearModCooldown(string modId) => Request.ClearModCooldown(modId);
 
-        public static Task<Result<NpcChatResult, RimMindError>> Chat(ContextRequest request, CancellationToken ct = default)
-            => ChatFlow.Execute(request, ct);
-        public static ContextSnapshot BuildContextSnapshot(ContextRequest request) => ChatFlow.BuildContextSnapshot(request);
         public static string BuildMapContext(Map map, bool brief = false) => ChatFlow.BuildMapContext(map, brief);
 
         public static IToolRegistry Tools => ToolSet.Registry;
@@ -78,7 +75,6 @@ namespace RimMind.Presentation
         public static IAgentActionBridge GetAgentActionBridge() => Ext.GetAgentActionBridge();
         public static void RegisterParameterTuner(IParameterTuner tuner) => Ext.RegisterParameterTuner(tuner);
         public static IReadOnlyList<IParameterTuner> ParameterTuners => Ext.ParameterTuners;
-        public static void RegisterPawnContextProvider(string key, Func<Pawn, string?> provider, int priority = 8) => Ext.RegisterPawnContextProvider(key, provider, priority);
 
         public static Result<string?, RimMindError> GetProviderData(string category, Pawn pawn) => Providers.GetProviderData(category, pawn);
         public static Result<string?, RimMindError> GetStaticProviderData(string category) => Providers.GetStaticProviderData(category);

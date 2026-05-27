@@ -5,6 +5,11 @@ namespace RimMind.Application.Common.Interfaces.Context
 {
     public interface IContextKeyRegistry
     {
-        List<KeyMeta> GetAll();
+        void Register(KeyMeta meta);
+        void Register(ContextProviderDef def);
+        bool Unregister(string key);
+        IReadOnlyList<KeyMeta> GetAll();
+        KeyMeta? Get(string key);
+        void Clear();
     }
 }

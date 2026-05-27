@@ -87,4 +87,25 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
         public string Type = "function";
         public ToolCallFunctionDto? Function;
     }
+
+    internal class OpenAIStreamChunkDto
+    {
+        public List<OpenAIStreamChoiceDto>? choices;
+        public UsageDto? usage;
+    }
+
+    internal class OpenAIStreamChoiceDto
+    {
+        public int index;
+        public OpenAIStreamDeltaDto? delta;
+        public string? finish_reason;
+    }
+
+    internal class OpenAIStreamDeltaDto
+    {
+        public string? role;
+        public string? content;
+        public string? reasoning_content;
+        public List<ToolCallDto>? tool_calls;
+    }
 }

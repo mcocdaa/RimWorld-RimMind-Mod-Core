@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Llm;
 
 using System.Collections.Generic;
 using System.Linq;
@@ -68,33 +68,33 @@ namespace RimMind.Infrastructure.Verse
             return sb.ToString();
         }
 
-        public void Record(AIRequest request, AIResponse response, int elapsedMs)
+        public void Record(LlmRequestEnvelope envelope, LlmResponse response, int elapsedMs)
         {
             _pendingEntries.Enqueue(new AIDebugEntry
             {
-                Source = request.RequestId ?? "",
+                Source = envelope.RequestId ?? "",
                 ModelName = GetModelSettings()?.ModelName ?? "",
-                FullSystemPrompt = request.Messages != null
-                    ? BuildLayeredText(request.Messages, "system")
-                    : (request.SystemPrompt ?? ""),
-                FullUserPrompt = request.Messages != null
-                    ? BuildLayeredText(request.Messages, "user")
-                    : (request.UserPrompt ?? ""),
-                FullAssistantPrompt = request.Messages != null
-                    ? BuildLayeredText(request.Messages, "assistant")
+                FullSystemPrompt = envelope.Messages != null
+                    ? BuildLayeredText(envelope.Messages, "system")
+                    : "",
+                FullUserPrompt = envelope.Messages != null
+                    ? BuildLayeredText(envelope.Messages, "user")
+                    : "",
+                FullAssistantPrompt = envelope.Messages != null
+                    ? BuildLayeredText(envelope.Messages, "assistant")
                     : "",
                 FullResponse = response.Content ?? "",
                 ElapsedMs = elapsedMs,
                 TokensUsed = response.TokensUsed,
-                IsError = response.State == AIRequestState.Error,
+                IsError = false,
                 ErrorMsg = "",
-                Priority = response.Priority,
-                State = response.State,
+                Priority = (AIRequestPriority)(int)envelope.Priority,
+                State = AIRequestState.Completed,
                 AttemptCount = response.AttemptCount,
                 QueueWaitMs = response.QueueWaitMs,
                 ProcessingMs = response.ProcessingMs,
                 HttpStatusCode = response.HttpStatusCode,
-                RequestPayloadBytes = response.RequestPayloadBytes,
+                RequestPayloadBytes = 0,
             });
         }
 

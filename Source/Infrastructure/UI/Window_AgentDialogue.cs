@@ -1,9 +1,10 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Storage;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Context;
-using RimMind.Application.Common.Models.Npc;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Infrastructure.Verse;
@@ -26,6 +27,7 @@ namespace RimMind.Infrastructure.UI
         private IHistoryManager? _cachedHistoryManager;
         private ISettingsProvider? _cachedSettingsProvider;
         private IContextBuilder? _cachedContextEngine;
+        private IRemoteSyncService? _cachedSyncService;
 
         // Route through ServiceLocator (Application layer) instead of RimMindRuntime (Presentation layer)
         private IHistoryManager? GetHistoryManager()
@@ -36,6 +38,13 @@ namespace RimMind.Infrastructure.UI
 
         private IContextBuilder? GetContextEngine()
             => _cachedContextEngine ??= RimMindServiceLocator.Get<IContextBuilder>();
+
+        private IRemoteSyncService? GetSyncService()
+            => _cachedSyncService ??= RimMindServiceLocator.Get<IRemoteSyncService>();
+
+        private string _streamingText = "";
+        private bool _isStreaming;
+        private string _thinkingText = "";
 
         public override Vector2 InitialSize => new Vector2(500f, 500f);
 
@@ -56,8 +65,14 @@ namespace RimMind.Infrastructure.UI
             Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), title);
             Text.Font = GameFont.Small;
 
-            float historyHeight = inRect.height - 70f;
-            var historyRect = new Rect(0f, 35f, inRect.width, historyHeight);
+            // NPC sync actions area (below title, above history)
+            float syncAreaHeight = 34f;
+            var syncRect = new Rect(0f, 35f, inRect.width, syncAreaHeight);
+            NpcSyncActions.DrawNpcSyncActions(syncRect, _npcId, GetSyncService());
+
+            float historyTop = 35f + syncAreaHeight + 4f;
+            float historyHeight = inRect.height - 70f - syncAreaHeight - 4f;
+            var historyRect = new Rect(0f, historyTop, inRect.width, historyHeight);
 
             DrawHistory(historyRect);
 
@@ -109,8 +124,13 @@ namespace RimMind.Infrastructure.UI
                         ? "RimMind.UI.AgentDialogue.PlayerLabel".Translate() + ": "
                         : "RimMind.UI.AgentDialogue.AgentLabel".Translate() + ": ";
                     string displayContent = content;
-                    if (role == "assistant" && content == "RimMind.UI.AgentDialogue.Thinking".Translate())
-                        displayContent = content;
+                    if (role == "assistant" && content == _thinkingText)
+                    {
+                        // Show streaming text while waiting for final response
+                        displayContent = _isStreaming && !string.IsNullOrEmpty(_streamingText)
+                            ? _streamingText
+                            : content;
+                    }
                     string line = prefix + displayContent;
                     float height = Text.CalcHeight(line, contentRect.width - 10f) + 4f;
                     var lineRect = new Rect(5f, y, contentRect.width - 10f, height);
@@ -138,34 +158,44 @@ namespace RimMind.Infrastructure.UI
             string message = _inputText.Trim();
             _inputText = "";
 
-            string thinkingText = "RimMind.UI.AgentDialogue.Thinking".Translate();
-            GetHistoryManager()?.AddTurn(_npcId, message, thinkingText, "Dialogue");
+            _thinkingText = "RimMind.UI.AgentDialogue.Thinking".Translate();
+            _streamingText = "";
+            _isStreaming = true;
+            GetHistoryManager()?.AddTurn(_npcId, message, _thinkingText, "Dialogue");
 
             var npcId = _npcId;
+            var thinkingText = _thinkingText;
             _agent.ForceThink();
 
             var settings = GetSettingsProvider();
-            var request = new ContextRequest
-            {
-                NpcId = _agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}",
-                Scenario = ScenarioIds.Dialogue,
-                Budget = RimMindDefaults.DefaultContextBudget,
-                CurrentQuery = message,
-                MaxTokens = settings?.MaxTokens ?? RimMindDefaults.MaxTokens,
-                Temperature = settings?.DefaultTemperature ?? RimMindDefaults.DefaultTemperature,
-            };
 
-            var engine = GetContextEngine();
-            var snapshot = engine.BuildSnapshot(request);
-            var driver = RimMind.Infrastructure.Persistence.StorageDriverFactory.GetDriver();
+            var envelope = LlmRequestEnvelopeBuilder
+                .ForNpc(_agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}", gameStateInfo: message)
+                .ForScenarioId(ScenarioIds.Dialogue)
+                .WithModId("RimMind.Dialogue")
+                .WithMaxTokens(settings?.MaxTokens ?? RimMindDefaults.MaxTokens)
+                .WithTemperature(settings?.DefaultTemperature ?? RimMindDefaults.DefaultTemperature)
+                .Streaming(chunk =>
+                {
+                    if (!string.IsNullOrEmpty(chunk.DeltaContent))
+                    {
+                        LongEventHandler.ExecuteWhenFinished(() =>
+                        {
+                            _streamingText += chunk.DeltaContent;
+                        });
+                    }
+                })
+                .Build();
 
             _ = System.Threading.Tasks.Task.Run(async () =>
             {
                 try
                 {
-                    var result = await driver.ChatAsync(snapshot.NpcId, snapshot.CurrentQuery ?? "", null);
+                    var result = await RimMind.Presentation.RimMindAPI.SendAsync(envelope);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
+                        _isStreaming = false;
+                        _streamingText = "";
                         var hm = GetHistoryManager();
                         var currentHistory = hm.GetHistory(npcId, MaxHistoryRounds);
                         if (currentHistory != null)
@@ -174,7 +204,8 @@ namespace RimMind.Infrastructure.UI
                             {
                                 if (currentHistory[i].role == "assistant" && currentHistory[i].content == thinkingText)
                                 {
-                                    hm.ReplaceLastAssistantTurn(npcId, result.Value.Message ?? "");
+                                    if (result.IsOk)
+                                        hm.ReplaceLastAssistantTurn(npcId, result.Value.Content ?? "");
                                     break;
                                 }
                             }
@@ -183,6 +214,11 @@ namespace RimMind.Infrastructure.UI
                 }
                 catch (System.Exception ex)
                 {
+                    LongEventHandler.ExecuteWhenFinished(() =>
+                    {
+                        _isStreaming = false;
+                        _streamingText = "";
+                    });
                     RimMindErrors.Warn($"[RimMind-Core] AgentDialogue chat failed: {ex.Message}");
                 }
             });

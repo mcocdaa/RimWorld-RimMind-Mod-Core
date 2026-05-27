@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models;
@@ -49,6 +50,27 @@ namespace RimMind.Presentation.Agent
         public void Clear()
         {
             _history.Clear();
+        }
+
+        /// <summary>
+        /// Get the most recent N behavior records.
+        /// </summary>
+        public IReadOnlyList<BehaviorRecord> GetRecentHistory(int count = 10)
+        {
+            if (count <= 0 || _history.Count == 0) return Array.Empty<BehaviorRecord>();
+            var skip = Math.Max(0, _history.Count - count);
+            return _history.Skip(skip).ToList();
+        }
+
+        /// <summary>
+        /// Get the success rate of the most recent N behavior records.
+        /// Returns 0.0 if no records exist.
+        /// </summary>
+        public float GetRecentSuccessRate(int count = 10)
+        {
+            var recent = GetRecentHistory(count);
+            if (recent.Count == 0) return 0f;
+            return (float)Enumerable.Count(recent, r => r.Success) / recent.Count;
         }
     }
 }

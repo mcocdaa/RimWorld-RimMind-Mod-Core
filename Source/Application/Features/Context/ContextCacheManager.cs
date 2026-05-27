@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context

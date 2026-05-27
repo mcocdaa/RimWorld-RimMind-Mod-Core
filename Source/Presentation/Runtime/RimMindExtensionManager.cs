@@ -4,18 +4,18 @@ using RimMind.Application.Common.Behaviours;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
+using RimMind.Application.Common.Interfaces.Agent.Psychology;
+using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Defaults;
+using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Agent.Reflection;
 using RimMind.Application.Features.Agent.Planning;
-using RimMind.Application.Features.Pipeline.AI;
 using RimMind.Application.Features.Pipeline.Bus;
-using RimMind.Application.Features.Pipeline.Context;
-using RimMind.Application.Features.Pipeline.Npc;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
@@ -51,8 +51,11 @@ namespace RimMind.Presentation.Runtime
                 ?? throw new InvalidOperationException("ITickProvider not registered");
             var reflectionStrategy = new DefaultReflectionStrategy(tickProvider);
             var dailyPlanner = new DefaultDailyPlanner(tickProvider);
+            var psychologyWatcher = RimMindServiceLocator.Get<IPsychologyWatcher>();
+            var socialEventOrganizer = RimMindServiceLocator.Get<ISocialEventOrganizer>();
+            var traitEvolutionEngine = RimMindServiceLocator.Get<ITraitEvolutionEngine>();
             modeRegistry.Register(new ReactiveAgentMode());
-            modeRegistry.Register(new ProactiveAgentMode(tickProvider, reflectionStrategy, dailyPlanner));
+            modeRegistry.Register(new ProactiveAgentMode(tickProvider, reflectionStrategy, dailyPlanner, psychologyWatcher, socialEventOrganizer, traitEvolutionEngine));
         }
 
         public void RegisterCoreSubscribers()
@@ -81,20 +84,11 @@ namespace RimMind.Presentation.Runtime
 
         public void AddMiddleware<TContext>(
             IMiddleware<TContext> middleware,
-            IPipeline<AIRequestContext>? aiPipeline,
-            IPipeline<NpcChatContext>? npcPipeline,
-            IPipeline<ContextBuildContext>? ctxPipeline,
             IPipeline<BusPublishContext>? busPipeline) where TContext : IPipelineContext
         {
             if (middleware == null) return;
             bool added = false;
-            if (aiPipeline is MutablePipeline<AIRequestContext> aiPipe && middleware is IMiddleware<AIRequestContext> aiMw)
-            { aiPipe.Use(aiMw); added = true; }
-            else if (npcPipeline is MutablePipeline<NpcChatContext> npcPipe && middleware is IMiddleware<NpcChatContext> npcMw)
-            { npcPipe.Use(npcMw); added = true; }
-            else if (ctxPipeline is MutablePipeline<ContextBuildContext> ctxPipe && middleware is IMiddleware<ContextBuildContext> ctxMw)
-            { ctxPipe.Use(ctxMw); added = true; }
-            else if (busPipeline is MutablePipeline<BusPublishContext> busPipe && middleware is IMiddleware<BusPublishContext> busMw)
+            if (busPipeline is MutablePipeline<BusPublishContext> busPipe && middleware is IMiddleware<BusPublishContext> busMw)
             { busPipe.Use(busMw); added = true; }
 
             if (!added)

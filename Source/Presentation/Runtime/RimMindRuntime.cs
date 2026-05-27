@@ -10,7 +10,6 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
-using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Interfaces.Runtime;
 using RimMind.Application.Common.Interfaces.Sensor;
@@ -18,11 +17,8 @@ using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Features.Pipeline.AI;
+using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Pipeline.Bus;
-using RimMind.Application.Features.Pipeline.Context;
-using RimMind.Application.Features.Pipeline.Npc;
 using RimMind.Application.Features.Registry;
 using Verse;
 
@@ -63,14 +59,14 @@ namespace RimMind.Presentation.Runtime
         public ITelemetryCollector Telemetry => _composition.Telemetry;
         public IToolRegistry ToolRegistry => _composition.ToolRegistry;
         public IGameMechanismRegistry MechanismRegistry => _composition.MechanismRegistry;
-        public IStorageDriverFactory? StorageDriverFactory => _composition.StorageDriverFactory;
         public IWindowService? WindowService => _composition.WindowService;
         public int MaxToolCallDepth { get; set; } = 3;
+        public IContextKeyRegistry ContextKeys => _composition.ContextKeyRegistry;
+        public IRelevanceTable RelevanceTable => _composition.RelevanceTable;
+        public IRelevanceLearner ContextLearner => _composition.RelevanceLearner;
 
-        public IPipeline<AIRequestContext> AIRequestPipeline => _composition.AIRequestPipeline;
-        public IPipeline<NpcChatContext> NpcChatPipeline => _composition.NpcChatPipeline;
-        public IPipeline<ContextBuildContext> ContextBuildPipeline => _composition.ContextBuildPipeline;
         public IPipeline<BusPublishContext> BusPublishPipeline => _composition.BusPublishPipeline;
+        public IPipeline<LlmRequestContext> UnifiedPipeline => _composition.UnifiedPipeline;
 
         public IReadOnlyList<IParameterTuner> ParameterTunersList => _parameterTuners.Values.ToList();
         public Func<Pawn, AgentIdentity?>? AgentIdentityProvider => _extensionManager.AgentIdentityProvider;
@@ -88,7 +84,8 @@ namespace RimMind.Presentation.Runtime
                 _composition.Telemetry,
                 _composition.ContextEngine,
                 _composition.Player2Lifecycle,
-                _composition.AgentBus);
+                _composition.AgentBus,
+                _composition.ContextKeyRegistry);
 
             // Step 3: Create Extension Manager
             _extensionManager = new RimMindExtensionManager(
@@ -145,9 +142,6 @@ namespace RimMind.Presentation.Runtime
         {
             _extensionManager.AddMiddleware(
                 middleware,
-                _composition.AIRequestPipeline,
-                _composition.NpcChatPipeline,
-                _composition.ContextBuildPipeline,
                 _composition.BusPublishPipeline);
         }
 

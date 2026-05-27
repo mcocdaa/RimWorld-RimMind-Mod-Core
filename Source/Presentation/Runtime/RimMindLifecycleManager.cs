@@ -9,7 +9,6 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Presentation.Agent;
-using RimMind.Presentation.Context;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -23,6 +22,7 @@ namespace RimMind.Presentation.Runtime
         private readonly IContextEngine _contextEngine;
         private readonly IPlayer2Lifecycle? _player2Lifecycle;
         private readonly IAgentBus _agentBus;
+        private readonly IContextKeyRegistry? _keyRegistry;
         private volatile bool _isShutdown;
 
         public bool IsShutdown => _isShutdown;
@@ -31,12 +31,14 @@ namespace RimMind.Presentation.Runtime
             ITelemetryCollector telemetry,
             IContextEngine contextEngine,
             IPlayer2Lifecycle? player2Lifecycle,
-            IAgentBus agentBus)
+            IAgentBus agentBus,
+            IContextKeyRegistry? keyRegistry = null)
         {
             _telemetry = telemetry;
             _contextEngine = contextEngine;
             _player2Lifecycle = player2Lifecycle;
             _agentBus = agentBus;
+            _keyRegistry = keyRegistry;
         }
 
         public void Shutdown()
@@ -59,8 +61,9 @@ namespace RimMind.Presentation.Runtime
             registries.Clear();
             extensionManager.Reset();
             RimMindServiceLocator.Reset();
-            ContextKeyRegistry.ResetCache();
-            ContextKeyRegistry.Clear();
+            _keyRegistry?.Clear();
+            // L3: Static ContextKeyRegistry.ResetCache() and Clear() are no longer needed
+            // as the instance-based ContextKeyRegistryImpl.Clear() is called above.
         }
     }
 }

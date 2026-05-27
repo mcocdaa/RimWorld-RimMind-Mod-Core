@@ -73,4 +73,61 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         [JsonProperty("currency")]
         public string? Currency;
     }
+
+    internal class Player2StreamChunkDto
+    {
+        [JsonProperty("choices")]
+        public List<Player2StreamChoiceDto>? Choices;
+
+        [JsonProperty("usage")]
+        public Player2UsageDto? Usage;
+    }
+
+    internal class Player2StreamChoiceDto
+    {
+        [JsonProperty("index")]
+        public int Index;
+
+        [JsonProperty("delta")]
+        public Player2StreamDeltaDto? Delta;
+
+        [JsonProperty("finish_reason")]
+        public string? FinishReason;
+    }
+
+    internal class Player2StreamDeltaDto
+    {
+        [JsonProperty("role")]
+        public string? Role;
+
+        [JsonProperty("content")]
+        public string? Content;
+
+        [JsonProperty("tool_calls")]
+        public List<Player2StreamToolCallDto>? ToolCalls;
+    }
+
+    internal class Player2StreamToolCallDto
+    {
+        [JsonProperty("index")]
+        public int Index;
+
+        [JsonProperty("id")]
+        public string? Id;
+
+        [JsonProperty("type")]
+        public string? Type;
+
+        [JsonProperty("function")]
+        public Player2StreamFunctionDto? Function;
+    }
+
+    internal class Player2StreamFunctionDto
+    {
+        [JsonProperty("name")]
+        public string? Name;
+
+        [JsonProperty("arguments")]
+        public string? Arguments;
+    }
 }

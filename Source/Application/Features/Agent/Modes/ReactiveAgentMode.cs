@@ -4,13 +4,13 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Tools;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
-using RimMind.Application.Features.Json;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Modes;
@@ -31,58 +31,36 @@ internal sealed class ReactiveAgentMode : IAgentMode
 
     public IThinkStrategy GetThinkStrategy() => new ReactiveThinkStrategy();
 
+    private static readonly string[] ExcludedToolPrefixes = { "planning.", "dream.", "reflect.", "trait_evolution." };
+
     public IReadOnlyList<string> AllowedToolIds(IToolRegistry registry)
-        => registry.GetAllDefinitions().Select(d => d.Id).ToList();
+        => registry.GetAllDefinitions()
+            .Where(d => !ExcludedToolPrefixes.Any(p => d.Id.StartsWith(p)))
+            .Select(d => d.Id)
+            .ToList();
 }
 
 internal sealed class ReactiveThinkStrategy : IThinkStrategy
 {
     public string ScenarioId => ScenarioIds.Decision;
 
-    public ContextRequest BuildRequest(IAgentInfo agent,
+    public LlmRequestEnvelope BuildEnvelope(IAgentInfo agent,
         IReadOnlyList<PerceptionBufferEntry> perceptions,
         IReadOnlyList<ToolDefinition> availableTools)
     {
-        var query = FormatPerceptions(perceptions);
-        return new ContextRequest
-        {
-            NpcId = agent.NpcId,
-            Scenario = ScenarioId,
-            CurrentQuery = query,
-        };
+        var query = ThinkStrategyHelper.FormatPerceptions(perceptions);
+        var domainTools = ThinkStrategyHelper.ConvertToDomainTools(availableTools);
+        return LlmRequestEnvelopeBuilder
+            .ForScenario(ScenarioId)
+            .WithModId("RimMind.Agent")
+            .WithNpcId(agent.NpcId)
+            .WithGameStateInfo(query)
+            .WithSchema("<Action>...</Action>")
+            .WithTools(domainTools)
+            .Build();
     }
 
-    public Result<AgentDecision, RimMindError> ParseDecision(IAgentInfo agent, AIResponse response)
-    {
-        var json = JsonTagExtractor.Extract<ActionJson>(response.Content, "Action");
-        if (json == null)
-            return Result<AgentDecision, RimMindError>.Err(
-                RimMindErrors.Internal("No <Action> tag in AI response"));
-
-        return Result<AgentDecision, RimMindError>.Ok(new AgentDecision
-        {
-            ActionIntent = json.action,
-            Reason = json.reason ?? "",
-            TargetPawnId = json.target,
-            Param = json.param,
-        });
-    }
-
-    private static string FormatPerceptions(IReadOnlyList<PerceptionBufferEntry> perceptions)
-    {
-        if (perceptions.Count == 0) return "";
-        var parts = perceptions.Select(p =>
-            $"[{p.PerceptionType}] {p.Content}" + (p.Importance > 0 ? $" (importance:{p.Importance:F1})" : ""));
-        return string.Join("\n", parts);
-    }
-
-    private class ActionJson
-    {
-#pragma warning disable CS0649
-        public string action = "";
-        public string? reason;
-        public string? target;
-        public string? param;
-#pragma warning restore CS0649
-    }
+    public Result<AgentDecision, RimMindError> ParseDecision(IAgentInfo agent, LlmResponse response,
+        IReadOnlyList<ToolResult>? toolCallResults = null)
+        => ThinkStrategyHelper.ParseDecisionCore(response, toolCallResults);
 }

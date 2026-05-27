@@ -13,7 +13,12 @@ namespace RimMind.Domain.Events
         ScheduleUpdate,
         MoodThreshold,
         NeedCritical,
-        MentalStateWarning
+        MentalStateWarning,
+        InformationDiffusion,
+        SocialEventProposed,
+        TraitEvolution,
+        Dream,
+        DecisionFailed
     }
 
     public class AgentBusEvent

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
@@ -24,6 +25,29 @@ namespace RimMind.Application.Features.AgentBus
         private readonly IThreadChecker? _threadChecker;
         private IPipeline<BusPublishContext>? _pipeline;
         private int _handlerIdCounter;
+
+        /// <summary>
+        /// Maps AgentBusEventType enum names to concrete event Types for SubscribeByName resolution.
+        /// </summary>
+        private static readonly Dictionary<string, Type> EventTypeMap = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
+        {
+            { nameof(AgentBusEventType.Perception), typeof(PerceptionEvent) },
+            { nameof(AgentBusEventType.Decision), typeof(DecisionEvent) },
+            { nameof(AgentBusEventType.Goal), typeof(GoalEvent) },
+            { nameof(AgentBusEventType.Action), typeof(ActionEvent) },
+            { nameof(AgentBusEventType.Lifecycle), typeof(AgentLifecycleEvent) },
+            { nameof(AgentBusEventType.ModeChange), typeof(AgentModeChangedEvent) },
+            { nameof(AgentBusEventType.InnerVoice), typeof(InnerVoiceEvent) },
+            { nameof(AgentBusEventType.Reflection), typeof(DecisionEvent) },
+            { nameof(AgentBusEventType.ScheduleUpdate), typeof(DecisionEvent) },
+            { nameof(AgentBusEventType.MoodThreshold), typeof(MoodThresholdCrossedEvent) },
+            { nameof(AgentBusEventType.NeedCritical), typeof(NeedCriticalEvent) },
+            { nameof(AgentBusEventType.MentalStateWarning), typeof(MentalStateWarningEvent) },
+            { nameof(AgentBusEventType.InformationDiffusion), typeof(InformationDiffusionEvent) },
+            { nameof(AgentBusEventType.SocialEventProposed), typeof(SocialEventProposedEvent) },
+            { nameof(AgentBusEventType.TraitEvolution), typeof(TraitEvolutionEvent) },
+            { nameof(AgentBusEventType.Dream), typeof(DreamEvent) },
+        };
 
         public AgentBusImpl(ILogSink? log = null, IThreadChecker? threadChecker = null)
         {
@@ -72,6 +96,23 @@ namespace RimMind.Application.Features.AgentBus
                 typeof(T),
                 _ => new List<HandlerEntry> { entry },
                 (_, list) => { lock (list) { list.Add(entry); } return list; });
+        }
+
+        public string SubscribeByName(string eventTypeName, Action<AgentBusEvent> handler)
+        {
+            if (!EventTypeMap.TryGetValue(eventTypeName, out var eventType))
+            {
+                _log?.Warning($"[AgentBus] SubscribeByName: unknown event type '{eventTypeName}', falling back to base AgentBusEvent type.");
+                eventType = typeof(AgentBusEvent);
+            }
+
+            var key = $"byname_{Interlocked.Increment(ref _handlerIdCounter)}";
+            var entry = new HandlerEntry(key, h => handler((AgentBusEvent)h));
+            _handlers.AddOrUpdate(
+                eventType,
+                _ => new List<HandlerEntry> { entry },
+                (_, list) => { lock (list) { list.Add(entry); } return list; });
+            return key;
         }
 
         public void Unsubscribe<T>(string key) where T : AgentBusEvent

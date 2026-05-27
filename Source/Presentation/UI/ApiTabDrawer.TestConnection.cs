@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Interfaces;
@@ -7,6 +8,8 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
+using RimMind.Domain.Llm;
+using DomainChatMessage = RimMind.Domain.Llm.ChatMessage;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
 using UnityEngine;
@@ -38,15 +41,16 @@ namespace RimMind.Presentation.UI
                             return;
                         }
 
-                        var request = new AIRequest
+                        var envelope = new LlmRequestEnvelope
                         {
                             RequestId = "test",
-                            UserPrompt = "RimMind.Settings.TestMessage".Translate(),
+                            ScenarioId = "RimMind.Test",
+                            ModId = "RimMind.Test",
+                            Messages = new List<DomainChatMessage> { new DomainChatMessage { Role = "user", Content = "RimMind.Settings.TestMessage".Translate() } },
                             MaxTokens = RimMindDefaults.TestConnectionMaxTokens,
                             Temperature = 0.7f,
-                            ModId = "RimMind.Test"
                         };
-                        var result = await client.SendAsync(request);
+                        var result = await client.SendAsync(envelope);
                         if (result.TryGetValue(out var response))
                         {
                             var content = response.Content.Trim();
@@ -116,16 +120,17 @@ namespace RimMind.Presentation.UI
                         return;
                     }
 
-                    var request = new AIRequest
+                    var envelope2 = new LlmRequestEnvelope
                     {
                         RequestId = "test",
-                        UserPrompt = "RimMind.Settings.TestMessage".Translate(),
+                        ScenarioId = "RimMind.Test",
+                        ModId = "RimMind.Test",
+                        Messages = new List<DomainChatMessage> { new DomainChatMessage { Role = "user", Content = "RimMind.Settings.TestMessage".Translate() } },
                         MaxTokens = 60,
                         Temperature = 0.7f,
-                        ModId = "RimMind.Test"
                     };
-                    var result = await client.SendAsync(request);
-                    if (result.TryGetValue(out var response2))
+                    var result2 = await client.SendAsync(envelope2);
+                    if (result2.TryGetValue(out var response2))
                     {
                         var content = response2.Content.Trim();
                         var tok = response2.TokensUsed;
@@ -137,7 +142,7 @@ namespace RimMind.Presentation.UI
                     }
                     else
                     {
-                        var error = result.Error.Message;
+                        var error = result2.Error.Message;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
                             _testStatus = $"FAIL {error}";

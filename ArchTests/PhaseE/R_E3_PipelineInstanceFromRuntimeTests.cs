@@ -12,9 +12,7 @@ namespace RimMind.Core.ArchTests.PhaseE
         private static readonly HashSet<string> PipelineFactoryFiles = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
         {
             @"Application\Features\Pipeline\Bus\BusPublishPipelineFactory.cs",
-            @"Presentation\Pipeline\AI\AIRequestPipelineFactory.cs",
-            @"Presentation\Pipeline\Npc\NpcChatPipelineFactory.cs",
-            @"Presentation\Pipeline\Context\ContextBuildPipelineFactory.cs",
+            @"Application\Features\Pipeline\Unified\UnifiedRequestPipelineFactory.cs",
         };
 
         private static readonly HashSet<string> KnownNewPipelineViolations = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
@@ -146,10 +144,10 @@ namespace RimMind.Core.ArchTests.PhaseE
             {
                 var source = File.ReadAllText(runtimeFile);
 
-                source.Should().Contain("AIRequestPipeline",
-                    "R-E3: RimMindRuntime must expose AIRequestPipeline property for centralized pipeline access");
-                source.Should().Contain("NpcChatPipeline",
-                    "R-E3: RimMindRuntime must expose NpcChatPipeline property for centralized pipeline access");
+                source.Should().Contain("UnifiedPipeline",
+                    "R-E3: RimMindRuntime must expose UnifiedPipeline property for centralized pipeline access (K-phase: AIRequestPipeline → UnifiedPipeline)");
+                source.Should().Contain("BusPublishPipeline",
+                    "R-E3: RimMindRuntime must expose BusPublishPipeline property for centralized pipeline access");
             }
         }
 

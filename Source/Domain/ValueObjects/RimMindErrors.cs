@@ -100,7 +100,7 @@ namespace RimMind.Domain.ValueObjects
             TraceId = TraceContext.Current,
         };
 
-        public static RimMindError StorageDriverFailed(string message, Exception? inner = null) => new(RimMindErrorCode.StorageDriverFailed, message)
+        public static RimMindError RemoteBackendFailed(string message, Exception? inner = null) => new(RimMindErrorCode.RemoteBackendFailed, message)
         {
             InnerException = inner,
             TraceId = TraceContext.Current,

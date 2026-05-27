@@ -13,28 +13,45 @@ using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Interfaces.Sensor;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
-using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.AgentBus;
+using RimMind.Application.Common.Interfaces.Agent.Psychology;
+using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Features.Agent.InnerVoice;
+using RimMind.Application.Features.Agent.Psychology;
+using RimMind.Application.Features.Agent.Social;
+using RimMind.Infrastructure.Psychology;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Pipeline.Bus;
+using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Application.Features.Registry;
 using RimMind.Infrastructure;
-using RimMind.Infrastructure.Persistence;
+using RimMind.Infrastructure.Mechanisms;
+using RimMind.Infrastructure.Mechanisms.Pawn.Job;
+using RimMind.Infrastructure.Mechanisms.Pawn.Draft;
+using RimMind.Infrastructure.Mechanisms.Pawn.Work;
+using RimMind.Infrastructure.Mechanisms.Pawn.Equipment;
+using RimMind.Infrastructure.Mechanisms.Pawn.Interaction;
+using RimMind.Infrastructure.Mechanisms.Pawn.Recruit;
+using RimMind.Infrastructure.Mechanisms.Pawn.Thought;
+using RimMind.Infrastructure.Mechanisms.Pawn.Inspiration;
+using RimMind.Infrastructure.Mechanisms.Pawn.MentalState;
+using RimMind.Infrastructure.Mechanisms.Pawn.Health;
+using RimMind.Infrastructure.Mechanisms.Pawn.Relations;
+using RimMind.Infrastructure.Mechanisms.Pawn.Skill;
+using RimMind.Infrastructure.Mechanisms.Pawn.Need;
+using RimMind.Infrastructure.Mechanisms.Map.Wealth;
+using RimMind.Infrastructure.Mechanisms.World.Faction;
+using RimMind.Infrastructure.Mechanisms.World.Storyteller;
+using RimMind.Infrastructure.Mechanisms.World.ChoiceLetter;
+using RimMind.Infrastructure.Social;
 using RimMind.Infrastructure.UI;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.Llm;
 using RimMind.Presentation.Settings;
-using RimMind.Application.Features.Pipeline.AI;
-using RimMind.Application.Features.Pipeline.Context;
-using RimMind.Application.Features.Pipeline.Npc;
-using RimMind.Presentation.Pipeline.AI;
-using RimMind.Presentation.Pipeline.Context;
-using RimMind.Presentation.Pipeline.Npc;
 using RimMind.Presentation.Sensor;
 
 namespace RimMind.Presentation.Runtime
@@ -63,7 +80,6 @@ namespace RimMind.Presentation.Runtime
             public IGameMechanismRegistry MechanismRegistry { get; init; } = null!;
             public IWindowService? WindowService { get; init; }
             public IPlayer2Lifecycle Player2Lifecycle { get; init; } = null!;
-            public IStorageDriverFactory? StorageDriverFactory { get; init; }
 
             // Presentation layer services
             public IProviderRegistry ProviderRegistry { get; init; } = null!;
@@ -81,12 +97,12 @@ namespace RimMind.Presentation.Runtime
             public IContextDiffTracker DiffTracker { get; init; } = null!;
             public IContextLayerBuilder LayerBuilder { get; init; } = null!;
             public IBudgetScheduler BudgetScheduler { get; init; } = null!;
+            public IRelevanceTable RelevanceTable { get; init; } = null!;
+            public IRelevanceLearner RelevanceLearner { get; init; } = null!;
 
             // Pipelines
-            public IPipeline<AIRequestContext> AIRequestPipeline { get; init; } = null!;
-            public IPipeline<NpcChatContext> NpcChatPipeline { get; init; } = null!;
-            public IPipeline<ContextBuildContext> ContextBuildPipeline { get; init; } = null!;
             public IPipeline<BusPublishContext> BusPublishPipeline { get; init; } = null!;
+            public IPipeline<LlmRequestContext> UnifiedPipeline { get; init; } = null!;
 
             // Resolved GameComponent services (Verse-instantiated, may be null)
             public INpcManager? NpcManager { get; init; }
@@ -115,6 +131,10 @@ namespace RimMind.Presentation.Runtime
 
             var logSink = infraBag.LogSink;
             var tickProvider = infraBag.TickProvider;
+
+            // H2: Register all 17 built-in Mechanisms
+            var mechanismRegistry = infraBag.MechanismRegistry;
+            RegisterAllMechanisms(mechanismRegistry);
 
             PawnDataExtractor.Initialize(logSink);
 
@@ -146,7 +166,13 @@ namespace RimMind.Presentation.Runtime
             var diffTracker = new ContextDiffTracker(logSink);
             var keyProvider = new DefaultContextKeyProvider();
             var layerBuilder = new ContextLayerBuilder(keyProvider, logSink);
-            var budgetScheduler = new BudgetScheduler();
+
+            // L3: Instance-based registries replacing static classes
+            var keyRegistryImpl = new ContextKeyRegistryImpl(logSink);
+            var relevanceTableImpl = new RelevanceTableImpl();
+            var relevanceLearner = new RelevanceLearner(tickProvider);
+            var budgetScheduler = new BudgetScheduler(relevanceTableImpl, relevanceLearner, tickProvider, cacheManager.EmbedCache);
+            var providerCache = new ProviderCache(agentBus, logSink, tickProvider);
 
             var buildServices = new ContextBuildServices(cacheManager, diffTracker, layerBuilder, budgetScheduler);
 
@@ -154,6 +180,9 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IContextCacheManager>(cacheManager);
             RimMindServiceLocator.Register<IContextDiffTracker>(diffTracker);
             RimMindServiceLocator.Register<IContextLayerBuilder>(layerBuilder);
+            RimMindServiceLocator.Register<IContextKeyRegistry>(keyRegistryImpl);
+            RimMindServiceLocator.Register<IRelevanceTable>(relevanceTableImpl);
+            RimMindServiceLocator.Register<IRelevanceLearner>(relevanceLearner);
 
             // Phase 4: Resolve GameComponent services (Verse-instantiated, may be null)
             var npcManager = RimMindServiceLocator.Get<INpcManager>();
@@ -170,7 +199,11 @@ namespace RimMind.Presentation.Runtime
                 translationService,
                 flywheelParameterStore,
                 logSink,
-                embeddingSnapshotStore);
+                embeddingSnapshotStore,
+                keyRegistryImpl,
+                relevanceTableImpl,
+                providerCache,
+                tickProvider);
             RimMindServiceLocator.Register<IContextEngine>(contextEngine);
             RimMindServiceLocator.Register<IContextKeyProvider>(keyProvider);
             // ContextOrchestrator implements IContextEngine : IContextBuilder, IContextCache, IContextInvalidation
@@ -179,29 +212,7 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IContextCache>(contextEngine);
 
             // Phase 5: Wire pipelines using direct references
-            var contextKeyRegistry = new ContextKeyRegistryAdapter();
-
-            var aiRequestPipeline = AIRequestPipelineFactory.Build(
-                resolvedSettings,
-                appBag.ToolRegistry,
-                logSink,
-                GetExtensionRegistry<IMiddleware<AIRequestContext>>());
-
-            var npcChatPipeline = NpcChatPipelineFactory.Build(
-                contextEngine,
-                infraBag.StorageDriverFactory,
-                logSink,
-                npcManager,
-                GetExtensionRegistry<IMiddleware<NpcChatContext>>());
-
-            var contextBuildPipeline = ContextBuildPipelineFactory.Build(
-                resolvedSettings,
-                cacheManager,
-                layerBuilder,
-                diffTracker,
-                contextKeyRegistry,
-                logSink,
-                GetExtensionRegistry<IMiddleware<ContextBuildContext>>());
+            var contextKeyRegistry = keyRegistryImpl as IContextKeyRegistry;
 
             var busPublishPipeline = BusPublishPipelineFactory.Build(
                 evt => agentBus.DispatchAction?.Invoke(evt),
@@ -213,9 +224,24 @@ namespace RimMind.Presentation.Runtime
             // IAgentBus interface because BusPublishContext lives in the Features layer.
             (agentBus as AgentBusImpl)?.SetPipeline(busPublishPipeline);
 
+            // Phase 5b: Build unified pipeline
+            // L5: Create AIResponseAnalyzer for context feedback (RelevanceLearner created in Phase 3)
+            var responseAnalyzer = new AIResponseAnalyzer();
+
+            var unifiedPipeline = UnifiedRequestPipelineFactory.Build(
+                appBag.ToolRegistry,
+                logSink,
+                npcManager,
+                contextEngine,
+                appBag.Telemetry,
+                resolvedSettings,
+                GetExtensionRegistry<IMiddleware<LlmRequestContext>>(),
+                relevanceLearner,
+                responseAnalyzer);
+
             // Phase 6: Create remaining Presentation services
 
-            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus);
+            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, infraBag.MechanismRegistry);
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
             var gameContextBuilder = new GameContextBuilder(
@@ -229,9 +255,11 @@ namespace RimMind.Presentation.Runtime
 
             RimMindServiceLocator.Register<IContextKeyRegistry>(contextKeyRegistry);
 
-            ContextKeyRegistry.Initialize(logSink, translationService, keyProvider, npcManager);
-
             RimMindServiceLocator.Register(GetExtensionRegistry<ISettingsTab>());
+
+            // Register built-in RemoteSync settings tab
+            var settingsTabRegistry = RimMindServiceLocator.Get<IExtensionRegistry<ISettingsTab>>();
+            settingsTabRegistry?.Register(new RimMind.Infrastructure.UI.RemoteSyncSettingsUI());
 
             // Register restored extension interfaces with null defaults
             var modCooldownRegistry = new ExtensionRegistry<IModCooldown>();
@@ -251,6 +279,9 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IExtensionRegistry<ISkipCheck>>(skipCheckRegistry);
 
             // Phase 6: Register built-in client factories
+            // NOTE: When remote + local clients are both configured, use HybridAIClient
+            // (Infrastructure.Services.Clients.Hybrid) to get remote-first with local fallback
+            // on retryable errors (transient, circuit-open, timeout).
             var clientFactoryRegistry = GetExtensionRegistry<IAIClientFactory>();
             var aiDebugLog = RimMindServiceLocator.Get<IAIDebugLog>();
             var resolvedOpenAISettings = openAISettings ?? RimMindServiceLocator.Get<IOpenAISettings>();
@@ -261,16 +292,41 @@ namespace RimMind.Presentation.Runtime
             Application.Common.Helpers.AIProviderRegistry.DefaultRegistry = clientFactoryRegistry;
 
             // Phase 7: Initialize Infrastructure static caches with resolved dependencies
-            RimMind.Infrastructure.Persistence.StorageDriverFactory.Initialize(
-                RimMindServiceLocator.Get<IApiCredentialSettings>(),
-                historyManager,
-                clientManager,
-                npcManager,
-                logSink,
-                resolvedSettings,
-                contextEngine,
-                gameContextBuilder,
-                responseDispatcher);
+            // K-phase: Register RemoteSyncService for submodules (replaces IStorageDriver)
+            var remoteSyncSettings = new RimMind.Domain.Settings.RemoteSyncSettings();
+            RimMindServiceLocator.Register(remoteSyncSettings);
+            var remoteBackend = RimMindServiceLocator.Get<RimMind.Domain.Storage.IRemoteBackend>();
+            var remoteSyncOrchestrator = new RimMind.Application.Features.Storage.RemoteSyncOrchestrator(
+                remoteBackend, remoteSyncSettings, logSink);
+            var remoteSyncService = new RimMind.Infrastructure.Services.Storage.RemoteSyncService(remoteSyncOrchestrator);
+            RimMindServiceLocator.Register<RimMind.Application.Common.Interfaces.Storage.IRemoteSyncService>(remoteSyncService);
+
+            // Social & Emergence services
+            var informationDiffuser = new DefaultInformationDiffuser(agentBus, tickProvider);
+            RimMindServiceLocator.Register<IInformationDiffuser>(informationDiffuser);
+
+            var socialEventOrganizer = new DefaultSocialEventOrganizer(tickProvider, agentBus);
+            RimMindServiceLocator.Register<ISocialEventOrganizer>(socialEventOrganizer);
+
+            var psychologyWatcher = RimMindServiceLocator.Get<IPsychologyWatcher>();
+            var traitEvolutionEngine = new DefaultTraitEvolutionEngine(tickProvider, psychologyWatcher, agentBus);
+            RimMindServiceLocator.Register<ITraitEvolutionEngine>(traitEvolutionEngine);
+
+            var sleepDetector = new VersePawnSleepDetector();
+            RimMindServiceLocator.Register<ISleepDetector>(sleepDetector);
+
+            var dreamGenerator = new DefaultDreamGenerator(tickProvider, sleepDetector, agentBus);
+            RimMindServiceLocator.Register<IDreamGenerator>(dreamGenerator);
+
+            var traitEvolver = new VerseTraitEvolver();
+            RimMindServiceLocator.Register(traitEvolver);
+
+            var thoughtInjector = RimMindServiceLocator.Get<IThoughtInjector>();
+            if (thoughtInjector != null)
+            {
+                var dreamThoughtInjector = new VerseDreamThoughtInjector(thoughtInjector);
+                RimMindServiceLocator.Register(dreamThoughtInjector);
+            }
 
             RimMindCoreDebugActions.Initialize(
                 resolvedSettings,
@@ -305,7 +361,6 @@ namespace RimMind.Presentation.Runtime
                 MechanismRegistry = infraBag.MechanismRegistry,
                 WindowService = infraBag.WindowService,
                 Player2Lifecycle = infraBag.Player2Lifecycle,
-                StorageDriverFactory = infraBag.StorageDriverFactory,
 
                 // Presentation
                 ProviderRegistry = providerRegistry,
@@ -323,12 +378,12 @@ namespace RimMind.Presentation.Runtime
                 DiffTracker = diffTracker,
                 LayerBuilder = layerBuilder,
                 BudgetScheduler = budgetScheduler,
+                RelevanceTable = relevanceTableImpl,
+                RelevanceLearner = relevanceLearner,
 
                 // Pipelines
-                AIRequestPipeline = aiRequestPipeline,
-                NpcChatPipeline = npcChatPipeline,
-                ContextBuildPipeline = contextBuildPipeline,
                 BusPublishPipeline = busPublishPipeline,
+                UnifiedPipeline = unifiedPipeline,
 
                 // GameComponent
                 NpcManager = npcManager,
@@ -345,6 +400,36 @@ namespace RimMind.Presentation.Runtime
             var newRegistry = new ExtensionRegistry<T>();
             RimMindServiceLocator.Register(newRegistry);
             return newRegistry;
+        }
+
+        /// <summary>
+        /// H2: Register all 17 built-in Mechanisms into the GameMechanismRegistry.
+        /// Each Mechanism auto-registers its ToolHandlers (query/set/toggle/trigger/list) via GameMechanismRegistry.Register.
+        /// </summary>
+        private static void RegisterAllMechanisms(IGameMechanismRegistry registry)
+        {
+            // Pawn mechanisms (13)
+            registry.Register(new JobMechanism());
+            registry.Register(new DraftMechanism());
+            registry.Register(new WorkMechanism());
+            registry.Register(new EquipmentMechanism());
+            registry.Register(new InteractionMechanism());
+            registry.Register(new RecruitMechanism());
+            registry.Register(new ThoughtMechanism());
+            registry.Register(new InspirationMechanism());
+            registry.Register(new MentalStateMechanism());
+            registry.Register(new HealthMechanism());
+            registry.Register(new RelationsMechanism());
+            registry.Register(new SkillMechanism());
+            registry.Register(new NeedMechanism());
+
+            // Map mechanisms (1)
+            registry.Register(new WealthMechanism());
+
+            // World mechanisms (3)
+            registry.Register(new FactionMechanism());
+            registry.Register(new StorytellerMechanism());
+            registry.Register(new ChoiceLetterMechanism());
         }
     }
 }

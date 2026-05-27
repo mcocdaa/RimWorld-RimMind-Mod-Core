@@ -7,10 +7,9 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Common;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using LudeonTK;
 using RimWorld;
@@ -78,32 +77,29 @@ namespace RimMind.Infrastructure.UI
                 return;
             }
 
-            var request = new AIRequest
-            {
-                SystemPrompt = "You are a test assistant. Always reply in JSON format.",
-                UserPrompt = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}",
-                MaxTokens = RimMindDefaults.TestConnectionMaxTokens,
-                Temperature = 0f,
-                RequestId = "Debug_TestConnection",
-                ModId = "Debug",
-                ExpireAtTicks = Find.TickManager.TicksGame + RimMindDefaults.LetterChoiceExpireTicks,
-                Priority = AIRequestPriority.High,
-            };
+            var envelope = LlmRequestEnvelopeBuilder
+                .ForScenario("TestConnection")
+                .WithModId("Debug")
+                .WithSchema(null)
+                .WithMaxTokens(RimMindDefaults.TestConnectionMaxTokens)
+                .WithTemperature(0f)
+                .WithPriority(AIRequestPriority.High)
+                .Build();
 
-            var queue = _requestQueue;
-            var client = _clientManager?.GetClient();
-            if (queue == null || client == null)
+            // Add test messages
+            envelope.Messages.Add(new ChatMessage { Role = "system", Content = "You are a test assistant. Always reply in JSON format." });
+            envelope.Messages.Add(new ChatMessage { Role = "user", Content = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}" });
+
+            RimMind.Presentation.RimMindAPI.Send(envelope, result =>
             {
-                Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate("Queue or client not available"), MessageTypeDefOf.NegativeEvent, false);
-                return;
-            }
-            queue.EnqueueImmediate(request, response =>
-            {
-                if (response.State == AIRequestState.Completed)
-                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionSuccess".Translate(response.Content), MessageTypeDefOf.PositiveEvent, false);
-                else
-                    Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate(response.State.ToString()), MessageTypeDefOf.NegativeEvent, false);
-            }, client);
+                LongEventHandler.ExecuteWhenFinished(() =>
+                {
+                    if (result.IsOk)
+                        Messages.Message("RimMind.Infrastructure.Debug.ConnectionSuccess".Translate(result.Value.Content ?? ""), MessageTypeDefOf.PositiveEvent, false);
+                    else
+                        Messages.Message("RimMind.Infrastructure.Debug.ConnectionFailed".Translate(result.Error.Message), MessageTypeDefOf.NegativeEvent, false);
+                });
+            });
 
             Messages.Message("RimMind.Infrastructure.Debug.RequestSent".Translate(), MessageTypeDefOf.NeutralEvent, false);
         }
@@ -157,14 +153,7 @@ namespace RimMind.Infrastructure.UI
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null) { RimMindErrors.Warn("[RimMind-Core] Select a pawn first."); return; }
             var npcId = $"NPC-{pawn.thingIDNumber}";
-            var request = new ContextRequest
-            {
-                NpcId = npcId,
-                Scenario = ScenarioIds.Dialogue,
-                Budget = 0.6f,
-                CurrentQuery = "[Debug] Show context",
-            };
-            var snapshot = _contextEngine?.BuildSnapshot(request);
+            var snapshot = _contextEngine?.BuildSnapshotFromEnvelope(npcId, "[Debug] Show context");
             if (snapshot == null) { RimMindErrors.Warn("[RimMind-Core] ContextEngine not available."); return; }
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
@@ -195,8 +184,8 @@ namespace RimMind.Infrastructure.UI
             var active = queue.GetActiveRequests();
             foreach (var t in active)
             {
-                sb.AppendLine($"  [Active] {t.Request.RequestId} mod={t.Request.ModId} " +
-                              $"priority={t.Request.Priority} state={t.State} attempt={t.AttemptCount}");
+                sb.AppendLine($"  [Active] {t.Envelope.RequestId} mod={t.Envelope.ModId} " +
+                              $"priority={t.Envelope.Priority} state={t.State} attempt={t.AttemptCount}");
             }
 
             foreach (var kvp in queue.GetAllQueueDepths())

@@ -1,10 +1,9 @@
 using System;
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Common.Models.Npc;
+using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Events;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Features.Pipeline.Npc;
 
 namespace RimMind.Presentation.Llm
 {
@@ -33,11 +32,11 @@ namespace RimMind.Presentation.Llm
                 requestId));
         }
 
-        public void Dispatch(NpcChatContext context, AIResponse response)
+        public void Dispatch(LlmRequestContext context, LlmResponse response)
         {
             if (context == null || response == null) return;
 
-            var npcId = context.Request?.NpcId;
+            var npcId = context.Envelope?.NpcId;
             DispatchChatResponse(npcId ?? "", response.RequestId);
         }
     }

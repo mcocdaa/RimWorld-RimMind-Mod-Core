@@ -10,7 +10,6 @@ namespace RimMind.Application.Common.Interfaces.Flywheel
         List<TelemetryRecord> GetRecent(int count = RimMindDefaults.TelemetryRecordLimit);
         Dictionary<string, float> ComputeAggregates();
         void Clear();
-        void Flush();
         List<TelemetryRecord> GetRecentRecords(int count = RimMindDefaults.TelemetryRecordLimit);
     }
 }

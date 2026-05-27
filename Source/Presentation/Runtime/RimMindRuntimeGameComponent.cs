@@ -3,7 +3,6 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Features.Queue;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.Agent;

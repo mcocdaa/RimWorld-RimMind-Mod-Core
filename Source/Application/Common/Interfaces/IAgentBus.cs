@@ -13,6 +13,13 @@ namespace RimMind.Application.Common.Interfaces
         void Unsubscribe<T>(string key) where T : AgentBusEvent;
         void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent;
 
+        /// <summary>
+        /// Subscribe to events by AgentBusEventType name (string) instead of generic type.
+        /// Returns a subscription key that can be used to unsubscribe.
+        /// Used by ProviderCache for invalidation triggers where the event type is not known at compile time.
+        /// </summary>
+        string SubscribeByName(string eventTypeName, Action<AgentBusEvent> handler);
+
         [ThreadAffinity(ThreadAffinityKind.MainOnly)]
         void Publish<T>(T evt) where T : AgentBusEvent;
 

@@ -6,8 +6,10 @@ using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Agent.Modes;
+using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
+using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
@@ -20,6 +22,8 @@ namespace RimMind.Presentation.Agent
         public Pawn Pawn { get; }
         private AgentState _state = AgentState.Dormant;
         public AgentState State { get => _state; private set => _state = value; }
+        private AgentWorkflowPhase _workflowPhase = AgentWorkflowPhase.Idle;
+        public AgentWorkflowPhase WorkflowPhase { get => _workflowPhase; private set => _workflowPhase = value; }
         private AgentIdentity _identity = null!;
         public AgentIdentity Identity { get => _identity; private set => _identity = value; }
         private AgentGoalStack _goalStack = new AgentGoalStack();
@@ -44,14 +48,18 @@ namespace RimMind.Presentation.Agent
         private IPawnThinker _thinker;
         private IPawnActor _actor;
         private IPawnRecorder _recorder;
-        private readonly List<BehaviorRecord> _behaviorHistory = new List<BehaviorRecord>();
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;
         private int _lastTick;
         private int _tickInterval;
-        private int _maxBehaviorHistory;
 
-        IReadOnlyList<BehaviorRecord> IPawnAgent.BehaviorHistory => _behaviorHistory;
+        IReadOnlyList<BehaviorRecord> IPawnAgent.BehaviorHistory => _recorder.History;
+
+        public IReadOnlyList<BehaviorRecord> GetRecentHistory(int count = 10) => _recorder.GetRecentHistory(count);
+        public float GetRecentSuccessRate(int count = 10) => _recorder.GetRecentSuccessRate(count);
+
+        public PawnAgent(Pawn pawn, IAgentBus agentBus)
+            : this(pawn, null!, agentBus) { }
 
         public PawnAgent(Pawn pawn, IAgentTickSettings tickSettings, IAgentBus agentBus,
             IPawnPerceiver? perceiver = null, IPawnThinker? thinker = null,
@@ -67,7 +75,6 @@ namespace RimMind.Presentation.Agent
             _recorder = recorder!;
             Identity = new SerializableAgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
             _tickInterval = _tickSettings?.AgentTickInterval ?? 150;
-            _maxBehaviorHistory = _tickSettings?.BehaviorHistoryMax ?? 100;
         }
 
         internal void RebuildCollaborators(IPawnPerceiver perceiver, IPawnThinker thinker, IPawnActor actor, IPawnRecorder recorder)
@@ -92,10 +99,47 @@ namespace RimMind.Presentation.Agent
             _lastTick = now;
 
             GoalStack.CheckExpired(Pawn.thingIDNumber);
-            _perceiver.Tick();
-            _thinker.Tick();
-            _actor.Tick();
+
+            // Phase-driven workflow: only one phase active at a time
+            switch (WorkflowPhase)
+            {
+                case AgentWorkflowPhase.Idle:
+                    _perceiver.Tick();
+                    if (_thinker.ShouldThink())
+                        TransitionWorkflow(AgentWorkflowPhase.Thinking);
+                    break;
+
+                case AgentWorkflowPhase.Thinking:
+                    _thinker.Tick();
+                    // Transition to Acting happens in ProcessPendingCallback when decision is ready
+                    break;
+
+                case AgentWorkflowPhase.Acting:
+                    _actor.Tick();
+                    // Transition to Recording after action execution
+                    TransitionWorkflow(AgentWorkflowPhase.Recording);
+                    break;
+
+                case AgentWorkflowPhase.Recording:
+                    // Recording is handled by RecordBehavior calls from PawnThinker
+                    TransitionWorkflow(AgentWorkflowPhase.Idle);
+                    break;
+
+                case AgentWorkflowPhase.Perceiving:
+                    _perceiver.Tick();
+                    TransitionWorkflow(AgentWorkflowPhase.Idle);
+                    break;
+            }
+
             StrategyOptimizer.DecayAll();
+        }
+
+        /// <summary>
+        /// Transition the workflow phase with guard checks.
+        /// </summary>
+        public void TransitionWorkflow(AgentWorkflowPhase target)
+        {
+            _workflowPhase = target;
         }
 
         public bool TransitionTo(AgentState newState)
@@ -103,6 +147,13 @@ namespace RimMind.Presentation.Agent
             if (!AgentStateTransition.CanTransition(State, newState)) return false;
             var previousState = State;
             State = newState;
+
+            // On Pause: reset workflow phase and thinker state
+            if (newState == AgentState.Paused)
+            {
+                _workflowPhase = AgentWorkflowPhase.Idle;
+                _thinker.ResetThinking();
+            }
 
             _agentBus?.Publish(new AgentLifecycleEvent(
                 Identity.NpcId,
@@ -135,6 +186,11 @@ namespace RimMind.Presentation.Agent
             _actor.SetPendingJob(job);
         }
 
+        public Result<Unit, RimMindError> ExecuteDecision(AgentDecision decision)
+        {
+            return _actor.ExecuteDecision(decision);
+        }
+
         public bool RemoveGoal(string goalDescription)
         {
             return GoalStack.Remove(goalDescription, Pawn.thingIDNumber);
@@ -154,9 +210,6 @@ namespace RimMind.Presentation.Agent
                 ActionEventId = dto.ActionEventId,
                 DurationMs = dto.DurationMs,
             };
-            _behaviorHistory.Add(record);
-            while (_behaviorHistory.Count > _maxBehaviorHistory)
-                _behaviorHistory.RemoveAt(0);
             _recorder.Record(record);
         }
 
@@ -198,7 +251,6 @@ namespace RimMind.Presentation.Agent
         public void Cleanup()
         {
             PerceptionBuffer.Clear();
-            _behaviorHistory.Clear();
         }
 
         public void Destroy()
@@ -219,6 +271,7 @@ namespace RimMind.Presentation.Agent
         {
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"State: {State}");
+            sb.AppendLine($"WorkflowPhase: {WorkflowPhase}");
             sb.AppendLine($"Goals: {GoalStack.TotalCount}");
             foreach (var g in GoalStack.Goals)
                 sb.AppendLine($"  - [{g.Status}] {g.Description} (P:{g.Priority:F1})");
@@ -236,6 +289,7 @@ namespace RimMind.Presentation.Agent
         public void ExposeData()
         {
             Scribe_Values.Look(ref _state, "agentState", AgentState.Dormant);
+            Scribe_Values.Look(ref _workflowPhase, "workflowPhase", AgentWorkflowPhase.Idle);
             Scribe_Deep.Look(ref _identity, "identity");
             Scribe_Deep.Look(ref _goalStack, "goalStack");
             Scribe_Deep.Look(ref _strategyOptimizer, "strategyOptimizer");
@@ -261,7 +315,7 @@ namespace RimMind.Presentation.Agent
                 concrete.RebuildCollaborators(
                     new PawnPerceiver(concrete, factory.AgentBus),
                     new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus),
-                    new PawnActor(concrete),
+                    new PawnActor(concrete, factory.ActionExecutor),
                     new PawnRecorder(concrete, factory.AgentBus));
 
                 // Re-subscribe event bus so subscribers can re-associate this agent after save/load

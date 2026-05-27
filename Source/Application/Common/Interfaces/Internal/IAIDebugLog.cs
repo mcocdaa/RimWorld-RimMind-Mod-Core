@@ -1,6 +1,5 @@
 using System.Collections.Generic;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Domain.Common;
+using RimMind.Domain.Llm;
 
 namespace RimMind.Application.Common.Interfaces.Internal
 {
@@ -8,7 +7,7 @@ namespace RimMind.Application.Common.Interfaces.Internal
     {
         IReadOnlyList<AIDebugEntry> Entries { get; }
         void Clear();
-        void Record(AIRequest request, AIResponse response, int elapsedMs);
+        void Record(LlmRequestEnvelope envelope, LlmResponse response, int elapsedMs);
     }
 
     public class AIDebugEntry

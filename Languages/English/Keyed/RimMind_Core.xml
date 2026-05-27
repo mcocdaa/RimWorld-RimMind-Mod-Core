@@ -355,4 +355,29 @@
   <RimMind.Application.Scenario.Storyteller>Narrative scenario</RimMind.Application.Scenario.Storyteller>
   <RimMind.Application.Scenario.Memory>Dark memory generation scenario</RimMind.Application.Scenario.Memory>
   <RimMind.UpgradeWarning>RimMind v2.0 has breaking changes. Old saves may not be fully compatible. AI request queues and some internal structures have been reorganized. Please start a new game for the best experience.</RimMind.UpgradeWarning>
+  <!-- RemoteSyncSettingsUI.cs -->
+  <RimMind.Settings.Tab.RemoteSync>Remote Sync</RimMind.Settings.Tab.RemoteSync>
+  <RimMind.Settings.RemoteSync.NotAvailable>Remote sync service not available.</RimMind.Settings.RemoteSync.NotAvailable>
+  <RimMind.Settings.RemoteSync.Section.AutoSync>Auto Sync</RimMind.Settings.RemoteSync.Section.AutoSync>
+  <RimMind.Settings.RemoteSync.AutoPull>Auto Pull on Load</RimMind.Settings.RemoteSync.AutoPull>
+  <RimMind.Settings.RemoteSync.AutoPull.Desc>Automatically pull remote data when loading a save.</RimMind.Settings.RemoteSync.AutoPull.Desc>
+  <RimMind.Settings.RemoteSync.AutoPush>Auto Push on Change</RimMind.Settings.RemoteSync.AutoPush>
+  <RimMind.Settings.RemoteSync.AutoPush.Desc>Automatically push local changes to remote storage.</RimMind.Settings.RemoteSync.AutoPush.Desc>
+  <RimMind.Settings.RemoteSync.Section.Granularity>Sync Granularity</RimMind.Settings.RemoteSync.Section.Granularity>
+  <RimMind.Settings.RemoteSync.SyncMemory>Sync Memory</RimMind.Settings.RemoteSync.SyncMemory>
+  <RimMind.Settings.RemoteSync.SyncMemory.Desc>Include agent memory data in remote sync.</RimMind.Settings.RemoteSync.SyncMemory.Desc>
+  <RimMind.Settings.RemoteSync.SyncSettings>Sync Settings</RimMind.Settings.RemoteSync.SyncSettings>
+  <RimMind.Settings.RemoteSync.SyncSettings.Desc>Include mod settings in remote sync.</RimMind.Settings.RemoteSync.SyncSettings.Desc>
+  <RimMind.Settings.RemoteSync.SyncAgentIdentity>Sync Agent Identity</RimMind.Settings.RemoteSync.SyncAgentIdentity>
+  <RimMind.Settings.RemoteSync.SyncAgentIdentity.Desc>Include agent identity and personality data in remote sync.</RimMind.Settings.RemoteSync.SyncAgentIdentity.Desc>
+  <RimMind.Settings.RemoteSync.Section.Manual>Manual Operations</RimMind.Settings.RemoteSync.Section.Manual>
+  <RimMind.Settings.RemoteSync.NotConfigured>Remote backend not configured. Manual operations require a configured remote storage backend.</RimMind.Settings.RemoteSync.NotConfigured>
+  <RimMind.Settings.RemoteSync.ManualPull>Pull from Remote</RimMind.Settings.RemoteSync.ManualPull>
+  <RimMind.Settings.RemoteSync.ManualPush>Push to Remote</RimMind.Settings.RemoteSync.ManualPush>
+  <RimMind.Settings.RemoteSync.Pulling>Pulling...</RimMind.Settings.RemoteSync.Pulling>
+  <RimMind.Settings.RemoteSync.Pushing>Pushing...</RimMind.Settings.RemoteSync.Pushing>
+  <RimMind.Settings.RemoteSync.PullSuccess>Pull completed successfully.</RimMind.Settings.RemoteSync.PullSuccess>
+  <RimMind.Settings.RemoteSync.PullFailed>Pull failed: {0}</RimMind.Settings.RemoteSync.PullFailed>
+  <RimMind.Settings.RemoteSync.PushSuccess>Push completed successfully.</RimMind.Settings.RemoteSync.PushSuccess>
+  <RimMind.Settings.RemoteSync.PushFailed>Push failed: {0}</RimMind.Settings.RemoteSync.PushFailed>
 </LanguageData>

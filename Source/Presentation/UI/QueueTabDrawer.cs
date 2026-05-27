@@ -150,8 +150,8 @@ namespace RimMind.Presentation.UI
                 {
                     int elapsedTicks = Find.TickManager.TicksGame - req.StartedProcessingAtTick;
                     float elapsedSec = elapsedTicks / 60f;
-                    string priority = req.Request.Priority.ToString();
-                    string info = $"[{req.Request.ModId}] {req.Request.RequestId}  " +
+                    string priority = req.Envelope.Priority.ToString();
+                    string info = $"[{req.Envelope.ModId}] {req.Envelope.RequestId}  " +
                                   $"{"RimMind.Settings.Queue.Priority".Translate()}: {priority}  " +
                                   $"{"RimMind.Settings.Queue.Attempt".Translate()}: {req.AttemptCount}/{req.MaxAttempts}  " +
                                   $"{"RimMind.Settings.Queue.Elapsed".Translate()}: {elapsedSec:F1}s";
@@ -179,8 +179,8 @@ namespace RimMind.Presentation.UI
                 {
                     int waitTicks = Find.TickManager.TicksGame - req.EnqueuedAtTick;
                     float waitSec = waitTicks / 60f;
-                    string priority = req.Request.Priority.ToString();
-                    string info = $"[{req.Request.ModId}] {req.Request.RequestId}  " +
+                    string priority = req.Envelope.Priority.ToString();
+                    string info = $"[{req.Envelope.ModId}] {req.Envelope.RequestId}  " +
                                   $"{"RimMind.Settings.Queue.Priority".Translate()}: {priority}  " +
                                   $"{"RimMind.Settings.Queue.Attempt".Translate()}: {req.AttemptCount}/{req.MaxAttempts}  " +
                                   $"{"RimMind.Settings.Queue.Waiting".Translate()}: {waitSec:F1}s";

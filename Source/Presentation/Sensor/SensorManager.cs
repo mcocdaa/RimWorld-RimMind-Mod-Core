@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Sensor;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Llm;
 using Verse;
 
 namespace RimMind.Presentation.Sensor

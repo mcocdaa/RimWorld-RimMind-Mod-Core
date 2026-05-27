@@ -71,11 +71,6 @@ namespace RimMind.Application.Features.Flywheel
             while (_records.TryDequeue(out _)) { }
         }
 
-        [Obsolete("Placeholder - not yet implemented")]
-        public void Flush()
-        {
-        }
-
         public List<TelemetryRecord> GetRecentRecords(int count = RimMindDefaults.TelemetryRecordLimit) => GetRecent(count);
 
         public void Dispose()

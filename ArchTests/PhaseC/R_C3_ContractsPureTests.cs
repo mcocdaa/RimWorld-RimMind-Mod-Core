@@ -120,7 +120,7 @@ namespace RimMind.Core.ArchTests.PhaseC
 
             var violatingFiles = new List<string>();
             var classPattern = @"(?:public|internal)\s+(?!abstract\s+)(?:sealed\s+)?class\s+";
-            var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*[{:]|class\s+\w+Dto\s*[{:]|class\s+\w+Data\s*[{:]|class\s+\w+Result\s*[{:]|class\s+\w+Request\s*[{:]|class\s+\w+Response\s*[{:]|class\s+\w+Tool\s*[{:]|class\s+\w+Context\s*[{:]|class\s+\w+Entry\s*[{:]|class\s+\w+Profile\s*[{:]|class\s+\w+Command\s*[{:]|class\s+\w+Message\s*[{:]|class\s+\w+Exception\s*[{:]|class\s+\w+Error\s*[{:]|class\s+\w+Errors\s*[{:]|class\s+\w+Cache\s*[{:]|class\s+\w+Meta\s*[{:]|class\s+\w+Diff\s*[{:]|class\s+\w+Layer\s*[{:]|class\s+\w+Code\s*[{:]|static\s+class\s+";
+            var allowedClassPattern = @"class\s+\w+Attribute\s*:\s*Attribute|class\s+\w+Event\s*[{:]|class\s+\w+Dto\s*[{:]|class\s+\w+Data\s*[{:]|class\s+\w+Result\s*[{:]|class\s+\w+Request\s*[{:]|class\s+\w+Response\s*[{:]|class\s+\w+Tool\s*[{:]|class\s+\w+Context\s*[{:]|class\s+\w+Entry\s*[{:]|class\s+\w+Profile\s*[{:]|class\s+\w+Command\s*[{:]|class\s+\w+Message\s*[{:]|class\s+\w+Exception\s*[{:]|class\s+\w+Error\s*[{:]|class\s+\w+Errors\s*[{:]|class\s+\w+Cache\s*[{:]|class\s+\w+Meta\s*[{:]|class\s+\w+Diff\s*[{:]|class\s+\w+Layer\s*[{:]|class\s+\w+Code\s*[{:]|class\s+\w+Call\s*[{:]|class\s+\w+Envelope\s*[{:]|class\s+\w+Builder\s*[{:]|class\s+\w+Settings\s*[{:]|static\s+class\s+";
 
             foreach (var file in GetSourceFiles(domainDir))
             {

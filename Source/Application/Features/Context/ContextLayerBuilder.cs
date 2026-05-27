@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
@@ -16,6 +19,45 @@ namespace RimMind.Application.Features.Context
         {
             _keyProvider = keyProvider;
             _log = log;
+        }
+
+        public async Task<List<ContextEntry>> BuildLayerAsync(
+            List<KeyMeta> keys, object? pawn, ProviderContext ctx,
+            ProviderCache? cache, CancellationToken ct)
+        {
+            if (keys == null || keys.Count == 0) return new List<ContextEntry>();
+            var entries = new List<ContextEntry>();
+            foreach (var key in keys)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (key.Def is ContextProviderDef def)
+                {
+                    string? value = cache != null
+                        ? await cache.GetOrComputeAsync(def, ctx, ct).ConfigureAwait(false)
+                        : await def.Provider(ctx, ct).ConfigureAwait(false);
+                    if (value != null)
+                        entries.Add(new ContextEntry { SourceKey = key.Key, Content = value });
+                }
+                else if (key.ValueProvider != null)
+                {
+                    var result = key.ValueProvider(pawn!);
+                    entries.AddRange(result);
+                }
+            }
+            return entries;
+        }
+
+        public ChatMessage? EntriesToLayerMessage(List<ContextEntry> entries, string layerTag)
+        {
+            if (entries == null || entries.Count == 0) return null;
+            var sb = new StringBuilder();
+            foreach (var entry in entries)
+            {
+                if (!string.IsNullOrEmpty(entry.Content))
+                    sb.AppendLine($"[{entry.SourceKey}] {entry.Content}");
+            }
+            if (sb.Length == 0) return null;
+            return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = layerTag };
         }
 
         public ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager)

@@ -4,16 +4,18 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
+using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Agent.Planning;
 using RimMind.Application.Common.Interfaces.Agent.Reflection;
+using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Common.Interfaces.Tools;
-using RimMind.Application.Common.Models.Client;
-using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Modes;
@@ -23,14 +25,23 @@ internal sealed class ProactiveAgentMode : IAgentMode
     private readonly ITickProvider _tickProvider;
     private readonly IReflectionStrategy? _reflectionStrategy;
     private readonly IDailyPlanner? _dailyPlanner;
+    private readonly IPsychologyWatcher? _psychologyWatcher;
+    private readonly ISocialEventOrganizer? _socialEventOrganizer;
+    private readonly ITraitEvolutionEngine? _traitEvolutionEngine;
 
     public ProactiveAgentMode(ITickProvider tickProvider,
         IReflectionStrategy? reflectionStrategy = null,
-        IDailyPlanner? dailyPlanner = null)
+        IDailyPlanner? dailyPlanner = null,
+        IPsychologyWatcher? psychologyWatcher = null,
+        ISocialEventOrganizer? socialEventOrganizer = null,
+        ITraitEvolutionEngine? traitEvolutionEngine = null)
     {
         _tickProvider = tickProvider;
         _reflectionStrategy = reflectionStrategy;
         _dailyPlanner = dailyPlanner;
+        _psychologyWatcher = psychologyWatcher;
+        _socialEventOrganizer = socialEventOrganizer;
+        _traitEvolutionEngine = traitEvolutionEngine;
     }
 
     public AgentModeId ModeId => AgentModeId.Proactive;
@@ -55,12 +66,22 @@ internal sealed class ProactiveAgentMode : IAgentMode
 
         if (_reflectionStrategy != null && _reflectionStrategy.ShouldReflect(agent)) return true;
         if (_dailyPlanner != null && _dailyPlanner.ShouldPlan(agent)) return true;
+        if (_psychologyWatcher?.HasUrgentEvent(agent.NpcId) == true) return true;
+
+        // Social event trigger
+        if (_socialEventOrganizer?.ShouldOrganize(agent) == true) return true;
+
+        // Trait evolution trigger
+        if (_traitEvolutionEngine?.ShouldEvolve(agent) == true) return true;
 
         return false;
     }
 
     public IReflectionStrategy? ReflectionStrategy => _reflectionStrategy;
     public IDailyPlanner? DailyPlanner => _dailyPlanner;
+    public IPsychologyWatcher? PsychologyWatcher => _psychologyWatcher;
+    public ISocialEventOrganizer? SocialEventOrganizer => _socialEventOrganizer;
+    public ITraitEvolutionEngine? TraitEvolutionEngine => _traitEvolutionEngine;
 
     public IThinkStrategy GetThinkStrategy() => new ProactiveThinkStrategy();
 
@@ -72,32 +93,28 @@ internal sealed class ProactiveThinkStrategy : IThinkStrategy
 {
     public string ScenarioId => ScenarioIds.Decision;
 
-    public ContextRequest BuildRequest(IAgentInfo agent,
+    public LlmRequestEnvelope BuildEnvelope(IAgentInfo agent,
         IReadOnlyList<PerceptionBufferEntry> perceptions,
         IReadOnlyList<ToolDefinition> availableTools)
     {
         var query = perceptions.Count > 0
-            ? FormatPerceptions(perceptions)
+            ? ThinkStrategyHelper.FormatPerceptions(perceptions)
             : $"Periodic self-evaluation. Current state: {SerializeAgentState(agent)}";
 
-        return new ContextRequest
-        {
-            NpcId = agent.NpcId,
-            Scenario = ScenarioId,
-            CurrentQuery = query,
-        };
+        var domainTools = ThinkStrategyHelper.ConvertToDomainTools(availableTools);
+        return LlmRequestEnvelopeBuilder
+            .ForScenario(ScenarioId)
+            .WithModId("RimMind.Agent")
+            .WithNpcId(agent.NpcId)
+            .WithGameStateInfo(query)
+            .WithSchema("<Action>...</Action>")
+            .WithTools(domainTools)
+            .Build();
     }
 
-    public Result<AgentDecision, RimMindError> ParseDecision(IAgentInfo agent, AIResponse response)
-        => new ReactiveThinkStrategy().ParseDecision(agent, response);
-
-    private static string FormatPerceptions(IReadOnlyList<PerceptionBufferEntry> perceptions)
-    {
-        if (perceptions.Count == 0) return "";
-        var parts = perceptions.Select(p =>
-            $"[{p.PerceptionType}] {p.Content}" + (p.Importance > 0 ? $" (importance:{p.Importance:F1})" : ""));
-        return string.Join("\n", parts);
-    }
+    public Result<AgentDecision, RimMindError> ParseDecision(IAgentInfo agent, LlmResponse response,
+        IReadOnlyList<ToolResult>? toolCallResults = null)
+        => ThinkStrategyHelper.ParseDecisionCore(response, toolCallResults);
 
     private static string SerializeAgentState(IAgentInfo agent)
     {

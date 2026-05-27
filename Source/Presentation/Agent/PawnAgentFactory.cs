@@ -1,6 +1,8 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Infrastructure.Agent;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -9,14 +11,17 @@ namespace RimMind.Presentation.Agent
     {
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;
+        private readonly IActionExecutor _actionExecutor;
 
         internal IAgentTickSettings? TickSettings => _tickSettings;
         internal IAgentBus AgentBus => _agentBus;
+        internal IActionExecutor ActionExecutor => _actionExecutor;
 
-        public PawnAgentFactory(IAgentTickSettings? tickSettings, IAgentBus agentBus)
+        public PawnAgentFactory(IAgentTickSettings? tickSettings, IAgentBus agentBus, IGameMechanismRegistry mechanismRegistry)
         {
             _tickSettings = tickSettings;
             _agentBus = agentBus;
+            _actionExecutor = new MechanismActionExecutor(mechanismRegistry);
         }
 
         public IPawnAgent Create(Pawn pawn, IAgentBus agentBus)
@@ -25,7 +30,7 @@ namespace RimMind.Presentation.Agent
             agent.RebuildCollaborators(
                 new PawnPerceiver(agent, agentBus),
                 new PawnThinker(agent, _tickSettings!, agentBus),
-                new PawnActor(agent),
+                new PawnActor(agent, _actionExecutor),
                 new PawnRecorder(agent, agentBus));
             return agent;
         }

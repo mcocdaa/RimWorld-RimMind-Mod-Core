@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Models;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Common.Models.Context

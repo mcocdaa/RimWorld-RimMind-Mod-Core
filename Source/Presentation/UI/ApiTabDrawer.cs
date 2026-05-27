@@ -5,7 +5,7 @@ using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Models.Client;
+using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;

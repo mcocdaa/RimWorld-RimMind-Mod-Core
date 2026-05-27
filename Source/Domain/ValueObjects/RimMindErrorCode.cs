@@ -21,7 +21,7 @@ namespace RimMind.Domain.ValueObjects
         MechanismInvalidAction = 3014,
 
         NpcNotFound = 4000,
-        StorageDriverFailed = 4001,
+        RemoteBackendFailed = 4001,
 
         InternalError = 9000,
         NotImplemented = 9001,

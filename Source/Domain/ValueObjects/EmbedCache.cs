@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using RimMind.Domain.Interfaces;
 
 namespace RimMind.Domain.ValueObjects
 {
-    public class EmbedCache
+    public class EmbedCache : IEmbedCache
     {
         // Architecture limit: Domain layer cannot reference Application layer's RimMindDefaults. Value mirrors RimMindDefaults.EmbedMaxBlockEntries.
         private const int MaxBlockEntries = 200;
@@ -134,6 +135,26 @@ namespace RimMind.Domain.ValueObjects
                 foreach (var k in keysToRemove)
                     _blockLayer.Remove(k);
             }
+        }
+
+        // IEmbedCache explicit implementations — simplified key-based access for BudgetScheduler.
+        // Uses internal npcId namespaces "$query" and "$entry" to avoid collision with npcId-keyed data.
+
+        float[]? IEmbedCache.GetOrComputeQueryEmbedding(string query)
+        {
+            // Query embedding computation requires external embedding service (not available in Domain layer).
+            // Return cached embedding if available; otherwise return null.
+            return GetBlockEmbedding("$query", query);
+        }
+
+        void IEmbedCache.StoreEntryEmbedding(string key, float[] embedding)
+        {
+            SetBlockEmbedding("$entry", key, embedding);
+        }
+
+        float[]? IEmbedCache.GetEntryEmbedding(string key)
+        {
+            return GetBlockEmbedding("$entry", key);
         }
 
         public void Clear()

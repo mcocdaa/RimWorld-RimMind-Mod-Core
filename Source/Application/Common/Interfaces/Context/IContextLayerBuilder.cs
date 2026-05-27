@@ -1,6 +1,9 @@
 using System.Collections.Generic;
-using RimMind.Application.Common.Models.Client;
+using System.Threading;
+using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Common.Interfaces.Context
@@ -12,5 +15,8 @@ namespace RimMind.Application.Common.Interfaces.Context
         ChatMessage? BuildContextLayer(List<KeyMeta> keys, object? pawn);
         ChatMessage? BuildL5(List<KeyMeta> keys, object? pawn);
         ChatMessage? BuildDiffMessage(string npcId, ContextLayer layer, ContextSnapshot snapshot, IContextDiffTracker diffTracker);
+
+        Task<List<ContextEntry>> BuildLayerAsync(List<KeyMeta> keys, object? pawn, ProviderContext ctx, ProviderCache? cache, CancellationToken ct);
+        ChatMessage? EntriesToLayerMessage(List<ContextEntry> entries, string layerTag);
     }
 }

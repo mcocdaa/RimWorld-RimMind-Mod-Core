@@ -1,7 +1,6 @@
 using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Presentation.Perception;
@@ -33,9 +32,6 @@ namespace RimMind.Presentation
 
             public static IAIClient? GetPlayer2Client()
                 => RimMindRuntime.Instance.GetPlayer2Client();
-
-            public static IStorageDriver? GetStorageDriver()
-                => RimMindRuntime.Instance.StorageDriverFactory?.GetDriver();
         }
     }
 }
