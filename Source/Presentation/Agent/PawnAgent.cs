@@ -289,6 +289,9 @@ namespace RimMind.Presentation.Agent
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"State: {State}");
             sb.AppendLine($"WorkflowPhase: {WorkflowPhase}");
+            sb.AppendLine($"CurrentModeId: {_currentModeId.Value}");
+            sb.AppendLine($"PerceptionBuffer: {PerceptionBuffer.Count} entries");
+            sb.AppendLine($"LastThinkTick: {LastThinkTick?.ToString() ?? "null"}");
             sb.AppendLine($"Goals: {GoalStack.TotalCount}");
             foreach (var g in GoalStack.Goals)
                 sb.AppendLine($"  - [{g.Status}] {g.Description} (P:{g.Priority:F1})");
