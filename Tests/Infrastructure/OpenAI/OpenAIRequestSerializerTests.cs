@@ -122,11 +122,15 @@ namespace RimMind.Tests.Infrastructure.OpenAI
             string path = SnapshotPath();
             if (ShouldRegenerate || !File.Exists(path))
             {
-                File.WriteAllText(path, pretty);
+                // Write with trailing newline so the end-of-file-fixer pre-commit hook
+                // does not modify the file after it is staged, which would break the lock.
+                File.WriteAllText(path, pretty + "\n");
             }
 
-            string expected = File.ReadAllText(path).Replace("\r\n", "\n");
-            string actual = pretty.Replace("\r\n", "\n");
+            // Trim trailing whitespace so the comparison is robust to editors and hooks
+            // that may add or remove a final newline.
+            string expected = File.ReadAllText(path).Replace("\r\n", "\n").TrimEnd();
+            string actual = pretty.Replace("\r\n", "\n").TrimEnd();
             Assert.Equal(expected, actual);
         }
 
