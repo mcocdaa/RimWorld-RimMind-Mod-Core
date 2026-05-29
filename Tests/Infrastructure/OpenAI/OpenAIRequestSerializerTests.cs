@@ -228,5 +228,33 @@ namespace RimMind.Tests.Infrastructure.OpenAI
             Assert.DoesNotContain("\"Arguments\"", json);
             Assert.DoesNotContain("\"Function\"", json);
         }
+
+        [Fact]
+        public void FewShotExamples_PrecedeLiveUserTurn()
+        {
+            var envelope = FullDecisionRequest();
+            string json = OpenAIRequestSerializer.BuildRequestJson(envelope, "gpt-4o-mini", 800);
+
+            var root = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(json)!;
+            var messages = (Newtonsoft.Json.Linq.JArray)root["messages"]!;
+
+            // Expected order: [0] system, [1..10] the 10 few-shot example messages, [11] live user perception.
+            Assert.Equal("system", (string?)messages[0]["role"]);
+
+            int perceptionIdx = -1;
+            int firstExampleIdx = -1;
+            for (int i = 0; i < messages.Count; i++)
+            {
+                string content = (string?)messages[i]["content"] ?? "";
+                if (content.Contains("Pawn is hungry")) perceptionIdx = i;
+                if (firstExampleIdx < 0 && content.Contains("pawn.job.force_rest")) firstExampleIdx = i;
+            }
+
+            Assert.True(firstExampleIdx >= 0, "example content present");
+            Assert.True(perceptionIdx >= 0, "live perception present");
+            Assert.True(firstExampleIdx < perceptionIdx,
+                $"examples (idx {firstExampleIdx}) should precede live perception (idx {perceptionIdx})");
+            Assert.Equal(perceptionIdx, messages.Count - 1);
+        }
     }
 }

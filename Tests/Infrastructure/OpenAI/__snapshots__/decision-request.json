@@ -7,10 +7,6 @@
     },
     {
       "role": "user",
-      "content": "<perceptions>Pawn is hungry. Food available in stockpile.</perceptions>"
-    },
-    {
-      "role": "user",
       "content": "[mood] Mood: 35% (importance:0.7)\n[need] Need: Food at 20% (importance:0.9)"
     },
     {
@@ -48,6 +44,10 @@
     {
       "role": "assistant",
       "content": "<Action>{\"action\":\"pawn.equipment.set\",\"reason\":\"Drafted and need ranged weapon for enemy at range 15\",\"param\":\"SniperRifle\"}</Action>"
+    },
+    {
+      "role": "user",
+      "content": "<perceptions>Pawn is hungry. Food available in stockpile.</perceptions>"
     }
   ],
   "max_tokens": 800,
