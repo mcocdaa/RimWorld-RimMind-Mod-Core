@@ -153,5 +153,17 @@ namespace RimMind.Tests.Infrastructure.OpenAI
             // The non-JSON sentinel did NOT leak into a response_format block.
             Assert.DoesNotContain("\"response_format\"", json);
         }
+
+        [Fact]
+        public async System.Threading.Tasks.Task MockAIClient_CapturesLastEnvelope()
+        {
+            var client = new RimMind.Presentation.Tests.MockAIClient().EnqueueResponse("ok");
+            var envelope = new LlmRequestEnvelope { RequestId = "cap-1", ScenarioId = ScenarioIds.Decision };
+
+            await client.SendAsync(envelope);
+
+            Assert.NotNull(client.LastEnvelope);
+            Assert.Equal("cap-1", client.LastEnvelope!.RequestId);
+        }
     }
 }

@@ -13,6 +13,8 @@ namespace RimMind.Presentation.Tests
     {
         private readonly Queue<Func<LlmRequestEnvelope, Result<LlmResponse, RimMindError>>> _responses = new();
 
+        public LlmRequestEnvelope? LastEnvelope { get; private set; }
+
         public bool IsLocalEndpoint => true;
 
         public bool IsConfigured() => true;
@@ -48,6 +50,7 @@ namespace RimMind.Presentation.Tests
 
         public Task<Result<LlmResponse, RimMindError>> SendAsync(LlmRequestEnvelope envelope)
         {
+            LastEnvelope = envelope;
             if (_responses.Count == 0)
                 return Task.FromResult(Result<LlmResponse, RimMindError>.Err(
                     RimMindErrors.ClientNotConfigured("MockAIClient: no responses queued")));
