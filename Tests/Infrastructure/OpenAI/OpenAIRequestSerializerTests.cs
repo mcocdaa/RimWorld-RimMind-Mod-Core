@@ -37,5 +37,22 @@ namespace RimMind.Tests.Infrastructure.OpenAI
 
             Assert.Null(ex);
         }
+
+        [Fact]
+        public void ValidJsonSchema_StillEmitsResponseFormat()
+        {
+            var envelope = new LlmRequestEnvelope
+            {
+                RequestId = "test-req",
+                ScenarioId = ScenarioIds.Memory,
+                Messages = { new ChatMessage { Role = "user", Content = "summarize" } },
+                JsonSchema = "{\"type\":\"object\",\"properties\":{\"summary\":{\"type\":\"string\"}}}",
+            };
+
+            string json = OpenAIRequestSerializer.BuildRequestJson(envelope, "gpt-4o-mini", 800);
+
+            Assert.Contains("\"response_format\"", json);
+            Assert.Contains("\"json_schema\"", json);
+        }
     }
 }

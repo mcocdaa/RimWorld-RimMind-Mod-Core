@@ -63,12 +63,12 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 stream = stream,
             };
 
-            if (!string.IsNullOrEmpty(envelope.JsonSchema))
+            if (TryParseJson(envelope.JsonSchema, out var parsedSchema))
             {
                 body.response_format = new ResponseFormatDto
                 {
                     type = "json_schema",
-                    json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(envelope.JsonSchema!) },
+                    json_schema = new { name = "response", schema = parsedSchema },
                 };
             }
 
@@ -97,6 +97,25 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
             return JsonConvert.SerializeObject(body, Formatting.None,
                 new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        }
+
+        private static bool TryParseJson(string? value, out object? parsed)
+        {
+            parsed = null;
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            string trimmed = value!.TrimStart();
+            // OpenAI json_schema must be a JSON object/array. Text sentinels like
+            // "<Action>...</Action>" are the Agent text convention, not a JSON schema.
+            if (trimmed.Length == 0 || (trimmed[0] != '{' && trimmed[0] != '[')) return false;
+            try
+            {
+                parsed = JsonConvert.DeserializeObject(value);
+                return parsed != null;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
     }
 }
