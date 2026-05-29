@@ -9,77 +9,8 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
     {
         private string BuildEnvelopeRequestJson(RimMind.Domain.Llm.LlmRequestEnvelope envelope, bool stream = false)
         {
-            var messages = new List<MessageDto>();
-
-            if (envelope.Messages != null && envelope.Messages.Count > 0)
-            {
-                foreach (var m in envelope.Messages)
-                {
-                    var dto = new MessageDto { role = m.Role, content = m.Content };
-                    if (m.Role == "assistant" && !string.IsNullOrEmpty(m.ReasoningContent))
-                        dto.reasoning_content = m.ReasoningContent;
-                    if (!string.IsNullOrEmpty(m.ToolCallId))
-                        dto.tool_call_id = m.ToolCallId;
-                    if (m.ToolCalls != null && m.ToolCalls.Count > 0)
-                    {
-                        dto.tool_calls = m.ToolCalls.Select(tc => new ToolCallDto
-                        {
-                            Id = tc.Id,
-                            Type = "function",
-                            Function = new ToolCallFunctionDto
-                            {
-                                Name = tc.Name,
-                                Arguments = tc.Arguments,
-                            },
-                        }).ToList();
-                    }
-                    messages.Add(dto);
-                }
-            }
-
-            var body = new OpenAIRequestDto
-            {
-                model = _settings.ModelName,
-                messages = messages,
-                max_tokens = envelope.MaxTokens > 0 ? envelope.MaxTokens : _settings.MaxTokens,
-                temperature = envelope.Temperature,
-                stream = stream,
-            };
-
-            if (!string.IsNullOrEmpty(envelope.JsonSchema))
-            {
-                body.response_format = new ResponseFormatDto
-                {
-                    type = "json_schema",
-                    json_schema = new { name = "response", schema = JsonConvert.DeserializeObject(envelope.JsonSchema!) },
-                };
-            }
-
-            if (envelope.Tools != null && envelope.Tools.Count > 0)
-            {
-                body.tools = new List<ToolDto>();
-                foreach (var t in envelope.Tools)
-                {
-                    body.tools.Add(new ToolDto
-                    {
-                        Function = new ToolFunctionDto
-                        {
-                            Name = t.Name,
-                            Description = t.Description,
-                            Parameters = t.Parameters != null
-                                ? JsonConvert.DeserializeObject(t.Parameters)
-                                : new { type = "object", properties = new { } },
-                        },
-                    });
-                }
-                if (envelope.Tools.Any(t => t.ToolChoice == "required"))
-                    body.tool_choice = "required";
-                else
-                    body.tool_choice = "auto";
-            }
-
-            return JsonConvert.SerializeObject(body, Formatting.None,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            return OpenAIRequestSerializer.BuildRequestJson(
+                envelope, _settings.ModelName, _settings.MaxTokens, stream);
         }
 
         private static void EnsureJsonKeyword(List<MessageDto> messages)

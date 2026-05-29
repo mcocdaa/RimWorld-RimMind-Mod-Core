@@ -18,28 +18,58 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Stubs that compile without deleted Domain/Application source -->
     <Compile Include="VerseStubs.cs" />
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="GlobalUsings.cs" />
     <Compile Include="MockAIClient.cs" />
+    <Compile Include="Result\*.cs" />
+    <Compile Include="ScenarioRegistryTests.cs" />
+    <Compile Include="ThreadSafetyTests.cs" />
+    <Compile Include="Pipeline\Unified\*.cs" />
+    <Compile Include="Context\Diff\*.cs" />
+    <Compile Include="Context\ContextKeyRegistryImplTests.cs" />
+    <Compile Include="Context\RelevanceTableImplTests.cs" />
+    <Compile Include="Context\ContextProviderDefTests.cs" />
+    <Compile Include="Context\ProviderCacheTests.cs" />
+    <Compile Include="Context\BudgetSchedulerScoringTests.cs" />
+    <Compile Include="Context\BudgetSchedulerQuerySimilarityTests.cs" />
+    <Compile Include="Context\BudgetSchedulerLearnerIntegrationTests.cs" />
+    <Compile Include="Context\ParallelLayerBuildTests.cs" />
+    <Compile Include="Context\RingBufferTests.cs" />
+    <Compile Include="Context\RelevanceLearnerTests.cs" />
+    <Compile Include="Context\AIResponseAnalyzerTests.cs" />
+    <Compile Include="Context\ContextLayerBuilderAsyncTests.cs" />
+    <Compile Include="ArchTests\PhaseL\*.cs" />
+    <Compile Include="ArchTests\PhaseN\*.cs" />
+    <Compile Include="ArchTests\PhaseO\*.cs" />
+    <Compile Include="ArchTests\PhaseP1\*.cs" />
+    <Compile Include="ArchTests\PhaseP2\*.cs" />
+    <Compile Include="ArchTests\PhaseP3\*.cs" />
+    <Compile Include="ArchTests\PhaseP4\*.cs" />
+    <Compile Include="ArchTests\PhaseP5\*.cs" />
+    <Compile Include="Agent\*.cs" Exclude="Agent\PawnThinkerTimeoutTests.cs" />
+    <Compile Include="Agent\PhaseO\*.cs" />
+    <Compile Include="Domain\*.cs" />
+    <Compile Include="Domain\ValueObjects\*.cs" />
+    <Compile Include="Domain\Llm\*.cs" />
+    <Compile Include="Application\Models\Pipeline\*.cs" />
+    <Compile Include="Application\Stubs\*.cs" />
+    <Compile Include="Application\Features\Agent\*.cs" />
+    <Compile Include="Application\Features\Agent\Social\*.cs" />
+    <Compile Include="Application\Features\Agent\Planning\*.cs" />
+    <Compile Include="Application\Features\Agent\Reflection\*.cs" />
+    <Compile Include="Application\Features\Agent\Psychology\*.cs" />
+    <Compile Include="Application\Features\Agent\InnerVoice\*.cs" />
+    <Compile Include="Presentation\Agent\*.cs" />
+    <Compile Include="Infrastructure\Verse\*.cs" />
   </ItemGroup>
 
-  <!--
-    Test file includes removed — all reference deleted Domain/Application types.
-    To restore: add back includes as source files are re-added to Source/ directory.
-    Removed includes:
-      Result\*.cs, ScenarioRegistryTests.cs, ThreadSafetyTests.cs,
-      Pipeline\Unified\*.cs, Context\Diff\*.cs, Context\*.cs,
-      ArchTests\PhaseL\*.cs, ArchTests\PhaseN\*.cs, ArchTests\PhaseO\*.cs, ArchTests\PhaseP1\*.cs,
-      Agent\*.cs, Agent\PhaseO\*.cs, Domain\*.cs, Domain\ValueObjects\*.cs, Domain\Llm\*.cs,
-      Application\Models\Pipeline\*.cs, Application\Stubs\*.cs,
-      Application\Features\Agent\Social\*.cs, Application\Features\Agent\Planning\*.cs,
-      Application\Features\Agent\Reflection\*.cs, Application\Features\Agent\Psychology\*.cs,
-      Application\Features\Agent\InnerVoice\*.cs,
-      Presentation\Agent\*.cs, Infrastructure\Verse\*.cs
-  -->
-
-  <!-- Source includes removed: Domain/, Application/, Infrastructure/ directories no longer contain compilable source files -->
+  <ItemGroup>
+    <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**;../Source/Domain/Common/NetStandardCompat.cs" />
+    <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/MessageDto.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/OpenAIRequestSerializer.cs" />
+  </ItemGroup>
 
 </Project>
