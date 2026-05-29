@@ -60,6 +60,8 @@ namespace RimMind.Presentation.Settings
         public int queueProcessInterval = RimMindDefaults.QueueProcessInterval;
         public int defaultModCooldownTicks = RimMindDefaults.DefaultModCooldownTicks;
 
+        public AgentAutonomyLevel autonomyLevel = AgentAutonomyLevel.Guided;
+
         public int circuitBreakerFailureThreshold = RimMindDefaults.CircuitBreakerFailureThreshold;
         public int circuitBreakerOpenDurationSec = RimMindDefaults.CircuitBreakerOpenDurationSec;
 
@@ -122,6 +124,7 @@ namespace RimMind.Presentation.Settings
             Scribe_Values.Look(ref behaviorHistoryMax, "behaviorHistoryMax", RimMindDefaults.BehaviorHistoryMax);
             Scribe_Values.Look(ref queueProcessInterval, "queueProcessInterval", RimMindDefaults.QueueProcessInterval);
             Scribe_Values.Look(ref defaultModCooldownTicks, "defaultModCooldownTicks", RimMindDefaults.DefaultModCooldownTicks);
+            Scribe_Values.Look(ref autonomyLevel, "autonomyLevel", AgentAutonomyLevel.Guided);
             Scribe_Values.Look(ref circuitBreakerFailureThreshold, "circuitBreakerFailureThreshold", RimMindDefaults.CircuitBreakerFailureThreshold);
             Scribe_Values.Look(ref circuitBreakerOpenDurationSec, "circuitBreakerOpenDurationSec", RimMindDefaults.CircuitBreakerOpenDurationSec);
             Validate();

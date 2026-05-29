@@ -16,5 +16,40 @@ namespace RimMind.Domain.Llm
         public long QueueWaitMs { get; init; }
         public long ProcessingMs { get; init; }
         public long HttpStatusCode { get; init; }
+
+        public LlmResponse With(
+            string? requestId = null,
+            string? content = null,
+            string? toolCallsJson = null,
+            string? reasoningContent = null,
+            int? tokensUsed = null,
+            int? promptTokens = null,
+            int? completionTokens = null,
+            int? cachedTokens = null,
+            AIRequestState? state = null,
+            AIRequestPriority? priority = null,
+            int? attemptCount = null,
+            long? queueWaitMs = null,
+            long? processingMs = null,
+            long? httpStatusCode = null)
+        {
+            return new LlmResponse
+            {
+                RequestId = requestId ?? RequestId,
+                Content = content ?? Content,
+                ToolCallsJson = toolCallsJson ?? ToolCallsJson,
+                ReasoningContent = reasoningContent ?? ReasoningContent,
+                TokensUsed = tokensUsed ?? TokensUsed,
+                PromptTokens = promptTokens ?? PromptTokens,
+                CompletionTokens = completionTokens ?? CompletionTokens,
+                CachedTokens = cachedTokens ?? CachedTokens,
+                State = state ?? State,
+                Priority = priority ?? Priority,
+                AttemptCount = attemptCount ?? AttemptCount,
+                QueueWaitMs = queueWaitMs ?? QueueWaitMs,
+                ProcessingMs = processingMs ?? ProcessingMs,
+                HttpStatusCode = httpStatusCode ?? HttpStatusCode,
+            };
+        }
     }
 }

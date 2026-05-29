@@ -46,14 +46,6 @@ namespace RimMind.Presentation.Context
             bool IsMonologue
         );
 
-        private readonly record struct LayerBuildResult(
-            List<ChatMessage> Messages,
-            long LatencyMs,
-            int TokenCount,
-            string LayerTag,
-            List<ContextEntry>? ExtraEntries
-        );
-
         private bool _needsFullRebuild = true;
         private bool _disposed;
 
@@ -181,6 +173,7 @@ namespace RimMind.Presentation.Context
         /// </summary>
         public async Task<ContextSnapshot?> BuildSnapshotFromEnvelopeAsync(string npcId, string? currentQuery,
             int maxTokens = 800, float temperature = 0.7f, string? scenarioId = null,
+            HashSet<string>? skipLayers = null,
             CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -244,8 +237,10 @@ namespace RimMind.Presentation.Context
                 .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
             var l2Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L2Keys, pawn, providerCtx, _providerCache, ct)
                 .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
-            var l3Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L3Keys, pawn, providerCtx, _providerCache, ct)
-                .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
+            var l3Task = (skipLayers != null && skipLayers.Contains("L3"))
+                ? Task.FromResult(new List<ContextEntry>())
+                : _buildServices.LayerBuilder.BuildLayerAsync(schedule.L3Keys, pawn, providerCtx, _providerCache, ct)
+                    .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
             var l5Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L5Keys, pawn, providerCtx, _providerCache, ct)
                 .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
 
@@ -263,7 +258,7 @@ namespace RimMind.Presentation.Context
             if (l0Msg != null) { messages.Add(l0Msg); snapshot.Meta.L0Tokens = EstimateTokens(l0Msg.Content); }
             if (l1Msg != null) { messages.Add(l1Msg); snapshot.Meta.L1Tokens = EstimateTokens(l1Msg.Content); }
             if (l2Msg != null) { messages.Add(l2Msg); snapshot.Meta.L2Tokens = EstimateTokens(l2Msg.Content); }
-            if (l3Msg != null) { messages.Add(l3Msg); snapshot.Meta.L3Tokens = EstimateTokens(l3Msg.Content); }
+            if (l3Msg != null && (skipLayers == null || !skipLayers.Contains("L3"))) { messages.Add(l3Msg); snapshot.Meta.L3Tokens = EstimateTokens(l3Msg.Content); }
             if (l5Msg != null) { messages.Add(l5Msg); snapshot.Meta.L5Tokens = EstimateTokens(l5Msg.Content); }
 
             BuildConversationHistory(ctx, schedule, scenario, messages, snapshot);
@@ -283,169 +278,6 @@ namespace RimMind.Presentation.Context
             };
 
             return snapshot;
-        }
-
-        /// <summary>
-        /// Safe wrapper for BuildL0Layer that catches exceptions and returns null on failure.
-        /// </summary>
-        private LayerBuildResult? BuildL0LayerSafe(BuildContext ctx, BudgetAllocation schedule, object? pawn)
-        {
-            try
-            {
-                long start = DateTime.Now.Ticks;
-                var msg = _buildServices.LayerBuilder.BuildL0(ctx.NpcId, ctx.Scenario, schedule.L0Keys, pawn, _buildServices.CacheManager);
-                var resultMessages = new List<ChatMessage>();
-                int tokenCount = 0;
-                if (msg != null)
-                {
-                    msg.LayerTag = "L0";
-                    resultMessages.Add(msg);
-                    tokenCount = EstimateTokens(msg.Content);
-                }
-                long latencyMs = (DateTime.Now.Ticks - start) / TimeSpan.TicksPerMillisecond;
-                return new LayerBuildResult(resultMessages, latencyMs, tokenCount, "L0", null);
-            }
-            catch (Exception ex)
-            {
-                _logSink?.Message($"[RimMind] L0 layer build failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Safe wrapper for BuildL1Layer that catches exceptions and returns null on failure.
-        /// </summary>
-        private LayerBuildResult? BuildL1LayerSafe(BuildContext ctx, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot)
-        {
-            try
-            {
-                long start = DateTime.Now.Ticks;
-                var msg = _buildServices.LayerBuilder.BuildL1(ctx.NpcId, schedule.L1Keys, pawn, _buildServices.CacheManager, _buildServices.DiffTracker);
-                var resultMessages = new List<ChatMessage>();
-                int tokenCount = 0;
-                List<ContextEntry>? extraEntries = null;
-                if (msg != null)
-                {
-                    msg.LayerTag = "L1";
-                    resultMessages.Add(msg);
-                    tokenCount = EstimateTokens(msg.Content);
-                }
-
-                var mapStructureKey = schedule.L1Keys.FirstOrDefault(k => k.Key == "map_structure");
-                if (mapStructureKey != null && pawn != null)
-                {
-                    var mapEntries = mapStructureKey.ValueProvider(pawn);
-                    if (mapEntries != null) extraEntries = mapEntries;
-                }
-
-                var diffMsg = _buildServices.LayerBuilder.BuildDiffMessage(ctx.NpcId, ContextLayer.L1_Baseline, snapshot, _buildServices.DiffTracker);
-                if (diffMsg != null)
-                {
-                    diffMsg.LayerTag = "L1";
-                    resultMessages.Add(diffMsg);
-                }
-
-                long latencyMs = (DateTime.Now.Ticks - start) / TimeSpan.TicksPerMillisecond;
-                return new LayerBuildResult(resultMessages, latencyMs, tokenCount, "L1", extraEntries);
-            }
-            catch (Exception ex)
-            {
-                _logSink?.Message($"[RimMind] L1 layer build failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Safe wrapper for BuildL2Layer that catches exceptions and returns null on failure.
-        /// </summary>
-        private LayerBuildResult? BuildL2LayerSafe(BuildContext ctx, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot)
-        {
-            try
-            {
-                long start = DateTime.Now.Ticks;
-                var msg = _buildServices.LayerBuilder.BuildContextLayer(schedule.L2Keys, pawn);
-                var resultMessages = new List<ChatMessage>();
-                int tokenCount = 0;
-                if (msg != null)
-                {
-                    var diffMsg = _buildServices.LayerBuilder.BuildDiffMessage(ctx.NpcId, ContextLayer.L2_Environment, snapshot, _buildServices.DiffTracker);
-                    if (diffMsg != null)
-                    {
-                        diffMsg.LayerTag = "L2";
-                        resultMessages.Add(diffMsg);
-                    }
-                    msg.LayerTag = "L2";
-                    resultMessages.Add(msg);
-                    tokenCount = EstimateTokens(msg.Content);
-                }
-                long latencyMs = (DateTime.Now.Ticks - start) / TimeSpan.TicksPerMillisecond;
-                return new LayerBuildResult(resultMessages, latencyMs, tokenCount, "L2", null);
-            }
-            catch (Exception ex)
-            {
-                _logSink?.Message($"[RimMind] L2 layer build failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Safe wrapper for BuildL3Layer that catches exceptions and returns null on failure.
-        /// </summary>
-        private LayerBuildResult? BuildL3LayerSafe(BuildContext ctx, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot)
-        {
-            try
-            {
-                long start = DateTime.Now.Ticks;
-                var msg = _buildServices.LayerBuilder.BuildContextLayer(schedule.L3Keys, pawn);
-                var resultMessages = new List<ChatMessage>();
-                int tokenCount = 0;
-                if (msg != null)
-                {
-                    var diffMsg = _buildServices.LayerBuilder.BuildDiffMessage(ctx.NpcId, ContextLayer.L3_State, snapshot, _buildServices.DiffTracker);
-                    if (diffMsg != null)
-                    {
-                        diffMsg.LayerTag = "L3";
-                        resultMessages.Add(diffMsg);
-                    }
-                    msg.LayerTag = "L3";
-                    resultMessages.Add(msg);
-                    tokenCount = EstimateTokens(msg.Content);
-                }
-                long latencyMs = (DateTime.Now.Ticks - start) / TimeSpan.TicksPerMillisecond;
-                return new LayerBuildResult(resultMessages, latencyMs, tokenCount, "L3", null);
-            }
-            catch (Exception ex)
-            {
-                _logSink?.Message($"[RimMind] L3 layer build failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Safe wrapper for BuildL5Layer that catches exceptions and returns null on failure.
-        /// </summary>
-        private LayerBuildResult? BuildL5LayerSafe(BudgetAllocation schedule, object? pawn)
-        {
-            try
-            {
-                long start = DateTime.Now.Ticks;
-                var msg = _buildServices.LayerBuilder.BuildL5(schedule.L5Keys, pawn);
-                var resultMessages = new List<ChatMessage>();
-                int tokenCount = 0;
-                if (msg != null)
-                {
-                    msg.LayerTag = "L5";
-                    resultMessages.Add(msg);
-                    tokenCount = EstimateTokens(msg.Content);
-                }
-                long latencyMs = (DateTime.Now.Ticks - start) / TimeSpan.TicksPerMillisecond;
-                return new LayerBuildResult(resultMessages, latencyMs, tokenCount, "L5", null);
-            }
-            catch (Exception ex)
-            {
-                _logSink?.Message($"[RimMind] L5 layer build failed: {ex.Message}");
-                return null;
-            }
         }
 
         private void BuildL0Layer(BuildContext ctx, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
@@ -510,7 +342,7 @@ namespace RimMind.Presentation.Context
         private void BuildL3Layer(BuildContext ctx, BudgetAllocation schedule, object? pawn, ContextSnapshot snapshot, List<ChatMessage> messages)
         {
             long l3Start = DateTime.Now.Ticks;
-            var l3Msg = _buildServices.LayerBuilder.BuildContextLayer(schedule.L3Keys, pawn);
+            var l3Msg = _buildServices.LayerBuilder.BuildL3(schedule.L3Keys, pawn);
             if (l3Msg != null)
             {
                 var l3DiffMsg = _buildServices.LayerBuilder.BuildDiffMessage(ctx.NpcId, ContextLayer.L3_State, snapshot, _buildServices.DiffTracker);

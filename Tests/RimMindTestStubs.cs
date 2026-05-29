@@ -1,7 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Domain.ValueObjects;
+using RimMind.Domain.Events;
+using RimMind.Domain.Enums;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Flywheel;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Models.Context;
+
+using IParameterTunerContract = RimMind.Application.Common.Interfaces.Extension.IParameterTuner;
 
 namespace RimMind.Application.Features.Context
 {
@@ -20,5 +34,13 @@ namespace RimMind.Application.Features.Context
             public ValueTask<bool> MoveNextAsync() => new ValueTask<bool>(false);
             public ValueTask DisposeAsync() => default;
         }
+    }
+}
+
+namespace RimMind.Tests
+{
+    internal sealed class VerseTickProvider : RimMind.Application.Common.Interfaces.Abstractions.ITickProvider
+    {
+        public int TicksGame => 0;
     }
 }

@@ -18,7 +18,8 @@ namespace RimMind.Domain.Events
         SocialEventProposed,
         TraitEvolution,
         Dream,
-        DecisionFailed
+        DecisionFailed,
+        WorkflowPhaseChange
     }
 
     public class AgentBusEvent

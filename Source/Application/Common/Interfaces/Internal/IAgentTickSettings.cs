@@ -1,6 +1,6 @@
 namespace RimMind.Application.Common.Interfaces.Internal
 {
-    public interface IAgentTickSettings
+    public interface IAgentTickSettings : IAgentAutonomySettings
     {
         int AgentTickInterval { get; }
         int BehaviorHistoryMax { get; set; }

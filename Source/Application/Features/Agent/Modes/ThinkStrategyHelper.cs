@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
@@ -15,7 +16,7 @@ namespace RimMind.Application.Features.Agent.Modes;
 /// Shared helper methods for IThinkStrategy implementations.
 /// Eliminates code duplication between ReactiveThinkStrategy and ProactiveThinkStrategy.
 /// </summary>
-internal static class ThinkStrategyHelper
+public static class ThinkStrategyHelper
 {
     public static List<StructuredTool> ConvertToDomainTools(IReadOnlyList<ToolDefinition> defs)
         => defs.Select(d => new StructuredTool
@@ -28,9 +29,14 @@ internal static class ThinkStrategyHelper
     public static string FormatPerceptions(IReadOnlyList<PerceptionBufferEntry> perceptions)
     {
         if (perceptions.Count == 0) return "";
-        var parts = perceptions.Select(p =>
-            $"[{p.PerceptionType}] {p.Content}" + (p.Importance > 0 ? $" (importance:{p.Importance:F1})" : ""));
-        return string.Join("\n", parts);
+        var sb = new StringBuilder();
+        sb.AppendLine("<perceptions>");
+        foreach (var p in perceptions)
+        {
+            sb.AppendLine($"[{p.PerceptionType}] {p.Content}" + (p.Importance > 0 ? $" (importance:{p.Importance:F1})" : ""));
+        }
+        sb.AppendLine("</perceptions>");
+        return sb.ToString();
     }
 
     public static Result<AgentDecision, RimMindError> ParseDecisionCore(
@@ -70,6 +76,17 @@ internal static class ThinkStrategyHelper
             Param = json.param,
             WantsMoreToolCalls = false,
         });
+    }
+
+    public static List<ChatMessage> BuildDecisionExamples()
+    {
+        var messages = new List<ChatMessage>();
+        foreach (var (user, assistant) in DecisionExampleData.Examples)
+        {
+            messages.Add(new ChatMessage { Role = "user", Content = user });
+            messages.Add(new ChatMessage { Role = "assistant", Content = assistant });
+        }
+        return messages;
     }
 
     private class ActionJson

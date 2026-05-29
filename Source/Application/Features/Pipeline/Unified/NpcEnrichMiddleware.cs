@@ -49,7 +49,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 }
 
                 // Inject game state info if not already set
-                if (string.IsNullOrEmpty(context.Envelope.GameStateInfo))
+                if (context.Envelope.GameStateInfo == null)
                 {
                     var npcProfile = _npcManager?.GetNpc(npcId);
                     if (npcProfile != null)

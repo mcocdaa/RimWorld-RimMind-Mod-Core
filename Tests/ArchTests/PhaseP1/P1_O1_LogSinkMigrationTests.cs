@@ -160,5 +160,53 @@ namespace RimMind.Tests.ArchTests.PhaseP1
             Assert.Contains("new PawnThinker", content);
             Assert.Matches(@"new\s+PawnThinker\s*\([^)]*_log[^)]*\)|new\s+PawnThinker\s*\([^)]*LogSink[^)]*\)", content);
         }
+
+        // --- O-2: Structured Logging Format ---
+
+        [Fact]
+        public void PawnThinker_LogCalls_UseStructuredFormat()
+        {
+            Assert.True(File.Exists(PawnThinkerPath), "PawnThinker.cs must exist");
+            var content = File.ReadAllText(PawnThinkerPath);
+            var logCalls = content.Split('\n')
+                .Select((line, idx) => (line, idx: idx + 1))
+                .Where(x => x.line.Contains("_log?.Message(") || x.line.Contains("_log?.Warning(") || x.line.Contains("_log?.Error("))
+                .ToList();
+            Assert.NotEmpty(logCalls);
+            foreach (var (line, idx) in logCalls)
+            {
+                Assert.Contains("[RimMind.Thinker]", line);
+            }
+        }
+
+        [Fact]
+        public void PawnAgent_LogCalls_UseStructuredFormat()
+        {
+            Assert.True(File.Exists(PawnAgentPath), "PawnAgent.cs must exist");
+            var content = File.ReadAllText(PawnAgentPath);
+            var logCalls = content.Split('\n')
+                .Select((line, idx) => (line, idx: idx + 1))
+                .Where(x => x.line.Contains("_log?.Message(") || x.line.Contains("_log?.Warning(") || x.line.Contains("_log?.Error("))
+                .ToList();
+            foreach (var (line, idx) in logCalls)
+            {
+                Assert.Contains("[RimMind.Agent]", line);
+            }
+        }
+
+        [Fact]
+        public void ProactiveBehaviorExecutor_LogCalls_UseStructuredFormat()
+        {
+            Assert.True(File.Exists(ProactiveExecutorPath), "ProactiveBehaviorExecutor.cs must exist");
+            var content = File.ReadAllText(ProactiveExecutorPath);
+            var logCalls = content.Split('\n')
+                .Select((line, idx) => (line, idx: idx + 1))
+                .Where(x => x.line.Contains("_log?.Message(") || x.line.Contains("_log?.Warning(") || x.line.Contains("_log?.Error("))
+                .ToList();
+            foreach (var (line, idx) in logCalls)
+            {
+                Assert.Contains("[RimMind.Executor]", line);
+            }
+        }
     }
 }

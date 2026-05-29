@@ -61,9 +61,11 @@ namespace RimMind.Tests.Agent
 
             var result = ThinkStrategyHelper.FormatPerceptions(entries);
 
+            Assert.Contains("<perceptions>", result);
             Assert.Contains("[sight]", result);
             Assert.Contains("a colonist", result);
             Assert.Contains("importance:0.7", result);
+            Assert.Contains("</perceptions>", result);
         }
 
         [Fact]
@@ -84,10 +86,11 @@ namespace RimMind.Tests.Agent
             var result = ThinkStrategyHelper.FormatPerceptions(entries);
             Assert.DoesNotContain("importance", result);
             Assert.Contains("[sight] test", result);
+            Assert.Contains("<perceptions>", result);
         }
 
         [Fact]
-        public void FormatPerceptions_MultipleEntries_SeparatedByNewline()
+        public void FormatPerceptions_MultipleEntries_ContainsAllEntries()
         {
             var entries = new List<PerceptionBufferEntry>
             {
@@ -97,9 +100,10 @@ namespace RimMind.Tests.Agent
 
             var result = ThinkStrategyHelper.FormatPerceptions(entries);
 
+            Assert.Contains("<perceptions>", result);
             Assert.Contains("[mood]", result);
             Assert.Contains("[health]", result);
-            Assert.Equal(2, result.Split('\n').Length);
+            Assert.Contains("</perceptions>", result);
         }
 
         [Fact]

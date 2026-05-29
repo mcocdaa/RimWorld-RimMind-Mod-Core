@@ -51,82 +51,58 @@ namespace RimMind.Application.Features.Context
         {
             if (entries == null || entries.Count == 0) return null;
             var sb = new StringBuilder();
+            sb.AppendLine($"<layer_{layerTag}>");
+            bool hasContent = false;
             foreach (var entry in entries)
             {
                 if (!string.IsNullOrEmpty(entry.Content))
+                {
                     sb.AppendLine($"[{entry.SourceKey}] {entry.Content}");
+                    hasContent = true;
+                }
             }
-            if (sb.Length == 0) return null;
+            sb.AppendLine($"</layer_{layerTag}>");
+            if (!hasContent) return null;
+            return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = layerTag };
+        }
+
+        public ChatMessage? BuildLayer(List<KeyMeta> keys, string xmlTag, string layerTag, object? pawn)
+        {
+            if (keys == null || keys.Count == 0) return null;
+            var sb = new StringBuilder();
+            sb.AppendLine($"<layer_{xmlTag}>");
+            bool hasContent = false;
+            foreach (var key in keys)
+            {
+                var entries = key.ValueProvider != null ? key.ValueProvider(pawn!) : new List<ContextEntry>();
+                foreach (var entry in entries)
+                {
+                    if (!string.IsNullOrEmpty(entry.Content))
+                    {
+                        sb.AppendLine($"[{key.Key}] {entry.Content}");
+                        hasContent = true;
+                    }
+                }
+            }
+            sb.AppendLine($"</layer_{xmlTag}>");
+            if (!hasContent) return null;
             return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = layerTag };
         }
 
         public ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager)
-        {
-            if (keys == null || keys.Count == 0) return null;
-            var sb = new System.Text.StringBuilder();
-            foreach (var key in keys)
-            {
-                var entries = key.ValueProvider != null ? key.ValueProvider(pawn!) : new List<ContextEntry>();
-                foreach (var entry in entries)
-                {
-                    if (!string.IsNullOrEmpty(entry.Content))
-                        sb.AppendLine($"[{key.Key}] {entry.Content}");
-                }
-            }
-            if (sb.Length == 0) return null;
-            return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = "L0" };
-        }
+            => BuildLayer(keys, "L0_Static", "L0", pawn);
 
         public ChatMessage? BuildL1(string npcId, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager, IContextDiffTracker diffTracker)
-        {
-            if (keys == null || keys.Count == 0) return null;
-            var sb = new System.Text.StringBuilder();
-            foreach (var key in keys)
-            {
-                var entries = key.ValueProvider != null ? key.ValueProvider(pawn!) : new List<ContextEntry>();
-                foreach (var entry in entries)
-                {
-                    if (!string.IsNullOrEmpty(entry.Content))
-                        sb.AppendLine($"[{key.Key}] {entry.Content}");
-                }
-            }
-            if (sb.Length == 0) return null;
-            return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = "L1" };
-        }
+            => BuildLayer(keys, "L1", "L1", pawn);
 
         public ChatMessage? BuildContextLayer(List<KeyMeta> keys, object? pawn)
-        {
-            if (keys == null || keys.Count == 0) return null;
-            var sb = new System.Text.StringBuilder();
-            foreach (var key in keys)
-            {
-                var entries = key.ValueProvider != null ? key.ValueProvider(pawn!) : new List<ContextEntry>();
-                foreach (var entry in entries)
-                {
-                    if (!string.IsNullOrEmpty(entry.Content))
-                        sb.AppendLine($"[{key.Key}] {entry.Content}");
-                }
-            }
-            if (sb.Length == 0) return null;
-            return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = "L2" };
-        }
+            => BuildLayer(keys, "L2", "L2", pawn);
+
+        public ChatMessage? BuildL3(List<KeyMeta> keys, object? pawn)
+            => BuildLayer(keys, "L3", "L3", pawn);
 
         public ChatMessage? BuildL5(List<KeyMeta> keys, object? pawn)
-        {
-            if (keys == null || keys.Count == 0) return null;
-            var sb = new System.Text.StringBuilder();
-            foreach (var key in keys)
-            {
-                var entries = key.ValueProvider != null ? key.ValueProvider(pawn!) : new List<ContextEntry>();
-                foreach (var entry in entries)
-                {
-                    if (!string.IsNullOrEmpty(entry.Content))
-                        sb.AppendLine($"[{key.Key}] {entry.Content}");
-                }
-            }
-            if (sb.Length == 0) return null;
-            return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = "L5" };
-        }
+            => BuildLayer(keys, "L5", "L5", pawn);
 
         public ChatMessage? BuildDiffMessage(string npcId, ContextLayer layer, ContextSnapshot snapshot, IContextDiffTracker diffTracker)
         {
@@ -134,10 +110,12 @@ namespace RimMind.Application.Features.Context
             var filtered = diffs.FindAll(d => d.Layer == layer);
             if (filtered.Count == 0) return null;
             var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<layer_diff_{layer}>");
             foreach (var diff in filtered)
             {
                 sb.AppendLine($"[{diff.Key}] {diff.OldValue} -> {diff.NewValue}");
             }
+            sb.AppendLine($"</layer_diff_{layer}>");
             return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = $"Diff-{layer}" };
         }
     }

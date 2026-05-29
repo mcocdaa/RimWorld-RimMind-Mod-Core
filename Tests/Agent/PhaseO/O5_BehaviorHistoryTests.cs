@@ -90,18 +90,19 @@ namespace RimMind.Tests.Agent.PhaseO
             if (history == null || history.Count == 0) return "";
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[Recent Behavior History]");
+            sb.AppendLine("<behavior_history>");
             foreach (var record in history)
             {
                 var status = record.Success ? "Success" : "Fail";
                 sb.AppendLine($"- {record.Action} → {status}: {record.Reason}");
             }
 
-            if (successRate < 0.3f)
+            if (successRate < 0.4f)
             {
                 sb.AppendLine("[Warning: Recent behavior success rate is low. Consider more cautious decisions.]");
             }
 
+            sb.AppendLine("</behavior_history>");
             return sb.ToString();
         }
 
@@ -123,9 +124,10 @@ namespace RimMind.Tests.Agent.PhaseO
 
             var result = FormatBehaviorHistory(history, successRate: 0.5f);
 
-            Assert.Contains("[Recent Behavior History]", result);
+            Assert.Contains("<behavior_history>", result);
             Assert.Contains("- investigate → Success: heard noise", result);
             Assert.Contains("- force_rest → Fail: tired", result);
+            Assert.Contains("</behavior_history>", result);
             Assert.DoesNotContain("Warning", result);
         }
 
@@ -149,7 +151,7 @@ namespace RimMind.Tests.Agent.PhaseO
 
             var result = FormatBehaviorHistory(history, successRate: 0.0f);
 
-            Assert.Contains("[Recent Behavior History]", result);
+            Assert.Contains("<behavior_history>", result);
             Assert.Contains("[Warning: Recent behavior success rate is low. Consider more cautious decisions.]", result);
         }
 

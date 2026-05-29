@@ -16,6 +16,7 @@ namespace RimMind.Domain.Llm
         public List<ChatMessage> Messages { get; init; } = new();
         public string? JsonSchema { get; init; }
         public List<StructuredTool>? Tools { get; init; }
+        public List<ChatMessage>? Examples { get; init; }
         public int MaxTokens { get; init; } = 800;
         public float Temperature { get; init; } = 0.7f;
 
@@ -31,6 +32,6 @@ namespace RimMind.Domain.Llm
 
         // === NPC Mode (optional) ===
         public string? NpcId { get; init; }
-        public string? GameStateInfo { get; set; }
+        public GameStateInfo? GameStateInfo { get; set; }
     }
 }

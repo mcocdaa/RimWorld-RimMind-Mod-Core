@@ -84,12 +84,14 @@ namespace RimMind.Tests.Presentation.Agent
         }
 
         [Fact]
-        public void PrivateMethods_Use_IProactiveExtensions_ParameterType()
+        public void Executor_Delegates_To_ProactiveBehaviorOrchestrator()
         {
             var source = ReadSource();
-
-            // All private methods that receive the proactive parameter should use IProactiveExtensions
-            Assert.Contains("IProactiveExtensions proactive, IPawnAgent agent", source);
+            Assert.Contains("ProactiveBehaviorOrchestrator", source);
+            Assert.Contains("orchestrator.ExecuteReflection", source);
+            Assert.Contains("orchestrator.ExecutePlanning", source);
+            Assert.Contains("orchestrator.ExecuteDream", source);
+            Assert.Contains("orchestrator.ExecuteTraitEvolution", source);
         }
 
         [Fact]

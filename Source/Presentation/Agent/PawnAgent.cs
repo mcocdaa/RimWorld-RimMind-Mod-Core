@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
@@ -54,12 +55,40 @@ namespace RimMind.Presentation.Agent
         private readonly IAgentBus _agentBus;
         private readonly ILogSink? _log;
         private int _lastTick;
-        private int _tickInterval;
+        private int _lastThinkTick;
+        private int TickInterval => _tickSettings?.AgentTickInterval ?? 150;
+        private AgentAutonomyLevel _autonomyLevel = AgentAutonomyLevel.Autonomous;
+        public AgentAutonomyLevel AutonomyLevel
+        {
+            get => _tickSettings?.AutonomyLevel ?? _autonomyLevel;
+            set
+            {
+                _autonomyLevel = value;
+                if (_tickSettings != null) _tickSettings.AutonomyLevel = value;
+            }
+        }
 
         IReadOnlyList<BehaviorRecord> IPawnAgent.BehaviorHistory => _recorder.History;
 
         public IReadOnlyList<BehaviorRecord> GetRecentHistory(int count = 10) => _recorder.GetRecentHistory(count);
         public float GetRecentSuccessRate(int count = 10) => _recorder.GetRecentSuccessRate(count);
+
+        IReadOnlyList<BehaviorRecordDto> IAgentInfo.GetRecentHistory(int count = 10)
+        {
+            return _recorder.GetRecentHistory(count)
+                .Select(r => new BehaviorRecordDto
+                {
+                    Action = r.Action,
+                    Reason = r.Reason,
+                    Success = r.Success,
+                    ResultReason = r.ResultReason,
+                    GoalProgressDelta = r.GoalProgressDelta,
+                    Timestamp = r.Timestamp,
+                    ActionEventId = r.ActionEventId,
+                    DurationMs = r.DurationMs
+                })
+                .ToList();
+        }
 
         public PawnAgent(Pawn pawn, IAgentBus agentBus)
             : this(pawn, null!, agentBus) { }
@@ -79,7 +108,6 @@ namespace RimMind.Presentation.Agent
             _actor = actor!;
             _recorder = recorder!;
             Identity = new SerializableAgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
-            _tickInterval = _tickSettings?.AgentTickInterval ?? 150;
         }
 
         internal void RebuildCollaborators(IPawnPerceiver perceiver, IPawnThinker thinker, IPawnActor actor, IPawnRecorder recorder)
@@ -88,6 +116,10 @@ namespace RimMind.Presentation.Agent
             _thinker = thinker ?? throw new ArgumentNullException(nameof(thinker));
             _actor = actor ?? throw new ArgumentNullException(nameof(actor));
             _recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
+
+            // Restore last think tick from serialized state
+            if (_lastThinkTick > 0 && _thinker is PawnThinker concreteThinker)
+                concreteThinker.RestoreLastThinkTick(_lastThinkTick);
         }
 
         public void Tick()
@@ -100,7 +132,7 @@ namespace RimMind.Presentation.Agent
             }
 
             int now = Find.TickManager.TicksGame;
-            if (now - _lastTick < _tickInterval) return;
+            if (now - _lastTick < TickInterval) return;
             _lastTick = now;
 
             GoalStack.CheckExpired(Pawn.thingIDNumber);
@@ -144,7 +176,12 @@ namespace RimMind.Presentation.Agent
         /// </summary>
         public void TransitionWorkflow(AgentWorkflowPhase target)
         {
+            var previous = _workflowPhase;
             _workflowPhase = target;
+            _agentBus?.Publish(new AgentBusEvent(
+                Identity.NpcId,
+                Pawn?.thingIDNumber ?? -1,
+                AgentBusEventType.WorkflowPhaseChange));
         }
 
         public bool TransitionTo(AgentState newState)
@@ -193,7 +230,42 @@ namespace RimMind.Presentation.Agent
 
         public Result<Unit, RimMindError> ExecuteDecision(AgentDecision decision)
         {
+            // Autonomy check: should this action be auto-approved?
+            var riskLevel = AssessRiskLevel(decision);
+            if (_tickSettings != null && !_tickSettings.ShouldApproveAction(riskLevel))
+            {
+                _log?.Message($"[RimMind.Agent] action=ActionPendingApproval npcId={Identity.NpcId} risk={riskLevel} intent={decision.ActionIntent}");
+                // Queue for player approval (future: approval UI). For now, log and skip execution.
+                return Result<Unit, RimMindError>.Ok(Unit.Value);
+            }
+
             return _actor.ExecuteDecision(decision);
+        }
+
+        /// <summary>
+        /// Assesses the risk level of a decision based on its action intent.
+        /// Conservative default — sub-mods can override via IModeTransitionPolicy
+        /// or custom IActionExecutor implementations.
+        /// </summary>
+        private RiskLevel AssessRiskLevel(AgentDecision decision)
+        {
+            if (decision == null) return RiskLevel.Low;
+
+            var intent = decision.ActionIntent?.ToLowerInvariant() ?? "";
+
+            // Critical: actions that can cause permanent harm or game state changes
+            if (intent.Contains("attack") || intent.Contains("kill") || intent.Contains("arrest"))
+                return RiskLevel.Critical;
+
+            // High: actions that significantly alter pawn state
+            if (intent.Contains("surgery") || intent.Contains("banish") || intent.Contains("execute"))
+                return RiskLevel.High;
+
+            // Medium: actions that change pawn assignments or roles
+            if (intent.Contains("assign") || intent.Contains("draft") || intent.Contains("trade"))
+                return RiskLevel.Medium;
+
+            return RiskLevel.Low;
         }
 
         public bool RemoveGoal(string goalDescription)
@@ -226,13 +298,27 @@ namespace RimMind.Presentation.Agent
             if (!newMode.IsApplicable(this)) return;
             if (_currentModeId == modeId) return;
 
+            // Check transition policies
+            var policies = RimMindAPI.ModePolicies?.All;
+            if (policies != null)
+            {
+                foreach (var policy in policies)
+                {
+                    if (!policy.CanTransition(this, _currentModeId, modeId))
+                    {
+                        _log?.Warning($"[RimMind.Agent] action=ModeTransitionDenied npcId={Identity.NpcId} from={_currentModeId.Value} to={modeId.Value} reason={policy.DenyReason ?? "Policy denied"}");
+                        return;
+                    }
+                }
+            }
+
             var oldModeId = _currentModeId;
             _currentModeId = modeId;
             LastThinkTick = null;
 
             int timestamp = Find.TickManager?.TicksGame ?? 0;
 
-            _log?.Message($"[RimMind] {Pawn?.Label ?? Identity.DisplayName} mode changed: {oldModeId.Value} -> {modeId.Value}");
+            _log?.Message($"[RimMind.Agent] action=ModeChanged npcId={Identity.NpcId} oldMode={oldModeId.Value} newMode={modeId.Value}");
 
             var bus = _agentBus;
             if (bus != null)
@@ -321,6 +407,9 @@ namespace RimMind.Presentation.Agent
             string _currentModeIdStr = _currentModeId.Value;
             Scribe_Values.Look(ref _currentModeIdStr, "currentModeId", AgentModeId.Reactive.Value);
             _currentModeId = AgentModeId.Normalize(_currentModeIdStr);
+
+            Scribe_Values.Look(ref _lastThinkTick, "lastThinkTick", 0);
+            Scribe_Values.Look(ref _autonomyLevel, "autonomyLevel", AgentAutonomyLevel.Autonomous);
         }
 
         /// <summary>

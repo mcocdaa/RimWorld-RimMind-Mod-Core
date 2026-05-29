@@ -162,6 +162,7 @@ namespace RimMind.Application.Features.Context
         public ChatMessage? BuildL0(string npcId, string scenario, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager) => null;
         public ChatMessage? BuildL1(string npcId, List<KeyMeta> keys, object? pawn, IContextCacheManager cacheManager, IContextDiffTracker diffTracker) => null;
         public ChatMessage? BuildContextLayer(List<KeyMeta> keys, object? pawn) => null;
+        public ChatMessage? BuildL3(List<KeyMeta> keys, object? pawn) => null;
         public ChatMessage? BuildL5(List<KeyMeta> keys, object? pawn) => null;
         public ChatMessage? BuildDiffMessage(string npcId, ContextLayer layer, ContextSnapshot snapshot, IContextDiffTracker diffTracker) => null;
     }

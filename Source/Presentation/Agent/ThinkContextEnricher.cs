@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Agent.InnerVoice;
@@ -16,51 +15,56 @@ namespace RimMind.Presentation.Agent
     /// </summary>
     internal sealed class ThinkContextEnricher
     {
-        private InnerVoiceHandler? _innerVoiceHandler;
-        private IPsychologyWatcher? _psychologyWatcher;
+        private readonly InnerVoiceHandler? _innerVoiceHandler;
+        private readonly IPsychologyWatcher? _psychologyWatcher;
 
-        private InnerVoiceHandler? GetInnerVoiceHandler()
-            => _innerVoiceHandler ??= RimMindServiceLocator.Get<InnerVoiceHandler>();
-
-        private IPsychologyWatcher? GetPsychologyWatcher()
-            => _psychologyWatcher ??= RimMindServiceLocator.Get<IPsychologyWatcher>();
+        public ThinkContextEnricher(
+            InnerVoiceHandler? voiceHandler = null,
+            IPsychologyWatcher? psychologyWatcher = null)
+        {
+            _innerVoiceHandler = voiceHandler;
+            _psychologyWatcher = psychologyWatcher;
+        }
 
         public string? ConsumeInnerVoice(string npcId)
         {
-            var handler = GetInnerVoiceHandler();
-            var text = handler?.GetPendingVoiceText(npcId);
+            var text = _innerVoiceHandler?.GetPendingVoiceText(npcId);
             if (!string.IsNullOrEmpty(text))
-                handler?.ClearVoice(npcId);
+                _innerVoiceHandler?.ClearVoice(npcId);
             return text;
         }
 
         public void CheckPsychology(IPawnAgent agent, int pawnId)
         {
-            GetPsychologyWatcher()?.CheckAndPublish(agent, pawnId);
+            _psychologyWatcher?.CheckAndPublish(agent, pawnId);
         }
 
         public void EnrichEnvelope(LlmRequestEnvelope envelope, string npcId, string? voiceText)
         {
             if (envelope == null) return;
 
-            var prefix = "";
+            envelope.GameStateInfo ??= new GameStateInfo();
+
             if (!string.IsNullOrEmpty(voiceText))
-                prefix += $"[Inner Voice: {voiceText}]\n";
+                envelope.GameStateInfo.AddSection("inner_voice", voiceText);
 
-            if (GetPsychologyWatcher()?.HasUrgentEvent(npcId) == true)
-                prefix += "[Psychology Alert: Urgent psychological event pending]\n";
-
-            if (!string.IsNullOrEmpty(prefix) && !string.IsNullOrEmpty(envelope.GameStateInfo))
-                envelope.GameStateInfo = prefix + envelope.GameStateInfo;
-            else if (!string.IsNullOrEmpty(prefix))
-                envelope.GameStateInfo = prefix.TrimEnd('\n');
+            if (_psychologyWatcher?.HasUrgentEvent(npcId) == true)
+                envelope.GameStateInfo.AddSection("psychology_alert", "Urgent psychological event pending");
         }
 
         /// <summary>
         /// Formats ToolCall execution results as a context section for the follow-up envelope.
         /// </summary>
         public string FormatToolCallResults(IReadOnlyList<ToolResult> results, int round)
-            => ToolCallResultFormatter.Format(results, round);
+        {
+            var inner = ToolCallResultFormatter.Format(results, round);
+            if (string.IsNullOrEmpty(inner)) return "";
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<tool_call_results round=\"{round}\">");
+            sb.AppendLine(inner);
+            sb.AppendLine("</tool_call_results>");
+            return sb.ToString();
+        }
 
         /// <summary>
         /// Enriches the envelope with ToolCall results context for agentic loop follow-up.
@@ -72,10 +76,8 @@ namespace RimMind.Presentation.Agent
             var toolCallSection = FormatToolCallResults(results, round);
             if (string.IsNullOrEmpty(toolCallSection)) return;
 
-            if (!string.IsNullOrEmpty(envelope.GameStateInfo))
-                envelope.GameStateInfo = toolCallSection + "\n" + envelope.GameStateInfo;
-            else
-                envelope.GameStateInfo = toolCallSection;
+            envelope.GameStateInfo ??= new GameStateInfo();
+            envelope.GameStateInfo.AddSection($"tool_call_results", toolCallSection);
         }
 
         /// <summary>
@@ -86,18 +88,19 @@ namespace RimMind.Presentation.Agent
             if (history == null || history.Count == 0) return "";
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[Recent Behavior History]");
+            sb.AppendLine("<behavior_history>");
             foreach (var record in history)
             {
                 var status = record.Success ? "Success" : "Fail";
                 sb.AppendLine($"- {record.Action} → {status}: {record.Reason}");
             }
 
-            if (successRate < 0.3f)
+            if (successRate < 0.4f)
             {
                 sb.AppendLine("[Warning: Recent behavior success rate is low. Consider more cautious decisions.]");
             }
 
+            sb.AppendLine("</behavior_history>");
             return sb.ToString();
         }
     }

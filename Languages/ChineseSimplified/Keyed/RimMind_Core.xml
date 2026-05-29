@@ -65,6 +65,7 @@
   <RimMind.Agent.Gizmo.DevViewDesc>在日志中输出 Agent 内部状态</RimMind.Agent.Gizmo.DevViewDesc>
   <RimMind.Agent.State.Active>激活</RimMind.Agent.State.Active>
   <RimMind.Agent.State.Dormant>休眠</RimMind.Agent.State.Dormant>
+  <RimMind.Agent.State.Paused>暂停</RimMind.Agent.State.Paused>
   <RimMind.Agent.State.Terminated>终止</RimMind.Agent.State.Terminated>
   <RimMind.Infrastructure.Player2.LocalDetected>RimMind: 已检测到 Player2 桌面应用！使用自动认证（无需 API Key）。</RimMind.Infrastructure.Player2.LocalDetected>
   <RimMind.Infrastructure.Player2.LocalNotFound>RimMind: 未检测到 Player2 桌面应用。请启动应用或手动输入 API Key。</RimMind.Infrastructure.Player2.LocalNotFound>
@@ -347,6 +348,21 @@
   <!-- Agent Gizmo - Mode Switch -->
   <RimMind.Agent.Gizmo.Mode>模式: {0}</RimMind.Agent.Gizmo.Mode>
   <RimMind.Agent.Gizmo.ModeDesc>切换小人行为模式（被动/主动）</RimMind.Agent.Gizmo.ModeDesc>
+  <RimMind.Agent.Gizmo.SelectMode>选择模式</RimMind.Agent.Gizmo.SelectMode>
+  <RimMind.Agent.Gizmo.SelectModeDesc>选择智能体行为模式</RimMind.Agent.Gizmo.SelectModeDesc>
+  <RimMind.Agent.Gizmo.CurrentMode>{0}（当前）</RimMind.Agent.Gizmo.CurrentMode>
+  <RimMind.Agent.Gizmo.InactiveMode>{0}</RimMind.Agent.Gizmo.InactiveMode>
+  <!-- Agent Gizmo - Pause/Resume -->
+  <RimMind.Agent.Gizmo.Pause>暂停</RimMind.Agent.Gizmo.Pause>
+  <RimMind.Agent.Gizmo.PauseDesc>暂停智能体思考循环</RimMind.Agent.Gizmo.PauseDesc>
+  <RimMind.Agent.Gizmo.Resume>恢复</RimMind.Agent.Gizmo.Resume>
+  <RimMind.Agent.Gizmo.ResumeDesc>恢复智能体思考循环</RimMind.Agent.Gizmo.ResumeDesc>
+  <!-- Agent Gizmo - Emergency Stop -->
+  <RimMind.Agent.Gizmo.EmergencyStop>紧急停止</RimMind.Agent.Gizmo.EmergencyStop>
+  <RimMind.Agent.Gizmo.EmergencyStopDesc>立即停止智能体并清空感知缓冲区</RimMind.Agent.Gizmo.EmergencyStopDesc>
+  <!-- Agent Gizmo - Force Think -->
+  <RimMind.Agent.Gizmo.ForceThink>强制思考</RimMind.Agent.Gizmo.ForceThink>
+  <RimMind.Agent.Gizmo.ForceThinkDesc>强制立即执行一次 AI 思考循环</RimMind.Agent.Gizmo.ForceThinkDesc>
   <!-- Flywheel autoApplyMode UI -->
   <RimMind.UI.FlywheelAutoApply>自动应用参数建议</RimMind.UI.FlywheelAutoApply>
   <RimMind.UI.FlywheelAutoApply.Desc>开启后 Flywheel 自动应用推荐的上下文参数调整</RimMind.UI.FlywheelAutoApply.Desc>
@@ -428,4 +444,11 @@
   <RimMind.UI.AgentModeDebug.RegisteredModes>已注册模式</RimMind.UI.AgentModeDebug.RegisteredModes>
   <RimMind.UI.AgentModeDebug.ModeEntry>{0} - {1}</RimMind.UI.AgentModeDebug.ModeEntry>
   <RimMind.UI.AgentModeDebug.SwitchTo>切换至:</RimMind.UI.AgentModeDebug.SwitchTo>
+  <!-- ITab_Pawn_Agent.cs -->
+  <RimMind.Agent.ITab.Label>智能体</RimMind.Agent.ITab.Label>
+  <RimMind.Agent.ITab.NoAgent>未分配智能体</RimMind.Agent.ITab.NoAgent>
+  <RimMind.Agent.ITab.Status>状态</RimMind.Agent.ITab.Status>
+  <RimMind.Agent.ITab.Goals>目标</RimMind.Agent.ITab.Goals>
+  <RimMind.Agent.ITab.Strategy>策略权重</RimMind.Agent.ITab.Strategy>
+  <RimMind.Agent.ITab.History>行为历史</RimMind.Agent.ITab.History>
 </LanguageData>

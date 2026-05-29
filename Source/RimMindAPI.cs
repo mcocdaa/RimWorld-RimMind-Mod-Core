@@ -60,6 +60,7 @@ namespace RimMind.Presentation
         public static IToolRegistry Tools => ToolSet.Registry;
         public static IGameMechanismRegistry Mechanisms => ToolSet.Mechanisms;
         public static IExtensionRegistry<IAgentMode> Modes => Extensions<IAgentMode>();
+        public static IExtensionRegistry<IModeTransitionPolicy> ModePolicies => Extensions<IModeTransitionPolicy>();
 
         public static IExtensionRegistry<T> Extensions<T>() where T : class, IExtension => Ext.Get<T>();
         public static bool ShouldSkipDialogue(Pawn pawn, string trigger) => Ext.ShouldSkipDialogue(pawn, trigger);

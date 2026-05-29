@@ -24,5 +24,11 @@ namespace RimMind.Application.Common.Interfaces
         int GetBackgroundQueueCount();
 
         Action<AgentBusEvent>? DispatchAction { get; }
+
+        /// <summary>
+        /// Register a custom event type mapping so SubscribeByName can resolve it.
+        /// Built-in event types are pre-registered; use this for custom event types from sub-mods.
+        /// </summary>
+        void RegisterEventType(string name, Type eventType);
     }
 }

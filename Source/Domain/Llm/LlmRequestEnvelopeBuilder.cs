@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace RimMind.Domain.Llm
@@ -9,9 +10,10 @@ namespace RimMind.Domain.Llm
         private string? _scenarioId;
         private string? _modId;
         private string? _npcId;
-        private string? _gameStateInfo;
+        private GameStateInfo? _gameStateInfo;
         private string? _jsonSchema;
         private List<StructuredTool>? _tools;
+        private List<ChatMessage>? _examples;
         private List<ChatMessage>? _messages;
         private AIRequestPriority _priority = AIRequestPriority.Normal;
         private bool _isStreaming;
@@ -29,7 +31,7 @@ namespace RimMind.Domain.Llm
             return builder;
         }
 
-        public static LlmRequestEnvelopeBuilder ForNpc(string npcId, string? gameStateInfo = null)
+        public static LlmRequestEnvelopeBuilder ForNpc(string npcId, GameStateInfo? gameStateInfo = null)
         {
             var builder = new LlmRequestEnvelopeBuilder();
             builder._npcId = npcId;
@@ -57,6 +59,14 @@ namespace RimMind.Domain.Llm
 
         public LlmRequestEnvelopeBuilder WithGameStateInfo(string? gameStateInfo)
         {
+            _gameStateInfo = !string.IsNullOrEmpty(gameStateInfo)
+                ? new GameStateInfo().AddSection("perceptions", gameStateInfo)
+                : null;
+            return this;
+        }
+
+        public LlmRequestEnvelopeBuilder WithGameStateInfo(GameStateInfo? gameStateInfo)
+        {
             _gameStateInfo = gameStateInfo;
             return this;
         }
@@ -70,6 +80,12 @@ namespace RimMind.Domain.Llm
         public LlmRequestEnvelopeBuilder WithTools(IEnumerable<StructuredTool> tools)
         {
             _tools = new List<StructuredTool>(tools);
+            return this;
+        }
+
+        public LlmRequestEnvelopeBuilder WithExamples(IEnumerable<ChatMessage> examples)
+        {
+            _examples = examples?.ToList();
             return this;
         }
 
@@ -135,6 +151,7 @@ namespace RimMind.Domain.Llm
                 Messages = _messages ?? new List<ChatMessage>(),
                 JsonSchema = _jsonSchema,
                 Tools = _tools,
+                Examples = _examples,
                 MaxTokens = _maxTokens,
                 Temperature = _temperature,
                 Priority = _priority,

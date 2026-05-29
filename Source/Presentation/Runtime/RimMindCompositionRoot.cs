@@ -1,6 +1,7 @@
 using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Extension;
@@ -15,8 +16,10 @@ using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Features.Agent.InnerVoice;
@@ -246,7 +249,8 @@ namespace RimMind.Presentation.Runtime
 
             RimMindServiceLocator.Register<IAgentIdentityProvider>(new AgentIdentityProviderAdapter());
 
-            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor, logSink);
+            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor, logSink,
+                GetExtensionRegistry<IPerceptionSource>());
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
             var gameContextBuilder = new GameContextBuilder(
@@ -282,6 +286,11 @@ namespace RimMind.Presentation.Runtime
             var skipCheckRegistry = new ExtensionRegistry<ISkipCheck>();
             skipCheckRegistry.Register(new NullSkipCheck());
             RimMindServiceLocator.Register<IExtensionRegistry<ISkipCheck>>(skipCheckRegistry);
+
+            // Register default mode transition policy (allows all transitions)
+            var modePolicyRegistry = GetExtensionRegistry<IModeTransitionPolicy>();
+            modePolicyRegistry.Register(new DefaultModeTransitionPolicy());
+            RimMindServiceLocator.Register(modePolicyRegistry);
 
             // Phase 6: Register built-in client factories
             // NOTE: When remote + local clients are both configured, use HybridAIClient

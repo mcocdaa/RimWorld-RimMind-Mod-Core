@@ -100,7 +100,7 @@ namespace RimMind.Infrastructure.Verse
             {
                 defaultLabel = "RimMind.Agent.Gizmo.AgentState".Translate(stateLabel),
                 defaultDesc = "RimMind.Agent.Gizmo.ToggleDesc".Translate(),
-                icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
+                icon = ContentFinder<Texture2D>.Get("UI/AgentStateIcon", reportFailure: false),
                 action = () =>
                 {
                     if (Agent.IsActive)
@@ -112,17 +112,36 @@ namespace RimMind.Infrastructure.Verse
 
             if (Agent.IsActive)
             {
+                // C-3: Pause
+                yield return new Command_Action
+                {
+                    defaultLabel = "RimMind.Agent.Gizmo.Pause".Translate(),
+                defaultDesc = "RimMind.Agent.Gizmo.PauseDesc".Translate(),
+                icon = ContentFinder<Texture2D>.Get("UI/AgentPauseIcon", reportFailure: false),
+                    action = () => Agent.TransitionTo(AgentState.Paused),
+                };
+
+                // C-4: Force Think
+                yield return new Command_Action
+                {
+                    defaultLabel = "RimMind.Agent.Gizmo.ForceThink".Translate(),
+                defaultDesc = "RimMind.Agent.Gizmo.ForceThinkDesc".Translate(),
+                icon = ContentFinder<Texture2D>.Get("UI/AgentThinkIcon", reportFailure: false),
+                    action = () => Agent.ForceThink(),
+                };
+
                 yield return new Command_Action
                 {
                     defaultLabel = "RimMind.Agent.Gizmo.Dialogue".Translate(),
-                    defaultDesc = "RimMind.Agent.Gizmo.DialogueDesc".Translate(),
-                    icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
+                defaultDesc = "RimMind.Agent.Gizmo.DialogueDesc".Translate(),
+                icon = ContentFinder<Texture2D>.Get("UI/AgentDialogueIcon", reportFailure: false),
                     action = () =>
                     {
                         GetWindowService()?.OpenAgentDialogue(Pawn);
                     },
                 };
 
+                // C-1: FloatMenu mode selection
                 var allModes = RimMindAPI.Modes?.All;
                 if (allModes != null && allModes.Count > 1)
                 {
@@ -130,35 +149,65 @@ namespace RimMind.Infrastructure.Verse
                     yield return new Command_Action
                     {
                         defaultLabel = "RimMind.Agent.Gizmo.Mode".Translate(currentModeName),
-                        defaultDesc = "RimMind.Agent.Gizmo.ModeDesc".Translate(),
-                        icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
+                        defaultDesc = "RimMind.Agent.Gizmo.SelectModeDesc".Translate(),
+                        icon = ContentFinder<Texture2D>.Get("UI/AgentModeIcon", reportFailure: false),
                         action = () =>
                         {
-                            int currentIndex = -1;
-                            for (int i = 0; i < allModes.Count; i++)
+                            var options = new List<FloatMenuOption>();
+                            foreach (var mode in allModes)
                             {
-                                if (allModes[i].ModeId == Agent.CurrentModeId)
-                                {
-                                    currentIndex = i;
-                                    break;
-                                }
-                            }
+                                bool isCurrent = mode.ModeId == Agent.CurrentModeId;
+                                bool isApplicable = mode.IsApplicable(Agent);
 
-                            // Cycle through modes to find next applicable one
-                            int nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % allModes.Count;
-                            for (int attempt = 0; attempt < allModes.Count; attempt++)
-                            {
-                                var candidate = allModes[nextIndex];
-                                if (candidate.IsApplicable(Agent))
+                                string label = isCurrent
+                                    ? "RimMind.Agent.Gizmo.CurrentMode".Translate(mode.DisplayName)
+                                    : "RimMind.Agent.Gizmo.InactiveMode".Translate(mode.DisplayName);
+
+                                if (!isApplicable && !isCurrent)
+                                    label += " (N/A)";
+
+                                options.Add(new FloatMenuOption(label, () =>
                                 {
-                                    Agent.SwitchMode(candidate.ModeId);
-                                    break;
-                                }
-                                nextIndex = (nextIndex + 1) % allModes.Count;
+                                    if (!isCurrent && isApplicable)
+                                        Agent.SwitchMode(mode.ModeId);
+                                })
+                                {
+                                    Disabled = !isApplicable || isCurrent,
+                                });
                             }
+                            Find.WindowStack.Add(new FloatMenu(options, "RimMind.Agent.Gizmo.SelectMode".Translate()));
                         },
                     };
                 }
+            }
+
+            // C-2: Emergency Stop (Active or Paused state)
+            if (Agent.State == AgentState.Active || Agent.State == AgentState.Paused)
+            {
+                yield return new Command_Action
+                {
+                    defaultLabel = "RimMind.Agent.Gizmo.EmergencyStop".Translate(),
+                    defaultDesc = "RimMind.Agent.Gizmo.EmergencyStopDesc".Translate(),
+                    icon = ContentFinder<Texture2D>.Get("UI/AgentStopIcon", reportFailure: false),
+                    action = () =>
+                    {
+                        if (Agent is IPawnAgent pawnAgent)
+                            pawnAgent.PerceptionBuffer.Clear();
+                        Agent.TransitionTo(AgentState.Paused);
+                    },
+                };
+            }
+
+            // Paused state: show Resume button
+            if (Agent.State == AgentState.Paused)
+            {
+                yield return new Command_Action
+                {
+                    defaultLabel = "RimMind.Agent.Gizmo.Resume".Translate(),
+                    defaultDesc = "RimMind.Agent.Gizmo.ResumeDesc".Translate(),
+                    icon = ContentFinder<Texture2D>.Get("UI/AgentResumeIcon", reportFailure: false),
+                    action = () => Agent.TransitionTo(AgentState.Active),
+                };
             }
 
             if (Prefs.DevMode)
@@ -167,7 +216,7 @@ namespace RimMind.Infrastructure.Verse
                 {
                     defaultLabel = "RimMind.Agent.Gizmo.DevView".Translate(),
                     defaultDesc = "RimMind.Agent.Gizmo.DevViewDesc".Translate(),
-                    icon = ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false),
+                    icon = ContentFinder<Texture2D>.Get("UI/AgentDevIcon", reportFailure: false),
                     action = () =>
                     {
                         Log.Message($"[RimMind-Core] {Pawn.Name?.ToStringShort}\n{Agent.GetDebugInfo()}");

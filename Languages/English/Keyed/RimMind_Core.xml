@@ -65,6 +65,7 @@
   <RimMind.Agent.Gizmo.DevViewDesc>Dump Agent internal state to log</RimMind.Agent.Gizmo.DevViewDesc>
   <RimMind.Agent.State.Active>Active</RimMind.Agent.State.Active>
   <RimMind.Agent.State.Dormant>Dormant</RimMind.Agent.State.Dormant>
+  <RimMind.Agent.State.Paused>Paused</RimMind.Agent.State.Paused>
   <RimMind.Agent.State.Terminated>Terminated</RimMind.Agent.State.Terminated>
   <RimMind.Infrastructure.Player2.LocalDetected>RimMind: Player2 desktop app detected! Using automatic authentication (no API key needed).</RimMind.Infrastructure.Player2.LocalDetected>
   <RimMind.Infrastructure.Player2.LocalNotFound>RimMind: Player2 desktop app not found. Please start the app or add an API key manually.</RimMind.Infrastructure.Player2.LocalNotFound>
@@ -347,6 +348,21 @@
   <!-- Agent Gizmo - Mode Switch -->
   <RimMind.Agent.Gizmo.Mode>Mode: {0}</RimMind.Agent.Gizmo.Mode>
   <RimMind.Agent.Gizmo.ModeDesc>Switch agent behavior mode (Reactive/Proactive)</RimMind.Agent.Gizmo.ModeDesc>
+  <RimMind.Agent.Gizmo.SelectMode>Select Mode</RimMind.Agent.Gizmo.SelectMode>
+  <RimMind.Agent.Gizmo.SelectModeDesc>Select an agent behavior mode</RimMind.Agent.Gizmo.SelectModeDesc>
+  <RimMind.Agent.Gizmo.CurrentMode>{0} (Current)</RimMind.Agent.Gizmo.CurrentMode>
+  <RimMind.Agent.Gizmo.InactiveMode>{0}</RimMind.Agent.Gizmo.InactiveMode>
+  <!-- Agent Gizmo - Pause/Resume -->
+  <RimMind.Agent.Gizmo.Pause>Pause</RimMind.Agent.Gizmo.Pause>
+  <RimMind.Agent.Gizmo.PauseDesc>Pause agent thinking cycle</RimMind.Agent.Gizmo.PauseDesc>
+  <RimMind.Agent.Gizmo.Resume>Resume</RimMind.Agent.Gizmo.Resume>
+  <RimMind.Agent.Gizmo.ResumeDesc>Resume agent thinking cycle</RimMind.Agent.Gizmo.ResumeDesc>
+  <!-- Agent Gizmo - Emergency Stop -->
+  <RimMind.Agent.Gizmo.EmergencyStop>Emergency Stop</RimMind.Agent.Gizmo.EmergencyStop>
+  <RimMind.Agent.Gizmo.EmergencyStopDesc>Immediately halt agent and clear perception buffer</RimMind.Agent.Gizmo.EmergencyStopDesc>
+  <!-- Agent Gizmo - Force Think -->
+  <RimMind.Agent.Gizmo.ForceThink>Force Think</RimMind.Agent.Gizmo.ForceThink>
+  <RimMind.Agent.Gizmo.ForceThinkDesc>Force an immediate AI think cycle</RimMind.Agent.Gizmo.ForceThinkDesc>
   <!-- Flywheel autoApplyMode UI -->
   <RimMind.UI.FlywheelAutoApply>Flywheel: auto-apply parameter recommendations</RimMind.UI.FlywheelAutoApply>
   <RimMind.UI.FlywheelAutoApply.Desc>When enabled, Flywheel automatically applies recommended context parameter adjustments</RimMind.UI.FlywheelAutoApply.Desc>
@@ -428,4 +444,11 @@
   <RimMind.UI.AgentModeDebug.RegisteredModes>Registered Modes</RimMind.UI.AgentModeDebug.RegisteredModes>
   <RimMind.UI.AgentModeDebug.ModeEntry>{0} - {1}</RimMind.UI.AgentModeDebug.ModeEntry>
   <RimMind.UI.AgentModeDebug.SwitchTo>Switch to:</RimMind.UI.AgentModeDebug.SwitchTo>
+  <!-- ITab_Pawn_Agent.cs -->
+  <RimMind.Agent.ITab.Label>Agent</RimMind.Agent.ITab.Label>
+  <RimMind.Agent.ITab.NoAgent>No agent assigned</RimMind.Agent.ITab.NoAgent>
+  <RimMind.Agent.ITab.Status>Status</RimMind.Agent.ITab.Status>
+  <RimMind.Agent.ITab.Goals>Goals</RimMind.Agent.ITab.Goals>
+  <RimMind.Agent.ITab.Strategy>Strategy Weights</RimMind.Agent.ITab.Strategy>
+  <RimMind.Agent.ITab.History>Behavior History</RimMind.Agent.ITab.History>
 </LanguageData>

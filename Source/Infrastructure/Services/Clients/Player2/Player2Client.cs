@@ -111,7 +111,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     messages = BuildEnvelopeMessages(envelope),
                     max_tokens = envelope.MaxTokens > 0 ? envelope.MaxTokens : _settings.MaxTokens,
                     temperature = envelope.Temperature,
-                    game_state_info = envelope.GameStateInfo,
+                    game_state_info = (string?)envelope.GameStateInfo,
                 };
                 json = JsonConvert.SerializeObject(npcBody, Formatting.None,
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
@@ -261,7 +261,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     messages = BuildEnvelopeMessages(envelope),
                     max_tokens = envelope.MaxTokens > 0 ? envelope.MaxTokens : _settings.MaxTokens,
                     temperature = envelope.Temperature,
-                    game_state_info = envelope.GameStateInfo,
+                    game_state_info = (string?)envelope.GameStateInfo,
                     stream = true,
                 };
                 json = JsonConvert.SerializeObject(npcBody, Formatting.None,

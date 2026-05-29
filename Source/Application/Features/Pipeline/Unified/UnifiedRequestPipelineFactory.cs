@@ -33,6 +33,12 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 new ShortCircuitMiddleware(log),
                 new TraceContextMiddleware(log),
                 new NpcEnrichMiddleware(npcManager, log),
+                new InputGuardrailMiddleware(new IInputGuardrail[]
+                {
+                    new EmptyPerceptionGuardrail(),
+                    new BudgetOverflowGuardrail(),
+                    new RepetitionGuardrail()
+                }, log),
                 new ContextBuildMiddleware(contextEngine, log),
                 new ContextFeedbackMiddleware(relevanceLearner ?? new RelevanceLearner(), analyzer, log),
                 new RequestSanitizeMiddleware(log),
@@ -41,7 +47,8 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 new CircuitBreakerMiddleware(circuitBreakerSettings, log),
                 new RetryMiddleware(log: log),
                 new ClientInvokeMiddleware(log),
-                new ToolCallDispatchMiddleware(toolRegistry, log)
+                new ToolCallDispatchMiddleware(toolRegistry, log),
+                new OutputGuardrailMiddleware()
             };
 
             var pipeline = new MutablePipeline<LlmRequestContext>();

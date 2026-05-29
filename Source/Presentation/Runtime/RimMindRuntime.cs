@@ -141,7 +141,8 @@ namespace RimMind.Presentation.Runtime
         {
             _extensionManager.AddMiddleware(
                 middleware,
-                _composition.BusPublishPipeline);
+                _composition.BusPublishPipeline,
+                _composition.UnifiedPipeline);
         }
 
         public void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)

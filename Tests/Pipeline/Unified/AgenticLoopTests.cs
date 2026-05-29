@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Agent.Modes;
@@ -404,5 +406,7 @@ namespace RimMind.Tests.Pipeline.Unified
         public AgentState State => AgentState.Active;
         public int? LastThinkTick { get; set; } = null;
         public int GoalCount => 0;
+        public IReadOnlyList<BehaviorRecordDto> GetRecentHistory(int count = 10) => Array.Empty<BehaviorRecordDto>();
+        public float GetRecentSuccessRate(int count = 10) => 1.0f;
     }
 }

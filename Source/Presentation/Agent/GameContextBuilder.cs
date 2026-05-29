@@ -57,7 +57,7 @@ namespace RimMind.Presentation.Agent
 
         // --- Instance methods (replacing removed static facade) ---
 
-        public string BuildMapContextInstance(Map map, bool brief = false) => _mapBuilder.BuildMapContext(map, brief);
+        public string BuildMapContextInstance(object map, bool brief = false) => map is Map m ? _mapBuilder.BuildMapContext(m, brief) : "";
 
         // --- IContextKeyProvider ---
 

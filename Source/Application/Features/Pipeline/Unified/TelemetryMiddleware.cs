@@ -38,7 +38,10 @@ namespace RimMind.Application.Features.Pipeline.Unified
             {
                 { "scenario", context.Envelope?.ScenarioId ?? "unknown" },
                 { "is_streaming", (context.Envelope?.IsStreaming ?? false).ToString() },
-                { "npc_id", context.Envelope?.NpcId ?? "none" }
+                { "npc_id", context.Envelope?.NpcId ?? "none" },
+                { "mode_id", context.AgentModeId.Value },
+                { "trace_id", context.TraceId ?? "none" },
+                { "tool_call_count", (context.ToolCallResults?.Count ?? 0).ToString() }
             };
 
             // Record timing

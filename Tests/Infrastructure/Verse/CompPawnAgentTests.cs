@@ -75,6 +75,8 @@ namespace RimMind.Tests.Infrastructure.Verse
             public bool RemoveGoal(string goalDescription) => false;
             public void RecordBehavior(BehaviorRecordDto record) { }
             public object? ConsumePendingJob() => null;
+            public IReadOnlyList<BehaviorRecordDto> GetRecentHistory(int count = 10) => Array.Empty<BehaviorRecordDto>();
+            public float GetRecentSuccessRate(int count = 10) => 1.0f;
         }
 
         /// <summary>
@@ -123,16 +125,16 @@ namespace RimMind.Tests.Infrastructure.Verse
         }
 
         [Fact]
-        public void CompGetGizmosExtra_ActiveAgent_AtLeastThreeGizmos()
+        public void CompGetGizmosExtra_ActiveAgent_AtLeastFiveGizmos()
         {
-            // State toggle + dialogue + mode switch = at least 3
+            // State toggle + pause + force think + dialogue + mode switch + emergency stop = 6
             var agent = new StubAgentControl(AgentState.Active, AgentModeId.Reactive);
             var comp = CreateCompWithAgent(agent);
 
             var gizmos = comp.CompGetGizmosExtra().ToList();
 
-            Assert.True(gizmos.Count >= 3,
-                $"Expected at least 3 gizmos when active (toggle + dialogue + mode switch), got {gizmos.Count}");
+            Assert.True(gizmos.Count >= 5,
+                $"Expected at least 5 gizmos when active (toggle + pause + force think + dialogue + mode switch + emergency stop), got {gizmos.Count}");
         }
 
         [Fact]
@@ -162,7 +164,7 @@ namespace RimMind.Tests.Infrastructure.Verse
         }
 
         [Fact]
-        public void CompGetGizmosExtra_ModeSwitchAction_CyclesToNextMode()
+        public void CompGetGizmosExtra_ModeSwitchAction_OpensFloatMenu()
         {
             var agent = new StubAgentControl(AgentState.Active, AgentModeId.Reactive);
             var comp = CreateCompWithAgent(agent);
@@ -173,10 +175,12 @@ namespace RimMind.Tests.Infrastructure.Verse
             Assert.NotNull(modeGizmo);
             Assert.NotNull(modeGizmo.action);
 
-            // Invoke the action - should cycle to next mode
+            // C-1: Mode switch now opens a FloatMenu instead of cycling
+            // Invoking the action should not throw (FloatMenu creation)
             modeGizmo.action!();
 
-            Assert.Equal(AgentModeId.Proactive, agent.CurrentModeId);
+            // Mode should NOT change directly — FloatMenu is shown instead
+            Assert.Equal(AgentModeId.Reactive, agent.CurrentModeId);
         }
     }
 }

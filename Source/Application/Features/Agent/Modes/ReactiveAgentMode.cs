@@ -50,13 +50,15 @@ internal sealed class ReactiveThinkStrategy : IThinkStrategy
     {
         var query = ThinkStrategyHelper.FormatPerceptions(perceptions);
         var domainTools = ThinkStrategyHelper.ConvertToDomainTools(availableTools);
+        var examples = ThinkStrategyHelper.BuildDecisionExamples();
         return LlmRequestEnvelopeBuilder
             .ForScenario(ScenarioId)
             .WithModId("RimMind.Agent")
             .WithNpcId(agent.NpcId)
-            .WithGameStateInfo(query)
+            .WithGameStateInfo(new GameStateInfo().AddSection("perceptions", query))
             .WithSchema("<Action>...</Action>")
             .WithTools(domainTools)
+            .WithExamples(examples)
             .Build();
     }
 

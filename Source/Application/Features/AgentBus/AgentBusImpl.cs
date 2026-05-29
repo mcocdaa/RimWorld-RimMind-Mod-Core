@@ -27,6 +27,7 @@ namespace RimMind.Application.Features.AgentBus
 
         /// <summary>
         /// Maps AgentBusEventType enum names to concrete event Types for SubscribeByName resolution.
+        /// Mutable to support RegisterEventType for custom event types from sub-mods.
         /// </summary>
         private static readonly Dictionary<string, Type> EventTypeMap = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
         {
@@ -46,6 +47,8 @@ namespace RimMind.Application.Features.AgentBus
             { nameof(AgentBusEventType.SocialEventProposed), typeof(SocialEventProposedEvent) },
             { nameof(AgentBusEventType.TraitEvolution), typeof(TraitEvolutionEvent) },
             { nameof(AgentBusEventType.Dream), typeof(DreamEvent) },
+            { nameof(AgentBusEventType.DecisionFailed), typeof(DecisionFailedEvent) },
+            { nameof(AgentBusEventType.WorkflowPhaseChange), typeof(AgentBusEvent) },
         };
 
         public AgentBusImpl(ILogSink? log = null, IThreadChecker? threadChecker = null)
@@ -194,6 +197,17 @@ namespace RimMind.Application.Features.AgentBus
         }
 
         public int GetBackgroundQueueCount() => _backgroundQueue.Count;
+
+        public void RegisterEventType(string name, Type eventType)
+        {
+            if (string.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
+            if (eventType == null) throw new ArgumentNullException(nameof(eventType));
+            if (!typeof(AgentBusEvent).IsAssignableFrom(eventType))
+                throw new ArgumentException($"Event type must inherit from AgentBusEvent, got {eventType.FullName}", nameof(eventType));
+
+            EventTypeMap[name] = eventType;
+            _log?.Message($"[RimMind.AgentBus] action=RegisterEventType name={name} type={eventType.Name}");
+        }
 
         private sealed class HandlerEntry
         {

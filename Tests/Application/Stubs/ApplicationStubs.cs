@@ -6,6 +6,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Agent.Social;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Agent.Psychology;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
@@ -115,6 +116,7 @@ namespace RimMind.Tests.Application.Stubs
         public int GetHandlerCount() => _handlers.Values.Sum(l => l.Count);
         public int GetBackgroundQueueCount() => 0;
         public Action<AgentBusEvent>? DispatchAction => null;
+        public void RegisterEventType(string name, Type eventType) { }
     }
 
     /// <summary>
@@ -127,6 +129,8 @@ namespace RimMind.Tests.Application.Stubs
         public AgentState State { get; set; } = AgentState.Active;
         public int? LastThinkTick { get; set; } = null;
         public int GoalCount { get; set; } = 0;
+        public IReadOnlyList<BehaviorRecordDto> GetRecentHistory(int count = 10) => Array.Empty<BehaviorRecordDto>();
+        public float GetRecentSuccessRate(int count = 10) => 1.0f;
     }
 
     /// <summary>

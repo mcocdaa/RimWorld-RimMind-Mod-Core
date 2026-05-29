@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Registry;
 using RimMind.Domain.Agent.Modes;
@@ -113,6 +115,8 @@ namespace RimMind.Tests.Agent
             public int? LastThinkTick { get; set; }
             public int GoalCount => 0;
             public AgentModeId CurrentModeId { get; set; }
+            public IReadOnlyList<BehaviorRecordDto> GetRecentHistory(int count = 10) => Array.Empty<BehaviorRecordDto>();
+            public float GetRecentSuccessRate(int count = 10) => 1.0f;
 
             public StubAgentInfo(AgentState state, AgentModeId currentModeId)
             {

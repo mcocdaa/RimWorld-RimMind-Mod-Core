@@ -32,6 +32,25 @@ namespace RimMind.Presentation.Settings
             set => _settings.requestExpireTicks = value;
         }
 
+        // IAgentAutonomySettings
+        public AgentAutonomyLevel AutonomyLevel
+        {
+            get => _settings.autonomyLevel;
+            set => _settings.autonomyLevel = value;
+        }
+
+        public bool ShouldApproveAction(RiskLevel risk)
+        {
+            return _settings.autonomyLevel switch
+            {
+                AgentAutonomyLevel.Manual => false,
+                AgentAutonomyLevel.Guided => risk is RiskLevel.Low or RiskLevel.Medium,
+                AgentAutonomyLevel.Autonomous => risk != RiskLevel.Critical,
+                AgentAutonomyLevel.Full => true,
+                _ => false
+            };
+        }
+
         // IAgentTickSettings
         public int AgentTickInterval => _settings.agentTickInterval;
         public int BehaviorHistoryMax

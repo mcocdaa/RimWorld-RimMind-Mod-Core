@@ -23,6 +23,7 @@ namespace RimMind.Tests.Pipeline.Unified
 
         public Task<ContextSnapshot?> BuildSnapshotFromEnvelopeAsync(string npcId, string? currentQuery,
             int maxTokens = 800, float temperature = 0.7f, string? scenarioId = null,
+            HashSet<string>? skipLayers = null,
             CancellationToken ct = default)
             => Task.FromResult(SnapshotResult);
 

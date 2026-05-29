@@ -50,6 +50,9 @@ namespace RimMind.Application.Features.Queue
         public float AutoApplyConfidenceThreshold { get => RimMindDefaults.AutoApplyConfidenceThreshold; set { } }
         public bool IsOpenAIConfigured() => false;
 
+        AgentAutonomyLevel IAgentAutonomySettings.AutonomyLevel { get => AgentAutonomyLevel.Autonomous; set { } }
+        bool IAgentAutonomySettings.ShouldApproveAction(RiskLevel risk) => risk <= RiskLevel.Medium;
+
         bool IPawnIncludeSettings.IncludeRace { get => Context.IncludeRace; set => Context.IncludeRace = value; }
         bool IPawnIncludeSettings.IncludeAge { get => Context.IncludeAge; set => Context.IncludeAge = value; }
         bool IPawnIncludeSettings.IncludeGender { get => Context.IncludeGender; set => Context.IncludeGender = value; }

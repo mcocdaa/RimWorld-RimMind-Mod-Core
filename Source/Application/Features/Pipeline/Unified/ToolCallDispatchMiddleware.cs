@@ -83,10 +83,14 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
             var result = await handler.ExecuteAsync(args, ct);
             return result.Match(
-                ok => ok with { ToolName = entry.FunctionName },
+                ok =>
+                {
+                    _log?.Message($"[RimMind.ToolCall] action=Dispatched toolName={entry.FunctionName} toolCallId={entry.Id} npcId={context.Envelope?.NpcId ?? "none"}");
+                    return ok with { ToolName = entry.FunctionName };
+                },
                 err =>
                 {
-                    _log?.Warning($"[UnifiedToolCallDispatch] Tool {entry.FunctionName} failed: {err.Message}");
+                    _log?.Warning($"[RimMind.ToolCall] action=Failed toolName={entry.FunctionName} toolCallId={entry.Id} npcId={context.Envelope?.NpcId ?? "none"} error={err.Message}");
                     return ToolResult.Fail(err.Message, entry.Id, entry.FunctionName);
                 });
         }

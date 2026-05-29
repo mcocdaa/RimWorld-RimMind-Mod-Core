@@ -46,12 +46,20 @@ namespace RimMind.Application.Features.Pipeline.Unified
             }
 
             // Build snapshot directly from envelope fields (no ContextRequest needed)
+            var skipLayers = new HashSet<string>();
+            if (context.Envelope.GameStateInfo != null
+                && context.Envelope.GameStateInfo.ContainsSection("perceptions"))
+            {
+                skipLayers.Add("L3");
+            }
+
             var snapshot = await _contextEngine.BuildSnapshotFromEnvelopeAsync(
                 context.Envelope.NpcId,
                 context.Envelope.GameStateInfo,
                 context.Envelope.MaxTokens,
                 context.Envelope.Temperature,
-                context.Envelope.ScenarioId);
+                context.Envelope.ScenarioId,
+                skipLayers);
 
             if (snapshot == null)
             {

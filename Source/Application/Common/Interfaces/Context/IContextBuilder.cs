@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Context;
@@ -25,6 +26,7 @@ namespace RimMind.Application.Common.Interfaces.Context
         /// </summary>
         Task<ContextSnapshot?> BuildSnapshotFromEnvelopeAsync(string npcId, string? currentQuery,
             int maxTokens = 800, float temperature = 0.7f, string? scenarioId = null,
+            HashSet<string>? skipLayers = null,
             CancellationToken ct = default);
 
         IBudgetScheduler? GetScheduler();

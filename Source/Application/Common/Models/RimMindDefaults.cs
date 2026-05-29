@@ -269,6 +269,7 @@ namespace RimMind.Application.Common.Models
             public const int ShortCircuit = 10;
             public const int TraceContext = 20;
             public const int NpcEnrich = 30;
+            public const int InputGuardrail = 35;
             public const int ContextBuild = 40;
             public const int ContextFeedback = 45;
             public const int RequestSanitize = 50;

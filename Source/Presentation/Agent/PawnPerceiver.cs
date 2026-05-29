@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Enums;
@@ -22,14 +24,17 @@ namespace RimMind.Presentation.Agent
 
         private readonly IPawnAgent _agent;
         private readonly IAgentBus _agentBus;
+        private readonly IExtensionRegistry<IPerceptionSource>? _sourceRegistry;
         private readonly HashSet<string> _sensedHediffs = new HashSet<string>();
         private int _lastPerceptionTick;
         private int _perceptionInterval = DefaultPerceptionInterval;
 
-        public PawnPerceiver(IPawnAgent agent, IAgentBus agentBus)
+        public PawnPerceiver(IPawnAgent agent, IAgentBus agentBus,
+            IExtensionRegistry<IPerceptionSource>? sourceRegistry = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _sourceRegistry = sourceRegistry;
         }
 
         public void Tick()
@@ -46,6 +51,45 @@ namespace RimMind.Presentation.Agent
             if (pawn == null || pawn.Dead) return;
 
             _sensedHediffs.Clear();
+
+            // Use registered perception sources if available
+            var sources = _sourceRegistry?.All;
+            if (sources != null && sources.Count > 0)
+            {
+                var sortedSources = sources.OrderBy(s => s.Priority).ToList();
+                foreach (var source in sortedSources)
+                {
+                    if (!source.ShouldSense(_agent)) continue;
+                    var entries = source.Sense(_agent);
+                    foreach (var entry in entries)
+                    {
+                        _agent.PerceptionBuffer.Add(entry);
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: inline perception (backward compatibility)
+                SenseInline();
+            }
+
+            // Publish PerceptionEvent so subscribers can react to perception changes
+            _agentBus.Publish(new PerceptionEvent(
+                _agent.Identity.NpcId,
+                _agent.Pawn?.thingIDNumber ?? -1,
+                "composite",
+                "Perception cycle completed",
+                0f,
+                Find.TickManager.TicksGame));
+        }
+
+        /// <summary>
+        /// Inline perception logic used as fallback when no IPerceptionSource is registered.
+        /// </summary>
+        private void SenseInline()
+        {
+            var pawn = _agent.Pawn;
+            if (pawn == null || pawn.Dead) return;
 
             if (pawn.needs?.mood != null)
             {
@@ -148,15 +192,6 @@ namespace RimMind.Presentation.Agent
                     });
                 }
             }
-
-            // Publish PerceptionEvent so subscribers can react to perception changes
-            _agentBus.Publish(new PerceptionEvent(
-                _agent.Identity.NpcId,
-                _agent.Pawn?.thingIDNumber ?? -1,
-                "composite",
-                "Perception cycle completed",
-                0f,
-                Find.TickManager.TicksGame));
         }
     }
 }

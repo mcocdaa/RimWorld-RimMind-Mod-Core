@@ -15,10 +15,15 @@ namespace RimMind.Presentation.Agent
         AgentIdentity Identity { get; }
         AgentGoalStack GoalStack { get; }
         IReadOnlyList<BehaviorRecord> BehaviorHistory { get; }
-        IReadOnlyList<BehaviorRecord> GetRecentHistory(int count = 10);
-        float GetRecentSuccessRate(int count = 10);
+        new IReadOnlyList<BehaviorRecord> GetRecentHistory(int count = 10);
+        new float GetRecentSuccessRate(int count = 10);
         StrategyOptimizer StrategyOptimizer { get; }
         PerceptionBuffer PerceptionBuffer { get; }
+
+        /// <summary>
+        /// Current autonomy level for agent decisions.
+        /// </summary>
+        AgentAutonomyLevel AutonomyLevel { get; }
 
         /// <summary>
         /// Current workflow phase in the Perceive→Think→Act→Record cycle.

@@ -83,12 +83,16 @@ namespace RimMind.Presentation.Runtime
 
         public void AddMiddleware<TContext>(
             IMiddleware<TContext> middleware,
-            IPipeline<BusPublishContext>? busPipeline) where TContext : IPipelineContext
+            IPipeline<BusPublishContext>? busPipeline,
+            IPipeline<LlmRequestContext>? llmPipeline) where TContext : IPipelineContext
         {
             if (middleware == null) return;
             bool added = false;
             if (busPipeline is MutablePipeline<BusPublishContext> busPipe && middleware is IMiddleware<BusPublishContext> busMw)
             { busPipe.Use(busMw); added = true; }
+
+            if (llmPipeline is MutablePipeline<LlmRequestContext> llmPipe && middleware is IMiddleware<LlmRequestContext> llmMw)
+            { llmPipe.Use(llmMw); added = true; }
 
             if (!added)
             {

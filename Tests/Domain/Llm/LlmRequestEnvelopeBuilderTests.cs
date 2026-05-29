@@ -29,12 +29,13 @@ namespace RimMind.Tests.Domain.Llm
         [Fact]
         public void ForNpc_SetsNpcIdAndGameStateInfo()
         {
-            var envelope = LlmRequestEnvelopeBuilder.ForNpc("npc42", "gameState")
+            var envelope = LlmRequestEnvelopeBuilder.ForNpc("npc42", new GameStateInfo().AddSection("perceptions", "gameState"))
                 .ForScenarioId("scenario1")
                 .Build();
 
             Assert.Equal("npc42", envelope.NpcId);
-            Assert.Equal("gameState", envelope.GameStateInfo);
+            Assert.NotNull(envelope.GameStateInfo);
+            Assert.Contains("gameState", envelope.GameStateInfo.ToXml());
         }
 
         [Fact]

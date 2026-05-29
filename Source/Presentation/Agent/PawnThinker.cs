@@ -5,17 +5,20 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
+using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Models.Agent;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
-using RimMind.Application.Common.Models;
+using RimMind.Application.Features.Agent;
+using RimMind.Application.Features.Agent.InnerVoice;
+using ThinkContextEnricher = RimMind.Application.Features.Agent.ThinkContextEnricher;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
-using RimMind.Domain.Events;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.Services.Verse;
 using RimMind.Presentation.Runtime;
 using Verse;
 
@@ -24,20 +27,18 @@ namespace RimMind.Presentation.Agent
     public class PawnThinker : IPawnThinker
     {
         private const int DefaultThinkCooldownTicks = RimMindDefaults.ThinkCooldownTicks;
-
         private readonly IPawnAgent _agent;
         private readonly IAgentBus _agentBus;
         private readonly IAgentTickSettings? _tickSettings;
         private readonly ProactiveBehaviorExecutor _proactiveExecutor;
         private readonly ThinkContextEnricher _contextEnricher;
         private readonly ILogSink? _log;
+        private readonly IDecisionProcessor _decisionProcessor;
         private int _lastThinkTick;
-        private int _thinkCooldownTicks;
+        private int ThinkCooldownTicks => _tickSettings?.ThinkCooldownTicks ?? DefaultThinkCooldownTicks;
         private volatile bool _thinking;
         private IReadOnlyList<PerceptionBufferEntry> _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
         private int _requestSentTick;
-
-        // Main-thread callback dispatch: AI callback stores result, Tick() processes on main thread
         private volatile bool _hasPendingCallback;
         private Result<LlmResponse, RimMindError> _pendingResult;
         private LlmRequestContext? _pendingContext;
@@ -52,9 +53,14 @@ namespace RimMind.Presentation.Agent
             _tickSettings = tickSettings;
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
             _log = log;
-            _thinkCooldownTicks = _tickSettings?.ThinkCooldownTicks ?? DefaultThinkCooldownTicks;
             _proactiveExecutor = new ProactiveBehaviorExecutor(agentBus, log);
-            _contextEnricher = new ThinkContextEnricher();
+            _contextEnricher = new ThinkContextEnricher(RimMindServiceLocator.Get<InnerVoiceHandler>(), RimMindServiceLocator.Get<IPsychologyWatcher>());
+            _decisionProcessor = new DecisionProcessor(
+                agent, agentBus, new VerseTickProvider(),
+                RequestFollowUpThink, ResetThinkingState,
+                phase => agent.TransitionWorkflow(phase),
+                decision => agent.ExecuteDecision(decision),
+                () => agent.Pawn?.thingIDNumber ?? -1, log);
         }
 
         public bool IsThinking => _thinking;
@@ -64,8 +70,7 @@ namespace RimMind.Presentation.Agent
         {
             if (_agent.State != AgentState.Active) return false;
             if (_thinking) return false;
-            if (Find.TickManager.TicksGame - _lastThinkTick < _thinkCooldownTicks) return false;
-            return true;
+            return Find.TickManager.TicksGame - _lastThinkTick >= ThinkCooldownTicks;
         }
 
         public void ResetThinking()
@@ -80,29 +85,19 @@ namespace RimMind.Presentation.Agent
         public void Tick()
         {
             if (_agent.State != AgentState.Active) return;
-
-            // Process pending AI callback on the main thread (thread-safe RimWorld object access)
-            if (_hasPendingCallback)
-            {
-                _hasPendingCallback = false;
-                ProcessPendingCallback();
-            }
-
-            // Timeout guard: if thinking has been stuck for too long, reset
+            if (_hasPendingCallback) { _hasPendingCallback = false; ProcessPendingCallback(); }
             if (_thinking && _requestSentTick > 0)
             {
                 var elapsed = Find.TickManager.TicksGame - _requestSentTick;
                 if (elapsed > RimMindDefaults.ThinkRequestTimeoutTicks)
                 {
-                    _log?.Warning($"[RimMind] Think request timeout for {_agent.Identity.NpcId} after {elapsed} ticks, resetting");
-                    _thinking = false;
-                    _requestSentTick = 0;
+                    _log?.Warning($"[RimMind.Thinker] action=ThinkTimeout npcId={_agent.Identity.NpcId} modeId={_agent.CurrentModeId.Value} elapsed={elapsed}");
+                    _thinking = false; _requestSentTick = 0;
                     _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
                 }
             }
-
             if (_thinking) return;
-            if (Find.TickManager.TicksGame - _lastThinkTick < _thinkCooldownTicks) return;
+            if (Find.TickManager.TicksGame - _lastThinkTick < ThinkCooldownTicks) return;
             _lastThinkTick = Find.TickManager.TicksGame;
             Think();
         }
@@ -114,183 +109,95 @@ namespace RimMind.Presentation.Agent
             {
                 var pawn = _agent.Pawn;
                 if (pawn == null || pawn.Dead) { _thinking = false; return; }
-
                 var entries = _agent.PerceptionBuffer.Flush();
                 _cachedPerceptions = entries;
                 var mode = _agent.CurrentMode;
-
                 if (!mode.ShouldThink(_agent, entries)) { _thinking = false; return; }
-
                 var pawnId = pawn.thingIDNumber;
-
-                // Pre-think enrichment: InnerVoice + Psychology
                 var voiceText = _contextEnricher.ConsumeInnerVoice(_agent.Identity.NpcId);
                 _contextEnricher.CheckPsychology(_agent, pawnId);
-
-                // Proactive extension behaviors (Reflection/Planning/Dream/TraitEvolution)
                 _proactiveExecutor.ExecuteProactiveExtensions(_agent, mode, pawnId);
-
-                // Core think: strategy -> envelope -> AI -> decision
                 var strategy = mode.GetThinkStrategy();
                 var allowedToolIds = mode.AllowedToolIds(RimMindAPI.Tools);
                 var availableTools = RimMindAPI.Tools.GetAllDefinitions()
-                    .Where(d => allowedToolIds.Contains(d.Id))
-                    .ToList();
-
+                    .Where(d => allowedToolIds.Contains(d.Id)).ToList();
                 var envelope = strategy.BuildEnvelope(_agent, entries, availableTools);
-
-                // Inject context enrichments
-                _contextEnricher.EnrichEnvelope(envelope, _agent.Identity.NpcId, voiceText);
-
-                // Inject behavior history feedback
-                var recentHistory = _agent.GetRecentHistory(10);
-                var successRate = _agent.GetRecentSuccessRate(10);
-                var historySection = _contextEnricher.FormatBehaviorHistory(recentHistory, successRate);
-                if (!string.IsNullOrEmpty(historySection))
-                {
-                    if (!string.IsNullOrEmpty(envelope.GameStateInfo))
-                        envelope.GameStateInfo = historySection + envelope.GameStateInfo;
-                    else
-                        envelope.GameStateInfo = historySection.TrimEnd('\n');
-                }
-
+                EnrichEnvelope(envelope, voiceText);
                 _requestSentTick = Find.TickManager.TicksGame;
                 SendThinkRequest(envelope, strategy, availableTools, 0);
             }
             catch (Exception ex)
             {
                 _thinking = false;
-                _log?.Error($"[Think] Unexpected error for {_agent.Identity.NpcId}: {ex}");
+                _log?.Error($"[RimMind.Thinker] action=UnexpectedError npcId={_agent.Identity.NpcId} modeId={_agent.CurrentModeId.Value} error={ex}");
             }
         }
 
-        /// <summary>
-        /// Sends a think request through the pipeline. The AI callback stores the result
-        /// into pending fields for main-thread processing via ProcessPendingCallback().
-        /// </summary>
-        private void SendThinkRequest(
-            LlmRequestEnvelope envelope,
-            IThinkStrategy strategy,
-            IReadOnlyList<ToolDefinition> availableTools,
-            int toolCallRound)
+        private void EnrichEnvelope(LlmRequestEnvelope envelope, string? voiceText)
         {
-            // Capture strategy context for the callback (avoids closure over mutable state)
+            _contextEnricher.EnrichEnvelope(envelope, _agent.Identity.NpcId, voiceText);
+            var agentInfo = (IAgentInfo)_agent;
+            var recentHistory = agentInfo.GetRecentHistory(10);
+            var successRate = agentInfo.GetRecentSuccessRate(10);
+            var historySection = _contextEnricher.FormatBehaviorHistory(recentHistory, successRate);
+            if (!string.IsNullOrEmpty(historySection))
+            {
+                envelope.GameStateInfo ??= new GameStateInfo();
+                envelope.GameStateInfo.AddSection("behavior_history", historySection);
+            }
+        }
+
+        private void SendThinkRequest(LlmRequestEnvelope envelope, IThinkStrategy strategy, IReadOnlyList<ToolDefinition> availableTools, int toolCallRound)
+        {
             _pendingStrategy = strategy;
             _pendingAvailableTools = availableTools;
             _pendingToolCallRound = toolCallRound;
             _pendingTraceId = envelope.TraceId;
             var modeId = _agent.CurrentModeId;
-
             RimMindAPI.Request.Send(envelope, (result, ctx) =>
             {
-                // Store result for main-thread processing — do NOT access RimWorld objects here
                 _pendingResult = result;
                 _pendingContext = ctx;
                 _hasPendingCallback = true;
-                if (ctx != null)
-                    ctx.AgentModeId = modeId;
+                if (ctx != null) ctx.AgentModeId = modeId;
             });
         }
 
-        /// <summary>
-        /// Processes the pending AI callback result on the main thread.
-        /// All RimWorld object access happens here, ensuring thread safety.
-        /// </summary>
         private void ProcessPendingCallback()
         {
-            var traceScope = _pendingTraceId != null
-                ? TraceContext.BeginScope(_pendingTraceId)
-                : null;
+            var traceScope = _pendingTraceId != null ? TraceContext.BeginScope(_pendingTraceId) : null;
             try
             {
-                var result = _pendingResult;
-                var ctx = _pendingContext;
-                var strategy = _pendingStrategy!;
-                var availableTools = _pendingAvailableTools!;
-                var toolCallRound = _pendingToolCallRound;
-
-                if (!result.IsOk)
-                {
-                    _thinking = false;
-                    _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
-                    _log?.Warning($"[Think] AI request failed: {result.Error}");
-                    return;
-                }
-
-                var response = result.Value;
-                var toolCallResults = ctx?.ToolCallResults;
-
-                var decision = strategy.ParseDecision(_agent, response, toolCallResults);
-                if (!decision.IsOk)
-                {
-                    _thinking = false;
-                    _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
-                    _log?.Warning($"[Think] Parse failed: {decision.Error}");
-                    return;
-                }
-
-                // Agentic loop: if AI wants more tool calls and depth not exceeded,
-                // build a follow-up envelope with ToolCall results and send again
-                if (decision.Value.WantsMoreToolCalls
-                    && toolCallResults != null
-                    && toolCallResults.Count > 0
-                    && toolCallRound + 1 < RimMindDefaults.DefaultMaxToolCallDepth)
-                {
-                    var followUpEnvelope = strategy.BuildEnvelope(_agent, _cachedPerceptions, availableTools);
-                    _contextEnricher.EnrichWithToolCallResults(followUpEnvelope, toolCallResults, toolCallRound + 1);
-                    _contextEnricher.EnrichEnvelope(followUpEnvelope, _agent.Identity.NpcId, null);
-
-                    SendThinkRequest(followUpEnvelope, strategy, availableTools, toolCallRound + 1);
-                    return;
-                }
-
-                // Final decision: execute, record and publish
-                _thinking = false;
-                _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
-                _agent.LastThinkTick = Find.TickManager.TicksGame;
-
-                // Transition workflow: Thinking → Acting
-                _agent.TransitionWorkflow(AgentWorkflowPhase.Acting);
-
-                // Execute the decision via PawnActor's IActionExecutor
-                var execResult = _agent.ExecuteDecision(decision.Value);
-                var execSuccess = execResult.IsOk;
-
-                // Transition workflow: Acting → Recording
-                _agent.TransitionWorkflow(AgentWorkflowPhase.Recording);
-
-                _agent.RecordBehavior(new BehaviorRecordDto
-                {
-                    Action = decision.Value.ActionIntent,
-                    Reason = decision.Value.Reason,
-                    Success = execSuccess,
-                    Timestamp = Find.TickManager.TicksGame
-                });
-                _agentBus.Publish(new DecisionEvent(
-                    _agent.Identity.NpcId,
-                    _agent.Pawn?.thingIDNumber ?? -1,
-                    decision.Value.ActionIntent ?? "think",
-                    decision.Value.Reason ?? "",
-                    decision.Value.ActionIntent ?? ""));
-
-                // Transition workflow: Recording → Idle
-                _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
+                _decisionProcessor.ProcessResult(_pendingResult, _pendingContext, _pendingStrategy!, _pendingAvailableTools!, _pendingToolCallRound);
             }
             catch (Exception ex)
             {
                 _thinking = false;
                 _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
-                _log?.Error($"[Think] Error processing AI callback for {_agent.Identity.NpcId}: {ex}");
+                _log?.Error($"[RimMind.Thinker] action=CallbackError npcId={_agent.Identity.NpcId} modeId={_agent.CurrentModeId.Value} error={ex}");
             }
-            finally
-            {
-                traceScope?.Dispose();
-            }
+            finally { traceScope?.Dispose(); }
         }
 
-        public void ForceThink()
+        private void RequestFollowUpThink()
         {
-            _lastThinkTick = 0;
+            var strategy = _pendingStrategy!;
+            var availableTools = _pendingAvailableTools!;
+            var toolCallRound = _pendingToolCallRound;
+            var followUpEnvelope = strategy.BuildEnvelope(_agent, _cachedPerceptions, availableTools);
+            _contextEnricher.EnrichWithToolCallResults(followUpEnvelope, null, toolCallRound + 1);
+            _contextEnricher.EnrichEnvelope(followUpEnvelope, _agent.Identity.NpcId, null);
+            SendThinkRequest(followUpEnvelope, strategy, availableTools, toolCallRound + 1);
         }
+
+        private void ResetThinkingState()
+        {
+            _thinking = false;
+            _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
+        }
+
+        public void ForceThink() => _lastThinkTick = 0;
+
+        internal void RestoreLastThinkTick(int tick) => _lastThinkTick = tick;
     }
 }
