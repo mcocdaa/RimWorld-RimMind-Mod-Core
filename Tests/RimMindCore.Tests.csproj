@@ -62,6 +62,7 @@
     <Compile Include="Application\Features\Agent\InnerVoice\*.cs" />
     <Compile Include="Presentation\Agent\*.cs" />
     <Compile Include="Infrastructure\Verse\*.cs" />
+    <Compile Include="Infrastructure\OpenAI\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
