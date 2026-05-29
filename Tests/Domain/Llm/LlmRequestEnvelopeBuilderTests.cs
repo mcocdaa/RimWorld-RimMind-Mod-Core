@@ -24,6 +24,7 @@ namespace RimMind.Tests.Domain.Llm
             Assert.Equal(800, envelope.MaxTokens);
             Assert.Equal(0.7f, envelope.Temperature);
             Assert.Equal(AIRequestPriority.Normal, envelope.Priority);
+            Assert.Equal(ToolCallDispatchMode.Auto, envelope.ToolDispatchMode);
         }
 
         [Fact]
@@ -69,6 +70,17 @@ namespace RimMind.Tests.Domain.Llm
                 .Build();
 
             Assert.Equal(AIRequestPriority.High, envelope.Priority);
+        }
+
+        [Fact]
+        public void WithToolDispatchMode_Manual_OverridesDefault()
+        {
+            var envelope = new LlmRequestEnvelopeBuilder()
+                .ForScenarioId("scenario1")
+                .WithToolDispatchMode(ToolCallDispatchMode.Manual)
+                .Build();
+
+            Assert.Equal(ToolCallDispatchMode.Manual, envelope.ToolDispatchMode);
         }
 
         [Fact]

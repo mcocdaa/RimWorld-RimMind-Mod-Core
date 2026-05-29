@@ -46,7 +46,8 @@ namespace RimMind.Tests.Pipeline.Unified
 
     public class ToolCallDispatchMiddlewareTests
     {
-        private static LlmRequestContext CreateContext()
+        private static LlmRequestContext CreateContext(
+            ToolCallDispatchMode toolDispatchMode = ToolCallDispatchMode.Auto)
         {
             return new LlmRequestContext
             {
@@ -54,6 +55,7 @@ namespace RimMind.Tests.Pipeline.Unified
                 {
                     RequestId = "req-1",
                     ScenarioId = "test",
+                    ToolDispatchMode = toolDispatchMode,
                 },
             };
         }
@@ -127,8 +129,7 @@ namespace RimMind.Tests.Pipeline.Unified
             registry.Register(handler);
 
             var middleware = new ToolCallDispatchMiddleware(registry);
-            var context = CreateContext();
-            context.Envelope.ToolDispatchMode = ToolCallDispatchMode.Manual;
+            var context = CreateContext(ToolCallDispatchMode.Manual);
 
             var toolCallsJson = MakeToolCallsJson(("tc-1", "get_weather", "{}"));
 
