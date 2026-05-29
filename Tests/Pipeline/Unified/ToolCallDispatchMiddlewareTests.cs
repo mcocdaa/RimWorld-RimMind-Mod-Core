@@ -118,6 +118,37 @@ namespace RimMind.Tests.Pipeline.Unified
         }
 
         [Fact]
+        public async Task ManualDispatchMode_DoesNotExecuteToolCalls()
+        {
+            var handler = new StubToolHandler2("get_weather",
+                Result<ToolResult, RimMindError>.Ok(
+                    new ToolResult { ToolCallId = "tc-1", Content = "sunny" }));
+            var registry = new StubToolRegistry2();
+            registry.Register(handler);
+
+            var middleware = new ToolCallDispatchMiddleware(registry);
+            var context = CreateContext();
+            context.Envelope.ToolDispatchMode = ToolCallDispatchMode.Manual;
+
+            var toolCallsJson = MakeToolCallsJson(("tc-1", "get_weather", "{}"));
+
+            await middleware.InvokeAsync(context, ctx =>
+            {
+                ctx.Result = Result<LlmResponse, RimMindError>.Ok(
+                    new LlmResponse
+                    {
+                        RequestId = "req-1",
+                        Content = "checking",
+                        ToolCallsJson = toolCallsJson,
+                    });
+                return Task.CompletedTask;
+            });
+
+            Assert.Null(context.ToolCallResults);
+            Assert.Equal(toolCallsJson, context.Result!.Value.Value.ToolCallsJson);
+        }
+
+        [Fact]
         public async Task ErrorResult_DoesNotDispatch()
         {
             var registry = new StubToolRegistry2();

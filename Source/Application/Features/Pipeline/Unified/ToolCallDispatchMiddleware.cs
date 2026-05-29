@@ -39,6 +39,11 @@ namespace RimMind.Application.Features.Pipeline.Unified
             // After the pipeline completes, check if the response contains tool calls
             if (context.Result?.IsOk != true) return;
             if (context.IsShortCircuited) return;
+            if (context.Envelope?.ToolDispatchMode == ToolCallDispatchMode.Manual)
+            {
+                _log?.Message($"[UnifiedToolCallDispatch] Manual dispatch requested for request {context.Envelope?.RequestId}; leaving tool_calls for owner.");
+                return;
+            }
 
             var response = context.Result.Value.Value;
             if (response == null || response.ToolCallsJson == null) return;

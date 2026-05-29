@@ -16,6 +16,7 @@ namespace RimMind.Domain.Llm
         public List<ChatMessage> Messages { get; init; } = new();
         public string? JsonSchema { get; init; }
         public List<StructuredTool>? Tools { get; init; }
+        public ToolCallDispatchMode ToolDispatchMode { get; set; } = ToolCallDispatchMode.Auto;
         public List<ChatMessage>? Examples { get; init; }
         public int MaxTokens { get; init; } = 800;
         public float Temperature { get; init; } = 0.7f;

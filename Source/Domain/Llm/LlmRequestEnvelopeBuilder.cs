@@ -13,6 +13,7 @@ namespace RimMind.Domain.Llm
         private GameStateInfo? _gameStateInfo;
         private string? _jsonSchema;
         private List<StructuredTool>? _tools;
+        private ToolCallDispatchMode _toolDispatchMode = ToolCallDispatchMode.Auto;
         private List<ChatMessage>? _examples;
         private List<ChatMessage>? _messages;
         private AIRequestPriority _priority = AIRequestPriority.Normal;
@@ -80,6 +81,12 @@ namespace RimMind.Domain.Llm
         public LlmRequestEnvelopeBuilder WithTools(IEnumerable<StructuredTool> tools)
         {
             _tools = new List<StructuredTool>(tools);
+            return this;
+        }
+
+        public LlmRequestEnvelopeBuilder WithToolDispatchMode(ToolCallDispatchMode mode)
+        {
+            _toolDispatchMode = mode;
             return this;
         }
 
@@ -151,6 +158,7 @@ namespace RimMind.Domain.Llm
                 Messages = _messages ?? new List<ChatMessage>(),
                 JsonSchema = _jsonSchema,
                 Tools = _tools,
+                ToolDispatchMode = _toolDispatchMode,
                 Examples = _examples,
                 MaxTokens = _maxTokens,
                 Temperature = _temperature,
