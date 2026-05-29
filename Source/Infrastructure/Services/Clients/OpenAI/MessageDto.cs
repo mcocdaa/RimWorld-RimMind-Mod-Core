@@ -52,19 +52,25 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
     internal class ToolDto
     {
         public string type = "function";
+        [JsonProperty("function")]
         public ToolFunctionDto? Function;
     }
 
     internal class ToolFunctionDto
     {
+        [JsonProperty("name")]
         public string Name = "";
+        [JsonProperty("description")]
         public string Description = "";
+        [JsonProperty("parameters")]
         public object? Parameters;
     }
 
     internal class ToolCallFunctionDto
     {
+        [JsonProperty("name")]
         public string Name = "";
+        [JsonProperty("arguments")]
         public string Arguments = "";
     }
 
@@ -83,8 +89,11 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
     internal class ToolCallDto
     {
+        [JsonProperty("id")]
         public string Id = "";
+        [JsonProperty("type")]
         public string Type = "function";
+        [JsonProperty("function")]
         public ToolCallFunctionDto? Function;
     }
 

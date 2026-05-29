@@ -165,5 +165,68 @@ namespace RimMind.Tests.Infrastructure.OpenAI
             Assert.NotNull(client.LastEnvelope);
             Assert.Equal("cap-1", client.LastEnvelope!.RequestId);
         }
+
+        [Fact]
+        public void Tools_SerializeWithLowercaseOpenAIKeys()
+        {
+            var envelope = new LlmRequestEnvelope
+            {
+                RequestId = "tool-casing",
+                ScenarioId = ScenarioIds.Decision,
+                Messages = { new ChatMessage { Role = "user", Content = "do something" } },
+                Tools = new System.Collections.Generic.List<StructuredTool>
+                {
+                    new StructuredTool
+                    {
+                        Name = "pawn.move.to",
+                        Description = "Move the pawn to a target cell.",
+                        Parameters = "{\"type\":\"object\",\"properties\":{\"target\":{\"type\":\"string\"}}}",
+                        ToolChoice = "auto",
+                    },
+                },
+            };
+
+            string json = OpenAIRequestSerializer.BuildRequestJson(envelope, "gpt-4o-mini", 800);
+
+            Assert.Contains("\"function\"", json);
+            Assert.Contains("\"name\"", json);
+            Assert.Contains("\"description\"", json);
+            Assert.Contains("\"parameters\"", json);
+            Assert.DoesNotContain("\"Function\"", json);
+            Assert.DoesNotContain("\"Name\"", json);
+            Assert.DoesNotContain("\"Description\"", json);
+            Assert.DoesNotContain("\"Parameters\"", json);
+        }
+
+        [Fact]
+        public void AssistantToolCalls_SerializeWithLowercaseOpenAIKeys()
+        {
+            var envelope = new LlmRequestEnvelope
+            {
+                RequestId = "toolcall-casing",
+                ScenarioId = ScenarioIds.Decision,
+                Messages =
+                {
+                    new ChatMessage
+                    {
+                        Role = "assistant",
+                        Content = "",
+                        ToolCalls = new System.Collections.Generic.List<ChatToolCall>
+                        {
+                            new ChatToolCall { Id = "call_1", Name = "pawn.move.to", Arguments = "{\"target\":\"A\"}" },
+                        },
+                    },
+                },
+            };
+
+            string json = OpenAIRequestSerializer.BuildRequestJson(envelope, "gpt-4o-mini", 800);
+
+            Assert.Contains("\"tool_calls\"", json);
+            Assert.Contains("\"id\"", json);
+            Assert.Contains("\"arguments\"", json);
+            Assert.DoesNotContain("\"Id\"", json);
+            Assert.DoesNotContain("\"Arguments\"", json);
+            Assert.DoesNotContain("\"Function\"", json);
+        }
     }
 }

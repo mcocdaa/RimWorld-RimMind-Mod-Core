@@ -56,10 +56,10 @@
   "tools": [
     {
       "type": "function",
-      "Function": {
-        "Name": "pawn.move.to",
-        "Description": "Move the pawn to a target cell.",
-        "Parameters": {
+      "function": {
+        "name": "pawn.move.to",
+        "description": "Move the pawn to a target cell.",
+        "parameters": {
           "type": "object",
           "properties": {
             "target": {
