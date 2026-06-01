@@ -47,6 +47,7 @@
     <Compile Include="ArchTests\PhaseP3\*.cs" />
     <Compile Include="ArchTests\PhaseP4\*.cs" />
     <Compile Include="ArchTests\PhaseP5\*.cs" />
+    <Compile Include="ArchTests\PhaseP6\*.cs" />
     <Compile Include="Agent\*.cs" Exclude="Agent\PawnThinkerTimeoutTests.cs" />
     <Compile Include="Agent\PhaseO\*.cs" />
     <Compile Include="Domain\*.cs" />

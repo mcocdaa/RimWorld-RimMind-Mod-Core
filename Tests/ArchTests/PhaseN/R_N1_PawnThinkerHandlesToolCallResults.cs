@@ -22,13 +22,14 @@ namespace RimMind.Tests.ArchTests.PhaseN
             RepoRoot, "RimMind-Core", "Source", "Application", "Features", "Agent", "DecisionProcessor.cs");
 
         [Fact]
-        public void PawnThinker_References_ToolCallResults()
+        public void PawnThinker_Delegates_To_DecisionProcessor()
         {
             Assert.True(File.Exists(PawnThinkerPath), "PawnThinker.cs must exist");
 
             var content = File.ReadAllText(PawnThinkerPath);
 
-            Assert.Contains("ToolCallResults", content);
+            Assert.Contains("IDecisionProcessor", content);
+            Assert.Contains("_decisionProcessor", content);
         }
 
         [Fact]

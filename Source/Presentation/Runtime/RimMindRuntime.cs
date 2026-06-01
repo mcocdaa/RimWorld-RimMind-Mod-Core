@@ -130,7 +130,7 @@ namespace RimMind.Presentation.Runtime
             // Delegate to ServiceLocator to ensure single source of truth.
             // Previously used _registries dict which created separate instances from CompositionRoot's SL,
             // causing sub-Mod extensions to be invisible to Pipeline factories.
-            var existing = RimMindServiceLocator.Get<IExtensionRegistry<T>>();
+            var existing = RimMindServiceLocator.TryGet<IExtensionRegistry<T>>();
             if (existing != null) return existing;
             var newRegistry = new ExtensionRegistry<T>();
             RimMindServiceLocator.Register(newRegistry);

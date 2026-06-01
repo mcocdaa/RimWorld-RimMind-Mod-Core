@@ -21,6 +21,9 @@ namespace RimMind.Application.Common.Interfaces.Internal
             return null;
         }
 
+        public static T? TryGet<T>() where T : class
+            => _services.TryGetValue(typeof(T), out var svc) ? (T)svc : null;
+
         public static bool IsRegistered<T>()
             => _services.ContainsKey(typeof(T));
 

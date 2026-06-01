@@ -14,7 +14,7 @@
   <RimMind.UI.DebugLog.QueueWait>queueWait</RimMind.UI.DebugLog.QueueWait>
   <RimMind.UI.Empty>(empty)</RimMind.UI.Empty>
   <!-- AITogglePatch.cs -->
-  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\nClick to toggle registered features on/off\nShift+Click to open mod settings\nCtrl+Click to open debug log window</RimMind.Presentation.Toggle.Tooltip>
+  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\nClick to open RimMind menu\nShift+Click to open mod settings\nCtrl+Click to open request log</RimMind.Presentation.Toggle.Tooltip>
   <!-- AICoreSettingsUI.cs - Tab labels -->
   <RimMind.Settings.Tab.Api>API Config</RimMind.Settings.Tab.Api>
   <RimMind.Settings.Tab.Context>Context Filter</RimMind.Settings.Tab.Context>
@@ -67,6 +67,16 @@
   <RimMind.Agent.State.Dormant>Dormant</RimMind.Agent.State.Dormant>
   <RimMind.Agent.State.Paused>Paused</RimMind.Agent.State.Paused>
   <RimMind.Agent.State.Terminated>Terminated</RimMind.Agent.State.Terminated>
+  <RimMind.Agent.Gizmo.CreateAgent>Create Agent</RimMind.Agent.Gizmo.CreateAgent>
+  <RimMind.Agent.Gizmo.CreateAgentDesc>Create a RimMind Agent for this pawn</RimMind.Agent.Gizmo.CreateAgentDesc>
+  <RimMind.Agent.Gizmo.CreateAgentFailed>Agent creation failed: service unavailable</RimMind.Agent.Gizmo.CreateAgentFailed>
+  <RimMind.Agent.Gizmo.AgentCreated>Agent created for {0}</RimMind.Agent.Gizmo.AgentCreated>
+  <RimMind.Agent.Gizmo.ViewState>View Agent State</RimMind.Agent.Gizmo.ViewState>
+  <RimMind.Agent.Gizmo.ViewStateDesc>Open the Agent State debug window for this pawn</RimMind.Agent.Gizmo.ViewStateDesc>
+  <RimMind.Agent.Gizmo.MustBeActive>Agent must be active to perform this action</RimMind.Agent.Gizmo.MustBeActive>
+  <RimMind.Agent.Gizmo.ForceThinkInactiveDesc>Agent is not active, cannot force think</RimMind.Agent.Gizmo.ForceThinkInactiveDesc>
+  <RimMind.Agent.Gizmo.AlreadyInMode>Already in {0} mode</RimMind.Agent.Gizmo.AlreadyInMode>
+  <RimMind.Agent.Gizmo.ModeNotApplicable>{0} mode is not applicable for this agent</RimMind.Agent.Gizmo.ModeNotApplicable>
   <RimMind.Infrastructure.Player2.LocalDetected>RimMind: Player2 desktop app detected! Using automatic authentication (no API key needed).</RimMind.Infrastructure.Player2.LocalDetected>
   <RimMind.Infrastructure.Player2.LocalNotFound>RimMind: Player2 desktop app not found. Please start the app or add an API key manually.</RimMind.Infrastructure.Player2.LocalNotFound>
   <!-- AICoreSettingsUI.cs - Section headers -->
@@ -295,6 +305,10 @@
   <RimMind.UI.RequestLog.Title>Approval &amp; Requests</RimMind.UI.RequestLog.Title>
   <RimMind.UI.RequestLog.ClearAll>Clear All</RimMind.UI.RequestLog.ClearAll>
   <RimMind.UI.RequestLog.Count>{0} pending</RimMind.UI.RequestLog.Count>
+  <RimMind.UI.RequestLog.EmptyReason.QueuePaused>Request queue is paused. Resume it in Settings.</RimMind.UI.RequestLog.EmptyReason.QueuePaused>
+  <RimMind.UI.RequestLog.EmptyReason.NoApiKey>API Key not configured. Set it up in Settings.</RimMind.UI.RequestLog.EmptyReason.NoApiKey>
+  <RimMind.UI.RequestLog.EmptyReason.NoAgent>No agents on current map. Create an agent for a pawn first.</RimMind.UI.RequestLog.EmptyReason.NoAgent>
+  <RimMind.UI.RequestLog.EmptyReason.NoRequests>No requests generated yet. Agents produce requests during think cycles.</RimMind.UI.RequestLog.EmptyReason.NoRequests>
   <!-- Window_AgentDialogue.cs -->
   <RimMind.UI.AgentDialogue.Title>Agent Dialogue</RimMind.UI.AgentDialogue.Title>
   <RimMind.UI.AgentDialogue.Send>Send</RimMind.UI.AgentDialogue.Send>
@@ -405,6 +419,7 @@
   <!-- Window_ToolCallDebug.cs -->
   <RimMind.UI.ToolCallDebug.Title>ToolCall Debug</RimMind.UI.ToolCallDebug.Title>
   <RimMind.UI.ToolCallDebug.Empty>No tools registered</RimMind.UI.ToolCallDebug.Empty>
+  <RimMind.UI.ToolCallDebug.EmptyHint>Tools are registered by sub-mods. Install sub-mods like Actions to populate this list.</RimMind.UI.ToolCallDebug.EmptyHint>
   <RimMind.UI.ToolCallDebug.Id>ID: {0}</RimMind.UI.ToolCallDebug.Id>
   <RimMind.UI.ToolCallDebug.Description>Description: {0}</RimMind.UI.ToolCallDebug.Description>
   <RimMind.UI.ToolCallDebug.Schema>Parameters Schema:</RimMind.UI.ToolCallDebug.Schema>
@@ -419,6 +434,9 @@
   <!-- Window_MechanismStatus.cs -->
   <RimMind.UI.MechanismStatus.Title>Mechanism Status</RimMind.UI.MechanismStatus.Title>
   <RimMind.UI.MechanismStatus.Empty>No mechanisms registered</RimMind.UI.MechanismStatus.Empty>
+  <RimMind.UI.MechanismStatus.EmptyHint>Mechanisms are game-state operation surfaces registered by sub-mods. Install sub-mods like Actions to populate this list.</RimMind.UI.MechanismStatus.EmptyHint>
+  <RimMind.UI.MechanismStatus.Description>Description: {0}</RimMind.UI.MechanismStatus.Description>
+  <RimMind.UI.MechanismStatus.OwnerMod>Owner: {0}</RimMind.UI.MechanismStatus.OwnerMod>
   <RimMind.UI.MechanismStatus.Scope>Scope: {0}</RimMind.UI.MechanismStatus.Scope>
   <RimMind.UI.MechanismStatus.Risk>Risk: {0}</RimMind.UI.MechanismStatus.Risk>
   <RimMind.UI.MechanismStatus.Operations>Operations: {0}</RimMind.UI.MechanismStatus.Operations>
@@ -431,6 +449,8 @@
   <!-- Window_AgentModeDebug.cs -->
   <RimMind.UI.AgentModeDebug.Title>Agent Mode Debug</RimMind.UI.AgentModeDebug.Title>
   <RimMind.UI.AgentModeDebug.NoPawns>No agents on current map</RimMind.UI.AgentModeDebug.NoPawns>
+  <RimMind.UI.AgentModeDebug.NoPawnsHint>Create an agent for a pawn to see its mode info here</RimMind.UI.AgentModeDebug.NoPawnsHint>
+  <RimMind.UI.AgentModeDebug.NoModes>No modes registered</RimMind.UI.AgentModeDebug.NoModes>
   <RimMind.UI.AgentModeDebug.Mode>Mode: {0}</RimMind.UI.AgentModeDebug.Mode>
   <RimMind.UI.AgentModeDebug.Active>Active</RimMind.UI.AgentModeDebug.Active>
   <RimMind.UI.AgentModeDebug.Inactive>Inactive</RimMind.UI.AgentModeDebug.Inactive>
@@ -451,4 +471,129 @@
   <RimMind.Agent.ITab.Goals>Goals</RimMind.Agent.ITab.Goals>
   <RimMind.Agent.ITab.Strategy>Strategy Weights</RimMind.Agent.ITab.Strategy>
   <RimMind.Agent.ITab.History>Behavior History</RimMind.Agent.ITab.History>
+  <!-- RimMindOverlayGameComponent.cs -->
+  <RimMind.UI.OverlayButton.Label>RimMind</RimMind.UI.OverlayButton.Label>
+  <RimMind.UI.OverlayMenu.RequestLog>AI Request Log</RimMind.UI.OverlayMenu.RequestLog>
+  <RimMind.UI.OverlayMenu.ToolCallDebug>ToolCall Debug</RimMind.UI.OverlayMenu.ToolCallDebug>
+  <RimMind.UI.OverlayMenu.MechanismStatus>Mechanism Status</RimMind.UI.OverlayMenu.MechanismStatus>
+  <RimMind.UI.OverlayMenu.AgentModeDebug>Mode Debug</RimMind.UI.OverlayMenu.AgentModeDebug>
+  <RimMind.UI.OverlayMenu.AgentState>Agent State</RimMind.UI.OverlayMenu.AgentState>
+  <RimMind.UI.OverlayMenu.ContextKeys>Context Keys</RimMind.UI.OverlayMenu.ContextKeys>
+  <RimMind.UI.OverlayMenu.AgentFlowLab>Agent Flow Lab</RimMind.UI.OverlayMenu.AgentFlowLab>
+  <RimMind.UI.OverlayMenu.Settings>Settings</RimMind.UI.OverlayMenu.Settings>
+  <!-- Window_AgentStateDebug.cs -->
+  <RimMind.UI.AgentStateDebug.Title>Agent State Debug</RimMind.UI.AgentStateDebug.Title>
+  <RimMind.UI.AgentStateDebug.NoPawn>No pawn selected</RimMind.UI.AgentStateDebug.NoPawn>
+  <RimMind.UI.AgentStateDebug.NoPawnHint>Click on a pawn in the game world to view its agent state</RimMind.UI.AgentStateDebug.NoPawnHint>
+  <RimMind.UI.AgentStateDebug.NoAgent>No Agent</RimMind.UI.AgentStateDebug.NoAgent>
+  <RimMind.UI.AgentStateDebug.AgentMissingHint>Click the 'Create/Get Agent' button below to create an agent for this pawn</RimMind.UI.AgentStateDebug.AgentMissingHint>
+  <RimMind.UI.AgentStateDebug.PawnInfo>Pawn: {0} (ID: {1})</RimMind.UI.AgentStateDebug.PawnInfo>
+  <RimMind.UI.AgentStateDebug.NpcId>NPC ID: {0}</RimMind.UI.AgentStateDebug.NpcId>
+  <RimMind.UI.AgentStateDebug.AgentExists>Agent: Created</RimMind.UI.AgentStateDebug.AgentExists>
+  <RimMind.UI.AgentStateDebug.AgentMissing>Agent: Not Created</RimMind.UI.AgentStateDebug.AgentMissing>
+  <RimMind.UI.AgentStateDebug.State>State: {0}</RimMind.UI.AgentStateDebug.State>
+  <RimMind.UI.AgentStateDebug.Mode>Mode: {0}</RimMind.UI.AgentStateDebug.Mode>
+  <RimMind.UI.AgentStateDebug.Thinking>Thinking: {0}</RimMind.UI.AgentStateDebug.Thinking>
+  <RimMind.UI.AgentStateDebug.LastThinkTick>Last Think: {0}</RimMind.UI.AgentStateDebug.LastThinkTick>
+  <RimMind.UI.AgentStateDebug.CreateAgent>Create/Get Agent</RimMind.UI.AgentStateDebug.CreateAgent>
+  <RimMind.UI.AgentStateDebug.BuildContext>Build Context</RimMind.UI.AgentStateDebug.BuildContext>
+  <RimMind.UI.AgentStateDebug.SendTestRequest>Send Test Request</RimMind.UI.AgentStateDebug.SendTestRequest>
+  <RimMind.UI.AgentStateDebug.OpenRequestLog>Request Log</RimMind.UI.AgentStateDebug.OpenRequestLog>
+  <RimMind.UI.AgentStateDebug.OpenToolCallDebug>ToolCall Debug</RimMind.UI.AgentStateDebug.OpenToolCallDebug>
+  <RimMind.UI.AgentStateDebug.OpenMechanismStatus>Mechanism Status</RimMind.UI.AgentStateDebug.OpenMechanismStatus>
+  <RimMind.UI.AgentStateDebug.QueueState>Queue State</RimMind.UI.AgentStateDebug.QueueState>
+  <RimMind.UI.AgentStateDebug.ContextSnapshot>Context Snapshot</RimMind.UI.AgentStateDebug.ContextSnapshot>
+  <RimMind.UI.AgentStateDebug.NoData>No Data</RimMind.UI.AgentStateDebug.NoData>
+  <RimMind.UI.AgentStateDebug.QueuePaused>Queue: Paused</RimMind.UI.AgentStateDebug.QueuePaused>
+  <RimMind.UI.AgentStateDebug.QueueRunning>Queue: Running (Active: {0}, Queued: {1})</RimMind.UI.AgentStateDebug.QueueRunning>
+  <!-- Window_ContextKeyDebug.cs -->
+  <RimMind.UI.ContextKeyDebug.Title>Context Key Debug</RimMind.UI.ContextKeyDebug.Title>
+  <RimMind.UI.ContextKeyDebug.Empty>No registered context keys</RimMind.UI.ContextKeyDebug.Empty>
+  <RimMind.UI.ContextKeyDebug.EmptyHint>Context keys are registered by Core and sub-mods. They appear automatically after loading a game save.</RimMind.UI.ContextKeyDebug.EmptyHint>
+  <RimMind.UI.ContextKeyDebug.FilterLayer>Filter Layer</RimMind.UI.ContextKeyDebug.FilterLayer>
+  <RimMind.UI.ContextKeyDebug.FilterOwner>Filter Owner</RimMind.UI.ContextKeyDebug.FilterOwner>
+  <RimMind.UI.ContextKeyDebug.FilterEmpty>No keys match the current filter</RimMind.UI.ContextKeyDebug.FilterEmpty>
+  <RimMind.UI.ContextKeyDebug.SelectKey>Select a context key from the list</RimMind.UI.ContextKeyDebug.SelectKey>
+  <RimMind.UI.ContextKeyDebug.Key>Key: {0}</RimMind.UI.ContextKeyDebug.Key>
+  <RimMind.UI.ContextKeyDebug.Layer>Layer: {0}</RimMind.UI.ContextKeyDebug.Layer>
+  <RimMind.UI.ContextKeyDebug.Priority>Priority: {0} (Adaptive: {1})</RimMind.UI.ContextKeyDebug.Priority>
+  <RimMind.UI.ContextKeyDebug.OwnerMod>Owner Mod: {0}</RimMind.UI.ContextKeyDebug.OwnerMod>
+  <RimMind.UI.ContextKeyDebug.Provider>Provider: {0}</RimMind.UI.ContextKeyDebug.Provider>
+  <RimMind.UI.ContextKeyDebug.Scenarios>Scenarios: {0}</RimMind.UI.ContextKeyDebug.Scenarios>
+  <RimMind.UI.ContextKeyDebug.DuplicateWarning>Duplicate key: {0} (overwritten by {1})</RimMind.UI.ContextKeyDebug.DuplicateWarning>
+  <RimMind.UI.ContextKeyDebug.TestDuplicates>Test Duplicates</RimMind.UI.ContextKeyDebug.TestDuplicates>
+  <RimMind.UI.ContextKeyDebug.NoDuplicates>No duplicate keys</RimMind.UI.ContextKeyDebug.NoDuplicates>
+  <RimMind.UI.ContextKeyDebug.HasProvider>Registered</RimMind.UI.ContextKeyDebug.HasProvider>
+  <RimMind.UI.ContextKeyDebug.NoProvider>Not Registered</RimMind.UI.ContextKeyDebug.NoProvider>
+  <!-- Window_AgentFlowLab.cs -->
+  <RimMind.UI.AgentFlowLab.Title>Agent Flow Lab</RimMind.UI.AgentFlowLab.Title>
+  <RimMind.UI.AgentFlowLab.NoPawn>No pawn selected</RimMind.UI.AgentFlowLab.NoPawn>
+  <RimMind.UI.AgentFlowLab.SelectedPawn>Current pawn: {0}</RimMind.UI.AgentFlowLab.SelectedPawn>
+  <RimMind.UI.AgentFlowLab.Refresh>Refresh</RimMind.UI.AgentFlowLab.Refresh>
+  <RimMind.UI.AgentFlowLab.Scope>Scope</RimMind.UI.AgentFlowLab.Scope>
+  <RimMind.UI.AgentFlowLab.ScopePawn>Pawn</RimMind.UI.AgentFlowLab.ScopePawn>
+  <RimMind.UI.AgentFlowLab.ScopeMap>Map</RimMind.UI.AgentFlowLab.ScopeMap>
+  <RimMind.UI.AgentFlowLab.ScopeColony>Colony</RimMind.UI.AgentFlowLab.ScopeColony>
+  <RimMind.UI.AgentFlowLab.ScopeStoryteller>Storyteller</RimMind.UI.AgentFlowLab.ScopeStoryteller>
+  <RimMind.UI.AgentFlowLab.ScopeGlobal>Global</RimMind.UI.AgentFlowLab.ScopeGlobal>
+  <RimMind.UI.AgentFlowLab.ScopeUnsupported>This scope is visible for planning, but runtime control is not wired yet. Pawn agents are available now.</RimMind.UI.AgentFlowLab.ScopeUnsupported>
+  <RimMind.UI.AgentFlowLab.AgentLifecycle>Agent Lifecycle</RimMind.UI.AgentFlowLab.AgentLifecycle>
+  <RimMind.UI.AgentFlowLab.AgentExists>Agent: Exists ({0})</RimMind.UI.AgentFlowLab.AgentExists>
+  <RimMind.UI.AgentFlowLab.AgentMissing>Agent: Not Created</RimMind.UI.AgentFlowLab.AgentMissing>
+  <RimMind.UI.AgentFlowLab.CreateAgent>Create/Get Agent</RimMind.UI.AgentFlowLab.CreateAgent>
+  <RimMind.UI.AgentFlowLab.ContextBuilding>Context Building</RimMind.UI.AgentFlowLab.ContextBuilding>
+  <RimMind.UI.AgentFlowLab.BuildContext>Build Context Snapshot</RimMind.UI.AgentFlowLab.BuildContext>
+  <RimMind.UI.AgentFlowLab.TokenCount>Estimated Tokens: {0}</RimMind.UI.AgentFlowLab.TokenCount>
+  <RimMind.UI.AgentFlowLab.LlmRequest>LLM Request</RimMind.UI.AgentFlowLab.LlmRequest>
+  <RimMind.UI.AgentFlowLab.SendTestRequest>Send Test Request</RimMind.UI.AgentFlowLab.SendTestRequest>
+  <RimMind.UI.AgentFlowLab.RequestStatus>Request Status: {0}</RimMind.UI.AgentFlowLab.RequestStatus>
+  <RimMind.UI.AgentFlowLab.DecisionParsing>Decision Parsing</RimMind.UI.AgentFlowLab.DecisionParsing>
+  <RimMind.UI.AgentFlowLab.MechanismMapping>Mechanism Mapping</RimMind.UI.AgentFlowLab.MechanismMapping>
+  <RimMind.UI.AgentFlowLab.DryRun>Dry Run Mechanism Mapping</RimMind.UI.AgentFlowLab.DryRun>
+  <RimMind.UI.AgentFlowLab.ExecuteMechanism>Execute Mechanism (Confirmation Required)</RimMind.UI.AgentFlowLab.ExecuteMechanism>
+  <RimMind.UI.AgentFlowLab.ConfirmExecute>Confirm execution? This will actually execute game mechanisms and may affect game state.</RimMind.UI.AgentFlowLab.ConfirmExecute>
+  <RimMind.UI.AgentFlowLab.QueueState>Queue State</RimMind.UI.AgentFlowLab.QueueState>
+  <RimMind.UI.AgentFlowLab.ErrorLog>Error Log</RimMind.UI.AgentFlowLab.ErrorLog>
+  <RimMind.UI.AgentFlowLab.ClearError>Clear Errors</RimMind.UI.AgentFlowLab.ClearError>
+  <RimMind.UI.AgentFlowLab.NoData>No Data</RimMind.UI.AgentFlowLab.NoData>
+  <RimMind.UI.AgentFlowLab.NoError>No Errors</RimMind.UI.AgentFlowLab.NoError>
+  <RimMind.UI.AgentFlowLab.Messages>Messages: {0}</RimMind.UI.AgentFlowLab.Messages>
+  <RimMind.UI.AgentFlowLab.MappedMechanisms>Mapped Mechanisms: {0}</RimMind.UI.AgentFlowLab.MappedMechanisms>
+  <RimMind.UI.AgentFlowLab.OfflineMode>Offline Mode (Stub)</RimMind.UI.AgentFlowLab.OfflineMode>
+  <RimMind.UI.AgentFlowLab.LiveMode>Live Mode (Real API)</RimMind.UI.AgentFlowLab.LiveMode>
+  <RimMind.UI.AgentFlowLab.OfflineHint>No API calls. Uses stub response for testing.</RimMind.UI.AgentFlowLab.OfflineHint>
+  <RimMind.UI.AgentFlowLab.LiveHint>Sends real API requests. Costs tokens.</RimMind.UI.AgentFlowLab.LiveHint>
+  <RimMind.UI.AgentFlowLab.OfflineStubUsed>Using offline stub response</RimMind.UI.AgentFlowLab.OfflineStubUsed>
+  <RimMind.UI.AgentFlowLab.ExecuteRequiresDryRun>Execute (Dry Run Required First)</RimMind.UI.AgentFlowLab.ExecuteRequiresDryRun>
+  <RimMind.UI.AgentFlowLab.DryRunHeader>Dry Run: {0} mechanisms registered</RimMind.UI.AgentFlowLab.DryRunHeader>
+  <RimMind.UI.AgentFlowLab.DryRunDecision>Decision action: {0}</RimMind.UI.AgentFlowLab.DryRunDecision>
+  <RimMind.UI.AgentFlowLab.DryRunTarget>Target mechanism: {0} (risk: {1})</RimMind.UI.AgentFlowLab.DryRunTarget>
+  <RimMind.UI.AgentFlowLab.DryRunNoTarget>No mechanism found for: {0}</RimMind.UI.AgentFlowLab.DryRunNoTarget>
+  <RimMind.UI.AgentFlowLab.DryRunNoDecision>No parsed decision available for mechanism mapping.</RimMind.UI.AgentFlowLab.DryRunNoDecision>
+  <RimMind.UI.AgentFlowLab.ExecuteNoWriteArgs>Execute blocked: dry run has no mapped write arguments.</RimMind.UI.AgentFlowLab.ExecuteNoWriteArgs>
+  <RimMind.UI.AgentFlowLab.ExecuteNoRegistry>Execute blocked: mechanism registry is not available.</RimMind.UI.AgentFlowLab.ExecuteNoRegistry>
+  <RimMind.UI.AgentFlowLab.ValidationResult>Validation: {0}</RimMind.UI.AgentFlowLab.ValidationResult>
+  <RimMind.UI.AgentFlowLab.ValidationPassed>Passed</RimMind.UI.AgentFlowLab.ValidationPassed>
+  <RimMind.UI.AgentFlowLab.ValidationFailed>Failed: {0}</RimMind.UI.AgentFlowLab.ValidationFailed>
+  <RimMind.UI.AgentFlowLab.OpenLogs>Open Logs</RimMind.UI.AgentFlowLab.OpenLogs>
+  <RimMind.UI.AgentFlowLab.OpenRequestLog>Request Log</RimMind.UI.AgentFlowLab.OpenRequestLog>
+  <RimMind.UI.AgentFlowLab.OpenToolCallDebug>ToolCall Debug</RimMind.UI.AgentFlowLab.OpenToolCallDebug>
+  <RimMind.UI.AgentFlowLab.OpenMechanismStatus>Mechanism Status</RimMind.UI.AgentFlowLab.OpenMechanismStatus>
+  <RimMind.UI.AgentFlowLab.OpenContextKeys>Context Keys</RimMind.UI.AgentFlowLab.OpenContextKeys>
+  <RimMind.UI.AgentFlowLab.OpenAgentProgress>Agent Progress</RimMind.UI.AgentFlowLab.OpenAgentProgress>
+  <!-- Window_AgentProgressFloat.cs -->
+  <RimMind.UI.AgentProgressFloat.Title>Agent Progress</RimMind.UI.AgentProgressFloat.Title>
+  <RimMind.UI.AgentProgressFloat.NoAgents>No active agents</RimMind.UI.AgentProgressFloat.NoAgents>
+  <RimMind.UI.AgentProgressFloat.NoAgentsHint>Create agents for pawns to see their progress here</RimMind.UI.AgentProgressFloat.NoAgentsHint>
+  <RimMind.UI.AgentProgressFloat.QueuePaused>Queue: Paused</RimMind.UI.AgentProgressFloat.QueuePaused>
+  <RimMind.UI.AgentProgressFloat.QueueRunning>Queue: Running (Active: {0}, Queued: {1})</RimMind.UI.AgentProgressFloat.QueueRunning>
+  <RimMind.UI.AgentProgressFloat.PhaseIdle>Idle</RimMind.UI.AgentProgressFloat.PhaseIdle>
+  <RimMind.UI.AgentProgressFloat.PhasePerceiving>Perceiving</RimMind.UI.AgentProgressFloat.PhasePerceiving>
+  <RimMind.UI.AgentProgressFloat.PhaseThinking>Thinking</RimMind.UI.AgentProgressFloat.PhaseThinking>
+  <RimMind.UI.AgentProgressFloat.PhaseActing>Acting</RimMind.UI.AgentProgressFloat.PhaseActing>
+  <RimMind.UI.AgentProgressFloat.PhaseRecording>Recording</RimMind.UI.AgentProgressFloat.PhaseRecording>
+  <RimMind.UI.AgentProgressFloat.Elapsed>Elapsed: {0}</RimMind.UI.AgentProgressFloat.Elapsed>
+  <RimMind.UI.AgentProgressFloat.Details>Details</RimMind.UI.AgentProgressFloat.Details>
+  <!-- RimMindPlaySettingsPatch.cs - Core menu -->
+  <RimMind.UI.OverlayMenu.AgentProgress>Agent Progress</RimMind.UI.OverlayMenu.AgentProgress>
 </LanguageData>

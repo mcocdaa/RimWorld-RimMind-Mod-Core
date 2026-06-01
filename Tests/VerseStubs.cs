@@ -8,7 +8,25 @@ namespace UnityEngine
     public class Texture2D { }
 }
 
-namespace RimWorld { }
+namespace RimWorld
+{
+    public static class Messages
+    {
+        public static void Message(string text, MessageTypeDef def, bool historical = false) { }
+    }
+
+    public class MessageTypeDef { }
+    public static class MessageTypeDefOf
+    {
+        public static MessageTypeDef RejectInput = new();
+        public static MessageTypeDef PositiveEvent = new();
+    }
+
+    public static class BaseContent
+    {
+        public static UnityEngine.Texture2D BadTex = new();
+    }
+}
 
 namespace Verse
 {
@@ -18,6 +36,7 @@ namespace Verse
         public int thingIDNumber;
         public bool Dead;
         public Pawn_Name Name => new Pawn_Name();
+        public string LabelShort => "TestPawn";
         public object jobs;
 
         public T? GetComp<T>() where T : ThingComp
@@ -195,6 +214,15 @@ namespace RimMind.Presentation
             get => _modes;
             set => _modes = value;
         }
+    }
+}
+
+namespace RimMind.Infrastructure.UI
+{
+    public class Window_AgentStateDebug : global::Verse.Window
+    {
+        public Window_AgentStateDebug() { }
+        public Window_AgentStateDebug(global::Verse.Pawn? pawn) { }
     }
 }
 

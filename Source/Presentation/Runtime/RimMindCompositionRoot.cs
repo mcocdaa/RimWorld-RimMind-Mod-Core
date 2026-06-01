@@ -191,7 +191,7 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IRelevanceLearner>(relevanceLearner);
 
             // Phase 4: Resolve GameComponent services (Verse-instantiated, may be null)
-            var npcManager = RimMindServiceLocator.Get<INpcManager>();
+            var npcManager = RimMindServiceLocator.TryGet<INpcManager>();
             var translationService = infraBag.TranslationService;
             var flywheelParameterStore = appBag.ParameterStore;
 
@@ -267,7 +267,7 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register(GetExtensionRegistry<ISettingsTab>());
 
             // Register built-in RemoteSync settings tab
-            var settingsTabRegistry = RimMindServiceLocator.Get<IExtensionRegistry<ISettingsTab>>();
+            var settingsTabRegistry = RimMindServiceLocator.TryGet<IExtensionRegistry<ISettingsTab>>();
             settingsTabRegistry?.Register(new RimMind.Presentation.UI.RemoteSyncSettingsUI());
 
             // Register restored extension interfaces with null defaults
@@ -297,8 +297,8 @@ namespace RimMind.Presentation.Runtime
             // (Infrastructure.Services.Clients.Hybrid) to get remote-first with local fallback
             // on retryable errors (transient, circuit-open, timeout).
             var clientFactoryRegistry = GetExtensionRegistry<IAIClientFactory>();
-            var aiDebugLog = RimMindServiceLocator.Get<IAIDebugLog>();
-            var resolvedOpenAISettings = openAISettings ?? RimMindServiceLocator.Get<IOpenAISettings>();
+            var aiDebugLog = RimMindServiceLocator.TryGet<IAIDebugLog>();
+            var resolvedOpenAISettings = openAISettings ?? RimMindServiceLocator.TryGet<IOpenAISettings>();
             Infrastructure.DependencyInjection.RegisterBuiltinClientFactories(clientFactoryRegistry, logSink, aiDebugLog, resolvedOpenAISettings);
             RimMindServiceLocator.Register(clientFactoryRegistry);
 
@@ -309,7 +309,7 @@ namespace RimMind.Presentation.Runtime
             // K-phase: Register RemoteSyncService for submodules (replaces IStorageDriver)
             var remoteSyncSettings = new RimMind.Domain.Settings.RemoteSyncSettings();
             RimMindServiceLocator.Register(remoteSyncSettings);
-            var remoteBackend = RimMindServiceLocator.Get<RimMind.Domain.Storage.IRemoteBackend>();
+            var remoteBackend = RimMindServiceLocator.TryGet<RimMind.Domain.Storage.IRemoteBackend>();
             var remoteSyncOrchestrator = new RimMind.Application.Features.Storage.RemoteSyncOrchestrator(
                 remoteBackend, remoteSyncSettings, logSink);
             var remoteSyncService = new RimMind.Infrastructure.Services.Storage.RemoteSyncService(remoteSyncOrchestrator);
@@ -322,7 +322,7 @@ namespace RimMind.Presentation.Runtime
             var socialEventOrganizer = new DefaultSocialEventOrganizer(tickProvider, agentBus);
             RimMindServiceLocator.Register<ISocialEventOrganizer>(socialEventOrganizer);
 
-            var psychologyWatcher = RimMindServiceLocator.Get<IPsychologyWatcher>();
+            var psychologyWatcher = RimMindServiceLocator.TryGet<IPsychologyWatcher>();
             var traitEvolutionEngine = new DefaultTraitEvolutionEngine(tickProvider, psychologyWatcher, agentBus);
             RimMindServiceLocator.Register<ITraitEvolutionEngine>(traitEvolutionEngine);
 
@@ -335,7 +335,7 @@ namespace RimMind.Presentation.Runtime
             var traitEvolver = new VerseTraitEvolver();
             RimMindServiceLocator.Register<ITraitEvolver>(traitEvolver);
 
-            var thoughtInjector = RimMindServiceLocator.Get<IThoughtInjector>();
+            var thoughtInjector = RimMindServiceLocator.TryGet<IThoughtInjector>();
             if (thoughtInjector != null)
             {
                 var dreamThoughtInjector = new VerseDreamThoughtInjector(thoughtInjector);
@@ -411,7 +411,7 @@ namespace RimMind.Presentation.Runtime
 
         private IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension
         {
-            var registry = RimMindServiceLocator.Get<IExtensionRegistry<T>>();
+            var registry = RimMindServiceLocator.TryGet<IExtensionRegistry<T>>();
             if (registry != null) return registry;
             var newRegistry = new ExtensionRegistry<T>();
             RimMindServiceLocator.Register(newRegistry);

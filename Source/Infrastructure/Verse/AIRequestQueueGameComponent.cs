@@ -8,19 +8,19 @@ namespace RimMind.Infrastructure.Verse
 {
     public class AIRequestQueueGameComponent : GameComponent
     {
-        private readonly IAIRequestQueueTickable _impl;
+        private IAIRequestQueueTickable? _impl;
         private IAgentBus? _cachedAgentBus;
+        private bool _initialized;
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
         private IAgentBus? GetAgentBus()
-            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
+            => _cachedAgentBus ??= RimMindServiceLocator.TryGet<IAgentBus>();
 
-        public AIRequestQueueGameComponent() : base()
+        private void EnsureCached()
         {
-            // [Framework-Forced SL] Resolving in constructor is acceptable for GameComponent
-            // since Verse creates instances before RimMindRuntime finishes initialization.
-            _impl = RimMindServiceLocator.Get<IAIRequestQueueTickable>()
-                ?? throw new System.InvalidOperationException("IAIRequestQueueTickable not available.");
+            if (_initialized) return;
+            var impl = RimMindServiceLocator.TryGet<IAIRequestQueueTickable>();
+            if (impl == null) return;
+            _impl = impl;
             _impl.CurrentTick = Find.TickManager.TicksGame;
             _impl.LogHandler = (msg, isWarning) =>
             {
@@ -29,16 +29,31 @@ namespace RimMind.Infrastructure.Verse
             };
             _impl.FlushBackgroundQueue = () =>
                 GetAgentBus()?.FlushBackgroundQueue();
+            _initialized = true;
         }
+
+        public AIRequestQueueGameComponent() : base() { }
+
+        public AIRequestQueueGameComponent(Game game) : base() { }
 
         public override void GameComponentTick()
         {
+            EnsureCached();
+            if (_impl == null) return;
             _impl.CurrentTick = Find.TickManager.TicksGame;
             _impl.Tick();
         }
 
-        public override void StartedNewGame() => _impl.Reset();
+        public override void StartedNewGame()
+        {
+            EnsureCached();
+            _impl?.Reset();
+        }
 
-        public override void LoadedGame() => _impl.Reset();
+        public override void LoadedGame()
+        {
+            EnsureCached();
+            _impl?.Reset();
+        }
     }
 }

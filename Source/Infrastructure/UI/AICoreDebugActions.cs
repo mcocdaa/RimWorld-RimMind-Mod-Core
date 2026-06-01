@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
@@ -17,6 +18,7 @@ using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
 using LudeonTK;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
@@ -90,7 +92,6 @@ namespace RimMind.Infrastructure.UI
             var envelope = LlmRequestEnvelopeBuilder
                 .ForScenario("TestConnection")
                 .WithModId("Debug")
-                .WithSchema(null)
                 .WithMaxTokens(RimMindDefaults.TestConnectionMaxTokens)
                 .WithTemperature(0f)
                 .WithPriority(AIRequestPriority.High)
@@ -319,26 +320,8 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Agent State (selected)", actionType = DebugActionType.Action)]
         public static void ShowAgentState()
         {
-            var pawn = Find.Selector.SingleSelectedThing as Pawn;
-            if (pawn == null)
-            {
-                RimMindErrors.Warn("[RimMind-Core] Select a pawn first.");
-                return;
-            }
-
-            var comp = RimMind.Infrastructure.Verse.CompPawnAgent.GetComp(pawn);
-            if (comp == null || comp.Agent == null)
-            {
-                RimMindErrors.Warn($"[RimMind-Core] {pawn.Name?.ToStringShort} has no PawnAgent comp.");
-                return;
-            }
-
-            var agent = comp.Agent;
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[RimMind-Core] Agent State for {pawn.Name?.ToStringShort}:");
-            sb.AppendLine(agent.GetDebugInfo());
-
-            Log.Message(sb.ToString());
+            Pawn? pawn = Find.Selector.SingleSelectedThing as Pawn;
+            Find.WindowStack.Add(new Window_AgentStateDebug(pawn));
         }
 
         [DebugAction("RimMind", "Show AgentBus Subscribers", actionType = DebugActionType.Action)]
@@ -471,10 +454,37 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Agent Mode Debug", actionType = DebugActionType.Action)]
         public static void OpenAgentModeDebug()
         {
-            Find.WindowStack.Add(new Window_AgentModeDebug());
+            Pawn? pawn = Find.Selector.SingleSelectedThing as Pawn;
+            Find.WindowStack.Add(new Window_AgentModeDebug(pawn));
+        }
+
+        [DebugAction("RimMind", "Agent State Window (selected)", actionType = DebugActionType.Action)]
+        public static void OpenAgentStateDebug()
+        {
+            Pawn? pawn = Find.Selector.SingleSelectedThing as Pawn;
+            Find.WindowStack.Add(new Window_AgentStateDebug(pawn));
+        }
+
+        [DebugAction("RimMind", "Context Keys Window", actionType = DebugActionType.Action)]
+        public static void OpenContextKeyDebug()
+        {
+            Find.WindowStack.Add(new Window_ContextKeyDebug());
         }
 
         // ── Autotests (H2 / K / L runtime verification) ──────────────────────
+
+        [DebugAction("RimMind", "Agent Flow Lab", actionType = DebugActionType.Action)]
+        public static void OpenAgentFlowLab()
+        {
+            Pawn? pawn = Find.Selector.SingleSelectedThing as Pawn;
+            Find.WindowStack.Add(new Window_AgentFlowLab(pawn));
+        }
+
+        [DebugAction("RimMind", "Agent Progress Float", actionType = DebugActionType.Action)]
+        public static void OpenAgentProgressFloat()
+        {
+            Find.WindowStack.Add(new Window_AgentProgressFloat());
+        }
 
         [DebugAction("Autotests", "Test H2 Actions Equivalence", actionType = DebugActionType.Action)]
         public static void TestH2ActionsEquivalence()
@@ -530,6 +540,50 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  Result: {pass} passed, {fail} failed");
             Log.Message(sb.ToString());
+        }
+
+        [DebugAction("Autotests", "Test P Visibility Entrypoints", actionType = DebugActionType.Action)]
+        public static void TestPVisibilityEntrypoints()
+        {
+            int pass = 0, fail = 0;
+            var sb = new StringBuilder();
+            sb.AppendLine("[RimMind Autotest P] Visibility Entrypoints");
+
+            void Check(string name, Func<bool> predicate)
+            {
+                try
+                {
+                    if (predicate())
+                    {
+                        pass++;
+                        sb.AppendLine($"PASS {name}");
+                    }
+                    else
+                    {
+                        fail++;
+                        sb.AppendLine($"FAIL {name}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    fail++;
+                    sb.AppendLine($"FAIL {name}: {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+
+            Check("Core icon asset", () => ContentFinder<Texture2D>.Get("UI/RimMind/Icon", false) != null);
+            Check("Request log window", () => new Window_RequestLog() != null);
+            Check("ToolCall debug window", () => new Window_ToolCallDebug() != null);
+            Check("Mechanism status window", () => new Window_MechanismStatus() != null);
+            Check("Context key window", () => new Window_ContextKeyDebug() != null);
+            Check("Agent state window", () => new Window_AgentStateDebug(null) != null);
+            Check("Agent mode window", () => new Window_AgentModeDebug(null) != null);
+            Check("Agent flow lab", () => new Window_AgentFlowLab(null) != null);
+            Check("Agent progress float", () => new Window_AgentProgressFloat() != null);
+
+            sb.AppendLine($"Summary: {pass} passed, {fail} failed");
+            if (fail > 0) Log.Error(sb.ToString());
+            else Log.Message(sb.ToString());
         }
 
         [DebugAction("Autotests", "Test K Unified Request", actionType = DebugActionType.Action)]

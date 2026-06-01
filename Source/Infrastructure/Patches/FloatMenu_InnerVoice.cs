@@ -10,12 +10,35 @@ using RimWorld;
 
 namespace RimMind.Infrastructure.Patches
 {
-    [HarmonyPatch(typeof(FloatMenuMakerMap), "AddHumanlikeOrders")]
+#if V1_5
+    [HarmonyPatch(typeof(FloatMenuMakerMap), nameof(FloatMenuMakerMap.ChoicesAtFor))]
+#else
+    [HarmonyPatch(typeof(FloatMenuMakerMap), nameof(FloatMenuMakerMap.GetOptions))]
+#endif
     internal static class FloatMenu_InnerVoice
     {
+#if V1_5
         [HarmonyPostfix]
-        internal static void Postfix(Vector3 clickPos, Pawn pawn, List<FloatMenuOption> opts)
+        internal static void Postfix(Vector3 clickPos, Pawn pawn, ref List<FloatMenuOption> __result)
         {
+            TryAddInnerVoiceOption(pawn, __result);
+        }
+#else
+        [HarmonyPostfix]
+        internal static void Postfix(
+            List<Pawn> selectedPawns,
+            Vector3 clickPos,
+            FloatMenuContext context,
+            ref List<FloatMenuOption> __result)
+        {
+            Pawn? pawn = (selectedPawns is { Count: 1 }) ? selectedPawns[0] : null;
+            TryAddInnerVoiceOption(pawn, __result);
+        }
+#endif
+
+        private static void TryAddInnerVoiceOption(Pawn? pawn, List<FloatMenuOption> opts)
+        {
+            if (opts == null) return;
             if (pawn == null || !pawn.Spawned || pawn.Dead) return;
 
             // Only show for pawns that have a PawnAgent

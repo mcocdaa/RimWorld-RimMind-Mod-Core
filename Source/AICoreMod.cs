@@ -21,11 +21,13 @@ namespace RimMind.Presentation
 {
     public class RimMindCoreMod : Mod
     {
+        public static RimMindCoreMod Instance { get; private set; } = null!;
         public static RimMindCoreSettings Settings { get; private set; } = null!;
         private static ISettingsProvider? _cachedSettingsProvider;
 
         public RimMindCoreMod(ModContentPack content) : base(content)
         {
+            Instance = this;
             AssemblyLoadGuard.AssertAssembliesLoaded();
 
             RimMindServiceLocator.OnServiceNotFound = msg => Log.Warning(msg);
@@ -75,7 +77,7 @@ namespace RimMind.Presentation
             // Route through RimMindRuntime facade instead of direct ServiceLocator access
             var runtime = RimMindRuntime.Instance;
             ScenarioRegistry.RegisterCoreScenarios(
-                runtime.GetService<ITranslationService>(),
+                null,
                 runtime.GetService<ILogSink>());
 
             // L3: Use instance-based RelevanceTable
@@ -86,7 +88,7 @@ namespace RimMind.Presentation
                 runtime.ContextKeys,
                 runtime.GetService<ITranslationService>(),
                 runtime.GetService<IContextKeyProvider>(),
-                runtime.GetService<INpcManager>());
+                RimMindServiceLocator.TryGet<INpcManager>());
         }
 
         public override string SettingsCategory() => "RimMind";

@@ -61,16 +61,16 @@ if (-not (Test-Path $RimWorldMods)) {
 $SourceDir = Join-Path $ModDir "Source"
 
 if ($ModName -eq "RimMind-Core") {
-    $contractsCsproj = Join-Path $SourceDir "Contracts\RimMindCore.Contracts.csproj"
-    $kernelCsproj = Join-Path $SourceDir "Kernel\RimMindCore.Kernel.csproj"
+    $domainCsproj = Join-Path $SourceDir "Domain\RimMindCore.Domain.csproj"
+    $applicationCsproj = Join-Path $SourceDir "Application\RimMindCore.Application.csproj"
     $coreCsproj = Get-ChildItem -Path $SourceDir -Filter "RimMindCore.csproj" -File -ErrorAction SilentlyContinue | Select-Object -First 1
 
-    if (-not (Test-Path $contractsCsproj)) {
-        Write-Error "Contracts csproj not found: $contractsCsproj"
+    if (-not (Test-Path $domainCsproj)) {
+        Write-Error "Domain csproj not found: $domainCsproj"
         exit 1
     }
-    if (-not (Test-Path $kernelCsproj)) {
-        Write-Error "Kernel csproj not found: $kernelCsproj"
+    if (-not (Test-Path $applicationCsproj)) {
+        Write-Error "Application csproj not found: $applicationCsproj"
         exit 1
     }
     if (-not $coreCsproj) {
@@ -78,15 +78,15 @@ if ($ModName -eq "RimMind-Core") {
         exit 1
     }
 
-    Write-Host "=== Building $ModName (Contracts) ===" -ForegroundColor Cyan
-    dotnet build $contractsCsproj -c Release --nologo -v quiet
-    if ($LASTEXITCODE -ne 0) { Write-Error "Contracts build failed"; exit $LASTEXITCODE }
-    Write-Host "  Contracts build successful"
+    Write-Host "=== Building $ModName (Domain) ===" -ForegroundColor Cyan
+    dotnet build $domainCsproj -c Release --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "Domain build failed"; exit $LASTEXITCODE }
+    Write-Host "  Domain build successful"
 
-    Write-Host "=== Building $ModName (Kernel) ===" -ForegroundColor Cyan
-    dotnet build $kernelCsproj -c Release --nologo -v quiet
-    if ($LASTEXITCODE -ne 0) { Write-Error "Kernel build failed"; exit $LASTEXITCODE }
-    Write-Host "  Kernel build successful"
+    Write-Host "=== Building $ModName (Application) ===" -ForegroundColor Cyan
+    dotnet build $applicationCsproj -c Release --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "Application build failed"; exit $LASTEXITCODE }
+    Write-Host "  Application build successful"
 
     Write-Host "=== Building $ModName (Core) ===" -ForegroundColor Cyan
     dotnet build $coreCsproj.FullName -c Release --nologo -v quiet

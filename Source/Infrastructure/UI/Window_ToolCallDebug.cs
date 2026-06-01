@@ -80,9 +80,20 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawEmptyState(Rect rect)
         {
+            float centerY = rect.y + rect.height / 2f;
+
             GUI.color = Color.grey;
             Text.Anchor = TextAnchor.MiddleCenter;
-            Widgets.Label(rect, "RimMind.UI.ToolCallDebug.Empty".Translate());
+            Widgets.Label(new Rect(rect.x, centerY - 30f, rect.width, 22f),
+                "RimMind.UI.ToolCallDebug.Empty".Translate());
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.6f, 0.6f, 0.6f);
+            string hint = "RimMind.UI.ToolCallDebug.EmptyHint".Translate();
+            float hintH = Text.CalcHeight(hint, rect.width - 24f);
+            Widgets.Label(new Rect(rect.x + 12f, centerY, rect.width - 24f, hintH), hint);
+            Text.Font = GameFont.Small;
+
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
         }

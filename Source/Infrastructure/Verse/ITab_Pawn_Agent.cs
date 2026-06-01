@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.Agent;
@@ -8,7 +7,7 @@ using Verse;
 
 namespace RimMind.Infrastructure.Verse
 {
-    public class ITab_Pawn_Agent : ITab_Pawn
+    public class ITab_Pawn_Agent : ITab
     {
         private static readonly Vector2 WinSize = new Vector2(420f, 480f);
 
@@ -20,7 +19,7 @@ namespace RimMind.Infrastructure.Verse
             labelKey = "RimMind.Agent.ITab.Label";
         }
 
-        private Pawn SelectedPawn => SelPawn;
+        private Pawn SelectedPawn => SelThing as Pawn;
 
         protected override void FillTab()
         {
@@ -46,11 +45,12 @@ namespace RimMind.Infrastructure.Verse
             // Section 1: Status Bar
             curY = DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Status".Translate());
             curY = DrawStatusLabel(contentRect, curY, "State", agent.State.ToString());
-            curY = DrawStatusLabel(contentRect, curY, "WorkflowPhase", agent.WorkflowPhase.ToString());
             curY = DrawStatusLabel(contentRect, curY, "Mode", agent.CurrentModeId.Value);
 
             if (agent is IPawnAgent pawnAgent)
             {
+                curY = DrawStatusLabel(contentRect, curY, "WorkflowPhase",
+                    pawnAgent.WorkflowPhase.ToString());
                 curY = DrawStatusLabel(contentRect, curY, "Autonomy",
                     pawnAgent.AutonomyLevel.ToString());
             }

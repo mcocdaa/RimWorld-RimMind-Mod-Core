@@ -186,6 +186,13 @@ namespace RimMind.Infrastructure.UI
             string ops = FormatOperations(mech.SupportedOperations);
             h += LineH + Padding;
 
+            if (!mech.Docs.Summary.NullOrEmpty())
+            {
+                h += Text.CalcHeight(
+                    "RimMind.UI.MechanismStatus.Description".Translate(mech.Docs.Summary),
+                    width - Padding * 4) + Padding;
+            }
+
             List<string> toolIds = GetToolIdsForMechanism(mech.MechanismId, tools);
             if (toolIds.Count > 0)
             {
@@ -216,13 +223,24 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.grey;
             string scopeText = "RimMind.UI.MechanismStatus.Scope".Translate(mech.Scope.ToString());
             string riskText = "RimMind.UI.MechanismStatus.Risk".Translate(mech.Risk.ToString());
-            Widgets.Label(new Rect(x, y, labelW, LineH), $"{scopeText}  |  {riskText}  |  {"RimMind.UI.MechanismStatus.Registered".Translate()}");
+            string ownerText = "RimMind.UI.MechanismStatus.OwnerMod".Translate(mech.OwnerModId ?? "Unknown");
+            Widgets.Label(new Rect(x, y, labelW, LineH), $"{scopeText}  |  {riskText}  |  {ownerText}");
             y += LineH + Padding;
 
             string ops = FormatOperations(mech.SupportedOperations);
             Widgets.Label(new Rect(x, y, labelW, LineH),
                 "RimMind.UI.MechanismStatus.Operations".Translate(ops));
             y += LineH + Padding;
+
+            if (!mech.Docs.Summary.NullOrEmpty())
+            {
+                string descLabel = "RimMind.UI.MechanismStatus.Description".Translate(mech.Docs.Summary);
+                float descH = Text.CalcHeight(descLabel, labelW - Padding * 2);
+                GUI.color = new Color(0.65f, 0.65f, 0.65f);
+                Widgets.Label(new Rect(x + Padding, y, labelW - Padding * 2, descH), descLabel);
+                GUI.color = Color.white;
+                y += descH + Padding;
+            }
 
             List<string> toolIds = GetToolIdsForMechanism(mech.MechanismId, tools);
             if (toolIds.Count > 0)
@@ -243,9 +261,20 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawEmpty(Rect rect)
         {
+            float centerY = rect.y + rect.height / 2f;
+
             GUI.color = Color.grey;
             Text.Anchor = TextAnchor.MiddleCenter;
-            Widgets.Label(rect, "RimMind.UI.MechanismStatus.Empty".Translate());
+            Widgets.Label(new Rect(rect.x, centerY - 30f, rect.width, LineH),
+                "RimMind.UI.MechanismStatus.Empty".Translate());
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.6f, 0.6f, 0.6f);
+            string hint = "RimMind.UI.MechanismStatus.EmptyHint".Translate();
+            float hintH = Text.CalcHeight(hint, rect.width - 24f);
+            Widgets.Label(new Rect(rect.x + 12f, centerY, rect.width - 24f, hintH), hint);
+            Text.Font = GameFont.Small;
+
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
         }

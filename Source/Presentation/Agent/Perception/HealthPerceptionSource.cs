@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Perception;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Common;
 using Verse;

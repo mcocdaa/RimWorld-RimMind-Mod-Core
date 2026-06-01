@@ -73,7 +73,7 @@ namespace RimMind.Presentation.Agent
         public IReadOnlyList<BehaviorRecord> GetRecentHistory(int count = 10) => _recorder.GetRecentHistory(count);
         public float GetRecentSuccessRate(int count = 10) => _recorder.GetRecentSuccessRate(count);
 
-        IReadOnlyList<BehaviorRecordDto> IAgentInfo.GetRecentHistory(int count = 10)
+        IReadOnlyList<BehaviorRecordDto> IAgentInfo.GetRecentHistory(int count)
         {
             return _recorder.GetRecentHistory(count)
                 .Select(r => new BehaviorRecordDto

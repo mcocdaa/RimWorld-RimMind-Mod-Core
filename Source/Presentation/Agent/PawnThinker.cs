@@ -185,7 +185,6 @@ namespace RimMind.Presentation.Agent
             var availableTools = _pendingAvailableTools!;
             var toolCallRound = _pendingToolCallRound;
             var followUpEnvelope = strategy.BuildEnvelope(_agent, _cachedPerceptions, availableTools);
-            _contextEnricher.EnrichWithToolCallResults(followUpEnvelope, null, toolCallRound + 1);
             _contextEnricher.EnrichEnvelope(followUpEnvelope, _agent.Identity.NpcId, null);
             SendThinkRequest(followUpEnvelope, strategy, availableTools, toolCallRound + 1);
         }

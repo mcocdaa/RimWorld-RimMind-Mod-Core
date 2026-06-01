@@ -50,9 +50,9 @@ namespace RimMind.Presentation.Runtime
                 ?? throw new InvalidOperationException("ITickProvider not registered");
             var reflectionStrategy = new DefaultReflectionStrategy(tickProvider);
             var dailyPlanner = new DefaultDailyPlanner(tickProvider);
-            var psychologyWatcher = RimMindServiceLocator.Get<IPsychologyWatcher>();
-            var socialEventOrganizer = RimMindServiceLocator.Get<ISocialEventOrganizer>();
-            var traitEvolutionEngine = RimMindServiceLocator.Get<ITraitEvolutionEngine>();
+            var psychologyWatcher = RimMindServiceLocator.TryGet<IPsychologyWatcher>();
+            var socialEventOrganizer = RimMindServiceLocator.TryGet<ISocialEventOrganizer>();
+            var traitEvolutionEngine = RimMindServiceLocator.TryGet<ITraitEvolutionEngine>();
             modeRegistry.Register(new ReactiveAgentMode());
             modeRegistry.Register(new ProactiveAgentMode(tickProvider, reflectionStrategy, dailyPlanner, psychologyWatcher, socialEventOrganizer, traitEvolutionEngine));
         }

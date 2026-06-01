@@ -170,7 +170,7 @@ namespace RimMind.Infrastructure.UI
             var settings = GetSettingsProvider();
 
             var envelope = LlmRequestEnvelopeBuilder
-                .ForNpc(_agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}", gameStateInfo: message)
+                .ForNpc(_agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}", gameStateInfo: new GameStateInfo().AddSection("dialogue_input", message))
                 .ForScenarioId(ScenarioIds.Dialogue)
                 .WithModId("RimMind.Dialogue")
                 .WithMaxTokens(settings?.MaxTokens ?? RimMindDefaults.MaxTokens)

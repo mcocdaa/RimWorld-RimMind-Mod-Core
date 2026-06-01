@@ -30,11 +30,15 @@ namespace RimMind.Infrastructure.UI
         private bool _isSubscribed;
         private readonly List<AgentModeChangedEvent> _modeChangeHistory = new();
         private List<Pawn> _cachedPawns = new();
+        private Pawn? _initialPawn;
 
         public override Vector2 InitialSize => new Vector2(720f, 560f);
 
-        public Window_AgentModeDebug()
+        public Window_AgentModeDebug() : this(null) { }
+
+        public Window_AgentModeDebug(Pawn? pawn)
         {
+            _initialPawn = pawn;
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -127,6 +131,14 @@ namespace RimMind.Infrastructure.UI
                 if (comp?.Agent != null)
                     _cachedPawns.Add(pawn);
             }
+
+            if (_initialPawn != null && _selectedPawnIndex < 0)
+            {
+                int idx = _cachedPawns.IndexOf(_initialPawn);
+                if (idx >= 0)
+                    _selectedPawnIndex = idx;
+                _initialPawn = null;
+            }
         }
 
         private void DrawHeader(Rect rect)
@@ -144,9 +156,20 @@ namespace RimMind.Infrastructure.UI
 
             if (_cachedPawns.Count == 0)
             {
+                float centerY = rect.y + rect.height / 2f;
+
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoPawns".Translate());
+                Widgets.Label(new Rect(rect.x, centerY - 20f, rect.width, LineH),
+                    "RimMind.UI.AgentModeDebug.NoPawns".Translate());
+
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.6f, 0.6f, 0.6f);
+                string hint = "RimMind.UI.AgentModeDebug.NoPawnsHint".Translate();
+                float hintH = Text.CalcHeight(hint, rect.width - 24f);
+                Widgets.Label(new Rect(rect.x + 12f, centerY + 2f, rect.width - 24f, hintH), hint);
+                Text.Font = GameFont.Small;
+
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
@@ -331,7 +354,7 @@ namespace RimMind.Infrastructure.UI
             {
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoPawns".Translate());
+                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoModes".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;
@@ -342,7 +365,7 @@ namespace RimMind.Infrastructure.UI
             {
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoPawns".Translate());
+                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoModes".Translate());
                 Text.Anchor = TextAnchor.UpperLeft;
                 GUI.color = Color.white;
                 return;

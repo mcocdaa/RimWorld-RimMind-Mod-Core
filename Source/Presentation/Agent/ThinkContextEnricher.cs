@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Agent.InnerVoice;
@@ -84,6 +85,27 @@ namespace RimMind.Presentation.Agent
         /// Formats recent behavior history as a context section for the envelope.
         /// </summary>
         public string FormatBehaviorHistory(IReadOnlyList<BehaviorRecord> history, float successRate)
+        {
+            if (history == null || history.Count == 0) return "";
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("<behavior_history>");
+            foreach (var record in history)
+            {
+                var status = record.Success ? "Success" : "Fail";
+                sb.AppendLine($"- {record.Action} → {status}: {record.Reason}");
+            }
+
+            if (successRate < 0.4f)
+            {
+                sb.AppendLine("[Warning: Recent behavior success rate is low. Consider more cautious decisions.]");
+            }
+
+            sb.AppendLine("</behavior_history>");
+            return sb.ToString();
+        }
+
+        public string FormatBehaviorHistory(IReadOnlyList<BehaviorRecordDto> history, float successRate)
         {
             if (history == null || history.Count == 0) return "";
 

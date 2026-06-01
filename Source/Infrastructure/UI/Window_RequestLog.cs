@@ -1,4 +1,9 @@
 using System.Linq;
+using System.Text;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.Verse;
 using UnityEngine;
 using Verse;
 
@@ -50,11 +55,7 @@ namespace RimMind.Infrastructure.UI
             var pending = RequestOverlay.Pending;
             if (pending.Count == 0)
             {
-                GUI.color = Color.grey;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.RequestOverlay.Empty".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
+                DrawEmptyState(rect);
                 return;
             }
 
@@ -123,6 +124,56 @@ namespace RimMind.Infrastructure.UI
             }
 
             Widgets.EndScrollView();
+        }
+
+        private void DrawEmptyState(Rect rect)
+        {
+            float centerX = rect.x + rect.width / 2f;
+            float centerY = rect.y + rect.height / 2f;
+
+            GUI.color = Color.grey;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Widgets.Label(new Rect(rect.x, centerY - 30f, rect.width, EntryLineH),
+                "RimMind.UI.RequestOverlay.Empty".Translate());
+
+            var sb = new StringBuilder();
+            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            if (queue != null && queue.IsPaused)
+                sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.QueuePaused".Translate());
+
+            var apiCred = RimMindServiceLocator.Get<IApiCredentialSettings>();
+            if (apiCred != null && apiCred.ApiKey.NullOrEmpty())
+                sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.NoApiKey".Translate());
+
+            bool hasAgent = false;
+            var map = Find.CurrentMap;
+            if (map != null)
+            {
+                foreach (Pawn pawn in map.mapPawns.AllPawns)
+                {
+                    var comp = CompPawnAgent.GetComp(pawn);
+                    if (comp?.Agent != null)
+                    {
+                        hasAgent = true;
+                        break;
+                    }
+                }
+            }
+            if (!hasAgent)
+                sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.NoAgent".Translate());
+
+            if (sb.Length == 0)
+                sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.NoRequests".Translate());
+
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.6f, 0.6f, 0.6f);
+            float hintH = Text.CalcHeight(sb.ToString().TrimEnd(), rect.width - Padding * 4);
+            Widgets.Label(new Rect(rect.x + Padding * 2, centerY, rect.width - Padding * 4, hintH),
+                sb.ToString().TrimEnd());
+            Text.Font = GameFont.Small;
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            GUI.color = Color.white;
         }
 
         private void DrawBottomBar(Rect rect)

@@ -103,11 +103,13 @@ namespace RimMind.Tests.Infrastructure.Verse
         }
 
         [Fact]
-        public void CompGetGizmosExtra_NullAgent_YieldsNoGizmos()
+        public void CompGetGizmosExtra_NullAgent_YieldsCreateAndViewState()
         {
             var comp = new CompPawnAgent { Agent = null };
-            var gizmos = comp.CompGetGizmosExtra().ToList();
-            Assert.Empty(gizmos);
+            var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
+            Assert.Equal(2, gizmos.Count);
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("CreateAgent"));
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("ViewState"));
         }
 
         [Fact]
@@ -145,9 +147,12 @@ namespace RimMind.Tests.Infrastructure.Verse
 
             var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
 
-            // Dormant agent should only have the state toggle gizmo, no dialogue or mode switch
-            Assert.Single(gizmos);
-            Assert.Contains("AgentState", gizmos[0].defaultLabel);
+            Assert.Equal(3, gizmos.Count);
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("AgentState"));
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("ViewState"));
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("ForceThink"));
+            Assert.DoesNotContain(gizmos, g => g.defaultLabel.Contains("Dialogue"));
+            Assert.DoesNotContain(gizmos, g => g.defaultLabel.Contains("Mode"));
         }
 
         [Fact]
