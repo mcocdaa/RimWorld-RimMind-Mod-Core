@@ -10,6 +10,8 @@ namespace RimMind.Domain.ValueObjects
         public float Priority;
         public Func<object, List<ContextEntry>> ValueProvider;
         public string OwnerMod;
+        public CacheScope CacheScope;
+        public string? OverrideSource;
         public bool IsIndexable;
         public float[]? KeyEmbedding;
 
@@ -36,7 +38,8 @@ namespace RimMind.Domain.ValueObjects
 
         public KeyMeta(string key, ContextLayer layer, float priority,
             Func<object, List<ContextEntry>> provider, string ownerMod,
-            bool isIndexable = false, float[]? keyEmbedding = null)
+            bool isIndexable = false, float[]? keyEmbedding = null,
+            CacheScope cacheScope = CacheScope.Scenario)
         {
             Key = key;
             Layer = layer;
@@ -46,6 +49,7 @@ namespace RimMind.Domain.ValueObjects
             OwnerMod = ownerMod;
             IsIndexable = isIndexable;
             KeyEmbedding = keyEmbedding;
+            CacheScope = cacheScope;
             AdaptivePriority = priority;
         }
 

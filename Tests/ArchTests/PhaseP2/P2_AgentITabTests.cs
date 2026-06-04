@@ -62,5 +62,16 @@ namespace RimMind.Tests.ArchTests.PhaseP2
             var content = ReadSourceFile("Infrastructure/Verse/ITab_Pawn_Agent.cs");
             Assert.Contains("AutonomyLevel", content);
         }
+
+        [Fact]
+        public void ITab_Pawn_Agent_Has_CreateAgent_Button_When_No_Agent()
+        {
+            var content = ReadSourceFile("Infrastructure/Verse/ITab_Pawn_Agent.cs");
+            Assert.Contains("RimMind.Agent.ITab.NoAgentHint", content);
+            Assert.Contains("RimMind.Agent.ITab.CreateAgent", content);
+            Assert.Contains("IPawnAgentFactory", content);
+            Assert.Contains("IAgentBus", content);
+            Assert.Contains("RimMind.Agent.ITab.CreateFailed", content);
+        }
     }
 }

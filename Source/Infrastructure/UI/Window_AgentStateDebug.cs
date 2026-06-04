@@ -22,14 +22,22 @@ namespace RimMind.Infrastructure.UI
 
         private string _contextSnapshotSummary = "";
         private Pawn? _targetPawn;
+        private IAgentControl? _targetAgent;
 
         public override Vector2 InitialSize => new Vector2(640f, 520f);
 
-        public Window_AgentStateDebug() : this(null) { }
+        public Window_AgentStateDebug() : this(pawn: null, agent: null) { }
 
-        public Window_AgentStateDebug(Pawn? pawn)
+        public Window_AgentStateDebug(Pawn? pawn) : this(pawn, agent: null) { }
+
+        public Window_AgentStateDebug(IAgentControl agent) : this(pawn: null, agent)
+        {
+        }
+
+        private Window_AgentStateDebug(Pawn? pawn, IAgentControl? agent)
         {
             _targetPawn = pawn;
+            _targetAgent = agent;
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -52,6 +60,12 @@ namespace RimMind.Infrastructure.UI
             Rect bodyRect = new Rect(inRect.x, inRect.y + headerH + Padding,
                 inRect.width, inRect.height - headerH - Padding);
 
+            if (_targetAgent is IScopedAgent scopedAgent)
+            {
+                DrawScopedAgentDetail(bodyRect, scopedAgent);
+                return;
+            }
+
             Pawn? pawn = _targetPawn ?? Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null)
             {
@@ -60,6 +74,175 @@ namespace RimMind.Infrastructure.UI
             }
 
             DrawPawnDetail(bodyRect, pawn);
+        }
+
+        private void DrawScopedAgentDetail(Rect rect, IScopedAgent scopedAgent)
+        {
+            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.14f, 0.5f));
+
+            float contentH = LineH * 16 + BtnHeight * 3 + Padding * 16;
+            Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
+            Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
+
+            float x = viewRect.x + Padding;
+            float y = viewRect.y + Padding;
+            float labelW = viewRect.width - Padding * 2;
+
+            GUI.color = new Color(0.7f, 0.85f, 1f);
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.AgentStateDebug.ScopedAgentTitle".Translate(scopedAgent.ScopeType));
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+            y += LineH + Padding;
+
+            GUI.color = new Color(0.85f, 0.9f, 1f);
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.AgentStateDebug.ScopeId".Translate(scopedAgent.ScopeId));
+            GUI.color = Color.white;
+            y += LineH + Padding;
+
+            if (scopedAgent.MapId.HasValue)
+            {
+                Widgets.Label(new Rect(x, y, labelW, LineH),
+                    "RimMind.UI.AgentStateDebug.MapId".Translate(scopedAgent.MapId.Value.ToString()));
+                y += LineH + Padding;
+            }
+
+            string stateKey = $"RimMind.Agent.State.{scopedAgent.State}";
+            string stateLabel = stateKey.Translate();
+            GUI.color = scopedAgent.State == AgentState.Active
+                ? new Color(0.4f, 1f, 0.4f)
+                : scopedAgent.State == AgentState.Paused
+                    ? new Color(1f, 0.8f, 0.3f)
+                    : new Color(0.7f, 0.7f, 0.7f);
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.AgentStateDebug.State".Translate(stateLabel));
+            GUI.color = Color.white;
+            y += LineH + Padding;
+
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.AgentStateDebug.Mode".Translate((string)scopedAgent.CurrentModeId));
+            y += LineH + Padding;
+
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.AgentStateDebug.NpcId".Translate(scopedAgent.NpcId ?? ""));
+            y += LineH + Padding;
+
+            int? lastThinkTick = scopedAgent.LastThinkTick;
+            if (lastThinkTick.HasValue && lastThinkTick.Value > 0)
+            {
+                int elapsed = Find.TickManager.TicksGame - lastThinkTick.Value;
+                Widgets.Label(new Rect(x, y, labelW, LineH),
+                    "RimMind.UI.AgentStateDebug.LastThinkTick".Translate(elapsed));
+            }
+            else
+            {
+                GUI.color = Color.grey;
+                Widgets.Label(new Rect(x, y, labelW, LineH),
+                    "RimMind.UI.AgentStateDebug.LastThinkTick".Translate(
+                        "RimMind.UI.AgentStateDebug.NoData".Translate()));
+                GUI.color = Color.white;
+            }
+            y += LineH + Padding;
+
+            float successRate = scopedAgent.GetRecentSuccessRate();
+            GUI.color = successRate > 0.5f ? new Color(0.4f, 1f, 0.4f) : new Color(1f, 0.8f, 0.3f);
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.AgentStateDebug.SuccessRate".Translate(successRate.ToString("P0")));
+            GUI.color = Color.white;
+            y += LineH + Padding;
+
+            var recentHistory = scopedAgent.GetRecentHistory(5);
+            if (recentHistory.Count > 0)
+            {
+                GUI.color = new Color(0.7f, 0.8f, 1f);
+                Widgets.Label(new Rect(x, y, labelW, LineH),
+                    "RimMind.UI.AgentStateDebug.RecentBehavior".Translate());
+                GUI.color = Color.white;
+                y += LineH;
+
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.7f, 0.7f, 0.7f);
+                foreach (var record in recentHistory)
+                {
+                    string recordStr = $"[{(record.Success ? "OK" : "FAIL")}] {record.Action}";
+                    float recordH = Text.CalcHeight(recordStr, labelW - Padding);
+                    Widgets.Label(new Rect(x + Padding, y, labelW - Padding, recordH), recordStr);
+                    y += recordH + 2f;
+                }
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+            }
+            else
+            {
+                GUI.color = Color.grey;
+                Widgets.Label(new Rect(x, y, labelW, LineH),
+                    "RimMind.UI.AgentStateDebug.NoBehaviorHistory".Translate());
+                GUI.color = Color.white;
+            }
+            y += LineH + Padding;
+
+            string debugInfo = scopedAgent.GetDebugInfo();
+            if (!string.IsNullOrEmpty(debugInfo))
+            {
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.5f, 0.5f, 0.5f);
+                float debugH = Text.CalcHeight(debugInfo, labelW);
+                Widgets.Label(new Rect(x, y, labelW, debugH), debugInfo);
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+                y += debugH + Padding;
+            }
+
+            y = DrawScopedAgentButtons(x, y, labelW, scopedAgent);
+
+            Widgets.EndScrollView();
+        }
+
+        private float DrawScopedAgentButtons(float x, float y, float labelW, IScopedAgent scopedAgent)
+        {
+            float btnW = 160f;
+
+            Rect forceThinkBtn = new Rect(x, y, btnW, BtnHeight);
+            if (Widgets.ButtonText(forceThinkBtn, "RimMind.UI.AgentStateDebug.SendTestRequest".Translate()))
+            {
+                scopedAgent.ForceThink();
+            }
+
+            Rect requestLogBtn = new Rect(x + btnW + Padding, y, btnW, BtnHeight);
+            if (Widgets.ButtonText(requestLogBtn, "RimMind.UI.AgentStateDebug.OpenRequestLog".Translate()))
+            {
+                Find.WindowStack.Add(new Window_RequestLog());
+            }
+            y += BtnHeight + Padding;
+
+            Rect toolCallBtn = new Rect(x, y, btnW, BtnHeight);
+            if (Widgets.ButtonText(toolCallBtn, "RimMind.UI.AgentStateDebug.OpenToolCallDebug".Translate()))
+            {
+                Find.WindowStack.Add(new Window_ToolCallDebug());
+            }
+
+            Rect mechanismBtn = new Rect(x + btnW + Padding, y, btnW, BtnHeight);
+            if (Widgets.ButtonText(mechanismBtn, "RimMind.UI.AgentStateDebug.OpenMechanismStatus".Translate()))
+            {
+                Find.WindowStack.Add(new Window_MechanismStatus());
+            }
+            y += BtnHeight + Padding;
+
+            Rect destroyBtn = new Rect(x, y, btnW, BtnHeight);
+            if (Widgets.ButtonText(destroyBtn, "RimMind.UI.AgentStateDebug.DestroyScopedAgent".Translate()))
+            {
+                var manager = RimMindServiceLocator.Get<IScopedAgentManager>();
+                if (manager != null)
+                {
+                    manager.Remove(scopedAgent.ScopeType, scopedAgent.ScopeId);
+                    Close();
+                }
+            }
+            y += BtnHeight + Padding;
+
+            return y;
         }
 
         private void DrawNoPawnState(Rect rect)

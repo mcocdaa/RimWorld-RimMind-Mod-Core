@@ -161,8 +161,21 @@ namespace RimMind.Infrastructure.UI
             float x = rect.x + PhaseIndicatorW + Padding;
             float labelW = rect.width - PhaseIndicatorW - Padding * 2 - 80f;
 
-            GUI.color = new Color(0.85f, 0.9f, 1f);
-            Widgets.Label(new Rect(x, rect.y + 2f, labelW, LineH), entry.PawnLabel);
+            if (entry.IsScopedAgent)
+            {
+                GUI.color = new Color(0.7f, 0.85f, 1f);
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(new Rect(x, rect.y + 2f, 50f, LineH),
+                    entry.ScopeType ?? "");
+                GUI.color = new Color(0.85f, 0.9f, 1f);
+                Text.Font = GameFont.Small;
+                Widgets.Label(new Rect(x + 54f, rect.y + 2f, labelW - 54f, LineH), entry.PawnLabel);
+            }
+            else
+            {
+                GUI.color = new Color(0.85f, 0.9f, 1f);
+                Widgets.Label(new Rect(x, rect.y + 2f, labelW, LineH), entry.PawnLabel);
+            }
             GUI.color = Color.white;
 
             string phaseLabel = PhaseLabel(entry.Phase);
@@ -190,7 +203,18 @@ namespace RimMind.Infrastructure.UI
             Rect detailBtn = new Rect(btnX, rect.y + (rect.height - BtnHeight) / 2f, 72f, BtnHeight);
             if (Widgets.ButtonText(detailBtn, "RimMind.UI.AgentProgressFloat.Details".Translate()))
             {
-                Find.WindowStack.Add(new Window_AgentStateDebug(entry.Pawn));
+                if (entry.IsScopedAgent && entry.AgentControl != null)
+                {
+                    Find.WindowStack.Add(new Window_AgentStateDebug(entry.AgentControl));
+                }
+                else if (entry.Pawn != null)
+                {
+                    Find.WindowStack.Add(new Window_AgentStateDebug(entry.Pawn));
+                }
+                else
+                {
+                    Find.WindowStack.Add(new Window_AgentStateDebug());
+                }
             }
         }
 
@@ -226,7 +250,33 @@ namespace RimMind.Infrastructure.UI
                     pawn.Name?.ToStringShort ?? pawn.LabelShort,
                     phase,
                     elapsedTicks,
-                    comp.Agent.State));
+                    comp.Agent.State,
+                    agentControl: comp.Agent));
+            }
+
+            var scopedAgentManager = RimMindServiceLocator.Get<IScopedAgentManager>();
+            if (scopedAgentManager != null)
+            {
+                foreach (var scoped in scopedAgentManager.GetAll())
+                {
+                    var phase = AgentWorkflowPhase.Idle;
+                    int elapsedTicks = 0;
+                    int? lastThinkTick = (scoped as IAgentInfo)?.LastThinkTick;
+                    if (lastThinkTick.HasValue && lastThinkTick.Value > 0)
+                    {
+                        int now = Find.TickManager?.TicksGame ?? 0;
+                        elapsedTicks = now - lastThinkTick.Value;
+                    }
+
+                    _cachedEntries.Add(new AgentProgressEntry(
+                        null,
+                        scoped.Label,
+                        phase,
+                        elapsedTicks,
+                        scoped.State,
+                        scoped.ScopeType,
+                        scoped));
+                }
             }
 
             _lastRefreshTick = Find.TickManager?.TicksGame ?? 0;
@@ -286,19 +336,25 @@ namespace RimMind.Infrastructure.UI
 
         private readonly struct AgentProgressEntry
         {
-            public readonly Pawn Pawn;
+            public readonly Pawn? Pawn;
             public readonly string PawnLabel;
             public readonly AgentWorkflowPhase Phase;
             public readonly int ElapsedTicks;
             public readonly AgentState State;
+            public readonly string? ScopeType;
+            public readonly IAgentControl? AgentControl;
 
-            public AgentProgressEntry(Pawn pawn, string pawnLabel, AgentWorkflowPhase phase, int elapsedTicks, AgentState state)
+            public bool IsScopedAgent => Pawn == null && ScopeType != null;
+
+            public AgentProgressEntry(Pawn? pawn, string pawnLabel, AgentWorkflowPhase phase, int elapsedTicks, AgentState state, string? scopeType = null, IAgentControl? agentControl = null)
             {
                 Pawn = pawn;
                 PawnLabel = pawnLabel;
                 Phase = phase;
                 ElapsedTicks = elapsedTicks;
                 State = state;
+                ScopeType = scopeType;
+                AgentControl = agentControl;
             }
         }
     }

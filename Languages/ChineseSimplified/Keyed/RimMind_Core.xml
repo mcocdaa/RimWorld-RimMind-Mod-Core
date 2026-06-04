@@ -7,6 +7,8 @@
   <RimMind.UI.DebugLog.CopyResponse>复制响应</RimMind.UI.DebugLog.CopyResponse>
   <RimMind.UI.DebugLog.ClickToView>（点击左侧条目查看详情）</RimMind.UI.DebugLog.ClickToView>
   <RimMind.UI.DebugLog.RecordCount>{0} 条记录</RimMind.UI.DebugLog.RecordCount>
+  <RimMind.UI.DebugLog.Empty>还没有记录 AI 请求结果</RimMind.UI.DebugLog.Empty>
+  <RimMind.UI.DebugLog.NotReady>AI 调试日志尚未初始化</RimMind.UI.DebugLog.NotReady>
   <RimMind.UI.DebugLog.Tok>tok</RimMind.UI.DebugLog.Tok>
   <RimMind.UI.DebugLog.Retry>重试</RimMind.UI.DebugLog.Retry>
   <RimMind.UI.DebugLog.Wait>等待</RimMind.UI.DebugLog.Wait>
@@ -14,7 +16,7 @@
   <RimMind.UI.DebugLog.QueueWait>排队等待</RimMind.UI.DebugLog.QueueWait>
   <RimMind.UI.Empty>(空)</RimMind.UI.Empty>
   <!-- AITogglePatch.cs -->
-  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\n点击打开 RimMind 菜单\nShift+点击打开模组设置\nCtrl+点击打开请求日志</RimMind.Presentation.Toggle.Tooltip>
+  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\n点击打开 Agent 控制台\nShift+点击打开模组设置\nCtrl+点击打开 Agent 控制台</RimMind.Presentation.Toggle.Tooltip>
   <!-- AICoreSettingsUI.cs - Tab labels -->
   <RimMind.Settings.Tab.Api>API 配置</RimMind.Settings.Tab.Api>
   <RimMind.Settings.Tab.Context>上下文过滤</RimMind.Settings.Tab.Context>
@@ -467,13 +469,18 @@
   <!-- ITab_Pawn_Agent.cs -->
   <RimMind.Agent.ITab.Label>智能体</RimMind.Agent.ITab.Label>
   <RimMind.Agent.ITab.NoAgent>未分配智能体</RimMind.Agent.ITab.NoAgent>
+  <RimMind.Agent.ITab.NoAgentHint>此小人尚未拥有 Agent。点击下方按钮创建一个。</RimMind.Agent.ITab.NoAgentHint>
+  <RimMind.Agent.ITab.CreateAgent>创建/获取 Agent</RimMind.Agent.ITab.CreateAgent>
+  <RimMind.Agent.ITab.CreateFailed>无法创建 Agent：工厂不可用</RimMind.Agent.ITab.CreateFailed>
   <RimMind.Agent.ITab.Status>状态</RimMind.Agent.ITab.Status>
   <RimMind.Agent.ITab.Goals>目标</RimMind.Agent.ITab.Goals>
   <RimMind.Agent.ITab.Strategy>策略权重</RimMind.Agent.ITab.Strategy>
   <RimMind.Agent.ITab.History>行为历史</RimMind.Agent.ITab.History>
   <!-- RimMindOverlayGameComponent.cs -->
   <RimMind.UI.OverlayButton.Label>RimMind</RimMind.UI.OverlayButton.Label>
+  <RimMind.UI.OverlayMenu.AgentHub>Agent 控制台</RimMind.UI.OverlayMenu.AgentHub>
   <RimMind.UI.OverlayMenu.RequestLog>AI 请求日志</RimMind.UI.OverlayMenu.RequestLog>
+  <RimMind.UI.OverlayMenu.AIDebugLog>AI 调试日志</RimMind.UI.OverlayMenu.AIDebugLog>
   <RimMind.UI.OverlayMenu.ToolCallDebug>ToolCall 调试</RimMind.UI.OverlayMenu.ToolCallDebug>
   <RimMind.UI.OverlayMenu.MechanismStatus>机制状态</RimMind.UI.OverlayMenu.MechanismStatus>
   <RimMind.UI.OverlayMenu.AgentModeDebug>模式调试</RimMind.UI.OverlayMenu.AgentModeDebug>
@@ -481,6 +488,30 @@
   <RimMind.UI.OverlayMenu.ContextKeys>上下文键</RimMind.UI.OverlayMenu.ContextKeys>
   <RimMind.UI.OverlayMenu.AgentFlowLab>Agent 流程实验室</RimMind.UI.OverlayMenu.AgentFlowLab>
   <RimMind.UI.OverlayMenu.Settings>设置</RimMind.UI.OverlayMenu.Settings>
+  <!-- MainTabWindow_RimMindHub.cs -->
+  <RimMind.UI.Hub.Title>RimMind Agent 控制台</RimMind.UI.Hub.Title>
+  <RimMind.UI.Hub.Tab.Overview>状态</RimMind.UI.Hub.Tab.Overview>
+  <RimMind.UI.Hub.Tab.Requests>请求</RimMind.UI.Hub.Tab.Requests>
+  <RimMind.UI.Hub.Tab.Agent>Agent 工具</RimMind.UI.Hub.Tab.Agent>
+  <RimMind.UI.Hub.Tab.Debug>调试</RimMind.UI.Hub.Tab.Debug>
+  <RimMind.UI.Hub.SelectedPawn>已选择小人: {0}</RimMind.UI.Hub.SelectedPawn>
+  <RimMind.UI.Hub.NoPawn>未选择小人</RimMind.UI.Hub.NoPawn>
+  <RimMind.UI.Hub.AgentSummary>当前地图 Agent: {0} 个（活跃 {1} 个）</RimMind.UI.Hub.AgentSummary>
+  <RimMind.UI.Hub.PendingRequests>待处理 AI 请求: {0}</RimMind.UI.Hub.PendingRequests>
+  <RimMind.UI.Hub.QueueMissing>队列：尚未初始化</RimMind.UI.Hub.QueueMissing>
+  <RimMind.UI.Hub.RequestPending>待处理请求</RimMind.UI.Hub.RequestPending>
+  <RimMind.UI.Hub.RequestResults>AI 结果</RimMind.UI.Hub.RequestResults>
+  <RimMind.UI.Hub.AIDebugLog>AI 调试日志</RimMind.UI.Hub.AIDebugLog>
+  <RimMind.UI.Hub.AgentFlowLab>Agent 流程实验室</RimMind.UI.Hub.AgentFlowLab>
+  <RimMind.UI.Hub.AgentState>Agent 状态</RimMind.UI.Hub.AgentState>
+  <RimMind.UI.Hub.AgentMode>Agent 模式</RimMind.UI.Hub.AgentMode>
+  <RimMind.UI.Hub.AgentProgress>Agent 进度</RimMind.UI.Hub.AgentProgress>
+  <RimMind.UI.Hub.RequestLog>请求日志</RimMind.UI.Hub.RequestLog>
+  <RimMind.UI.Hub.ToolCallDebug>ToolCall 调试</RimMind.UI.Hub.ToolCallDebug>
+  <RimMind.UI.Hub.MechanismStatus>机制状态</RimMind.UI.Hub.MechanismStatus>
+  <RimMind.UI.Hub.ContextKeys>上下文键</RimMind.UI.Hub.ContextKeys>
+  <RimMind.UI.Hub.Settings>设置</RimMind.UI.Hub.Settings>
+  <RimMind.UI.Hub.SelectPawnState>刷新选择</RimMind.UI.Hub.SelectPawnState>
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent 状态调试</RimMind.UI.AgentStateDebug.Title>
   <RimMind.UI.AgentStateDebug.NoPawn>未选择小人</RimMind.UI.AgentStateDebug.NoPawn>
@@ -506,6 +537,13 @@
   <RimMind.UI.AgentStateDebug.NoData>无数据</RimMind.UI.AgentStateDebug.NoData>
   <RimMind.UI.AgentStateDebug.QueuePaused>队列状态：已暂停</RimMind.UI.AgentStateDebug.QueuePaused>
   <RimMind.UI.AgentStateDebug.QueueRunning>队列状态：运行中（活跃: {0}，排队: {1}）</RimMind.UI.AgentStateDebug.QueueRunning>
+  <RimMind.UI.AgentStateDebug.ScopedAgentTitle>作用域代理：{0}</RimMind.UI.AgentStateDebug.ScopedAgentTitle>
+  <RimMind.UI.AgentStateDebug.ScopeId>作用域 ID：{0}</RimMind.UI.AgentStateDebug.ScopeId>
+  <RimMind.UI.AgentStateDebug.MapId>地图 ID：{0}</RimMind.UI.AgentStateDebug.MapId>
+  <RimMind.UI.AgentStateDebug.SuccessRate>成功率：{0}</RimMind.UI.AgentStateDebug.SuccessRate>
+  <RimMind.UI.AgentStateDebug.RecentBehavior>近期行为</RimMind.UI.AgentStateDebug.RecentBehavior>
+  <RimMind.UI.AgentStateDebug.NoBehaviorHistory>无行为历史</RimMind.UI.AgentStateDebug.NoBehaviorHistory>
+  <RimMind.UI.AgentStateDebug.DestroyScopedAgent>销毁代理</RimMind.UI.AgentStateDebug.DestroyScopedAgent>
   <!-- Window_ContextKeyDebug.cs -->
   <RimMind.UI.ContextKeyDebug.Title>上下文键调试</RimMind.UI.ContextKeyDebug.Title>
   <RimMind.UI.ContextKeyDebug.Empty>无已注册上下文键</RimMind.UI.ContextKeyDebug.Empty>
@@ -525,6 +563,8 @@
   <RimMind.UI.ContextKeyDebug.NoDuplicates>无重复键</RimMind.UI.ContextKeyDebug.NoDuplicates>
   <RimMind.UI.ContextKeyDebug.HasProvider>已注册</RimMind.UI.ContextKeyDebug.HasProvider>
   <RimMind.UI.ContextKeyDebug.NoProvider>未注册</RimMind.UI.ContextKeyDebug.NoProvider>
+  <RimMind.UI.ContextKeyDebug.CacheScope>缓存范围: {0}</RimMind.UI.ContextKeyDebug.CacheScope>
+  <RimMind.UI.ContextKeyDebug.OverrideSource>覆盖：此前由 {0} 注册</RimMind.UI.ContextKeyDebug.OverrideSource>
   <!-- Window_AgentFlowLab.cs -->
   <RimMind.UI.AgentFlowLab.Title>Agent 流程实验室</RimMind.UI.AgentFlowLab.Title>
   <RimMind.UI.AgentFlowLab.NoPawn>未选择小人</RimMind.UI.AgentFlowLab.NoPawn>
@@ -537,6 +577,8 @@
   <RimMind.UI.AgentFlowLab.ScopeStoryteller>叙事者</RimMind.UI.AgentFlowLab.ScopeStoryteller>
   <RimMind.UI.AgentFlowLab.ScopeGlobal>全局</RimMind.UI.AgentFlowLab.ScopeGlobal>
   <RimMind.UI.AgentFlowLab.ScopeUnsupported>此范围已显示用于规划，但运行时控制尚未接线；当前可用的是小人 Agent。</RimMind.UI.AgentFlowLab.ScopeUnsupported>
+  <RimMind.UI.AgentFlowLab.ScopeHint>{0} 范围 Agent。上下文构建和决策流程可用；完整运行时控制受限。</RimMind.UI.AgentFlowLab.ScopeHint>
+  <RimMind.UI.AgentFlowLab.ScopedAgentActive>范围 Agent: {0}:{1} [{2}]</RimMind.UI.AgentFlowLab.ScopedAgentActive>
   <RimMind.UI.AgentFlowLab.AgentLifecycle>Agent 生命周期</RimMind.UI.AgentFlowLab.AgentLifecycle>
   <RimMind.UI.AgentFlowLab.AgentExists>Agent: 已存在 ({0})</RimMind.UI.AgentFlowLab.AgentExists>
   <RimMind.UI.AgentFlowLab.AgentMissing>Agent: 未创建</RimMind.UI.AgentFlowLab.AgentMissing>

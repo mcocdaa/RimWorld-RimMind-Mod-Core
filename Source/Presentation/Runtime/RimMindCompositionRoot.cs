@@ -253,6 +253,12 @@ namespace RimMind.Presentation.Runtime
                 GetExtensionRegistry<IPerceptionSource>());
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
+            var scopedAgentFactory = new ScopedAgentFactory();
+            RimMindServiceLocator.Register<IScopedAgentFactory>(scopedAgentFactory);
+
+            var scopedAgentManager = new ScopedAgentManager(scopedAgentFactory);
+            RimMindServiceLocator.Register<IScopedAgentManager>(scopedAgentManager);
+
             var gameContextBuilder = new GameContextBuilder(
                 new PawnContextBuilder(resolvedSettings),
                 new MapContextBuilder(resolvedSettings),

@@ -269,5 +269,212 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             Assert.Contains("ISettingsTab", interfaceContent);
             Assert.Contains("IExtension", interfaceContent);
         }
+
+        [Fact]
+        public void IScopedAgent_Inherits_IAgentControl()
+        {
+            var content = ReadCoreSource("Presentation/Agent/IScopedAgent.cs");
+            Assert.Contains("IAgentControl", content);
+            Assert.Contains("ScopeId", content);
+            Assert.Contains("ScopeType", content);
+            Assert.Contains("MapId", content);
+        }
+
+        [Fact]
+        public void ScopedAgent_Implements_IScopedAgent()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgent.cs");
+            Assert.Contains("class ScopedAgent : IScopedAgent", content);
+            Assert.Contains("IAgentBus", content);
+            Assert.Contains("AgentState", content);
+            Assert.Contains("GetDebugInfo", content);
+            Assert.Contains("ScopedThinkStrategy", content);
+        }
+
+        [Fact]
+        public void IScopedAgentFactory_Creates_ScopedAgent()
+        {
+            var content = ReadCoreSource("Presentation/Agent/IScopedAgentFactory.cs");
+            Assert.Contains("IScopedAgent Create", content);
+            Assert.Contains("scopeType", content);
+            Assert.Contains("scopeId", content);
+            Assert.Contains("IAgentBus", content);
+        }
+
+        [Fact]
+        public void ScopedAgentFactory_Implements_IScopedAgentFactory()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgentFactory.cs");
+            Assert.Contains("ScopedAgentFactory : IScopedAgentFactory", content);
+            Assert.Contains("new ScopedAgent", content);
+        }
+
+        [Fact]
+        public void CompositionRoot_Registers_ScopedAgentFactory()
+        {
+            var content = ReadCoreSource("Presentation/Runtime/RimMindCompositionRoot.cs");
+            Assert.Contains("IScopedAgentFactory", content);
+            Assert.Contains("ScopedAgentFactory", content);
+        }
+
+        [Fact]
+        public void IScopedAgentManager_Manages_ScopedAgent_Lifecycle()
+        {
+            var content = ReadCoreSource("Presentation/Agent/IScopedAgentManager.cs");
+            Assert.Contains("GetOrCreate", content);
+            Assert.Contains("Find", content);
+            Assert.Contains("GetAll", content);
+            Assert.Contains("Remove", content);
+            Assert.Contains("Clear", content);
+        }
+
+        [Fact]
+        public void ScopedAgentManager_Implements_IScopedAgentManager()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgentManager.cs");
+            Assert.Contains("ScopedAgentManager : IScopedAgentManager", content);
+            Assert.Contains("IScopedAgentFactory", content);
+            Assert.Contains("GetOrCreate", content);
+            Assert.Contains("CompositeKey", content);
+        }
+
+        [Fact]
+        public void CompositionRoot_Registers_ScopedAgentManager()
+        {
+            var content = ReadCoreSource("Presentation/Runtime/RimMindCompositionRoot.cs");
+            Assert.Contains("IScopedAgentManager", content);
+            Assert.Contains("ScopedAgentManager", content);
+        }
+
+        [Fact]
+        public void ProgressFloat_Shows_ScopedAgent_Entries()
+        {
+            var content = ReadCoreSource("Infrastructure/UI/Window_AgentProgressFloat.cs");
+            Assert.Contains("IScopedAgentManager", content);
+            Assert.Contains("scopedAgentManager.GetAll()", content);
+            Assert.Contains("ScopeType", content);
+            Assert.Contains("IsScopedAgent", content);
+        }
+
+        [Fact]
+        public void FlowLab_Uses_ScopedAgentManager()
+        {
+            var content = ReadCoreSource("Infrastructure/UI/Window_AgentFlowLab.cs");
+            Assert.Contains("IScopedAgentManager", content);
+            Assert.Contains("GetOrCreate", content);
+        }
+
+        [Fact]
+        public void AgentStateDebug_Supports_IAgentControl_Constructor()
+        {
+            var content = ReadCoreSource("Infrastructure/UI/Window_AgentStateDebug.cs");
+            Assert.Contains("IAgentControl? _targetAgent", content);
+            Assert.Contains("Window_AgentStateDebug(IAgentControl agent)", content);
+            Assert.Contains("DrawScopedAgentDetail", content);
+            Assert.Contains("IScopedAgent scopedAgent", content);
+        }
+
+        [Fact]
+        public void AgentStateDebug_ScopedAgentDetail_Shows_Scope_Info()
+        {
+            var content = ReadCoreSource("Infrastructure/UI/Window_AgentStateDebug.cs");
+            Assert.Contains("ScopedAgentTitle", content);
+            Assert.Contains("ScopeId", content);
+            Assert.Contains("SuccessRate", content);
+            Assert.Contains("RecentBehavior", content);
+            Assert.Contains("DestroyScopedAgent", content);
+            Assert.Contains("DrawScopedAgentButtons", content);
+        }
+
+        [Fact]
+        public void ProgressFloat_Passes_AgentControl_To_Details()
+        {
+            var content = ReadCoreSource("Infrastructure/UI/Window_AgentProgressFloat.cs");
+            Assert.Contains("IAgentControl? AgentControl", content);
+            Assert.Contains("Window_AgentStateDebug(entry.AgentControl)", content);
+        }
+
+        [Fact]
+        public void ScopedThinkStrategy_Implements_IThinkStrategy()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedThinkStrategy.cs");
+            Assert.Contains("ScopedThinkStrategy : IThinkStrategy", content);
+            Assert.Contains("ScenarioId", content);
+            Assert.Contains("BuildEnvelope", content);
+            Assert.Contains("ParseDecision", content);
+            Assert.Contains("ThinkStrategyHelper.ParseDecisionCore", content);
+            Assert.Contains("LlmRequestEnvelopeBuilder", content);
+        }
+
+        [Fact]
+        public void ScopedThinkStrategy_Uses_Scope_Appropriate_ScenarioId()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedThinkStrategy.cs");
+            Assert.Contains("ScenarioIds.Storyteller", content);
+            Assert.Contains("ScenarioIds.Decision", content);
+        }
+
+        [Fact]
+        public void ScopedAgentMode_ShouldThink_When_Perceptions_Exist()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgent.cs");
+            Assert.Contains("perceptions.Count > 0", content);
+            Assert.DoesNotContain("NoOpThinkStrategy", content);
+        }
+
+        [Fact]
+        public void ScopedAgent_Has_Thinking_Pipeline()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgent.cs");
+            Assert.Contains("private void Think()", content);
+            Assert.Contains("RimMindAPI.Request.Send", content);
+            Assert.Contains("ProcessPendingCallback", content);
+            Assert.Contains("_thinking", content);
+            Assert.Contains("_hasPendingCallback", content);
+        }
+
+        [Fact]
+        public void ScopedAgent_ForceThink_Triggers_Think()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgent.cs");
+            Assert.Contains("public void ForceThink()", content);
+            Assert.Contains("_lastThinkTick = 0", content);
+            Assert.Contains("Think()", content);
+        }
+
+        [Fact]
+        public void ScopedAgent_Tick_Drives_Think_Cycle()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgent.cs");
+            Assert.Contains("ThinkCooldownTicks", content);
+            Assert.Contains("public void Tick()", content);
+            Assert.Contains("ProcessPendingCallback()", content);
+        }
+
+        [Fact]
+        public void ScopedAgent_Records_Behavior_On_Decision()
+        {
+            var content = ReadCoreSource("Presentation/Agent/ScopedAgent.cs");
+            var processIdx = content.IndexOf("private void ProcessPendingCallback()");
+            Assert.True(processIdx > 0, "ProcessPendingCallback method must exist");
+            var methodSection = content.Substring(processIdx, Math.Min(500, content.Length - processIdx));
+            Assert.Contains("RecordBehavior", methodSection);
+            Assert.Contains("ActionIntent", methodSection);
+        }
+
+        private static int FindMatchingBrace(string content, int openBraceIndex)
+        {
+            int depth = 0;
+            for (int i = openBraceIndex; i < content.Length; i++)
+            {
+                if (content[i] == '{') depth++;
+                else if (content[i] == '}')
+                {
+                    depth--;
+                    if (depth == 0) return i + 1;
+                }
+            }
+            return content.Length;
+        }
     }
 }

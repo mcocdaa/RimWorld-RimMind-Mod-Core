@@ -183,5 +183,149 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             if (endIdx < 0 || endIdx <= startIdx) endIdx = content.Length;
             return content.Substring(startIdx, endIdx - startIdx);
         }
+
+        [Fact]
+        public void ContextProviderDef_Has_CacheScope_Property()
+        {
+            var content = File.ReadAllText(Path.Combine(RepoRoot,
+                "RimMind-Core", "Source", "Application", "Common", "Interfaces", "Context",
+                "ContextProviderDef.cs"));
+            Assert.Contains("CacheScope CacheScope", content);
+            Assert.Contains("cacheScope = CacheScope.Scenario", content);
+        }
+
+        [Fact]
+        public void KeyMeta_Has_CacheScope_And_OverrideSource_Fields()
+        {
+            var content = File.ReadAllText(Path.Combine(RepoRoot,
+                "RimMind-Core", "Source", "Domain", "ValueObjects", "KeyMeta.cs"));
+            Assert.Contains("CacheScope CacheScope;", content);
+            Assert.Contains("string? OverrideSource;", content);
+        }
+
+        [Fact]
+        public void ContextKeyRegistryImpl_Records_OverrideSource_On_Overwrite()
+        {
+            var content = File.ReadAllText(Path.Combine(RepoRoot,
+                "RimMind-Core", "Source", "Application", "Features", "Context",
+                "ContextKeyRegistryImpl.cs"));
+            Assert.Contains("OverrideSource", content);
+            Assert.Contains("meta.OverrideSource = old.OwnerMod", content);
+        }
+
+        [Fact]
+        public void ContextKeyRegistryImpl_Passes_CacheScope_To_KeyMeta()
+        {
+            var content = File.ReadAllText(Path.Combine(RepoRoot,
+                "RimMind-Core", "Source", "Application", "Features", "Context",
+                "ContextKeyRegistryImpl.cs"));
+            Assert.Contains("cacheScope: def.CacheScope", content);
+        }
+
+        [Fact]
+        public void Window_ContextKeyDebug_Shows_CacheScope_And_OverrideSource()
+        {
+            var content = File.ReadAllText(Path.Combine(RepoRoot,
+                "RimMind-Core", "Source", "Infrastructure", "UI", "Window_ContextKeyDebug.cs"));
+            Assert.Contains("RimMind.UI.ContextKeyDebug.CacheScope", content);
+            Assert.Contains("RimMind.UI.ContextKeyDebug.OverrideSource", content);
+            Assert.Contains("selected.OverrideSource", content);
+            Assert.Contains("selected.CacheScope", content);
+        }
+
+        [Fact]
+        public void CacheScope_Enum_Defines_All_Planned_Scopes()
+        {
+            var content = File.ReadAllText(Path.Combine(RepoRoot,
+                "RimMind-Core", "Source", "Domain", "ValueObjects", "CacheScope.cs"));
+            Assert.Contains("Static", content);
+            Assert.Contains("Pawn", content);
+            Assert.Contains("Map", content);
+            Assert.Contains("Storyteller", content);
+            Assert.Contains("Scenario", content);
+        }
+
+        [Fact]
+        public void CoreContextProviders_Static_Keys_Have_CacheScope_Static()
+        {
+            var content = ReadModSource("RimMind-Core", "Presentation/Context/CoreContextProviders.cs");
+            var staticKeys = new[] { "system_instruction", "world_rules", "npc_task_instruction" };
+            foreach (var key in staticKeys)
+            {
+                var keyIdx = content.IndexOf($"key: \"{key}\"");
+                Assert.True(keyIdx >= 0, $"Key '{key}' not found in CoreContextProviders.cs");
+                var nearby = content.Substring(keyIdx, Math.Min(2500, content.Length - keyIdx));
+                Assert.True(nearby.Contains("cacheScope: CacheScope.Static"),
+                    $"Key '{key}' should have cacheScope: CacheScope.Static");
+            }
+        }
+
+        [Fact]
+        public void CoreContextProviders_Map_Keys_Have_CacheScope_Map()
+        {
+            var content = ReadModSource("RimMind-Core", "Presentation/Context/CoreContextProviders.cs");
+            var mapKeys = new[] { "map_structure", "weather", "time_of_day", "season", "colony_status" };
+            foreach (var key in mapKeys)
+            {
+                var keyIdx = content.IndexOf($"key: \"{key}\"");
+                Assert.True(keyIdx >= 0, $"Key '{key}' not found in CoreContextProviders.cs");
+                var nearby = content.Substring(keyIdx, Math.Min(2500, content.Length - keyIdx));
+                Assert.True(nearby.Contains("cacheScope: CacheScope.Map"),
+                    $"Key '{key}' should have cacheScope: CacheScope.Map");
+            }
+        }
+
+        [Fact]
+        public void CoreContextProviders_Pawn_Keys_Have_CacheScope_Pawn()
+        {
+            var content = ReadModSource("RimMind-Core", "Presentation/Context/CoreContextProviders.cs");
+            var pawnKeys = new[]
+            {
+                "npc_identity", "npc_commands",
+                "pawn_base_info", "fixed_relations", "ideology", "skills_summary",
+                "current_area", "nearby_pawns",
+                "health", "mood", "current_job", "combat_status", "target_info", "task_progress"
+            };
+            foreach (var key in pawnKeys)
+            {
+                var keyIdx = content.IndexOf($"key: \"{key}\"");
+                Assert.True(keyIdx >= 0, $"Key '{key}' not found in CoreContextProviders.cs");
+                var nearby = content.Substring(keyIdx, Math.Min(2500, content.Length - keyIdx));
+                Assert.True(nearby.Contains("cacheScope: CacheScope.Pawn"),
+                    $"Key '{key}' should have cacheScope: CacheScope.Pawn");
+            }
+        }
+
+        [Fact]
+        public void CoreContextProviders_No_Key_Uses_Default_CacheScope_Scenario()
+        {
+            var content = ReadModSource("RimMind-Core", "Presentation/Context/CoreContextProviders.cs");
+            Assert.DoesNotContain("cacheScope: CacheScope.Scenario", content);
+        }
+
+        [Fact]
+        public void CoreContextProviders_All_Keys_Have_Explicit_CacheScope()
+        {
+            var content = ReadModSource("RimMind-Core", "Presentation/Context/CoreContextProviders.cs");
+            var allKeys = new[]
+            {
+                "system_instruction", "npc_identity", "npc_commands", "world_rules", "npc_task_instruction",
+                "map_structure", "pawn_base_info", "fixed_relations", "ideology", "skills_summary",
+                "current_area", "weather", "time_of_day", "nearby_pawns", "season", "colony_status",
+                "health", "mood", "current_job", "combat_status", "target_info", "task_progress"
+            };
+            foreach (var key in allKeys)
+            {
+                var keyIdx = content.IndexOf($"key: \"{key}\"");
+                Assert.True(keyIdx >= 0, $"Key '{key}' not found in CoreContextProviders.cs");
+                var nearby = content.Substring(keyIdx, Math.Min(2500, content.Length - keyIdx));
+                Assert.True(
+                    nearby.Contains("cacheScope: CacheScope.Static") ||
+                    nearby.Contains("cacheScope: CacheScope.Pawn") ||
+                    nearby.Contains("cacheScope: CacheScope.Map") ||
+                    nearby.Contains("cacheScope: CacheScope.Storyteller"),
+                    $"Key '{key}' must have an explicit cacheScope annotation");
+            }
+        }
     }
 }

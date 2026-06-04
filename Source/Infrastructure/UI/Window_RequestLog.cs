@@ -29,6 +29,11 @@ namespace RimMind.Infrastructure.UI
 
         public override void DoWindowContents(Rect inRect)
         {
+            DrawEmbedded(inRect);
+        }
+
+        public void DrawEmbedded(Rect inRect)
+        {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 

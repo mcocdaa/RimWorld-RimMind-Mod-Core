@@ -6,12 +6,12 @@ namespace RimMind.Tests.ArchTests.PhaseP6
 {
     public class P6_VisibilityAutotestTests
     {
-        private static string RepoRoot => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        private static string ProjectRoot => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
 
         [Fact]
         public void DebugActions_Register_Runtime_Visibility_Autotest()
         {
-            var path = Path.Combine(RepoRoot, "Source", "Infrastructure", "UI", "AICoreDebugActions.cs");
+            var path = Path.Combine(ProjectRoot, "Source", "Infrastructure", "UI", "AICoreDebugActions.cs");
             var content = File.ReadAllText(path);
 
             Assert.Contains("[DebugAction(\"Autotests\", \"Test P Visibility Entrypoints\"", content);

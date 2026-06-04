@@ -165,8 +165,8 @@ namespace RimMind.Tests.ArchTests.PhaseP3
         public void AgentStateDebug_Has_Queue_Diagnostic_In_NoPawn_State()
         {
             var content = ReadSourceFile(AgentStateDebugRelative);
-            var drawNoPawnStart = content.IndexOf("DrawNoPawnState");
-            Assert.True(drawNoPawnStart > 0, "DrawNoPawnState must exist");
+            var drawNoPawnStart = content.IndexOf("private void DrawNoPawnState");
+            Assert.True(drawNoPawnStart > 0, "DrawNoPawnState method must exist");
             var nextBrace = content.IndexOf('{', drawNoPawnStart);
             var methodEnd = FindMatchingBrace(content, nextBrace);
             var methodContent = content.Substring(drawNoPawnStart, methodEnd - drawNoPawnStart);

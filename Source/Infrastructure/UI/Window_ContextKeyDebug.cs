@@ -334,10 +334,19 @@ namespace RimMind.Infrastructure.UI
             }
 
             GUI.color = new Color(0.6f, 0.6f, 0.6f);
-            string cacheScope = selected.Layer == ContextLayer.L0_Static ? "Static" : "NpcId/Scenario";
-            Widgets.Label(new Rect(x, y, labelW, LineH), $"Cache scope: {cacheScope}");
+            Widgets.Label(new Rect(x, y, labelW, LineH),
+                "RimMind.UI.ContextKeyDebug.CacheScope".Translate(selected.CacheScope.ToString()));
             GUI.color = Color.white;
             y += LineH + Padding;
+
+            if (!selected.OverrideSource.NullOrEmpty())
+            {
+                GUI.color = new Color(1f, 0.7f, 0.3f);
+                Widgets.Label(new Rect(x, y, labelW, LineH),
+                    "RimMind.UI.ContextKeyDebug.OverrideSource".Translate(selected.OverrideSource));
+                GUI.color = Color.white;
+                y += LineH + Padding;
+            }
 
             GUI.color = new Color(0.6f, 0.6f, 0.6f);
             Widgets.Label(new Rect(x, y, labelW, LineH),

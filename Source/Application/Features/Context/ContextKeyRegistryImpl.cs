@@ -23,13 +23,15 @@ namespace RimMind.Application.Features.Context
                 var old = _keys[meta.Key];
                 _logSink?.Warning($"[RimMind-Core] ContextKey '{meta.Key}' registered by '{old.OwnerMod}' " +
                     $"overwritten by '{meta.OwnerMod}'.");
+                meta.OverrideSource = old.OwnerMod ?? "Unknown";
             }
             _keys[meta.Key] = meta;
         }
 
         public void Register(ContextProviderDef def)
         {
-            var meta = new KeyMeta(def.Key, def.Layer, def.Priority, null, def.OwnerMod ?? "Unknown")
+            var meta = new KeyMeta(def.Key, def.Layer, def.Priority, null, def.OwnerMod ?? "Unknown",
+                cacheScope: def.CacheScope)
             {
                 Def = def
             };

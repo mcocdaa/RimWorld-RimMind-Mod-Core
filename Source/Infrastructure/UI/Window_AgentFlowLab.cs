@@ -66,6 +66,7 @@ namespace RimMind.Infrastructure.UI
 
         private Pawn? _selectedPawn;
         private IAgentControl? _agent;
+        private IScopedAgent? _scopedAgent;
         private ContextSnapshot? _lastSnapshot;
         private string _requestStatus = "";
         private string _lastError = "";
@@ -257,9 +258,9 @@ namespace RimMind.Infrastructure.UI
 
             if (_selectedScope != AgentFlowScope.Pawn)
             {
-                GUI.color = new Color(1f, 0.85f, 0.45f);
-                Widgets.Label(new Rect(Padding, y, w - Padding * 2, Text.LineHeight * 2f),
-                    "RimMind.UI.AgentFlowLab.ScopeUnsupported".Translate());
+                GUI.color = new Color(0.7f, 0.9f, 1f);
+                string scopeHint = "RimMind.UI.AgentFlowLab.ScopeHint".Translate(_selectedScope.ToString());
+                Widgets.Label(new Rect(Padding, y, w - Padding * 2, Text.LineHeight * 2f), scopeHint);
                 GUI.color = Color.white;
                 y += Text.LineHeight * 2f + Padding;
             }
@@ -273,27 +274,74 @@ namespace RimMind.Infrastructure.UI
             GUI.color = selected ? new Color(0.45f, 0.85f, 1f) : Color.white;
             if (Widgets.ButtonText(new Rect(x, y, width, BtnHeight), labelKey.Translate()))
             {
-                _selectedScope = scope;
+                if (_selectedScope != scope)
+                {
+                    _selectedScope = scope;
+                    _scopedAgent = null;
+                    _agent = null;
+                    ResetStepStatuses();
+                }
             }
             GUI.color = Color.white;
             x += width + 6f;
         }
 
-        private bool DrawPawnScopeUnsupported(ref float y, float w)
+        private bool DrawNonPawnScope(ref float y, float w)
         {
             if (_selectedScope == AgentFlowScope.Pawn)
                 return false;
 
-            DrawLabel(ref y, w, "RimMind.UI.AgentFlowLab.ScopeUnsupported".Translate(), GameFont.Small);
-            y += SectionGap;
-            return true;
+            if (_scopedAgent == null)
+            {
+                var manager = RimMindServiceLocator.Get<IScopedAgentManager>();
+                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                if (manager != null && agentBus != null)
+                {
+                    string scopeType = _selectedScope.ToString();
+                    string scopeId = ResolveScopeId(_selectedScope);
+                    int? mapId = _selectedScope == AgentFlowScope.Map ? Find.CurrentMap?.Index : null;
+                    _scopedAgent = manager.GetOrCreate(scopeType, scopeId, agentBus, mapId);
+                    _agent = _scopedAgent;
+                    SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Completed);
+                }
+            }
+
+            if (_scopedAgent != null)
+            {
+                GUI.color = new Color(0.4f, 1f, 0.4f);
+                Widgets.Label(new Rect(Padding, y, w - Padding * 2, LineH),
+                    "RimMind.UI.AgentFlowLab.ScopedAgentActive".Translate(
+                        _scopedAgent.ScopeType, _scopedAgent.ScopeId, _scopedAgent.State));
+                GUI.color = Color.white;
+            }
+            else
+            {
+                GUI.color = new Color(1f, 0.5f, 0.4f);
+                Widgets.Label(new Rect(Padding, y, w - Padding * 2, LineH),
+                    "RimMind.UI.AgentFlowLab.ScopeUnsupported".Translate());
+                GUI.color = Color.white;
+            }
+            y += LineH + SectionGap;
+            return _scopedAgent == null;
+        }
+
+        private string ResolveScopeId(AgentFlowScope scope)
+        {
+            return scope switch
+            {
+                AgentFlowScope.Map => Find.CurrentMap?.ToString() ?? "no_map",
+                AgentFlowScope.Colony => Find.World?.info?.name ?? "colony",
+                AgentFlowScope.Storyteller => Find.Storyteller?.def?.defName ?? "storyteller",
+                AgentFlowScope.Global => "global",
+                _ => "unknown"
+            };
         }
 
         private void DrawPawnSelection(ref float y, float w)
         {
             DrawStepHeader(ref y, w, "RimMind.UI.AgentFlowLab.SelectedPawn", FlowLabStep.SelectTarget);
 
-            if (DrawPawnScopeUnsupported(ref y, w))
+            if (DrawNonPawnScope(ref y, w))
                 return;
 
             if (_selectedPawn != null && _selectedPawn.Destroyed)
@@ -344,7 +392,7 @@ namespace RimMind.Infrastructure.UI
         {
             DrawStepHeader(ref y, w, "RimMind.UI.AgentFlowLab.AgentLifecycle", FlowLabStep.CreateAgent);
 
-            if (DrawPawnScopeUnsupported(ref y, w))
+            if (DrawNonPawnScope(ref y, w))
                 return;
 
             if (_selectedPawn != null)
@@ -435,7 +483,7 @@ namespace RimMind.Infrastructure.UI
         {
             DrawStepHeader(ref y, w, "RimMind.UI.AgentFlowLab.ContextBuilding", FlowLabStep.BuildContext);
 
-            if (DrawPawnScopeUnsupported(ref y, w))
+            if (DrawNonPawnScope(ref y, w))
                 return;
 
             Rect buildBtn = new Rect(Padding, y, 180f, BtnHeight);
@@ -512,7 +560,7 @@ namespace RimMind.Infrastructure.UI
         {
             DrawStepHeader(ref y, w, "RimMind.UI.AgentFlowLab.LlmRequest", FlowLabStep.SendRequest);
 
-            if (DrawPawnScopeUnsupported(ref y, w))
+            if (DrawNonPawnScope(ref y, w))
                 return;
 
             Rect sendBtn = new Rect(Padding, y, 180f, BtnHeight);
@@ -714,7 +762,7 @@ namespace RimMind.Infrastructure.UI
         {
             DrawStepHeader(ref y, w, "RimMind.UI.AgentFlowLab.MechanismMapping", FlowLabStep.MapMechanism);
 
-            if (DrawPawnScopeUnsupported(ref y, w))
+            if (DrawNonPawnScope(ref y, w))
                 return;
 
             Rect dryRunBtn = new Rect(Padding, y, 200f, BtnHeight);
@@ -780,7 +828,6 @@ namespace RimMind.Infrastructure.UI
                             try
                             {
                                 SetStepStatus(FlowLabStep.Execute, StepStatus.Active);
-                                var mechanismRegistry = RimMindServiceLocator.Get<IGameMechanismRegistry>();
                                 if (_lastWriteArgs == null)
                                 {
                                     _lastError = "RimMind.UI.AgentFlowLab.ExecuteNoWriteArgs".Translate();
@@ -788,6 +835,7 @@ namespace RimMind.Infrastructure.UI
                                     return;
                                 }
 
+                                var mechanismRegistry = RimMindServiceLocator.Get<IGameMechanismRegistry>();
                                 if (mechanismRegistry == null)
                                 {
                                     _lastError = "RimMind.UI.AgentFlowLab.ExecuteNoRegistry".Translate();
@@ -795,28 +843,25 @@ namespace RimMind.Infrastructure.UI
                                     return;
                                 }
 
-                                if (mechanismRegistry != null && _lastWriteArgs != null)
+                                var targetMech = mechanismRegistry.FindById(_lastWriteArgs.MechanismId);
+                                if (targetMech != null)
                                 {
-                                    var targetMech = mechanismRegistry.FindById(_lastWriteArgs.MechanismId);
-                                    if (targetMech != null)
+                                    var result = ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType).Result;
+                                    if (result.IsOk)
                                     {
-                                        var result = ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType).Result;
-                                        if (result.IsOk)
-                                        {
-                                            _lastError = $"Execute {_lastOperationType} ok: {result.Value}";
-                                            SetStepStatus(FlowLabStep.Execute, StepStatus.Completed);
-                                        }
-                                        else
-                                        {
-                                            _lastError = result.Error.Message;
-                                            SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
-                                        }
+                                        _lastError = $"Execute {_lastOperationType} ok: {result.Value}";
+                                        SetStepStatus(FlowLabStep.Execute, StepStatus.Completed);
                                     }
                                     else
                                     {
-                                        _lastError = $"Mechanism not found: {_lastWriteArgs.MechanismId}";
+                                        _lastError = result.Error.Message;
                                         SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
                                     }
+                                }
+                                else
+                                {
+                                    _lastError = $"Mechanism not found: {_lastWriteArgs.MechanismId}";
+                                    SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
                                 }
                             }
                             catch (Exception ex)

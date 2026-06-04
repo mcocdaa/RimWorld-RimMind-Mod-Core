@@ -312,7 +312,7 @@ namespace RimMind.Tests.ArchTests.PhaseP4
         }
 
         [Fact]
-        public void FlowLab_Exposes_NonPawn_Scopes_As_Disabled_States()
+        public void FlowLab_Exposes_NonPawn_Scopes_With_ScopedAgent()
         {
             var content = ReadSourceFile(FlowLabRelative);
 
@@ -321,7 +321,24 @@ namespace RimMind.Tests.ArchTests.PhaseP4
             Assert.Contains("AgentFlowScope.Colony", content);
             Assert.Contains("AgentFlowScope.Storyteller", content);
             Assert.Contains("AgentFlowScope.Global", content);
-            Assert.Contains("RimMind.UI.AgentFlowLab.ScopeUnsupported", content);
+            Assert.Contains("IScopedAgent", content);
+            Assert.Contains("IScopedAgentManager", content);
+            Assert.Contains("DrawNonPawnScope", content);
+            Assert.Contains("ResolveScopeId", content);
+            Assert.Contains("RimMind.UI.AgentFlowLab.ScopedAgentActive", content);
+            Assert.Contains("RimMind.UI.AgentFlowLab.ScopeHint", content);
+        }
+
+        [Fact]
+        public void FlowLab_Scope_Switch_Clears_ScopedAgent()
+        {
+            var content = ReadSourceFile(FlowLabRelative);
+
+            int switchIdx = content.IndexOf("_selectedScope = scope;");
+            Assert.True(switchIdx > 0, "Scope switch must exist");
+            string switchBlock = content.Substring(switchIdx - 50, 200);
+            Assert.Contains("_scopedAgent = null", switchBlock);
+            Assert.Contains("_agent = null", switchBlock);
         }
 
     }

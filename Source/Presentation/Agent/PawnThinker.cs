@@ -54,7 +54,9 @@ namespace RimMind.Presentation.Agent
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
             _log = log;
             _proactiveExecutor = new ProactiveBehaviorExecutor(agentBus, log);
-            _contextEnricher = new ThinkContextEnricher(RimMindServiceLocator.Get<InnerVoiceHandler>(), RimMindServiceLocator.Get<IPsychologyWatcher>());
+            _contextEnricher = new ThinkContextEnricher(
+                RimMindServiceLocator.TryGet<InnerVoiceHandler>(),
+                RimMindServiceLocator.TryGet<IPsychologyWatcher>());
             _decisionProcessor = new DecisionProcessor(
                 agent, agentBus, new VerseTickProvider(),
                 RequestFollowUpThink, ResetThinkingState,

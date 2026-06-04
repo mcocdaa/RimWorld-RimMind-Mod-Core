@@ -1,5 +1,8 @@
+using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
+using RimMind.Presentation;
 using RimMind.Presentation.Agent;
 using RimWorld;
 using UnityEngine;
@@ -30,8 +33,41 @@ namespace RimMind.Infrastructure.Verse
             var agent = comp?.Agent;
             if (agent == null)
             {
-                Widgets.Label(new Rect(10f, 10f, WinSize.x - 20f, 30f),
+                float y = 10f;
+                GUI.color = Color.grey;
+                Widgets.Label(new Rect(10f, y, WinSize.x - 20f, 30f),
                     "RimMind.Agent.ITab.NoAgent".Translate());
+                y += 34f;
+
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.6f, 0.6f, 0.6f);
+                string hint = "RimMind.Agent.ITab.NoAgentHint".Translate();
+                float hintH = Text.CalcHeight(hint, WinSize.x - 24f);
+                Widgets.Label(new Rect(12f, y, WinSize.x - 24f, hintH), hint);
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+                y += hintH + 8f;
+
+                Rect createBtn = new Rect(10f, y, 160f, 28f);
+                if (Widgets.ButtonText(createBtn, "RimMind.Agent.ITab.CreateAgent".Translate()))
+                {
+                    var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                    var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                    if (factory != null && agentBus != null)
+                    {
+                        var createdAgent = factory.Create(pawn, agentBus);
+                        if (createdAgent != null)
+                        {
+                            if (comp != null && comp.Agent == null)
+                                comp.Agent = createdAgent;
+                        }
+                    }
+                    else
+                    {
+                        Messages.Message("RimMind.Agent.ITab.CreateFailed".Translate(),
+                            MessageTypeDefOf.RejectInput, false);
+                    }
+                }
                 return;
             }
 

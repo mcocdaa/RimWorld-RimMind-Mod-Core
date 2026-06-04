@@ -17,6 +17,8 @@ namespace RimMind.Application.Common.Interfaces.Context
         public float Priority { get; }
         public string? OwnerMod { get; }
 
+        public CacheScope CacheScope { get; }
+
         /// <summary>
         /// Async provider function. Receives ProviderContext + CancellationToken.
         /// Returns null if the provider has no content for this context.
@@ -53,7 +55,8 @@ namespace RimMind.Application.Common.Interfaces.Context
             int stalenessTicks = 0,
             IReadOnlyList<string>? invalidationTriggers = null,
             bool allowUserPin = true,
-            bool isSensitive = false)
+            bool isSensitive = false,
+            CacheScope cacheScope = CacheScope.Scenario)
         {
             Key = key ?? throw new ArgumentNullException(nameof(key));
             Layer = layer;
@@ -64,6 +67,7 @@ namespace RimMind.Application.Common.Interfaces.Context
             InvalidationTriggers = invalidationTriggers;
             AllowUserPin = allowUserPin;
             IsSensitive = isSensitive;
+            CacheScope = cacheScope;
         }
     }
 

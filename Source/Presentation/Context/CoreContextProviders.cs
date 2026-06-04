@@ -76,7 +76,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(profile?.SystemPrompt);
                 },
                 ownerMod: "Core",
-                stalenessTicks: 0));
+                stalenessTicks: 0,
+                cacheScope: CacheScope.Static));
 
             registry.Register(new ContextProviderDef(
                 key: "npc_identity",
@@ -101,7 +102,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(sb.ToString().TrimEnd());
                 },
                 ownerMod: "Core",
-                stalenessTicks: 0));
+                stalenessTicks: 0,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "npc_commands",
@@ -122,7 +124,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(sb.ToString().TrimEnd());
                 },
                 ownerMod: "Core",
-                stalenessTicks: 0));
+                stalenessTicks: 0,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "world_rules",
@@ -151,7 +154,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(sb2.ToString().TrimEnd());
                 },
                 ownerMod: "Core",
-                stalenessTicks: 0));
+                stalenessTicks: 0,
+                cacheScope: CacheScope.Static));
 
             registry.Register(new ContextProviderDef(
                 key: "npc_task_instruction",
@@ -168,7 +172,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(T("RimMind.Prompt.TaskInstruction.Base"));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 0));
+                stalenessTicks: 0,
+                cacheScope: CacheScope.Static));
 
             // ── L1_Baseline (stalenessTicks: 3000 ~50s) ──
 
@@ -187,7 +192,8 @@ namespace RimMind.Presentation.Context
                     return string.Join("\n", entries.Select(e => e.Content));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 3000));
+                stalenessTicks: 3000,
+                cacheScope: CacheScope.Map));
 
             registry.Register(new ContextProviderDef(
                 key: "pawn_base_info",
@@ -200,7 +206,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractPawnBaseInfo(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 3000));
+                stalenessTicks: 3000,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "fixed_relations",
@@ -213,7 +220,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractFixedRelations(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 3000));
+                stalenessTicks: 3000,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "ideology",
@@ -226,7 +234,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractIdeology(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 3000));
+                stalenessTicks: 3000,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "skills_summary",
@@ -239,7 +248,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractSkillsSummary(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 3000));
+                stalenessTicks: 3000,
+                cacheScope: CacheScope.Pawn));
 
             // ── L2_Environment (stalenessTicks: 1500 ~25s) ──
 
@@ -254,7 +264,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractCurrentArea(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 1500));
+                stalenessTicks: 1500,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "weather",
@@ -267,7 +278,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractWeather(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 1500));
+                stalenessTicks: 1500,
+                cacheScope: CacheScope.Map));
 
             registry.Register(new ContextProviderDef(
                 key: "time_of_day",
@@ -280,7 +292,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractTimeOfDay(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 1500));
+                stalenessTicks: 1500,
+                cacheScope: CacheScope.Map));
 
             registry.Register(new ContextProviderDef(
                 key: "nearby_pawns",
@@ -293,7 +306,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractNearbyPawns(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 1500));
+                stalenessTicks: 1500,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "season",
@@ -306,7 +320,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractSeason(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 1500));
+                stalenessTicks: 1500,
+                cacheScope: CacheScope.Map));
 
             registry.Register(new ContextProviderDef(
                 key: "colony_status",
@@ -319,7 +334,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractColonyStatus(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 1500));
+                stalenessTicks: 1500,
+                cacheScope: CacheScope.Map));
 
             // ── L3_State (stalenessTicks: 750 ~12.5s) ──
 
@@ -334,7 +350,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractHealth(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 750));
+                stalenessTicks: 750,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "mood",
@@ -347,7 +364,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractMood(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 750));
+                stalenessTicks: 750,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "current_job",
@@ -360,7 +378,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractCurrentJob(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 750));
+                stalenessTicks: 750,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "combat_status",
@@ -373,7 +392,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractCombatStatus(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 750));
+                stalenessTicks: 750,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "target_info",
@@ -386,7 +406,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractTargetInfo(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 750));
+                stalenessTicks: 750,
+                cacheScope: CacheScope.Pawn));
 
             registry.Register(new ContextProviderDef(
                 key: "task_progress",
@@ -399,7 +420,8 @@ namespace RimMind.Presentation.Context
                     return NullIfEmpty(ctx.ExtractTaskProgress(pawn));
                 },
                 ownerMod: "Core",
-                stalenessTicks: 750));
+                stalenessTicks: 750,
+                cacheScope: CacheScope.Pawn));
         }
     }
 }

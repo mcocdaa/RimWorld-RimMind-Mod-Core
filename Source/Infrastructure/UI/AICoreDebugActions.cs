@@ -576,7 +576,7 @@ namespace RimMind.Infrastructure.UI
             Check("ToolCall debug window", () => new Window_ToolCallDebug() != null);
             Check("Mechanism status window", () => new Window_MechanismStatus() != null);
             Check("Context key window", () => new Window_ContextKeyDebug() != null);
-            Check("Agent state window", () => new Window_AgentStateDebug(null) != null);
+            Check("Agent state window", () => new Window_AgentStateDebug(pawn: null) != null);
             Check("Agent mode window", () => new Window_AgentModeDebug(null) != null);
             Check("Agent flow lab", () => new Window_AgentFlowLab(null) != null);
             Check("Agent progress float", () => new Window_AgentProgressFloat() != null);

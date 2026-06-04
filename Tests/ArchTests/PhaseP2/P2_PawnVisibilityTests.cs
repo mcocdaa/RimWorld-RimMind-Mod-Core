@@ -28,7 +28,7 @@ namespace RimMind.Tests.ArchTests.PhaseP2
         }
 
         [Fact]
-        public void CompPawnAgent_CreateAgent_Gizmo_Uses_RimMind_Icon()
+        public void CompPawnAgent_CreateAgent_Gizmo_Uses_Independent_Agent_Icon()
         {
             var content = ReadSourceFile(CompPawnAgentRelative);
             var agentNullBlockStart = content.IndexOf("if (Agent == null)");
@@ -36,7 +36,8 @@ namespace RimMind.Tests.ArchTests.PhaseP2
             var yieldBreakPos = content.IndexOf("yield break", agentNullBlockStart);
             Assert.True(yieldBreakPos > 0, "Agent == null block must end with yield break");
             var blockContent = content.Substring(agentNullBlockStart, yieldBreakPos - agentNullBlockStart);
-            Assert.Contains("RimMindIcon", blockContent);
+            Assert.Contains("AgentIcon", blockContent);
+            Assert.DoesNotContain("RimMindIcon", blockContent);
         }
 
         [Fact]
@@ -111,7 +112,7 @@ namespace RimMind.Tests.ArchTests.PhaseP2
         public void Window_AgentStateDebug_Has_Parameterless_Constructor_Chain()
         {
             var content = ReadSourceFile(WindowAgentStateDebugRelative);
-            Assert.Contains("Window_AgentStateDebug() : this(null)", content);
+            Assert.Contains("Window_AgentStateDebug() : this(pawn: null, agent: null)", content);
         }
 
         [Fact]

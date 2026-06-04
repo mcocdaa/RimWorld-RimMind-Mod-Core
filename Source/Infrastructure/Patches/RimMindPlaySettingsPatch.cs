@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using HarmonyLib;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -43,11 +42,11 @@ namespace RimMind.Infrastructure.Patches
             }
             else if (control)
             {
-                Find.WindowStack.Add(new Window_RequestLog());
+                Find.WindowStack.Add(new Window_RimMindHub());
             }
             else
             {
-                OpenCoreMenu();
+                Find.WindowStack.Add(new Window_RimMindHub());
             }
 
             _iconState = IsAnyToggleActive();
@@ -62,32 +61,6 @@ namespace RimMind.Infrastructure.Patches
                 if (toggle.IsActive) return true;
             }
             return false;
-        }
-
-        private static void OpenCoreMenu()
-        {
-            Pawn? selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
-            var options = new List<FloatMenuOption>
-            {
-                new FloatMenuOption("RimMind.UI.OverlayMenu.RequestLog".Translate(), () =>
-                    Find.WindowStack.Add(new Window_RequestLog())),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.ToolCallDebug".Translate(), () =>
-                    Find.WindowStack.Add(new Window_ToolCallDebug())),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.MechanismStatus".Translate(), () =>
-                    Find.WindowStack.Add(new Window_MechanismStatus())),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.AgentModeDebug".Translate(), () =>
-                    Find.WindowStack.Add(new Window_AgentModeDebug(selectedPawn))),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.AgentState".Translate(), () =>
-                    Find.WindowStack.Add(new Window_AgentStateDebug(selectedPawn))),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.ContextKeys".Translate(), () =>
-                    Find.WindowStack.Add(new Window_ContextKeyDebug())),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.AgentFlowLab".Translate(), () =>
-                    Find.WindowStack.Add(new Window_AgentFlowLab(selectedPawn))),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.AgentProgress".Translate(), () =>
-                    Find.WindowStack.Add(new Window_AgentProgressFloat())),
-                new FloatMenuOption("RimMind.UI.OverlayMenu.Settings".Translate(), OpenSettings)
-            };
-            Find.WindowStack.Add(new FloatMenu(options));
         }
 
         private static void OpenSettings()

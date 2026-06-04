@@ -28,8 +28,8 @@ namespace RimMind.Infrastructure.Verse
     {
         public IAgentControl? Agent { get; internal set; }
 
-        private static readonly Texture2D RimMindIcon =
-            ContentFinder<Texture2D>.Get("UI/RimMind/Icon", reportFailure: false) ?? BaseContent.BadTex;
+        private static Texture2D AgentIcon =>
+            ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false) ?? BaseContent.BadTex;
 
         private IPawnAgentFactory? _cachedFactory;
         private IAgentBus? _cachedAgentBus;
@@ -99,7 +99,7 @@ namespace RimMind.Infrastructure.Verse
                 {
                     defaultLabel = "RimMind.Agent.Gizmo.CreateAgent".Translate(),
                     defaultDesc = "RimMind.Agent.Gizmo.CreateAgentDesc".Translate(),
-                    icon = RimMindIcon,
+                    icon = AgentIcon,
                     action = () =>
                     {
                         var factory = GetFactory();
@@ -132,7 +132,7 @@ namespace RimMind.Infrastructure.Verse
                 {
                     defaultLabel = "RimMind.Agent.Gizmo.ViewState".Translate(),
                     defaultDesc = "RimMind.Agent.Gizmo.ViewStateDesc".Translate(),
-                    icon = RimMindIcon,
+                    icon = AgentIcon,
                     action = () =>
                     {
                         Find.WindowStack.Add(new Window_AgentStateDebug(Pawn));
@@ -165,7 +165,7 @@ namespace RimMind.Infrastructure.Verse
             {
                 defaultLabel = "RimMind.Agent.Gizmo.ViewState".Translate(),
                 defaultDesc = "RimMind.Agent.Gizmo.ViewStateDesc".Translate(),
-                icon = RimMindIcon,
+                icon = AgentIcon,
                 action = () =>
                 {
                     Find.WindowStack.Add(new Window_AgentStateDebug(Pawn));
