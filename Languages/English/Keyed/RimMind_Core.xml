@@ -16,7 +16,7 @@
   <RimMind.UI.DebugLog.QueueWait>queueWait</RimMind.UI.DebugLog.QueueWait>
   <RimMind.UI.Empty>(empty)</RimMind.UI.Empty>
   <!-- AITogglePatch.cs -->
-  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\nClick to open Agent Hub\nShift+Click to open mod settings\nCtrl+Click to open Agent Hub</RimMind.Presentation.Toggle.Tooltip>
+  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\nClick to toggle request overlay\nShift+Click to open mod settings\nCtrl+Click to open the debug center</RimMind.Presentation.Toggle.Tooltip>
   <!-- AICoreSettingsUI.cs - Tab labels -->
   <RimMind.Settings.Tab.Api>API Config</RimMind.Settings.Tab.Api>
   <RimMind.Settings.Tab.Context>Context Filter</RimMind.Settings.Tab.Context>
@@ -28,6 +28,7 @@
   <RimMind.Settings.Provider.Player2>Player2</RimMind.Settings.Provider.Player2>
   <RimMind.Settings.ApiKey>API Key</RimMind.Settings.ApiKey>
   <RimMind.Settings.ApiKey.Desc>Your AI provider's API key for authentication.</RimMind.Settings.ApiKey.Desc>
+  <RimMind.Settings.ApiKey.Saved>Saved ({0} chars). Click Show to edit.</RimMind.Settings.ApiKey.Saved>
   <RimMind.Settings.ApiEndpoint>API Endpoint</RimMind.Settings.ApiEndpoint>
   <RimMind.Settings.ApiEndpoint.Desc>AI service API address. Supports OpenAI-compatible interfaces (e.g. DeepSeek, local Ollama).</RimMind.Settings.ApiEndpoint.Desc>
   <RimMind.Settings.ModelName>Model Name</RimMind.Settings.ModelName>
@@ -465,6 +466,8 @@
   <RimMind.UI.AgentModeDebug.ModeChange>{0}: {1} → {2}</RimMind.UI.AgentModeDebug.ModeChange>
   <RimMind.UI.AgentModeDebug.RegisteredModes>Registered Modes</RimMind.UI.AgentModeDebug.RegisteredModes>
   <RimMind.UI.AgentModeDebug.ModeEntry>{0} - {1}</RimMind.UI.AgentModeDebug.ModeEntry>
+  <RimMind.UI.AgentModeDebug.PawnList>Pawn List</RimMind.UI.AgentModeDebug.PawnList>
+  <RimMind.UI.AgentModeDebug.ModeDetails>Mode Details</RimMind.UI.AgentModeDebug.ModeDetails>
   <RimMind.UI.AgentModeDebug.SwitchTo>Switch to:</RimMind.UI.AgentModeDebug.SwitchTo>
   <!-- ITab_Pawn_Agent.cs -->
   <RimMind.Agent.ITab.Label>Agent</RimMind.Agent.ITab.Label>
@@ -478,7 +481,7 @@
   <RimMind.Agent.ITab.History>Behavior History</RimMind.Agent.ITab.History>
   <!-- RimMindOverlayGameComponent.cs -->
   <RimMind.UI.OverlayButton.Label>RimMind</RimMind.UI.OverlayButton.Label>
-  <RimMind.UI.OverlayMenu.AgentHub>Agent Hub</RimMind.UI.OverlayMenu.AgentHub>
+  <RimMind.UI.OverlayMenu.AgentHub>Debug Center</RimMind.UI.OverlayMenu.AgentHub>
   <RimMind.UI.OverlayMenu.RequestLog>AI Request Log</RimMind.UI.OverlayMenu.RequestLog>
   <RimMind.UI.OverlayMenu.AIDebugLog>AI Debug Log</RimMind.UI.OverlayMenu.AIDebugLog>
   <RimMind.UI.OverlayMenu.ToolCallDebug>ToolCall Debug</RimMind.UI.OverlayMenu.ToolCallDebug>
@@ -489,15 +492,15 @@
   <RimMind.UI.OverlayMenu.AgentFlowLab>Agent Flow Lab</RimMind.UI.OverlayMenu.AgentFlowLab>
   <RimMind.UI.OverlayMenu.Settings>Settings</RimMind.UI.OverlayMenu.Settings>
   <!-- MainTabWindow_RimMindHub.cs -->
-  <RimMind.UI.Hub.Title>RimMind Agent Control</RimMind.UI.Hub.Title>
+  <RimMind.UI.Hub.Title>RimMind Debug Center</RimMind.UI.Hub.Title>
   <RimMind.UI.Hub.Tab.Overview>Status</RimMind.UI.Hub.Tab.Overview>
-  <RimMind.UI.Hub.Tab.Requests>Requests</RimMind.UI.Hub.Tab.Requests>
-  <RimMind.UI.Hub.Tab.Agent>Agent Tools</RimMind.UI.Hub.Tab.Agent>
-  <RimMind.UI.Hub.Tab.Debug>Debug</RimMind.UI.Hub.Tab.Debug>
-  <RimMind.UI.Hub.SelectedPawn>Selected pawn: {0}</RimMind.UI.Hub.SelectedPawn>
+  <RimMind.UI.Hub.Tab.Requests>AI Requests</RimMind.UI.Hub.Tab.Requests>
+  <RimMind.UI.Hub.Tab.Agent>Agent Console</RimMind.UI.Hub.Tab.Agent>
+  <RimMind.UI.Hub.Tab.Debug>System Debug</RimMind.UI.Hub.Tab.Debug>
+  <RimMind.UI.Hub.SelectedPawn>Selected pawn</RimMind.UI.Hub.SelectedPawn>
   <RimMind.UI.Hub.NoPawn>No pawn selected</RimMind.UI.Hub.NoPawn>
-  <RimMind.UI.Hub.AgentSummary>Agents on map: {0} ({1} active)</RimMind.UI.Hub.AgentSummary>
-  <RimMind.UI.Hub.PendingRequests>Pending AI requests: {0}</RimMind.UI.Hub.PendingRequests>
+  <RimMind.UI.Hub.AgentSummary>Agents on map</RimMind.UI.Hub.AgentSummary>
+  <RimMind.UI.Hub.PendingRequests>Pending AI requests</RimMind.UI.Hub.PendingRequests>
   <RimMind.UI.Hub.QueueMissing>Queue: not initialized</RimMind.UI.Hub.QueueMissing>
   <RimMind.UI.Hub.RequestPending>Pending Requests</RimMind.UI.Hub.RequestPending>
   <RimMind.UI.Hub.RequestResults>AI Results</RimMind.UI.Hub.RequestResults>
@@ -510,6 +513,8 @@
   <RimMind.UI.Hub.ToolCallDebug>ToolCall Debug</RimMind.UI.Hub.ToolCallDebug>
   <RimMind.UI.Hub.MechanismStatus>Mechanism Status</RimMind.UI.Hub.MechanismStatus>
   <RimMind.UI.Hub.ContextKeys>Context Keys</RimMind.UI.Hub.ContextKeys>
+  <RimMind.UI.Hub.QueueState>Queue State</RimMind.UI.Hub.QueueState>
+  <RimMind.UI.Hub.QuickActions>Quick Actions</RimMind.UI.Hub.QuickActions>
   <RimMind.UI.Hub.Settings>Settings</RimMind.UI.Hub.Settings>
   <RimMind.UI.Hub.SelectPawnState>Refresh Selection</RimMind.UI.Hub.SelectPawnState>
   <!-- Window_AgentStateDebug.cs -->
@@ -543,6 +548,11 @@
   <RimMind.UI.AgentStateDebug.SuccessRate>Success Rate: {0}</RimMind.UI.AgentStateDebug.SuccessRate>
   <RimMind.UI.AgentStateDebug.RecentBehavior>Recent Behavior</RimMind.UI.AgentStateDebug.RecentBehavior>
   <RimMind.UI.AgentStateDebug.NoBehaviorHistory>No behavior history</RimMind.UI.AgentStateDebug.NoBehaviorHistory>
+  <RimMind.UI.AgentStateDebug.SectionIdentity>Identity</RimMind.UI.AgentStateDebug.SectionIdentity>
+  <RimMind.UI.AgentStateDebug.ScopeType>Scope Type</RimMind.UI.AgentStateDebug.ScopeType>
+  <RimMind.UI.AgentStateDebug.SectionState>State</RimMind.UI.AgentStateDebug.SectionState>
+  <RimMind.UI.AgentStateDebug.SectionPawnInfo>Pawn Info</RimMind.UI.AgentStateDebug.SectionPawnInfo>
+  <RimMind.UI.AgentStateDebug.SectionAgentState>Agent State</RimMind.UI.AgentStateDebug.SectionAgentState>
   <RimMind.UI.AgentStateDebug.DestroyScopedAgent>Destroy Agent</RimMind.UI.AgentStateDebug.DestroyScopedAgent>
   <!-- Window_ContextKeyDebug.cs -->
   <RimMind.UI.ContextKeyDebug.Title>Context Key Debug</RimMind.UI.ContextKeyDebug.Title>

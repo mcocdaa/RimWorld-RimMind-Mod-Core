@@ -6,6 +6,20 @@ namespace UnityEngine
 {
     /// <summary>Stub for Unity Texture2D used in test compilation.</summary>
     public class Texture2D { }
+
+    /// <summary>Stub for Unity Color struct used in UI theme tests.</summary>
+    public struct Color
+    {
+        public float r, g, b, a;
+        public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; }
+        public static Color white => new(1f, 1f, 1f, 1f);
+        public static bool operator ==(Color lhs, Color rhs) =>
+            System.Math.Abs(lhs.r - rhs.r) < 1e-6f && System.Math.Abs(lhs.g - rhs.g) < 1e-6f &&
+            System.Math.Abs(lhs.b - rhs.b) < 1e-6f && System.Math.Abs(lhs.a - rhs.a) < 1e-6f;
+        public static bool operator !=(Color lhs, Color rhs) => !(lhs == rhs);
+        public override bool Equals(object? obj) => obj is Color c && this == c;
+        public override int GetHashCode() => HashCode.Combine(r, g, b, a);
+    }
 }
 
 namespace RimWorld

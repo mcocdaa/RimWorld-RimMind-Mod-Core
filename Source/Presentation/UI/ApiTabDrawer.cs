@@ -112,12 +112,16 @@ namespace RimMind.Presentation.UI
                 Rect toggle = new Rect(field.xMax + 4f, row.y, btnW, row.height);
 
                 if (_showApiKey)
-                    s.ApiKey = Widgets.TextField(field, s.ApiKey);
+                {
+                    s.ApiKey = Widgets.TextField(field, s.ApiKey ?? string.Empty);
+                }
                 else
                 {
-                    GUI.enabled = false;
-                    Widgets.TextField(field, new string('*', s.ApiKey?.Length ?? 0));
-                    GUI.enabled = true;
+                    string hiddenLabel = string.IsNullOrEmpty(s.ApiKey)
+                        ? string.Empty
+                        : "RimMind.Settings.ApiKey.Saved".Translate(s.ApiKey.Length).ToString();
+                    Widgets.DrawBoxSolid(field, new Color(0.08f, 0.08f, 0.08f, 0.35f));
+                    Widgets.Label(new Rect(field.x + 6f, field.y + 4f, field.width - 12f, field.height), hiddenLabel);
                 }
                 if (Widgets.ButtonText(toggle, _showApiKey ? "RimMind.Settings.Hide".Translate() : "RimMind.Settings.Show".Translate()))
                     _showApiKey = !_showApiKey;
@@ -156,12 +160,16 @@ namespace RimMind.Presentation.UI
                 Rect toggle = new Rect(field.xMax + 4f, row.y, btnW, row.height);
 
                 if (_showApiKey)
-                    s.ApiKey = Widgets.TextField(field, s.ApiKey);
+                {
+                    s.ApiKey = Widgets.TextField(field, s.ApiKey ?? string.Empty);
+                }
                 else
                 {
-                    GUI.enabled = false;
-                    Widgets.TextField(field, new string('*', s.ApiKey?.Length ?? 0));
-                    GUI.enabled = true;
+                    string hiddenLabel = string.IsNullOrEmpty(s.ApiKey)
+                        ? string.Empty
+                        : "RimMind.Settings.ApiKey.Saved".Translate(s.ApiKey.Length).ToString();
+                    Widgets.DrawBoxSolid(field, new Color(0.08f, 0.08f, 0.08f, 0.35f));
+                    Widgets.Label(new Rect(field.x + 6f, field.y + 4f, field.width - 12f, field.height), hiddenLabel);
                 }
                 if (Widgets.ButtonText(toggle, _showApiKey ? "RimMind.Settings.Hide".Translate() : "RimMind.Settings.Show".Translate()))
                     _showApiKey = !_showApiKey;

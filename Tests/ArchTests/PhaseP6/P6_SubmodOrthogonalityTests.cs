@@ -378,7 +378,7 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         public void AgentStateDebug_ScopedAgentDetail_Shows_Scope_Info()
         {
             var content = ReadCoreSource("Infrastructure/UI/Window_AgentStateDebug.cs");
-            Assert.Contains("ScopedAgentTitle", content);
+            Assert.Contains("SectionIdentity", content);
             Assert.Contains("ScopeId", content);
             Assert.Contains("SuccessRate", content);
             Assert.Contains("RecentBehavior", content);

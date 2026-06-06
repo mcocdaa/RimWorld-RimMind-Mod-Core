@@ -21,6 +21,10 @@ namespace RimMind.Presentation.UI
     {
         private static void RunConnectionTest(ISettingsProvider s)
         {
+            NormalizeConnectionSettings(s);
+            GetClientManager()?.InvalidateCache();
+            Log.Message(BuildConnectionDebugLine("start", s, null, null));
+
             if (!AIProviderRegistry.RequiresApiKey(s.Provider))
             {
                 _testStatus = "RimMind.Settings.Status.Testing".Translate();
@@ -31,6 +35,7 @@ namespace RimMind.Presentation.UI
                     try
                     {
                         var client = GetClientManager()?.GetPlayer2Client();
+                        LogFromBackground(BuildConnectionDebugLine("player2-client", s, client, client?.IsConfigured()));
                         if (client == null)
                         {
                             LongEventHandler.ExecuteWhenFinished(() =>
@@ -86,6 +91,7 @@ namespace RimMind.Presentation.UI
 
             if (!s.IsOpenAIConfigured())
             {
+                Log.Message(BuildConnectionDebugLine("openai-settings-not-configured", s, null, null));
                 _testStatus = "RimMind.Settings.Status.NotConfigured".Translate();
                 _testStatusColor = Color.yellow;
                 return;
@@ -98,18 +104,8 @@ namespace RimMind.Presentation.UI
             {
                 try
                 {
-                    var openAISettings = GetOpenAISettings();
-                    if (openAISettings == null)
-                    {
-                        LongEventHandler.ExecuteWhenFinished(() =>
-                        {
-                            _testStatus = "RimMind.Settings.Status.NotConfigured".Translate();
-                            _testStatusColor = Color.yellow;
-                        });
-                        return;
-                    }
-
                     var client = GetClientManager()?.GetClient();
+                    LogFromBackground(BuildConnectionDebugLine("openai-client", s, client, client?.IsConfigured()));
                     if (client == null)
                     {
                         LongEventHandler.ExecuteWhenFinished(() =>
@@ -160,6 +156,26 @@ namespace RimMind.Presentation.UI
                     });
                 }
             });
+        }
+
+        private static void NormalizeConnectionSettings(ISettingsProvider s)
+        {
+            s.ApiKey = (s.ApiKey ?? string.Empty).Trim();
+            s.ApiEndpoint = (s.ApiEndpoint ?? string.Empty).Trim();
+            s.ModelName = (s.ModelName ?? string.Empty).Trim();
+            s.Player2RemoteUrl = (s.Player2RemoteUrl ?? string.Empty).Trim();
+        }
+
+        private static string BuildConnectionDebugLine(string stage, ISettingsProvider s, IAIClient? client, bool? configured)
+        {
+            string clientType = client == null ? "(null)" : client.GetType().Name;
+            string configuredText = configured.HasValue ? configured.Value.ToString() : "(n/a)";
+            return $"[RimMind-Core] TestConnection {stage}: provider={s.Provider}, requiresKey={AIProviderRegistry.RequiresApiKey(s.Provider)}, keyLen={(s.ApiKey ?? string.Empty).Length}, endpointLen={(s.ApiEndpoint ?? string.Empty).Length}, model={s.ModelName}, client={clientType}, clientConfigured={configuredText}";
+        }
+
+        private static void LogFromBackground(string message)
+        {
+            LongEventHandler.ExecuteWhenFinished(() => Log.Message(message));
         }
 
         private static float EstimateApiHeight()

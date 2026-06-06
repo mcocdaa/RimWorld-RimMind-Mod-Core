@@ -150,8 +150,8 @@ namespace RimMind.Presentation.Runtime
             var historyManager = new HistoryManager(tickProvider);
             RimMindServiceLocator.Register<IHistoryManager>(historyManager);
 
-            var extensionRegistry = new ExtensionRegistry<IAIClientFactory>();
-            var clientManager = new ClientManager(resolvedSettings, extensionRegistry);
+            var clientFactoryRegistry = GetExtensionRegistry<IAIClientFactory>();
+            var clientManager = new ClientManager(resolvedSettings, clientFactoryRegistry);
             RimMindServiceLocator.Register<IClientManager>(clientManager);
 
             var sensorManager = new SensorManager();
@@ -302,7 +302,6 @@ namespace RimMind.Presentation.Runtime
             // NOTE: When remote + local clients are both configured, use HybridAIClient
             // (Infrastructure.Services.Clients.Hybrid) to get remote-first with local fallback
             // on retryable errors (transient, circuit-open, timeout).
-            var clientFactoryRegistry = GetExtensionRegistry<IAIClientFactory>();
             var aiDebugLog = RimMindServiceLocator.TryGet<IAIDebugLog>();
             var resolvedOpenAISettings = openAISettings ?? RimMindServiceLocator.TryGet<IOpenAISettings>();
             Infrastructure.DependencyInjection.RegisterBuiltinClientFactories(clientFactoryRegistry, logSink, aiDebugLog, resolvedOpenAISettings);

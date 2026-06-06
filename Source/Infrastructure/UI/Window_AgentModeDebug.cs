@@ -10,6 +10,7 @@ using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Events;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation;
+using RimMind.Presentation.UI;
 using UnityEngine;
 using Verse;
 
@@ -17,13 +18,10 @@ namespace RimMind.Infrastructure.UI
 {
     public class Window_AgentModeDebug : Window
     {
-        private Vector2 _scrollPos = Vector2.zero;
-        private Vector2 _historyScrollPos = Vector2.zero;
+        private Vector2 _pawnListScrollPos = Vector2.zero;
+        private Vector2 _detailScrollPos = Vector2.zero;
         private Vector2 _modesScrollPos = Vector2.zero;
-        private const float Padding = 6f;
-        private const float LineH = 22f;
-        private const float BtnHeight = 24f;
-        private const int MaxHistoryEntries = 20;
+        private Vector2 _historyScrollPos = Vector2.zero;
 
         private int _selectedPawnIndex = -1;
         private int _targetModeIndex;
@@ -32,7 +30,7 @@ namespace RimMind.Infrastructure.UI
         private List<Pawn> _cachedPawns = new();
         private Pawn? _initialPawn;
 
-        public override Vector2 InitialSize => new Vector2(720f, 560f);
+        public override Vector2 InitialSize => new Vector2(740f, 580f);
 
         public Window_AgentModeDebug() : this(null) { }
 
@@ -53,35 +51,24 @@ namespace RimMind.Infrastructure.UI
             EnsureSubscribed();
             RefreshPawnCache();
 
-            float headerH = 30f;
-            float pawnListH = 100f;
-            float detailH = 180f;
-            float modesHeaderH = LineH + Padding;
-            float modesH = 60f;
-            float historyHeaderH = LineH + Padding;
-            float historyH = inRect.height - headerH - pawnListH - detailH - modesHeaderH - modesH - historyHeaderH - Padding * 7;
+            float y = RimMindUI.DrawWindowHeader(inRect, "RimMind.UI.AgentModeDebug.Title".Translate());
 
-            Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, headerH);
-            float y = headerRect.yMax + Padding;
-            Rect pawnListRect = new Rect(inRect.x, y, inRect.width, pawnListH);
-            y = pawnListRect.yMax + Padding;
-            Rect detailRect = new Rect(inRect.x, y, inRect.width, detailH);
-            y = detailRect.yMax + Padding;
-            Rect modesHeaderRect = new Rect(inRect.x, y, inRect.width, modesHeaderH);
-            y = modesHeaderRect.yMax + Padding;
-            Rect modesRect = new Rect(inRect.x, y, inRect.width, modesH);
-            y = modesRect.yMax + Padding;
-            Rect historyHeaderRect = new Rect(inRect.x, y, inRect.width, historyHeaderH);
-            y = historyHeaderRect.yMax + Padding;
-            Rect historyRect = new Rect(inRect.x, y, inRect.width, Mathf.Max(historyH, 40f));
+            // Left-right split: Pawn list on left, detail on right
+            float listW = 220f;
+            float detailW = inRect.width - listW - RimMindUI.Padding * 2;
+            float bodyH = inRect.height - y + inRect.y;
 
-            DrawHeader(headerRect);
+            Rect pawnListRect = new Rect(inRect.x, y, listW, bodyH);
+            Rect detailRect = new Rect(inRect.x + listW + RimMindUI.Padding, y, detailW, bodyH);
+
+            // Divider line between panels
+            Widgets.DrawLine(
+                new Vector2(inRect.x + listW + RimMindUI.Padding * 0.5f, y),
+                new Vector2(inRect.x + listW + RimMindUI.Padding * 0.5f, inRect.yMax),
+                RimMindUI.ColorDivider, RimMindUI.DividerThickness);
+
             DrawPawnList(pawnListRect);
-            DrawSelectedPawnDetail(detailRect);
-            DrawRegisteredModesHeader(modesHeaderRect);
-            DrawRegisteredModes(modesRect);
-            DrawHistoryHeader(historyHeaderRect);
-            DrawHistory(historyRect);
+            DrawDetailPanel(detailRect);
         }
 
         public override void PreClose()
@@ -89,6 +76,268 @@ namespace RimMind.Infrastructure.UI
             Unsubscribe();
             base.PreClose();
         }
+
+        #region Pawn List (Left Panel)
+
+        private void DrawPawnList(Rect rect)
+        {
+            // Section header
+            float y = rect.y;
+            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.AgentModeDebug.PawnList".Translate()) + rect.y;
+
+            Rect listRect = new Rect(rect.x, y, rect.width, rect.height - (y - rect.y));
+
+            if (_cachedPawns.Count == 0)
+            {
+                RimMindUI.DrawEmptyState(listRect, "RimMind.UI.AgentModeDebug.NoPawns".Translate(),
+                    "RimMind.UI.AgentModeDebug.NoPawnsHint".Translate());
+                return;
+            }
+
+            float contentH = _cachedPawns.Count * RimMindUI.LineHeight;
+            Rect viewRect = new Rect(listRect.x, listRect.y, listRect.width - 16f, contentH);
+            Widgets.BeginScrollView(listRect, ref _pawnListScrollPos, viewRect);
+
+            float rowY = listRect.y;
+            for (int i = 0; i < _cachedPawns.Count; i++)
+            {
+                Pawn pawn = _cachedPawns[i];
+                var comp = CompPawnAgent.GetComp(pawn);
+                if (comp?.Agent == null) continue;
+
+                IAgentControl agent = comp.Agent;
+                string label = $"{pawn.Name?.ToStringShort ?? pawn.LabelShort}";
+
+                Rect rowRect = new Rect(viewRect.x, rowY, viewRect.width, RimMindUI.LineHeight);
+                if (i == _selectedPawnIndex)
+                    Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorTabActive);
+
+                if (Widgets.ButtonInvisible(rowRect))
+                    _selectedPawnIndex = i;
+
+                // Pawn name
+                GUI.color = i == _selectedPawnIndex ? RimMindUI.ColorHeader : RimMindUI.ColorValue;
+                Widgets.Label(new Rect(rowRect.x + RimMindUI.Padding, rowRect.y, rowRect.width * 0.55f, RimMindUI.LineHeight), label);
+
+                // Mode badge
+                string modeLabel = (string)agent.CurrentModeId;
+                GUI.color = i == _selectedPawnIndex ? RimMindUI.ColorActive : RimMindUI.ColorMuted;
+                Text.Font = GameFont.Tiny;
+                Widgets.Label(new Rect(rowRect.x + rowRect.width * 0.55f, rowRect.y, rowRect.width * 0.45f, RimMindUI.LineHeight), modeLabel);
+                Text.Font = GameFont.Small;
+                GUI.color = Color.white;
+
+                rowY += RimMindUI.LineHeight;
+            }
+
+            Widgets.EndScrollView();
+        }
+
+        #endregion
+
+        #region Detail Panel (Right Panel)
+
+        private void DrawDetailPanel(Rect rect)
+        {
+            if (_selectedPawnIndex < 0 || _selectedPawnIndex >= _cachedPawns.Count)
+            {
+                RimMindUI.DrawEmptyState(rect, "RimMind.UI.AgentModeDebug.SelectPawn".Translate());
+                return;
+            }
+
+            Pawn pawn = _cachedPawns[_selectedPawnIndex];
+            var comp = CompPawnAgent.GetComp(pawn);
+            if (comp?.Agent == null) return;
+
+            IAgentControl agent = comp.Agent;
+            IAgentMode currentMode = agent.CurrentMode;
+
+            float contentH = CalculateDetailContentHeight(agent, currentMode, rect.width);
+            Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
+            Widgets.BeginScrollView(rect, ref _detailScrollPos, viewRect);
+
+            float y = viewRect.y;
+
+            // ── Section: Agent Info ──
+            y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, pawn.Name?.ToStringShort ?? pawn.LabelShort) + viewRect.y;
+
+            var (stateTextColor, stateBgColor) = RimMindUI.GetStateBadgeColors(agent.IsActive, agent.State == Domain.Enums.AgentState.Paused);
+            string stateKey = $"RimMind.Agent.State.{agent.State}";
+            y = RimMindUI.DrawStatusBadge(viewRect, y - viewRect.y, stateKey.Translate(), stateTextColor, stateBgColor) + viewRect.y;
+
+            y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.Mode".Translate(), (string)agent.CurrentModeId) + viewRect.y;
+
+            // ── Section: Mode Details ──
+            y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
+            y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.ModeDetails".Translate()) + viewRect.y;
+
+            if (currentMode != null)
+            {
+                var toolRegistry = RimMindAPI.Tools;
+                IReadOnlyList<string> allowedTools = toolRegistry != null
+                    ? currentMode.AllowedToolIds(toolRegistry)
+                    : Array.Empty<string>();
+                string toolsStr = allowedTools.Count > 0 ? string.Join(", ", allowedTools) : "-";
+                y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.AllowedTools".Translate(), toolsStr) + viewRect.y;
+
+                bool shouldThink = currentMode.ShouldThink(agent, Array.Empty<PerceptionBufferEntry>());
+                string thinkLabel = shouldThink.ToString();
+                Color thinkColor = shouldThink ? RimMindUI.ColorActive : RimMindUI.ColorMuted;
+                y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.ShouldThink".Translate(), thinkLabel) + viewRect.y;
+            }
+
+            // ── Section: Mode Switch ──
+            y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
+            y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.SwitchTo".Translate()) + viewRect.y;
+            y = DrawModeSwitchButtons(viewRect, y, agent);
+
+            // ── Section: Registered Modes ──
+            y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
+            y = DrawRegisteredModesSection(viewRect, y);
+
+            // ── Section: History ──
+            y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
+            y = DrawHistorySection(viewRect, y);
+
+            Widgets.EndScrollView();
+        }
+
+        private float DrawModeSwitchButtons(Rect viewRect, float y, IAgentControl agent)
+        {
+            IExtensionRegistry<IAgentMode>? modeRegistry = RimMindAPI.Modes;
+            if (modeRegistry == null) return y;
+
+            IReadOnlyList<IAgentMode> modes = modeRegistry.All;
+            if (modes.Count == 0) return y;
+
+            if (_targetModeIndex < 0 || _targetModeIndex >= modes.Count)
+                _targetModeIndex = 0;
+
+            float x = viewRect.x + RimMindUI.Padding;
+            float rowY = y;
+            float maxX = viewRect.x + viewRect.width - RimMindUI.Padding;
+
+            for (int i = 0; i < modes.Count; i++)
+            {
+                string modeLabel = (string)modes[i].ModeId;
+                float btnW = Text.CalcSize(modeLabel).x + RimMindUI.Padding * 4;
+
+                if (x + btnW > maxX)
+                {
+                    x = viewRect.x + RimMindUI.Padding;
+                    rowY += RimMindUI.BtnHeight + RimMindUI.Padding * 0.5f;
+                }
+
+                Rect btnRect = new Rect(x, rowY, btnW, RimMindUI.BtnHeight);
+                if (i == _targetModeIndex)
+                    Widgets.DrawBoxSolid(btnRect, RimMindUI.ColorTabActive);
+
+                if (Widgets.ButtonText(btnRect, modeLabel))
+                    _targetModeIndex = i;
+
+                x += btnW + RimMindUI.Padding * 0.5f;
+            }
+
+            rowY += RimMindUI.BtnHeight + RimMindUI.Padding;
+
+            Rect switchBtnRect = new Rect(viewRect.x + RimMindUI.Padding, rowY, 120f, RimMindUI.BtnHeight);
+            if (Widgets.ButtonText(switchBtnRect, "RimMind.UI.AgentModeDebug.SwitchMode".Translate()))
+            {
+                if (_targetModeIndex >= 0 && _targetModeIndex < modes.Count)
+                {
+                    agent.SwitchMode(modes[_targetModeIndex].ModeId);
+                }
+            }
+
+            return rowY + RimMindUI.BtnHeight + RimMindUI.Padding;
+        }
+
+        private float DrawRegisteredModesSection(Rect viewRect, float y)
+        {
+            y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.RegisteredModes".Translate()) + viewRect.y;
+
+            IExtensionRegistry<IAgentMode>? modeRegistry = RimMindAPI.Modes;
+            if (modeRegistry == null || modeRegistry.All.Count == 0)
+            {
+                y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.NoModes".Translate(), RimMindUI.ColorMuted) + viewRect.y;
+                return y;
+            }
+
+            foreach (var mode in modeRegistry.All)
+            {
+                string entry = "RimMind.UI.AgentModeDebug.ModeEntry".Translate((string)mode.ModeId, mode.DisplayName);
+                y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, (string)mode.ModeId, mode.DisplayName) + viewRect.y;
+            }
+
+            return y;
+        }
+
+        private float DrawHistorySection(Rect viewRect, float y)
+        {
+            y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.History".Translate()) + viewRect.y;
+
+            if (_modeChangeHistory.Count == 0)
+            {
+                y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.NoHistory".Translate(), RimMindUI.ColorMuted) + viewRect.y;
+                return y;
+            }
+
+            Text.Font = GameFont.Tiny;
+            for (int i = _modeChangeHistory.Count - 1; i >= 0; i--)
+            {
+                AgentModeChangedEvent evt = _modeChangeHistory[i];
+                string entry = "RimMind.UI.AgentModeDebug.ModeChange".Translate(
+                    evt.NpcId, evt.OldMode, evt.NewMode) + $" [T:{evt.Timestamp}]";
+                y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, entry, RimMindUI.ColorMuted) + viewRect.y;
+            }
+            Text.Font = GameFont.Small;
+
+            return y;
+        }
+
+        private float CalculateDetailContentHeight(IAgentControl agent, IAgentMode? currentMode, float width)
+        {
+            float h = RimMindUI.Padding;
+
+            // Agent Info section
+            h += RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // header
+            h += RimMindUI.LineHeight + RimMindUI.Padding * 0.5f; // badge
+            h += RimMindUI.LineHeight + RimMindUI.Padding * 0.5f; // mode
+
+            // Mode Details section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
+            if (currentMode != null)
+            {
+                h += (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * 2;
+            }
+
+            // Mode Switch section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
+            IExtensionRegistry<IAgentMode>? modeRegistry = RimMindAPI.Modes;
+            if (modeRegistry != null && modeRegistry.All.Count > 0)
+            {
+                h += RimMindUI.BtnHeight + RimMindUI.Padding * 0.5f; // mode buttons row (approximate)
+                h += RimMindUI.BtnHeight + RimMindUI.Padding; // switch button
+            }
+
+            // Registered Modes section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
+            if (modeRegistry != null)
+            {
+                h += modeRegistry.All.Count * (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f);
+            }
+
+            // History section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
+            h += _modeChangeHistory.Count * (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f);
+
+            h += RimMindUI.Padding;
+            return h;
+        }
+
+        #endregion
+
+        #region Bus Subscription
 
         private void EnsureSubscribed()
         {
@@ -119,6 +368,12 @@ namespace RimMind.Infrastructure.UI
                 _modeChangeHistory.RemoveAt(0);
         }
 
+        private const int MaxHistoryEntries = 20;
+
+        #endregion
+
+        #region Pawn Cache
+
         private void RefreshPawnCache()
         {
             _cachedPawns.Clear();
@@ -141,289 +396,6 @@ namespace RimMind.Infrastructure.UI
             }
         }
 
-        private void DrawHeader(Rect rect)
-        {
-            GUI.color = new Color(0.7f, 0.8f, 1f);
-            Text.Font = GameFont.Medium;
-            Widgets.Label(rect, "RimMind.UI.AgentModeDebug.Title".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-        }
-
-        private void DrawPawnList(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.16f, 0.5f));
-
-            if (_cachedPawns.Count == 0)
-            {
-                float centerY = rect.y + rect.height / 2f;
-
-                GUI.color = Color.grey;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(new Rect(rect.x, centerY - 20f, rect.width, LineH),
-                    "RimMind.UI.AgentModeDebug.NoPawns".Translate());
-
-                Text.Font = GameFont.Tiny;
-                GUI.color = new Color(0.6f, 0.6f, 0.6f);
-                string hint = "RimMind.UI.AgentModeDebug.NoPawnsHint".Translate();
-                float hintH = Text.CalcHeight(hint, rect.width - 24f);
-                Widgets.Label(new Rect(rect.x + 12f, centerY + 2f, rect.width - 24f, hintH), hint);
-                Text.Font = GameFont.Small;
-
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                return;
-            }
-
-            float contentH = _cachedPawns.Count * LineH;
-            Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
-            Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
-
-            float y = rect.y;
-            for (int i = 0; i < _cachedPawns.Count; i++)
-            {
-                Pawn pawn = _cachedPawns[i];
-                var comp = CompPawnAgent.GetComp(pawn);
-                if (comp?.Agent == null) continue;
-
-                IAgentControl agent = comp.Agent;
-                string label = $"[{pawn.Name?.ToStringShort ?? pawn.LabelShort}] " +
-                    "RimMind.UI.AgentModeDebug.Mode".Translate((string)agent.CurrentModeId);
-
-                Rect rowRect = new Rect(viewRect.x, y, viewRect.width, LineH);
-                if (i == _selectedPawnIndex)
-                    Widgets.DrawBoxSolid(rowRect, new Color(0.3f, 0.4f, 0.6f, 0.5f));
-
-                if (Widgets.ButtonInvisible(rowRect))
-                    _selectedPawnIndex = i;
-
-                GUI.color = i == _selectedPawnIndex ? new Color(0.85f, 0.9f, 1f) : Color.white;
-                Widgets.Label(new Rect(rowRect.x + Padding, rowRect.y, rowRect.width - Padding * 2, LineH), label);
-                GUI.color = Color.white;
-
-                y += LineH;
-            }
-
-            Widgets.EndScrollView();
-        }
-
-        private void DrawSelectedPawnDetail(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.14f, 0.5f));
-
-            if (_selectedPawnIndex < 0 || _selectedPawnIndex >= _cachedPawns.Count)
-            {
-                GUI.color = Color.grey;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.SelectPawn".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                return;
-            }
-
-            Pawn pawn = _cachedPawns[_selectedPawnIndex];
-            var comp = CompPawnAgent.GetComp(pawn);
-            if (comp?.Agent == null) return;
-
-            IAgentControl agent = comp.Agent;
-            IAgentMode currentMode = agent.CurrentMode;
-            float x = rect.x + Padding;
-            float y = rect.y + Padding;
-            float labelW = rect.width - Padding * 2;
-
-            // Pawn name + mode
-            string nameLine = $"[{pawn.Name?.ToStringShort ?? pawn.LabelShort}] " +
-                "RimMind.UI.AgentModeDebug.Mode".Translate((string)agent.CurrentModeId);
-            GUI.color = new Color(0.85f, 0.9f, 1f);
-            Widgets.Label(new Rect(x, y, labelW, LineH), nameLine);
-            GUI.color = Color.white;
-            y += LineH + Padding;
-
-            // IsActive
-            string activeLabel = agent.IsActive
-                ? "RimMind.UI.AgentModeDebug.Active".Translate()
-                : "RimMind.UI.AgentModeDebug.Inactive".Translate();
-            GUI.color = agent.IsActive ? new Color(0.4f, 1f, 0.4f) : new Color(1f, 0.5f, 0.4f);
-            Widgets.Label(new Rect(x, y, labelW, LineH), activeLabel);
-            GUI.color = Color.white;
-            y += LineH + Padding;
-
-            // AllowedToolIds
-            if (currentMode != null)
-            {
-                var toolRegistry = RimMindAPI.Tools;
-                IReadOnlyList<string> allowedTools = toolRegistry != null
-                    ? currentMode.AllowedToolIds(toolRegistry)
-                    : Array.Empty<string>();
-                string toolsStr = allowedTools.Count > 0 ? string.Join(", ", allowedTools) : "-";
-                string toolsLabel = "RimMind.UI.AgentModeDebug.AllowedTools".Translate(toolsStr);
-                float toolsH = Text.CalcHeight(toolsLabel, labelW);
-                GUI.color = new Color(0.7f, 0.7f, 0.7f);
-                Widgets.Label(new Rect(x, y, labelW, toolsH), toolsLabel);
-                GUI.color = Color.white;
-                y += toolsH + Padding;
-
-                // ShouldThink
-                bool shouldThink = currentMode.ShouldThink(agent, Array.Empty<PerceptionBufferEntry>());
-                string thinkLabel = "RimMind.UI.AgentModeDebug.ShouldThink".Translate(shouldThink.ToString());
-                GUI.color = shouldThink ? new Color(0.4f, 1f, 0.4f) : new Color(0.7f, 0.7f, 0.7f);
-                Widgets.Label(new Rect(x, y, labelW, LineH), thinkLabel);
-                GUI.color = Color.white;
-                y += LineH + Padding;
-            }
-
-            // Mode switch controls
-            DrawModeSwitchControls(new Rect(x, y, labelW, BtnHeight + LineH + Padding), agent);
-        }
-
-        private void DrawModeSwitchControls(Rect rect, IAgentControl agent)
-        {
-            IExtensionRegistry<IAgentMode>? modeRegistry = RimMindAPI.Modes;
-            if (modeRegistry == null) return;
-
-            IReadOnlyList<IAgentMode> modes = modeRegistry.All;
-            if (modes.Count == 0) return;
-
-            // Clamp target mode index
-            if (_targetModeIndex < 0 || _targetModeIndex >= modes.Count)
-                _targetModeIndex = 0;
-
-            float x = rect.x;
-            float y = rect.y;
-
-            // "Switch to:" label
-            string switchToLabel = "RimMind.UI.AgentModeDebug.SwitchTo".Translate();
-            float switchToW = Text.CalcSize(switchToLabel).x + Padding;
-            Widgets.Label(new Rect(x, y, switchToW, LineH), switchToLabel);
-            x += switchToW;
-
-            // Mode dropdown buttons
-            for (int i = 0; i < modes.Count; i++)
-            {
-                string modeLabel = (string)modes[i].ModeId;
-                float btnW = Text.CalcSize(modeLabel).x + Padding * 4;
-                Rect btnRect = new Rect(x, y, btnW, BtnHeight);
-
-                if (i == _targetModeIndex)
-                    Widgets.DrawBoxSolid(btnRect, new Color(0.3f, 0.5f, 0.7f, 0.6f));
-
-                if (Widgets.ButtonText(btnRect, modeLabel))
-                    _targetModeIndex = i;
-
-                x += btnW + Padding;
-
-                if (x + 60f > rect.xMax)
-                    break;
-            }
-
-            y += BtnHeight + Padding;
-
-            // Switch button
-            Rect switchBtnRect = new Rect(rect.x, y, 120f, BtnHeight);
-            if (Widgets.ButtonText(switchBtnRect, "RimMind.UI.AgentModeDebug.SwitchMode".Translate()))
-            {
-                if (_targetModeIndex >= 0 && _targetModeIndex < modes.Count)
-                {
-                    agent.SwitchMode(modes[_targetModeIndex].ModeId);
-                }
-            }
-        }
-
-        private void DrawHistoryHeader(Rect rect)
-        {
-            GUI.color = new Color(0.7f, 0.8f, 1f);
-            Text.Font = GameFont.Small;
-            Widgets.Label(rect, "RimMind.UI.AgentModeDebug.History".Translate());
-            GUI.color = Color.white;
-        }
-
-        private void DrawRegisteredModesHeader(Rect rect)
-        {
-            GUI.color = new Color(0.7f, 0.8f, 1f);
-            Text.Font = GameFont.Small;
-            Widgets.Label(rect, "RimMind.UI.AgentModeDebug.RegisteredModes".Translate());
-            GUI.color = Color.white;
-        }
-
-        private void DrawRegisteredModes(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.16f, 0.5f));
-
-            IExtensionRegistry<IAgentMode>? modeRegistry = RimMindAPI.Modes;
-            if (modeRegistry == null)
-            {
-                GUI.color = Color.grey;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoModes".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                return;
-            }
-
-            IReadOnlyList<IAgentMode> modes = modeRegistry.All;
-            if (modes.Count == 0)
-            {
-                GUI.color = Color.grey;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoModes".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                return;
-            }
-
-            float contentH = modes.Count * LineH;
-            Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
-            Widgets.BeginScrollView(rect, ref _modesScrollPos, viewRect);
-
-            float y = rect.y;
-            for (int i = 0; i < modes.Count; i++)
-            {
-                IAgentMode mode = modes[i];
-                string entry = "RimMind.UI.AgentModeDebug.ModeEntry".Translate(
-                    (string)mode.ModeId, mode.DisplayName);
-                GUI.color = new Color(0.7f, 0.7f, 0.7f);
-                Widgets.Label(new Rect(viewRect.x + Padding, y, viewRect.width - Padding * 2, LineH), entry);
-                GUI.color = Color.white;
-                y += LineH;
-            }
-
-            Widgets.EndScrollView();
-        }
-
-        private void DrawHistory(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.16f, 0.5f));
-
-            if (_modeChangeHistory.Count == 0)
-            {
-                GUI.color = Color.grey;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(rect, "RimMind.UI.AgentModeDebug.NoHistory".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                GUI.color = Color.white;
-                return;
-            }
-
-            float contentH = _modeChangeHistory.Count * LineH;
-            Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
-            Widgets.BeginScrollView(rect, ref _historyScrollPos, viewRect);
-
-            float y = rect.y;
-            for (int i = _modeChangeHistory.Count - 1; i >= 0; i--)
-            {
-                AgentModeChangedEvent evt = _modeChangeHistory[i];
-                string tickInfo = $" [T:{evt.Timestamp}]";
-                string entry = "RimMind.UI.AgentModeDebug.ModeChange".Translate(
-                    evt.NpcId, evt.OldMode, evt.NewMode) + tickInfo;
-
-                GUI.color = new Color(0.7f, 0.7f, 0.7f);
-                Widgets.Label(new Rect(viewRect.x + Padding, y, viewRect.width - Padding * 2, LineH),
-                    entry);
-                GUI.color = Color.white;
-                y += LineH;
-            }
-
-            Widgets.EndScrollView();
-        }
+        #endregion
     }
 }

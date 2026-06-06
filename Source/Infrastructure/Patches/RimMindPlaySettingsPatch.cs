@@ -46,7 +46,7 @@ namespace RimMind.Infrastructure.Patches
             }
             else
             {
-                Find.WindowStack.Add(new Window_RimMindHub());
+                ToggleCoreOverlay();
             }
 
             _iconState = IsAnyToggleActive();
@@ -61,6 +61,20 @@ namespace RimMind.Infrastructure.Patches
                 if (toggle.IsActive) return true;
             }
             return false;
+        }
+
+        private static void ToggleCoreOverlay()
+        {
+            var registry = RimMindAPI.Extensions<IToggleBehavior>();
+            if (registry == null) return;
+            foreach (var toggle in registry.All)
+            {
+                if (toggle.Id == "request_overlay")
+                {
+                    toggle.Toggle();
+                    return;
+                }
+            }
         }
 
         private static void OpenSettings()

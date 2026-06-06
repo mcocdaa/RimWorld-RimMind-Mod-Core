@@ -53,7 +53,7 @@ namespace RimMind.Tests.ArchTests.PhaseP2
         public void ITab_Pawn_Agent_Shows_BehaviorHistory()
         {
             var content = ReadSourceFile("Infrastructure/Verse/ITab_Pawn_Agent.cs");
-            Assert.Contains("BehaviorHistory", content);
+            Assert.Contains("GetRecentHistory", content);
         }
 
         [Fact]

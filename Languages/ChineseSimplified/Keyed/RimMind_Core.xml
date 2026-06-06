@@ -16,7 +16,7 @@
   <RimMind.UI.DebugLog.QueueWait>排队等待</RimMind.UI.DebugLog.QueueWait>
   <RimMind.UI.Empty>(空)</RimMind.UI.Empty>
   <!-- AITogglePatch.cs -->
-  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\n点击打开 Agent 控制台\nShift+点击打开模组设置\nCtrl+点击打开 Agent 控制台</RimMind.Presentation.Toggle.Tooltip>
+  <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\n点击开关请求浮窗\nShift+点击打开模组设置\nCtrl+点击打开调试中心</RimMind.Presentation.Toggle.Tooltip>
   <!-- AICoreSettingsUI.cs - Tab labels -->
   <RimMind.Settings.Tab.Api>API 配置</RimMind.Settings.Tab.Api>
   <RimMind.Settings.Tab.Context>上下文过滤</RimMind.Settings.Tab.Context>
@@ -28,6 +28,7 @@
   <RimMind.Settings.Provider.Player2>Player2</RimMind.Settings.Provider.Player2>
   <RimMind.Settings.ApiKey>API 密钥</RimMind.Settings.ApiKey>
   <RimMind.Settings.ApiKey.Desc>你的 AI 服务商提供的 API Key，用于身份验证。</RimMind.Settings.ApiKey.Desc>
+  <RimMind.Settings.ApiKey.Saved>已保存（{0} 字符）。点击显示后可编辑。</RimMind.Settings.ApiKey.Saved>
   <RimMind.Settings.ApiEndpoint>API 端点</RimMind.Settings.ApiEndpoint>
   <RimMind.Settings.ApiEndpoint.Desc>AI 服务的 API 地址。支持 OpenAI 兼容接口（如 DeepSeek、本地 Ollama 等）。</RimMind.Settings.ApiEndpoint.Desc>
   <RimMind.Settings.ModelName>模型名称</RimMind.Settings.ModelName>
@@ -465,6 +466,8 @@
   <RimMind.UI.AgentModeDebug.ModeChange>{0}: {1} → {2}</RimMind.UI.AgentModeDebug.ModeChange>
   <RimMind.UI.AgentModeDebug.RegisteredModes>已注册模式</RimMind.UI.AgentModeDebug.RegisteredModes>
   <RimMind.UI.AgentModeDebug.ModeEntry>{0} - {1}</RimMind.UI.AgentModeDebug.ModeEntry>
+  <RimMind.UI.AgentModeDebug.PawnList>小人列表</RimMind.UI.AgentModeDebug.PawnList>
+  <RimMind.UI.AgentModeDebug.ModeDetails>模式详情</RimMind.UI.AgentModeDebug.ModeDetails>
   <RimMind.UI.AgentModeDebug.SwitchTo>切换至:</RimMind.UI.AgentModeDebug.SwitchTo>
   <!-- ITab_Pawn_Agent.cs -->
   <RimMind.Agent.ITab.Label>智能体</RimMind.Agent.ITab.Label>
@@ -478,7 +481,7 @@
   <RimMind.Agent.ITab.History>行为历史</RimMind.Agent.ITab.History>
   <!-- RimMindOverlayGameComponent.cs -->
   <RimMind.UI.OverlayButton.Label>RimMind</RimMind.UI.OverlayButton.Label>
-  <RimMind.UI.OverlayMenu.AgentHub>Agent 控制台</RimMind.UI.OverlayMenu.AgentHub>
+  <RimMind.UI.OverlayMenu.AgentHub>调试中心</RimMind.UI.OverlayMenu.AgentHub>
   <RimMind.UI.OverlayMenu.RequestLog>AI 请求日志</RimMind.UI.OverlayMenu.RequestLog>
   <RimMind.UI.OverlayMenu.AIDebugLog>AI 调试日志</RimMind.UI.OverlayMenu.AIDebugLog>
   <RimMind.UI.OverlayMenu.ToolCallDebug>ToolCall 调试</RimMind.UI.OverlayMenu.ToolCallDebug>
@@ -489,15 +492,15 @@
   <RimMind.UI.OverlayMenu.AgentFlowLab>Agent 流程实验室</RimMind.UI.OverlayMenu.AgentFlowLab>
   <RimMind.UI.OverlayMenu.Settings>设置</RimMind.UI.OverlayMenu.Settings>
   <!-- MainTabWindow_RimMindHub.cs -->
-  <RimMind.UI.Hub.Title>RimMind Agent 控制台</RimMind.UI.Hub.Title>
+  <RimMind.UI.Hub.Title>RimMind 调试中心</RimMind.UI.Hub.Title>
   <RimMind.UI.Hub.Tab.Overview>状态</RimMind.UI.Hub.Tab.Overview>
-  <RimMind.UI.Hub.Tab.Requests>请求</RimMind.UI.Hub.Tab.Requests>
-  <RimMind.UI.Hub.Tab.Agent>Agent 工具</RimMind.UI.Hub.Tab.Agent>
-  <RimMind.UI.Hub.Tab.Debug>调试</RimMind.UI.Hub.Tab.Debug>
-  <RimMind.UI.Hub.SelectedPawn>已选择小人: {0}</RimMind.UI.Hub.SelectedPawn>
+  <RimMind.UI.Hub.Tab.Requests>AI 请求</RimMind.UI.Hub.Tab.Requests>
+  <RimMind.UI.Hub.Tab.Agent>Agent 控制台</RimMind.UI.Hub.Tab.Agent>
+  <RimMind.UI.Hub.Tab.Debug>系统调试</RimMind.UI.Hub.Tab.Debug>
+  <RimMind.UI.Hub.SelectedPawn>已选择小人</RimMind.UI.Hub.SelectedPawn>
   <RimMind.UI.Hub.NoPawn>未选择小人</RimMind.UI.Hub.NoPawn>
-  <RimMind.UI.Hub.AgentSummary>当前地图 Agent: {0} 个（活跃 {1} 个）</RimMind.UI.Hub.AgentSummary>
-  <RimMind.UI.Hub.PendingRequests>待处理 AI 请求: {0}</RimMind.UI.Hub.PendingRequests>
+  <RimMind.UI.Hub.AgentSummary>当前地图 Agent</RimMind.UI.Hub.AgentSummary>
+  <RimMind.UI.Hub.PendingRequests>待处理 AI 请求</RimMind.UI.Hub.PendingRequests>
   <RimMind.UI.Hub.QueueMissing>队列：尚未初始化</RimMind.UI.Hub.QueueMissing>
   <RimMind.UI.Hub.RequestPending>待处理请求</RimMind.UI.Hub.RequestPending>
   <RimMind.UI.Hub.RequestResults>AI 结果</RimMind.UI.Hub.RequestResults>
@@ -510,6 +513,8 @@
   <RimMind.UI.Hub.ToolCallDebug>ToolCall 调试</RimMind.UI.Hub.ToolCallDebug>
   <RimMind.UI.Hub.MechanismStatus>机制状态</RimMind.UI.Hub.MechanismStatus>
   <RimMind.UI.Hub.ContextKeys>上下文键</RimMind.UI.Hub.ContextKeys>
+  <RimMind.UI.Hub.QueueState>队列状态</RimMind.UI.Hub.QueueState>
+  <RimMind.UI.Hub.QuickActions>快捷操作</RimMind.UI.Hub.QuickActions>
   <RimMind.UI.Hub.Settings>设置</RimMind.UI.Hub.Settings>
   <RimMind.UI.Hub.SelectPawnState>刷新选择</RimMind.UI.Hub.SelectPawnState>
   <!-- Window_AgentStateDebug.cs -->
@@ -543,6 +548,11 @@
   <RimMind.UI.AgentStateDebug.SuccessRate>成功率：{0}</RimMind.UI.AgentStateDebug.SuccessRate>
   <RimMind.UI.AgentStateDebug.RecentBehavior>近期行为</RimMind.UI.AgentStateDebug.RecentBehavior>
   <RimMind.UI.AgentStateDebug.NoBehaviorHistory>无行为历史</RimMind.UI.AgentStateDebug.NoBehaviorHistory>
+  <RimMind.UI.AgentStateDebug.SectionIdentity>身份信息</RimMind.UI.AgentStateDebug.SectionIdentity>
+  <RimMind.UI.AgentStateDebug.ScopeType>作用域类型</RimMind.UI.AgentStateDebug.ScopeType>
+  <RimMind.UI.AgentStateDebug.SectionState>状态</RimMind.UI.AgentStateDebug.SectionState>
+  <RimMind.UI.AgentStateDebug.SectionPawnInfo>小人信息</RimMind.UI.AgentStateDebug.SectionPawnInfo>
+  <RimMind.UI.AgentStateDebug.SectionAgentState>智能体状态</RimMind.UI.AgentStateDebug.SectionAgentState>
   <RimMind.UI.AgentStateDebug.DestroyScopedAgent>销毁代理</RimMind.UI.AgentStateDebug.DestroyScopedAgent>
   <!-- Window_ContextKeyDebug.cs -->
   <RimMind.UI.ContextKeyDebug.Title>上下文键调试</RimMind.UI.ContextKeyDebug.Title>

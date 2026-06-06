@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation;
+using RimMind.Presentation.UI;
 using UnityEngine;
 using Verse;
 
@@ -12,19 +13,22 @@ namespace RimMind.Infrastructure.UI
 {
     public class Window_RimMindHub : Window
     {
-        private const float Padding = 8f;
-        private const float TabHeight = 30f;
-        private const float RowHeight = 26f;
-        private const float ButtonHeight = 32f;
-        private HubPage _page = HubPage.Overview;
+        private HubPage _page;
         private int _requestPage;
         private readonly Window_RequestLog _requestLog = new Window_RequestLog();
         private readonly Window_AIDebugLog _aiDebugLog = new Window_AIDebugLog();
 
-        public override Vector2 InitialSize => new Vector2(760f, 560f);
+        public override Vector2 InitialSize => new Vector2(780f, 580f);
 
         public Window_RimMindHub()
+            : this(HubPage.Requests, 1)
         {
+        }
+
+        private Window_RimMindHub(HubPage initialPage, int requestPage)
+        {
+            _page = initialPage;
+            _requestPage = requestPage;
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -33,16 +37,14 @@ namespace RimMind.Infrastructure.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 32f),
-                "RimMind.UI.Hub.Title".Translate());
+            float y = RimMindUI.DrawWindowHeader(inRect, "RimMind.UI.Hub.Title".Translate());
 
-            Text.Font = GameFont.Small;
-            Rect tabRect = new Rect(inRect.x, inRect.y + 38f, inRect.width, TabHeight);
+            // Tab bar
+            Rect tabRect = new Rect(inRect.x, y, inRect.width, RimMindUI.TabHeight);
             DrawTabs(tabRect);
+            y = tabRect.yMax + RimMindUI.Padding;
 
-            Rect contentRect = new Rect(inRect.x, tabRect.yMax + Padding, inRect.width,
-                inRect.height - tabRect.yMax - Padding);
+            Rect contentRect = new Rect(inRect.x, y, inRect.width, inRect.height - y + inRect.y);
 
             switch (_page)
             {
@@ -63,21 +65,17 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawTabs(Rect rect)
         {
-            DrawTab(rect, 0, HubPage.Overview, "RimMind.UI.Hub.Tab.Overview");
-            DrawTab(rect, 1, HubPage.Requests, "RimMind.UI.Hub.Tab.Requests");
-            DrawTab(rect, 2, HubPage.Agent, "RimMind.UI.Hub.Tab.Agent");
-            DrawTab(rect, 3, HubPage.Debug, "RimMind.UI.Hub.Tab.Debug");
-        }
+            float tabW = rect.width / 4f;
+            var pages = new[] { HubPage.Overview, HubPage.Requests, HubPage.Agent, HubPage.Debug };
+            var labels = new[] { "RimMind.UI.Hub.Tab.Overview", "RimMind.UI.Hub.Tab.Requests", "RimMind.UI.Hub.Tab.Agent", "RimMind.UI.Hub.Tab.Debug" };
 
-        private void DrawTab(Rect rect, int index, HubPage page, string labelKey)
-        {
-            float width = rect.width / 4f;
-            Rect tab = new Rect(rect.x + index * width, rect.y, width - 4f, rect.height);
-            bool selected = _page == page;
-            if (selected)
-                Widgets.DrawHighlightSelected(tab);
-            if (Widgets.ButtonText(tab, labelKey.Translate()))
-                _page = page;
+            for (int i = 0; i < 4; i++)
+            {
+                Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
+                bool selected = _page == pages[i];
+                if (RimMindUI.DrawTabButton(tabBtn, labels[i].Translate(), selected))
+                    _page = pages[i];
+            }
         }
 
         private static void DrawOverview(Rect rect)
@@ -107,43 +105,81 @@ namespace RimMind.Infrastructure.UI
                     : "RimMind.Settings.QueueRunning".Translate();
 
             float y = rect.y;
-            DrawLine(rect, ref y, "RimMind.UI.Hub.SelectedPawn",
-                selectedPawn?.LabelShortCap ?? "RimMind.UI.Hub.NoPawn".Translate());
-            DrawLine(rect, ref y, "RimMind.UI.Hub.AgentSummary", agentCount, activeCount);
-            DrawLine(rect, ref y, "RimMind.UI.Hub.PendingRequests", RequestOverlay.Pending.Count);
-            DrawRawLine(rect, ref y, queueText);
-            y += Padding;
 
-            float colW = (rect.width - Padding) / 2f;
-            DrawButton(new Rect(rect.x, y, colW, ButtonHeight), "RimMind.UI.Hub.AgentFlowLab",
+            // ── Status Cards ──
+            float cardW = (rect.width - RimMindUI.Padding) / 2f;
+            float cardH = 60f;
+
+            // Agent card
+            Rect agentCard = new Rect(rect.x, y, cardW, cardH);
+            Widgets.DrawBoxSolid(agentCard, RimMindUI.ColorCardBg);
+            float innerY = agentCard.y + RimMindUI.Padding;
+            GUI.color = RimMindUI.ColorSectionTitle;
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(new Rect(agentCard.x + RimMindUI.Padding, innerY, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
+                "RimMind.UI.Hub.AgentSummary".Translate());
+            Text.Font = GameFont.Medium;
+            GUI.color = activeCount > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted;
+            Widgets.Label(new Rect(agentCard.x + RimMindUI.Padding, innerY + RimMindUI.LineHeight, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
+                $"{activeCount} / {agentCount}");
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+
+            // Queue card
+            Rect queueCard = new Rect(rect.x + cardW + RimMindUI.Padding, y, cardW, cardH);
+            Widgets.DrawBoxSolid(queueCard, RimMindUI.ColorCardBg);
+            innerY = queueCard.y + RimMindUI.Padding;
+            GUI.color = RimMindUI.ColorSectionTitle;
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(new Rect(queueCard.x + RimMindUI.Padding, innerY, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
+                "RimMind.UI.Hub.QueueState".Translate());
+            Text.Font = GameFont.Medium;
+            bool isQueueRunning = queue != null && !queue.IsPaused;
+            GUI.color = isQueueRunning ? RimMindUI.ColorActive : RimMindUI.ColorPaused;
+            Widgets.Label(new Rect(queueCard.x + RimMindUI.Padding, innerY + RimMindUI.LineHeight, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
+                queueText);
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+
+            y += cardH + RimMindUI.SectionGap;
+
+            // ── Selected Pawn Info ──
+            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.SelectedPawn".Translate()) + rect.y;
+            string pawnText = selectedPawn?.LabelShortCap ?? "RimMind.UI.Hub.NoPawn".Translate();
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.SelectedPawn".Translate(), pawnText) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.PendingRequests".Translate(), RequestOverlay.Pending.Count.ToString()) + rect.y;
+
+            y += RimMindUI.SectionGap;
+
+            // ── Quick Actions ──
+            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.QuickActions".Translate()) + rect.y;
+
+            float colW = (rect.width - RimMindUI.Padding) / 2f;
+            DrawButton(new Rect(rect.x, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentFlowLab",
                 () => Find.WindowStack.Add(new Window_AgentFlowLab(selectedPawn)));
-            DrawButton(new Rect(rect.x + colW + Padding, y, colW, ButtonHeight), "RimMind.UI.Hub.AgentProgress",
+            DrawButton(new Rect(rect.x + colW + RimMindUI.Padding, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentProgress",
                 () => Find.WindowStack.Add(new Window_AgentProgressFloat()));
-            y += ButtonHeight + Padding;
+            y += RimMindUI.BtnHeight + RimMindUI.Padding;
 
-            DrawButton(new Rect(rect.x, y, colW, ButtonHeight), "RimMind.UI.Hub.AgentState",
+            DrawButton(new Rect(rect.x, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentState",
                 () => Find.WindowStack.Add(new Window_AgentStateDebug(selectedPawn)));
-            DrawButton(new Rect(rect.x + colW + Padding, y, colW, ButtonHeight), "RimMind.UI.Hub.AgentMode",
+            DrawButton(new Rect(rect.x + colW + RimMindUI.Padding, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentMode",
                 () => Find.WindowStack.Add(new Window_AgentModeDebug(selectedPawn)));
         }
 
         private void DrawRequests(Rect rect)
         {
-            Rect tabs = new Rect(rect.x, rect.y, rect.width, TabHeight);
-            Rect pendingTab = new Rect(tabs.x, tabs.y, (tabs.width - Padding) / 2f, tabs.height);
-            Rect resultsTab = new Rect(pendingTab.xMax + Padding, tabs.y, pendingTab.width, tabs.height);
+            Rect tabs = new Rect(rect.x, rect.y, rect.width, RimMindUI.TabHeight);
+            float halfW = (tabs.width - RimMindUI.Padding) / 2f;
+            Rect pendingTab = new Rect(tabs.x, tabs.y, halfW, tabs.height);
+            Rect resultsTab = new Rect(pendingTab.xMax + RimMindUI.Padding, tabs.y, halfW, tabs.height);
 
-            if (_requestPage == 0)
-                Widgets.DrawHighlightSelected(pendingTab);
-            if (_requestPage == 1)
-                Widgets.DrawHighlightSelected(resultsTab);
-
-            if (Widgets.ButtonText(pendingTab, "RimMind.UI.Hub.RequestPending".Translate()))
+            if (RimMindUI.DrawTabButton(pendingTab, "RimMind.UI.Hub.RequestPending".Translate(), _requestPage == 0))
                 _requestPage = 0;
-            if (Widgets.ButtonText(resultsTab, "RimMind.UI.Hub.RequestResults".Translate()))
+            if (RimMindUI.DrawTabButton(resultsTab, "RimMind.UI.Hub.RequestResults".Translate(), _requestPage == 1))
                 _requestPage = 1;
 
-            Rect body = new Rect(rect.x, tabs.yMax + Padding, rect.width, rect.height - tabs.height - Padding);
+            Rect body = new Rect(rect.x, tabs.yMax + RimMindUI.Padding, rect.width, rect.height - tabs.height - RimMindUI.Padding);
             if (_requestPage == 0)
                 _requestLog.DrawEmbedded(body);
             else
@@ -163,37 +199,25 @@ namespace RimMind.Infrastructure.UI
         private static void DrawDebugTools(Rect rect)
         {
             DrawToolGrid(rect,
+                ("RimMind.UI.Hub.RequestLog", () => Find.WindowStack.Add(new Window_RequestLog())),
+                ("RimMind.UI.Hub.AIDebugLog", () => Find.WindowStack.Add(new Window_AIDebugLog())),
                 ("RimMind.UI.Hub.ToolCallDebug", () => Find.WindowStack.Add(new Window_ToolCallDebug())),
                 ("RimMind.UI.Hub.MechanismStatus", () => Find.WindowStack.Add(new Window_MechanismStatus())),
                 ("RimMind.UI.Hub.ContextKeys", () => Find.WindowStack.Add(new Window_ContextKeyDebug())),
-                ("RimMind.UI.Hub.AIDebugLog", () => Find.WindowStack.Add(new Window_AIDebugLog())),
                 ("RimMind.UI.Hub.Settings", OpenSettings));
         }
 
         private static void DrawToolGrid(Rect rect, params (string LabelKey, Action Action)[] tools)
         {
-            float colW = (rect.width - Padding) / 2f;
+            float colW = (rect.width - RimMindUI.Padding) / 2f;
             for (int i = 0; i < tools.Length; i++)
             {
                 int col = i % 2;
                 int row = i / 2;
-                Rect button = new Rect(rect.x + col * (colW + Padding),
-                    rect.y + row * (ButtonHeight + Padding), colW, ButtonHeight);
+                Rect button = new Rect(rect.x + col * (colW + RimMindUI.Padding),
+                    rect.y + row * (RimMindUI.BtnHeight + RimMindUI.Padding), colW, RimMindUI.BtnHeight);
                 DrawButton(button, tools[i].LabelKey, tools[i].Action);
             }
-        }
-
-        private static void DrawLine(Rect rect, ref float y, string labelKey, params object[] args)
-        {
-            string text = string.Format(labelKey.Translate().ToString(), args);
-            Widgets.Label(new Rect(rect.x, y, rect.width, RowHeight), text);
-            y += RowHeight;
-        }
-
-        private static void DrawRawLine(Rect rect, ref float y, string text)
-        {
-            Widgets.Label(new Rect(rect.x, y, rect.width, RowHeight), text);
-            y += RowHeight;
         }
 
         private static void DrawButton(Rect rect, string labelKey, Action action)

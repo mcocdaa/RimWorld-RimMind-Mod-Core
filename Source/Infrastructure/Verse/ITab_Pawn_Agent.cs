@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
 using RimMind.Presentation;
 using RimMind.Presentation.Agent;
+using RimMind.Presentation.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -12,7 +13,7 @@ namespace RimMind.Infrastructure.Verse
 {
     public class ITab_Pawn_Agent : ITab
     {
-        private static readonly Vector2 WinSize = new Vector2(420f, 480f);
+        private static readonly Vector2 WinSize = new Vector2(440f, 520f);
 
         private Vector2 _scrollPosition = Vector2.zero;
 
@@ -31,157 +32,210 @@ namespace RimMind.Infrastructure.Verse
 
             var comp = CompPawnAgent.GetComp(pawn);
             var agent = comp?.Agent;
+
+            var rect = new Rect(RimMindUI.Padding, RimMindUI.Padding, WinSize.x - RimMindUI.Padding * 2, WinSize.y - RimMindUI.Padding * 2);
+
             if (agent == null)
             {
-                float y = 10f;
-                GUI.color = Color.grey;
-                Widgets.Label(new Rect(10f, y, WinSize.x - 20f, 30f),
-                    "RimMind.Agent.ITab.NoAgent".Translate());
-                y += 34f;
-
-                Text.Font = GameFont.Tiny;
-                GUI.color = new Color(0.6f, 0.6f, 0.6f);
-                string hint = "RimMind.Agent.ITab.NoAgentHint".Translate();
-                float hintH = Text.CalcHeight(hint, WinSize.x - 24f);
-                Widgets.Label(new Rect(12f, y, WinSize.x - 24f, hintH), hint);
-                Text.Font = GameFont.Small;
-                GUI.color = Color.white;
-                y += hintH + 8f;
-
-                Rect createBtn = new Rect(10f, y, 160f, 28f);
-                if (Widgets.ButtonText(createBtn, "RimMind.Agent.ITab.CreateAgent".Translate()))
-                {
-                    var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
-                    var agentBus = RimMindServiceLocator.Get<IAgentBus>();
-                    if (factory != null && agentBus != null)
-                    {
-                        var createdAgent = factory.Create(pawn, agentBus);
-                        if (createdAgent != null)
-                        {
-                            if (comp != null && comp.Agent == null)
-                                comp.Agent = createdAgent;
-                        }
-                    }
-                    else
-                    {
-                        Messages.Message("RimMind.Agent.ITab.CreateFailed".Translate(),
-                            MessageTypeDefOf.RejectInput, false);
-                    }
-                }
+                DrawNoAgentState(rect, pawn, comp);
                 return;
             }
 
-            var rect = new Rect(10f, 10f, WinSize.x - 20f, WinSize.y - 20f);
-            var contentRect = new Rect(0f, 0f, rect.width - 16f, CalculateContentHeight(agent));
+            float contentH = CalculateContentHeight(agent, rect.width);
+            var contentRect = new Rect(0f, 0f, rect.width - 16f, contentH);
 
             Widgets.BeginScrollView(rect, ref _scrollPosition, contentRect);
 
             float curY = 0f;
 
-            // Section 1: Status Bar
-            curY = DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Status".Translate());
-            curY = DrawStatusLabel(contentRect, curY, "State", agent.State.ToString());
-            curY = DrawStatusLabel(contentRect, curY, "Mode", agent.CurrentModeId.Value);
+            // ── Section: Status ──
+            curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Status".Translate());
+
+            var (stateTextColor, stateBgColor) = RimMindUI.GetStateBadgeColors(
+                agent.State == AgentState.Active,
+                agent.State == AgentState.Paused);
+            string stateKey = $"RimMind.Agent.State.{agent.State}";
+            string stateLabel = stateKey.Translate();
+            curY = RimMindUI.DrawStatusBadge(contentRect, curY, stateLabel, stateTextColor, stateBgColor);
+
+            curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "Mode", agent.CurrentModeId.Value);
 
             if (agent is IPawnAgent pawnAgent)
             {
-                curY = DrawStatusLabel(contentRect, curY, "WorkflowPhase",
-                    pawnAgent.WorkflowPhase.ToString());
-                curY = DrawStatusLabel(contentRect, curY, "Autonomy",
-                    pawnAgent.AutonomyLevel.ToString());
+                curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "WorkflowPhase", pawnAgent.WorkflowPhase.ToString());
+                curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "Autonomy", pawnAgent.AutonomyLevel.ToString());
             }
 
-            curY += 8f;
+            // ── Section: Goals ──
+            curY = RimMindUI.DrawDivider(contentRect, curY);
+            curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Goals".Translate());
 
-            // Section 2: Goals
-            curY = DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Goals".Translate());
             if (agent is IPawnAgent pa2)
             {
                 var goals = pa2.GoalStack.Goals;
                 if (goals.Count == 0)
                 {
-                    curY = DrawStatusLabel(contentRect, curY, "", "  (none)");
+                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (none)", RimMindUI.ColorMuted);
                 }
                 else
                 {
                     foreach (var goal in goals)
                     {
-                        var goalText = $"  [{goal.Status}] {goal.Description} (P:{goal.Priority:F1})";
-                        curY = DrawStatusLabel(contentRect, curY, "", goalText);
+                        string statusMarker = goal.Status.ToString();
+                        Color markerColor = goal.Status == GoalStatus.Achieved
+                            ? RimMindUI.ColorActive
+                            : goal.Status == GoalStatus.Abandoned
+                                ? RimMindUI.ColorError
+                                : RimMindUI.ColorValue;
+                        string goalText = $"[{statusMarker}] {goal.Description} (P:{goal.Priority:F1})";
+                        curY = RimMindUI.DrawWrappedLabel(contentRect, curY, goalText, markerColor);
                     }
                 }
             }
 
-            curY += 8f;
+            // ── Section: Strategy ──
+            curY = RimMindUI.DrawDivider(contentRect, curY);
+            curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Strategy".Translate());
 
-            // Section 3: Strategy Weights
-            curY = DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Strategy".Translate());
             if (agent is IPawnAgent pa3)
             {
                 var topW = pa3.StrategyOptimizer.GetTopN(5);
                 if (topW.Count == 0)
                 {
-                    curY = DrawStatusLabel(contentRect, curY, "", "  (no data)");
+                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (no data)", RimMindUI.ColorMuted);
                 }
                 else
                 {
                     foreach (var kv in topW)
                     {
-                        curY = DrawStatusLabel(contentRect, curY, "", $"  {kv.Key}: {kv.Value:F2}");
+                        curY = RimMindUI.DrawKeyValueRow(contentRect, curY, kv.Key, kv.Value.ToString("F2"));
                     }
                 }
             }
 
-            curY += 8f;
+            // ── Section: History ──
+            curY = RimMindUI.DrawDivider(contentRect, curY);
+            curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.History".Translate());
 
-            // Section 4: Behavior History (from IPawnAgent.BehaviorHistory via GetRecentHistory)
-            curY = DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.History".Translate());
             if (agent is IPawnAgent pa4)
             {
                 var recent = pa4.GetRecentHistory(5);
                 if (recent.Count == 0)
                 {
-                    curY = DrawStatusLabel(contentRect, curY, "", "  (no history)");
+                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (no history)", RimMindUI.ColorMuted);
                 }
                 else
                 {
+                    Text.Font = GameFont.Tiny;
                     foreach (var record in recent)
                     {
                         var marker = record.Success ? "OK" : "FAIL";
-                        curY = DrawStatusLabel(contentRect, curY, "",
-                            $"  [{marker}] {record.Action} - {record.Reason}");
+                        Color markerColor = record.Success ? RimMindUI.ColorActive : RimMindUI.ColorError;
+                        string recordText = $"[{marker}] {record.Action} - {record.Reason}";
+                        curY = RimMindUI.DrawWrappedLabel(contentRect, curY, recordText, markerColor);
                     }
+                    Text.Font = GameFont.Small;
                 }
             }
 
             Widgets.EndScrollView();
         }
 
-        private float CalculateContentHeight(IAgentControl agent)
+        private void DrawNoAgentState(Rect rect, Pawn pawn, CompPawnAgent? comp)
         {
-            float height = 200f;
-            if (agent is IPawnAgent pa)
+            float y = rect.y;
+
+            RimMindUI.DrawEmptyState(rect, "RimMind.Agent.ITab.NoAgent".Translate(),
+                "RimMind.Agent.ITab.NoAgentHint".Translate());
+
+            y = rect.y + rect.height - 40f;
+            Rect createBtn = new Rect(rect.x, y, 160f, 28f);
+            if (Widgets.ButtonText(createBtn, "RimMind.Agent.ITab.CreateAgent".Translate()))
             {
-                height += pa.GoalStack.Goals.Count * 20f;
-                height += pa.StrategyOptimizer.GetTopN(5).Count * 20f;
-                height += pa.GetRecentHistory(5).Count * 20f;
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                if (factory != null && agentBus != null)
+                {
+                    var createdAgent = factory.Create(pawn, agentBus);
+                    if (createdAgent != null)
+                    {
+                        if (comp != null && comp.Agent == null)
+                            comp.Agent = createdAgent;
+                    }
+                }
+                else
+                {
+                    Messages.Message("RimMind.Agent.ITab.CreateFailed".Translate(),
+                        MessageTypeDefOf.RejectInput, false);
+                }
             }
-            return height;
         }
 
-        private float DrawSectionHeader(Rect contentRect, float y, string label)
+        private float CalculateContentHeight(IAgentControl agent, float width)
         {
-            Widgets.Label(new Rect(contentRect.x, contentRect.y + y, contentRect.width, 22f),
-                $"<b>{label}</b>");
-            return y + 24f;
-        }
+            float h = 0f;
 
-        private float DrawStatusLabel(Rect contentRect, float y, string key, string value)
-        {
-            var text = string.IsNullOrEmpty(key) ? value : $"{key}: {value}";
-            Widgets.Label(new Rect(contentRect.x + 4f, contentRect.y + y, contentRect.width - 8f, 18f),
-                text);
-            return y + 20f;
+            // Status section
+            h += RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // header
+            h += RimMindUI.LineHeight + RimMindUI.Padding * 0.5f; // badge
+            h += RimMindUI.LineHeight + RimMindUI.Padding * 0.5f; // mode
+            if (agent is IPawnAgent pa1)
+            {
+                h += (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * 2; // workflow, autonomy
+            }
+
+            // Goals section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // divider + header
+            if (agent is IPawnAgent pa2)
+            {
+                var goals = pa2.GoalStack.Goals;
+                if (goals.Count == 0)
+                {
+                    h += RimMindUI.LineHeight;
+                }
+                else
+                {
+                    Text.Font = GameFont.Small;
+                    foreach (var goal in goals)
+                    {
+                        string goalText = $"[{goal.Status}] {goal.Description} (P:{goal.Priority:F1})";
+                        h += Text.CalcHeight(goalText, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
+                    }
+                }
+            }
+
+            // Strategy section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
+            if (agent is IPawnAgent pa3)
+            {
+                var topW = pa3.StrategyOptimizer.GetTopN(5);
+                h += topW.Count > 0
+                    ? (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * topW.Count
+                    : RimMindUI.LineHeight;
+            }
+
+            // History section
+            h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
+            if (agent is IPawnAgent pa4)
+            {
+                var recent = pa4.GetRecentHistory(5);
+                if (recent.Count == 0)
+                {
+                    h += RimMindUI.LineHeight;
+                }
+                else
+                {
+                    Text.Font = GameFont.Tiny;
+                    foreach (var record in recent)
+                    {
+                        string recordText = $"[{(record.Success ? "OK" : "FAIL")}] {record.Action} - {record.Reason}";
+                        h += Text.CalcHeight(recordText, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
+                    }
+                    Text.Font = GameFont.Small;
+                }
+            }
+
+            return h + RimMindUI.Padding;
         }
     }
 }

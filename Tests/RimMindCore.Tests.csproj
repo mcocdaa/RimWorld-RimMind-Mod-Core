@@ -62,6 +62,7 @@
     <Compile Include="Application\Features\Agent\Psychology\*.cs" />
     <Compile Include="Application\Features\Agent\InnerVoice\*.cs" />
     <Compile Include="Presentation\Agent\*.cs" />
+    <Compile Include="Presentation\UI\*.cs" />
     <Compile Include="Infrastructure\Verse\*.cs" />
     <Compile Include="Infrastructure\OpenAI\*.cs" />
   </ItemGroup>
@@ -70,6 +71,7 @@
     <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**;../Source/Domain/Common/NetStandardCompat.cs" />
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
     <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
+    <Compile Include="../Source/Presentation/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/MessageDto.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/OpenAIRequestSerializer.cs" />
   </ItemGroup>

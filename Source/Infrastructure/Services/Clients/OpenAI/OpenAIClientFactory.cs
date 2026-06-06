@@ -25,8 +25,30 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
         public IAIClient Create(ISettingsProvider settings)
         {
-            if (_openAISettings == null) return null;
-            return new OpenAIClient(_openAISettings, _logSink, _aiDebugLog);
+            var resolvedSettings = settings != null
+                ? new OpenAISettingsAdapter(settings)
+                : _openAISettings;
+            if (resolvedSettings == null) return null;
+            return new OpenAIClient(resolvedSettings, _logSink, _aiDebugLog);
+        }
+
+        private sealed class OpenAISettingsAdapter : IOpenAISettings
+        {
+            private readonly ISettingsProvider _settings;
+
+            public OpenAISettingsAdapter(ISettingsProvider settings)
+            {
+                _settings = settings;
+            }
+
+            public string ApiEndpoint => _settings.ApiEndpoint;
+            public string ModelName => _settings.ModelName;
+            public string ApiKey => _settings.ApiKey;
+            public bool ForceJsonMode => _settings.ForceJsonMode;
+            public int MaxTokens => _settings.MaxTokens;
+            public float DefaultTemperature => _settings.DefaultTemperature;
+            public bool DebugLogging => _settings.DebugLogging;
+            public bool IsConfigured() => _settings.IsOpenAIConfigured();
         }
     }
 }
