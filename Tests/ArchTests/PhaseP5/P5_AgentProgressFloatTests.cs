@@ -15,7 +15,7 @@ namespace RimMind.Tests.ArchTests.PhaseP5
             => File.ReadAllText(Path.Combine(SourceDir, relativePath.Replace('/', Path.DirectorySeparatorChar)));
 
         private const string ProgressFloatRelative = "Infrastructure/UI/Window_AgentProgressFloat.cs";
-        private const string OverlayPatchRelative = "Infrastructure/Patches/RimMindPlaySettingsPatch.cs";
+        private const string HubRelative = "Infrastructure/UI/MainTabWindow_RimMindHub.cs";
         private const string DebugActionsRelative = "Infrastructure/UI/AICoreDebugActions.cs";
         private const string FlowLabRelative = "Infrastructure/UI/Window_AgentFlowLab.cs";
 
@@ -143,8 +143,8 @@ namespace RimMind.Tests.ArchTests.PhaseP5
         [Fact]
         public void ProgressFloat_Entry_In_Core_Menu()
         {
-            var content = ReadSourceFile(OverlayPatchRelative);
-            Assert.Contains("RimMind.UI.OverlayMenu.AgentProgress", content);
+            var content = ReadSourceFile(HubRelative);
+            Assert.Contains("RimMind.UI.Hub.AgentProgress", content);
             Assert.Contains("Window_AgentProgressFloat", content);
         }
 

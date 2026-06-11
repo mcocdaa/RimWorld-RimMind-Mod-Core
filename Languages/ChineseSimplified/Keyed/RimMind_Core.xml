@@ -553,7 +553,6 @@
   <RimMind.UI.AgentFlowLab.ScopePawn>小人</RimMind.UI.AgentFlowLab.ScopePawn>
   <RimMind.UI.AgentFlowLab.ScopeMap>地图</RimMind.UI.AgentFlowLab.ScopeMap>
   <RimMind.UI.AgentFlowLab.ScopeColony>殖民地</RimMind.UI.AgentFlowLab.ScopeColony>
-  <RimMind.UI.AgentFlowLab.ScopeStoryteller>叙事者</RimMind.UI.AgentFlowLab.ScopeStoryteller>
   <RimMind.UI.AgentFlowLab.ScopeGlobal>全局</RimMind.UI.AgentFlowLab.ScopeGlobal>
   <RimMind.UI.AgentFlowLab.ScopeUnsupported>此范围已显示用于规划，但运行时控制尚未接线；当前可用的是小人 Agent。</RimMind.UI.AgentFlowLab.ScopeUnsupported>
   <RimMind.UI.AgentFlowLab.ScopeHint>{0} 范围 Agent。上下文构建和决策流程可用；完整运行时控制受限。</RimMind.UI.AgentFlowLab.ScopeHint>
@@ -630,10 +629,11 @@
   <RimMind.UI.AgentsPage.Pause>暂停</RimMind.UI.AgentsPage.Pause>
   <RimMind.UI.AgentsPage.Resume>恢复</RimMind.UI.AgentsPage.Resume>
   <RimMind.UI.AgentsPage.ForceThink>强制思考</RimMind.UI.AgentsPage.ForceThink>
+  <RimMind.UI.AgentsPage.OpenRequests>打开请求</RimMind.UI.AgentsPage.OpenRequests>
   <RimMind.UI.AgentsPage.Send>发送</RimMind.UI.AgentsPage.Send>
   <RimMind.UI.AgentsPage.State>状态</RimMind.UI.AgentsPage.State>
   <RimMind.UI.AgentsPage.CreateFailed>创建智能体失败，请检查服务是否可用。</RimMind.UI.AgentsPage.CreateFailed>
-  <RimMind.UI.AgentsPage.MessageSent>消息已发送至智能体。</RimMind.UI.AgentsPage.MessageSent>
+  <RimMind.UI.AgentsPage.MessageUnavailable>智能体聊天输入尚未接入，已保留当前草稿。</RimMind.UI.AgentsPage.MessageUnavailable>
   <!-- AIRequestsPageDrawer.cs -->
   <RimMind.UI.AIRequestsPage.TraceUnavailable>AI 请求追踪日志不可用。</RimMind.UI.AIRequestsPage.TraceUnavailable>
   <RimMind.UI.AIRequestsPage.Empty>暂无 AI 请求记录。</RimMind.UI.AIRequestsPage.Empty>

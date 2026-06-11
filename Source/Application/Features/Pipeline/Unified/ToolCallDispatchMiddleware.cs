@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
@@ -23,12 +24,18 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
         private readonly IToolRegistry _toolRegistry;
         private readonly ILogSink? _log;
+        private readonly IAIRequestTraceLog? _traceLog;
         private readonly int _maxDepth;
 
-        public ToolCallDispatchMiddleware(IToolRegistry toolRegistry, ILogSink? log = null, int maxDepth = RimMindDefaults.DefaultMaxToolCallDepth)
+        public ToolCallDispatchMiddleware(
+            IToolRegistry toolRegistry,
+            ILogSink? log = null,
+            IAIRequestTraceLog? traceLog = null,
+            int maxDepth = RimMindDefaults.DefaultMaxToolCallDepth)
         {
             _toolRegistry = toolRegistry;
             _log = log;
+            _traceLog = traceLog;
             _maxDepth = maxDepth;
         }
 
@@ -54,10 +61,17 @@ namespace RimMind.Application.Features.Pipeline.Unified
             _log?.Message($"[UnifiedToolCallDispatch] Dispatching {toolCalls.Count} tool call(s) for request {context.Envelope?.RequestId}");
 
             var results = new List<ToolResult>();
+            var requestId = context.Envelope?.RequestId ?? string.Empty;
             foreach (var tc in toolCalls)
             {
                 var result = await DispatchToolCallAsync(tc, context, context.Ct);
                 results.Add(result);
+                _traceLog?.AddToolCall(
+                    requestId,
+                    result.ToolCallId ?? tc.Id,
+                    result.ToolName ?? tc.FunctionName,
+                    !result.IsError,
+                    result.IsError ? result.Content : null);
             }
 
             // Store results in context for downstream consumers

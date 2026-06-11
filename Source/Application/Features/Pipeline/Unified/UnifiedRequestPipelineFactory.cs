@@ -25,7 +25,8 @@ namespace RimMind.Application.Features.Pipeline.Unified
             ICircuitBreakerSettings? circuitBreakerSettings = null,
             IExtensionRegistry<IMiddleware<LlmRequestContext>>? extensions = null,
             IRelevanceLearner? relevanceLearner = null,
-            AIResponseAnalyzer? responseAnalyzer = null)
+            AIResponseAnalyzer? responseAnalyzer = null,
+            IAIRequestTraceLog? requestTraceLog = null)
         {
             var analyzer = responseAnalyzer ?? new AIResponseAnalyzer();
             var middlewares = new List<IMiddleware<LlmRequestContext>>
@@ -47,7 +48,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 new CircuitBreakerMiddleware(circuitBreakerSettings, log),
                 new RetryMiddleware(log: log),
                 new ClientInvokeMiddleware(log),
-                new ToolCallDispatchMiddleware(toolRegistry, log),
+                new ToolCallDispatchMiddleware(toolRegistry, log, requestTraceLog),
                 new OutputGuardrailMiddleware()
             };
 

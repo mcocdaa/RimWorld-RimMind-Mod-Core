@@ -240,7 +240,8 @@ namespace RimMind.Presentation.Runtime
                 resolvedSettings,
                 GetExtensionRegistry<IMiddleware<LlmRequestContext>>(),
                 relevanceLearner,
-                responseAnalyzer);
+                responseAnalyzer,
+                RimMindServiceLocator.TryGet<IAIRequestTraceLog>());
 
             // Phase 6: Create remaining Presentation services
 

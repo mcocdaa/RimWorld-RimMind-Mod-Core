@@ -327,5 +327,35 @@ namespace RimMind.Tests.ArchTests.PhaseP6
                     $"Key '{key}' must have an explicit cacheScope annotation");
             }
         }
+
+        [Fact]
+        public void Storyteller_ContextKeys_Have_Explicit_Owner_And_CacheScope()
+        {
+            var content = ReadModSource("RimMind-Storyteller", "RimMindStorytellerMod.cs");
+            var scenarioKeys = new[]
+            {
+                "storyteller_dialogue",
+                "storyteller_context",
+                "storyteller_reactions",
+                "storyteller_recent_incidents"
+            };
+
+            AssertKeyHasScope(content, "storyteller_task", "CacheScope.Static");
+            foreach (var key in scenarioKeys)
+            {
+                AssertKeyHasScope(content, key, "CacheScope.Scenario");
+            }
+        }
+
+        private static void AssertKeyHasScope(string content, string key, string cacheScope)
+        {
+            var keyIdx = content.IndexOf($"\"{key}\"", StringComparison.Ordinal);
+            Assert.True(keyIdx >= 0, $"Key '{key}' should be registered");
+            var nextRegistration = content.IndexOf("RimMindAPI.Context.ContextKeys.Register", keyIdx + 1, StringComparison.Ordinal);
+            var length = nextRegistration > keyIdx ? nextRegistration - keyIdx : content.Length - keyIdx;
+            var nearby = content.Substring(keyIdx, length);
+            Assert.Contains("ownerMod: ModId", nearby);
+            Assert.Contains($"cacheScope: {cacheScope}", nearby);
+        }
     }
 }

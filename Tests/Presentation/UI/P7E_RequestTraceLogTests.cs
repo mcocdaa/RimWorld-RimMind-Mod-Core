@@ -1,5 +1,7 @@
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Debug;
+using System;
+using System.IO;
 using RimMind.Infrastructure.Verse;
 using Xunit;
 
@@ -7,6 +9,14 @@ namespace RimMind.Tests.Presentation.UI
 {
     public class P7E_RequestTraceLogTests
     {
+        private static readonly string ProjectRoot = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+
+        private static readonly string SourceDir = Path.Combine(ProjectRoot, "Source");
+
+        private static string ReadSource(string relativePath)
+            => File.ReadAllText(Path.Combine(SourceDir, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+
         [Fact]
         public void StartRequest_Creates_Running_Entry()
         {
@@ -128,6 +138,18 @@ namespace RimMind.Tests.Presentation.UI
 
             Assert.Equal(maxEntries, log.Entries.Count);
             Assert.Equal("req-50", log.Entries[0].RequestId);
+        }
+
+        [Fact]
+        public void RimMindApiRequest_Records_Real_Request_Lifecycle()
+        {
+            string content = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
+
+            Assert.Contains("StartRequest", content);
+            Assert.Contains("CompleteRequest", content);
+            Assert.Contains("FailRequest", content);
+            Assert.DoesNotContain("Authorization", content);
+            Assert.DoesNotContain("ApiKey", content);
         }
     }
 }

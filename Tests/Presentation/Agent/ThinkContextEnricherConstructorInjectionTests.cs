@@ -116,8 +116,8 @@ namespace RimMind.Tests.Presentation.Agent
             Assert.True(File.Exists(thinkerPath), $"PawnThinker.cs must exist at {thinkerPath}");
 
             var source = File.ReadAllText(thinkerPath);
-            Assert.Contains("RimMindServiceLocator.Get<InnerVoiceHandler>()", source);
-            Assert.Contains("RimMindServiceLocator.Get<IPsychologyWatcher>()", source);
+            Assert.Contains("RimMindServiceLocator.TryGet<InnerVoiceHandler>()", source);
+            Assert.Contains("RimMindServiceLocator.TryGet<IPsychologyWatcher>()", source);
             Assert.Contains("new ThinkContextEnricher(", source);
         }
     }

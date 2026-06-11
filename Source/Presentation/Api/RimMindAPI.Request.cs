@@ -12,6 +12,8 @@ using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Presentation.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Verse;
 
@@ -53,9 +55,37 @@ namespace RimMind.Application.Api
                 }
 
                 var ctx = new LlmRequestContext { Envelope = envelope, Client = client };
-                RimMindRuntime.Instance.UnifiedPipeline.ExecuteAsync(ctx).ContinueWith(_ =>
+                var traceLog = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
+                var elapsed = Stopwatch.StartNew();
+                traceLog?.StartRequest(
+                    envelope.RequestId,
+                    GetTraceSource(envelope),
+                    RimMindServiceLocator.TryGet<IAIModelSettings>()?.ModelName ?? string.Empty,
+                    GetTracePrompt(envelope));
+
+                RimMindRuntime.Instance.UnifiedPipeline.ExecuteAsync(ctx).ContinueWith(task =>
                 {
-                    onComplete?.Invoke(ctx.Result ?? Result<LlmResponse, RimMindError>.Err(RimMindErrors.Internal("Pipeline produced no result.")), ctx);
+                    elapsed.Stop();
+                    if (task.IsFaulted)
+                    {
+                        var message = task.Exception?.GetBaseException().Message ?? "Pipeline execution failed.";
+                        traceLog?.FailRequest(envelope.RequestId, message);
+                        onComplete?.Invoke(Result<LlmResponse, RimMindError>.Err(RimMindErrors.Internal(message)), ctx);
+                        return;
+                    }
+
+                    var result = ctx.Result ?? Result<LlmResponse, RimMindError>.Err(RimMindErrors.Internal("Pipeline produced no result."));
+                    if (result.IsOk)
+                    {
+                        var response = result.Value;
+                        traceLog?.CompleteRequest(envelope.RequestId, response.Content, response.TokensUsed, (int)elapsed.ElapsedMilliseconds);
+                    }
+                    else
+                    {
+                        traceLog?.FailRequest(envelope.RequestId, result.Error.Message);
+                    }
+
+                    onComplete?.Invoke(result, ctx);
                 }, TaskContinuationOptions.ExecuteSynchronously);
             }
 
@@ -66,6 +96,19 @@ namespace RimMind.Application.Api
                 Send(envelope, result => tcs.SetResult(result));
                 return tcs.Task;
             }
+
+            private static string GetTraceSource(LlmRequestEnvelope envelope)
+            {
+                if (!string.IsNullOrWhiteSpace(envelope.NpcId)) return $"npc:{envelope.NpcId}";
+                if (!string.IsNullOrWhiteSpace(envelope.ModId)) return envelope.ModId;
+                if (!string.IsNullOrWhiteSpace(envelope.ScenarioId)) return envelope.ScenarioId;
+                return "unknown";
+            }
+
+            private static string GetTracePrompt(LlmRequestEnvelope envelope)
+                => envelope.Messages.LastOrDefault(m => m.Role == "user")?.Content
+                   ?? envelope.Messages.LastOrDefault()?.Content
+                   ?? string.Empty;
         }
     }
 }

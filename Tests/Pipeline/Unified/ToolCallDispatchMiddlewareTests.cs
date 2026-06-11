@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Models.Debug;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Pipeline.Unified;
+using RimMind.Infrastructure.Verse;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using Xunit;
@@ -117,6 +119,40 @@ namespace RimMind.Tests.Pipeline.Unified
             Assert.NotNull(context.ToolCallResults);
             Assert.Single(context.ToolCallResults);
             Assert.Equal("sunny", context.ToolCallResults[0].Content);
+        }
+
+        [Fact]
+        public async Task WithToolCalls_RecordsTraceEntries()
+        {
+            var handler = new StubToolHandler2("get_weather",
+                Result<ToolResult, RimMindError>.Ok(
+                    new ToolResult { ToolCallId = "tc-1", Content = "sunny" }));
+            var registry = new StubToolRegistry2();
+            registry.Register(handler);
+            var traceLog = new AIRequestTraceLog();
+            traceLog.StartRequest("req-1", "test", "model", "prompt");
+
+            var middleware = new ToolCallDispatchMiddleware(registry, traceLog: traceLog);
+            var context = CreateContext();
+
+            await middleware.InvokeAsync(context, ctx =>
+            {
+                ctx.Result = Result<LlmResponse, RimMindError>.Ok(
+                    new LlmResponse
+                    {
+                        RequestId = "req-1",
+                        Content = "checking",
+                        ToolCallsJson = MakeToolCallsJson(("tc-1", "get_weather", "{}")),
+                    });
+                return Task.CompletedTask;
+            });
+
+            var entry = Assert.Single(traceLog.Entries);
+            var tool = Assert.Single(entry.ToolCalls);
+            Assert.Equal("tc-1", tool.ToolCallId);
+            Assert.Equal("get_weather", tool.ToolName);
+            Assert.True(tool.Succeeded);
+            Assert.Null(tool.Error);
         }
 
         [Fact]

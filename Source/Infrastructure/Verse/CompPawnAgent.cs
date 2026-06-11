@@ -21,11 +21,10 @@ namespace RimMind.Infrastructure.Verse
     {
         public IPawnAgentVerse? Agent { get; internal set; }
 
-        private static Texture2D AgentIcon =>
-            ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false) ?? BaseContent.BadTex;
-
         private IPawnAgentFactoryVerse? _cachedFactory;
         private IAgentBus? _cachedAgentBus;
+        private Texture2D? _agentIcon;
+        private Texture2D? _agentDevIcon;
 
         private Pawn Pawn => (Pawn)parent;
 
@@ -80,7 +79,7 @@ namespace RimMind.Infrastructure.Verse
                 {
                     defaultLabel = "RimMind.Agent.Gizmo.DevView".Translate(),
                     defaultDesc = "RimMind.Agent.Gizmo.DevViewDesc".Translate(),
-                    icon = ContentFinder<Texture2D>.Get("UI/AgentDevIcon", reportFailure: false) ?? BaseContent.BadTex,
+                    icon = AgentDevIcon,
                     action = () =>
                     {
                         Log.Message($"[RimMind-Core] {Pawn.Name?.ToStringShort}\n{Agent.GetDebugInfo()}");
@@ -88,6 +87,12 @@ namespace RimMind.Infrastructure.Verse
                 };
             }
         }
+
+        private Texture2D AgentIcon =>
+            _agentIcon ??= ContentFinder<Texture2D>.Get("UI/AgentIcon", reportFailure: false) ?? BaseContent.BadTex;
+
+        private Texture2D AgentDevIcon =>
+            _agentDevIcon ??= ContentFinder<Texture2D>.Get("UI/AgentDevIcon", reportFailure: false) ?? BaseContent.BadTex;
 
         public global::Verse.AI.Job? ConsumePendingJob()
         {

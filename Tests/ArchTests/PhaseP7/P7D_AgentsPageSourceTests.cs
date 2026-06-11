@@ -38,11 +38,43 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
+        public void AgentsPageDrawer_Does_Not_Fake_Send_Chat_Messages()
+        {
+            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs");
+            string sendMethod = content.Substring(content.IndexOf("private void SendAgentMessage", StringComparison.Ordinal));
+
+            Assert.Contains("RimMind.UI.AgentsPage.MessageUnavailable", sendMethod);
+            Assert.Contains("MessageTypeDefOf.RejectInput", sendMethod);
+            Assert.DoesNotContain("RimMind.UI.AgentsPage.MessageSent", sendMethod);
+            Assert.DoesNotContain("_chatDraft = string.Empty", sendMethod);
+        }
+
+        [Fact]
+        public void AgentsPageDrawer_ActivePaused_Detail_Can_Open_AIRequests()
+        {
+            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs");
+
+            Assert.Contains("RimMind.UI.AgentsPage.OpenRequests", content);
+            Assert.Contains("Window_RimMindHub.OpenAIRequests()", content);
+            Assert.Contains("Find.WindowStack.Add", content);
+        }
+
+        [Fact]
         public void CompPawnAgent_Has_EnsureAgentCreated()
         {
             string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
 
             Assert.Contains("EnsureAgentCreated", content);
+        }
+
+        [Fact]
+        public void AgentFlowLab_Does_Not_Expose_Storyteller_Scope()
+        {
+            string content = ReadSource("Infrastructure/UI/Window_AgentFlowLab.cs");
+
+            Assert.DoesNotContain("AgentFlowScope.Storyteller", content);
+            Assert.DoesNotContain("RimMind.UI.AgentFlowLab.ScopeStoryteller", content);
+            Assert.DoesNotContain("Find.Storyteller", content);
         }
     }
 }

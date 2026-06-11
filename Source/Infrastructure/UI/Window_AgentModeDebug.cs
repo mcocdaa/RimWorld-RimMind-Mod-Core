@@ -256,14 +256,20 @@ namespace RimMind.Infrastructure.UI
         {
             y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.RegisteredModes".Translate()) + viewRect.y;
 
-            IExtensionRegistry<IAgentMode>? modeRegistry = RimMindAPI.Modes;
-            if (modeRegistry == null || modeRegistry.All.Count == 0)
+            IReadOnlyList<IAgentMode>? modes = RimMindAPI.Modes?.All;
+            if (modes == null)
             {
                 y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.NoModes".Translate(), RimMindUI.ColorMuted) + viewRect.y;
                 return y;
             }
 
-            foreach (var mode in modeRegistry.All)
+            if (modes.Count == 0)
+            {
+                y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, "RimMind.UI.AgentModeDebug.NoModes".Translate(), RimMindUI.ColorMuted) + viewRect.y;
+                return y;
+            }
+
+            foreach (var mode in modes)
             {
                 string entry = "RimMind.UI.AgentModeDebug.ModeEntry".Translate((string)mode.ModeId, mode.DisplayName);
                 y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, (string)mode.ModeId, mode.DisplayName) + viewRect.y;

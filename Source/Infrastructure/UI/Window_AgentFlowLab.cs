@@ -46,7 +46,6 @@ namespace RimMind.Infrastructure.UI
             Pawn,
             Map,
             Colony,
-            Storyteller,
             Global
         }
 
@@ -252,7 +251,6 @@ namespace RimMind.Infrastructure.UI
             DrawScopeButton(ref x, y, 110f, AgentFlowScope.Pawn, "RimMind.UI.AgentFlowLab.ScopePawn");
             DrawScopeButton(ref x, y, 110f, AgentFlowScope.Map, "RimMind.UI.AgentFlowLab.ScopeMap");
             DrawScopeButton(ref x, y, 110f, AgentFlowScope.Colony, "RimMind.UI.AgentFlowLab.ScopeColony");
-            DrawScopeButton(ref x, y, 130f, AgentFlowScope.Storyteller, "RimMind.UI.AgentFlowLab.ScopeStoryteller");
             DrawScopeButton(ref x, y, 110f, AgentFlowScope.Global, "RimMind.UI.AgentFlowLab.ScopeGlobal");
             y += BtnHeight + Padding;
 
@@ -331,7 +329,6 @@ namespace RimMind.Infrastructure.UI
             {
                 AgentFlowScope.Map => Find.CurrentMap?.ToString() ?? "no_map",
                 AgentFlowScope.Colony => Find.World?.info?.name ?? "colony",
-                AgentFlowScope.Storyteller => Find.Storyteller?.def?.defName ?? "storyteller",
                 AgentFlowScope.Global => "global",
                 _ => "unknown"
             };

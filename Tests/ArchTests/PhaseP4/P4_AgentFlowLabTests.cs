@@ -312,15 +312,15 @@ namespace RimMind.Tests.ArchTests.PhaseP4
         }
 
         [Fact]
-        public void FlowLab_Exposes_NonPawn_Scopes_With_ScopedAgent()
+        public void FlowLab_Exposes_Generic_NonPawn_Scopes_With_ScopedAgent()
         {
             var content = ReadSourceFile(FlowLabRelative);
 
             Assert.Contains("private enum AgentFlowScope", content);
             Assert.Contains("AgentFlowScope.Map", content);
             Assert.Contains("AgentFlowScope.Colony", content);
-            Assert.Contains("AgentFlowScope.Storyteller", content);
             Assert.Contains("AgentFlowScope.Global", content);
+            Assert.DoesNotContain("AgentFlowScope.Storyteller", content);
             Assert.Contains("IScopedAgent", content);
             Assert.Contains("IScopedAgentManager", content);
             Assert.Contains("DrawNonPawnScope", content);

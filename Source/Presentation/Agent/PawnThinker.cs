@@ -13,7 +13,6 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Agent;
 using RimMind.Application.Features.Agent.InnerVoice;
 using ThinkContextEnricher = RimMind.Application.Features.Agent.ThinkContextEnricher;
-using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Llm;

@@ -553,7 +553,6 @@
   <RimMind.UI.AgentFlowLab.ScopePawn>Pawn</RimMind.UI.AgentFlowLab.ScopePawn>
   <RimMind.UI.AgentFlowLab.ScopeMap>Map</RimMind.UI.AgentFlowLab.ScopeMap>
   <RimMind.UI.AgentFlowLab.ScopeColony>Colony</RimMind.UI.AgentFlowLab.ScopeColony>
-  <RimMind.UI.AgentFlowLab.ScopeStoryteller>Storyteller</RimMind.UI.AgentFlowLab.ScopeStoryteller>
   <RimMind.UI.AgentFlowLab.ScopeGlobal>Global</RimMind.UI.AgentFlowLab.ScopeGlobal>
   <RimMind.UI.AgentFlowLab.ScopeUnsupported>This scope is visible for planning, but runtime control is not wired yet. Pawn agents are available now.</RimMind.UI.AgentFlowLab.ScopeUnsupported>
   <RimMind.UI.AgentFlowLab.ScopeHint>{0} scope agent. Context building and decision flow are available; full runtime control is limited.</RimMind.UI.AgentFlowLab.ScopeHint>
@@ -630,10 +629,11 @@
   <RimMind.UI.AgentsPage.Pause>Pause</RimMind.UI.AgentsPage.Pause>
   <RimMind.UI.AgentsPage.Resume>Resume</RimMind.UI.AgentsPage.Resume>
   <RimMind.UI.AgentsPage.ForceThink>Force Think</RimMind.UI.AgentsPage.ForceThink>
+  <RimMind.UI.AgentsPage.OpenRequests>Open Requests</RimMind.UI.AgentsPage.OpenRequests>
   <RimMind.UI.AgentsPage.Send>Send</RimMind.UI.AgentsPage.Send>
   <RimMind.UI.AgentsPage.State>State</RimMind.UI.AgentsPage.State>
   <RimMind.UI.AgentsPage.CreateFailed>Failed to create agent. Check that services are available.</RimMind.UI.AgentsPage.CreateFailed>
-  <RimMind.UI.AgentsPage.MessageSent>Message sent to agent.</RimMind.UI.AgentsPage.MessageSent>
+  <RimMind.UI.AgentsPage.MessageUnavailable>Agent chat input is not connected yet. Your draft was kept.</RimMind.UI.AgentsPage.MessageUnavailable>
   <!-- AIRequestsPageDrawer.cs -->
   <RimMind.UI.AIRequestsPage.TraceUnavailable>AI request trace log is not available.</RimMind.UI.AIRequestsPage.TraceUnavailable>
   <RimMind.UI.AIRequestsPage.Empty>No AI requests recorded yet.</RimMind.UI.AIRequestsPage.Empty>

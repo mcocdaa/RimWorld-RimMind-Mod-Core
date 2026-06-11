@@ -78,6 +78,18 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
+        public void CompPawnAgent_Does_Not_Load_Textures_From_Static_Initializer()
+        {
+            string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
+            int gizmoIndex = content.IndexOf("CompGetGizmosExtra", StringComparison.Ordinal);
+
+            Assert.True(gizmoIndex >= 0, "CompGetGizmosExtra must exist.");
+            string beforeGizmos = content.Substring(0, gizmoIndex);
+
+            Assert.DoesNotContain("ContentFinder<Texture2D>.Get", beforeGizmos);
+        }
+
+        [Fact]
         public void CompPawnAgent_Uses_One_Player_Facing_Control_Gizmo()
         {
             string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");

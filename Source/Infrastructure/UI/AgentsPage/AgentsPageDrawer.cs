@@ -240,6 +240,12 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                     {
                         agent.ForceThink();
                     }
+
+                    if (Widgets.ButtonText(new Rect(rect.x + 260f, y, 140f, RimMindUI.BtnHeight),
+                        "RimMind.UI.AgentsPage.OpenRequests".Translate()))
+                    {
+                        Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
+                    }
                 }
             }
 
@@ -261,14 +267,8 @@ namespace RimMind.Infrastructure.UI.AgentsPage
         private void SendAgentMessage(Pawn pawn)
         {
             if (string.IsNullOrWhiteSpace(_chatDraft)) return;
-            var comp = CompPawnAgent.GetComp(pawn);
-            if (comp?.Agent != null)
-            {
-                comp.Agent.ForceThink();
-                Messages.Message("RimMind.UI.AgentsPage.MessageSent".Translate(),
-                    MessageTypeDefOf.PositiveEvent, false);
-            }
-            _chatDraft = string.Empty;
+            Messages.Message("RimMind.UI.AgentsPage.MessageUnavailable".Translate(),
+                MessageTypeDefOf.RejectInput, false);
         }
 
         private static void SafeTransitionTo(IAgentControl? agent, AgentState target)
