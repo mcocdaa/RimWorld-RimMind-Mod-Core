@@ -137,7 +137,7 @@ namespace RimMind.Core.ArchTests.PhaseK
         [Trait("Phase", "K")]
         public void R_K4_RimMindAPI_Has_Send_Method()
         {
-            var apiType = typeof(RimMind.Presentation.RimMindAPI);
+            var apiType = typeof(RimMind.Application.Api.RimMindAPI);
             var requestType = apiType.GetNestedType("Request");
             requestType.Should().NotBeNull("RimMindAPI must have nested Request type");
 
@@ -149,7 +149,7 @@ namespace RimMind.Core.ArchTests.PhaseK
         [Trait("Phase", "K")]
         public void R_K4_RimMindAPI_Has_SendAsync_Method()
         {
-            var apiType = typeof(RimMind.Presentation.RimMindAPI);
+            var apiType = typeof(RimMind.Application.Api.RimMindAPI);
             var requestType = apiType.GetNestedType("Request");
             requestType.Should().NotBeNull("RimMindAPI must have nested Request type");
 

@@ -4,188 +4,125 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
-using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Application.Features.Registry;
 using RimMind.Domain.Agent.Modes;
+using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
+using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation;
+using RimMind.Presentation.Agent;
 using Verse;
+using Verse.AI;
 using Xunit;
 
 namespace RimMind.Tests.Infrastructure.Verse
 {
-    public class CompPawnAgentGizmoTests : IDisposable
+    public class CompPawnAgentGizmoTests
     {
-        private readonly IExtensionRegistry<IAgentMode>? _originalModes;
-
-        public CompPawnAgentGizmoTests()
-        {
-            _originalModes = RimMindAPI.Modes;
-            var registry = new ExtensionRegistry<IAgentMode>();
-            registry.Register(new StubAgentMode(AgentModeId.Reactive, "Reactive"));
-            registry.Register(new StubAgentMode(AgentModeId.Proactive, "Proactive"));
-            RimMindAPI.Modes = registry;
-        }
-
-        public void Dispose()
-        {
-            RimMindAPI.Modes = _originalModes;
-        }
-
-        private static CompPawnAgent CreateCompWithAgent(IAgentControl agent)
+        private static CompPawnAgent CreateCompWithAgent(IPawnAgentVerse? agent)
         {
             return new CompPawnAgent { Agent = agent };
         }
 
-        /// <summary>
-        /// Stub IAgentControl that supports IsActive, State, CurrentModeId, and SwitchMode.
-        /// </summary>
-        private sealed class StubAgentControl : IAgentControl
+        private sealed class StubAgentControl : IPawnAgentVerse
         {
             private AgentState _state;
-            private AgentModeId _currentModeId;
 
-            public StubAgentControl(AgentState state, AgentModeId currentModeId)
+            public StubAgentControl(AgentState state)
             {
                 _state = state;
-                _currentModeId = currentModeId;
             }
 
             public bool IsActive => _state == AgentState.Active;
             public AgentState State => _state;
-            public AgentModeId CurrentModeId => _currentModeId;
-            public IAgentMode CurrentMode
-                => RimMindAPI.Modes?.FindById(_currentModeId.Value) ?? throw new InvalidOperationException();
+            public AgentModeId CurrentModeId => AgentModeId.Reactive;
+            public IAgentMode CurrentMode => throw new NotImplementedException();
             public bool IsPawnValid => true;
             public string GetDebugInfo() => "stub";
             public string NpcId => "TEST-1";
             public string Label => "TestPawn";
             public int? LastThinkTick { get; set; }
             public int GoalCount => 0;
+            public Pawn Pawn => throw new NotImplementedException();
+            public AgentIdentity Identity => throw new NotImplementedException();
+            public IReadOnlyList<BehaviorRecord> BehaviorHistory => Array.Empty<BehaviorRecord>();
+            public AgentGoalStack GoalStack => throw new NotImplementedException();
+            public IStrategyOptimizer StrategyOptimizer => throw new NotImplementedException();
+            public IPerceptionBuffer PerceptionBuffer => throw new NotImplementedException();
+            public AgentAutonomyLevel AutonomyLevel { get => AgentAutonomyLevel.Autonomous; set { } }
+            public AgentWorkflowPhase WorkflowPhase => AgentWorkflowPhase.Idle;
 
             public void Tick() { }
             public bool TransitionTo(AgentState newState) { _state = newState; return true; }
             public void ForceThink() { }
-            public void SwitchMode(AgentModeId modeId) => _currentModeId = modeId;
+            public void SwitchMode(AgentModeId modeId) { }
             public void Cleanup() { }
             public void Destroy() { }
             public void ResubscribeEvents() { }
             public bool RemoveGoal(string goalDescription) => false;
+            public void AddGoal(AgentGoal goal) { }
             public void RecordBehavior(BehaviorRecordDto record) { }
-            public object? ConsumePendingJob() => null;
+            public global::Verse.AI.Job? ConsumePendingJob() => null;
+            public void SetPendingJob(global::Verse.AI.Job job) { }
+            object? IJobProvider.ConsumePendingJob() => null;
+            public void ExposeData() { }
+            public Result<Unit, RimMindError> ExecuteDecision(AgentDecision decision) => throw new NotImplementedException();
+            public void TransitionWorkflow(AgentWorkflowPhase target) { }
+            IReadOnlyList<BehaviorRecord> IPawnAgent.GetRecentHistory(int count) => Array.Empty<BehaviorRecord>();
+            float IPawnAgent.GetRecentSuccessRate(int count) => 1.0f;
             public IReadOnlyList<BehaviorRecordDto> GetRecentHistory(int count = 10) => Array.Empty<BehaviorRecordDto>();
             public float GetRecentSuccessRate(int count = 10) => 1.0f;
         }
 
-        /// <summary>
-        /// Minimal IAgentMode stub for testing mode switch Gizmo.
-        /// </summary>
-        private sealed class StubAgentMode : IAgentMode
-        {
-            public AgentModeId ModeId { get; }
-            public string DisplayName { get; }
-            public string Description => $"{DisplayName} mode";
-            public string Id => ModeId.Value;
-            public string OwnerModId => "TestMod";
-
-            public StubAgentMode(AgentModeId modeId, string displayName)
-            {
-                ModeId = modeId;
-                DisplayName = displayName;
-            }
-
-            public bool IsApplicable(IAgentInfo agent) => agent.State == AgentState.Active;
-            public bool ShouldThink(IAgentInfo agent, IReadOnlyList<PerceptionBufferEntry> perceptions) => true;
-            public IThinkStrategy GetThinkStrategy() => throw new NotImplementedException();
-            public IReadOnlyList<string> AllowedToolIds(IToolRegistry registry) => Array.Empty<string>();
-        }
-
         [Fact]
-        public void CompGetGizmosExtra_NullAgent_YieldsCreateAndViewState()
+        public void CompGetGizmosExtra_NullAgent_YieldsOneAgentControlGizmo()
         {
             var comp = new CompPawnAgent { Agent = null };
             var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
-            Assert.Equal(2, gizmos.Count);
-            Assert.Contains(gizmos, g => g.defaultLabel.Contains("CreateAgent"));
-            Assert.Contains(gizmos, g => g.defaultLabel.Contains("ViewState"));
+            Assert.Single(gizmos);
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("Control"));
         }
 
         [Fact]
-        public void CompGetGizmosExtra_ActiveAgent_ContainsModeSwitchGizmo()
+        public void CompGetGizmosExtra_ActiveAgent_YieldsOneAgentControlGizmo()
         {
-            var agent = new StubAgentControl(AgentState.Active, AgentModeId.Reactive);
-            var comp = CreateCompWithAgent(agent);
-
-            var gizmos = comp.CompGetGizmosExtra().ToList();
-
-            // Should contain a gizmo whose label contains "Mode"
-            var modeGizmo = gizmos.OfType<Command_Action>()
-                .FirstOrDefault(g => g.defaultLabel.Contains("Mode"));
-            Assert.NotNull(modeGizmo);
-        }
-
-        [Fact]
-        public void CompGetGizmosExtra_ActiveAgent_AtLeastFiveGizmos()
-        {
-            // State toggle + pause + force think + dialogue + mode switch + emergency stop = 6
-            var agent = new StubAgentControl(AgentState.Active, AgentModeId.Reactive);
-            var comp = CreateCompWithAgent(agent);
-
-            var gizmos = comp.CompGetGizmosExtra().ToList();
-
-            Assert.True(gizmos.Count >= 5,
-                $"Expected at least 5 gizmos when active (toggle + pause + force think + dialogue + mode switch + emergency stop), got {gizmos.Count}");
-        }
-
-        [Fact]
-        public void CompGetGizmosExtra_DormantAgent_NoDialogueOrModeGizmos()
-        {
-            var agent = new StubAgentControl(AgentState.Dormant, AgentModeId.Reactive);
+            var agent = new StubAgentControl(AgentState.Active);
             var comp = CreateCompWithAgent(agent);
 
             var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
 
-            Assert.Equal(3, gizmos.Count);
-            Assert.Contains(gizmos, g => g.defaultLabel.Contains("AgentState"));
-            Assert.Contains(gizmos, g => g.defaultLabel.Contains("ViewState"));
-            Assert.Contains(gizmos, g => g.defaultLabel.Contains("ForceThink"));
+            Assert.Single(gizmos);
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("Control"));
+        }
+
+        [Fact]
+        public void CompGetGizmosExtra_DormantAgent_YieldsOneAgentControlGizmo()
+        {
+            var agent = new StubAgentControl(AgentState.Dormant);
+            var comp = CreateCompWithAgent(agent);
+
+            var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
+
+            Assert.Single(gizmos);
+            Assert.Contains(gizmos, g => g.defaultLabel.Contains("Control"));
             Assert.DoesNotContain(gizmos, g => g.defaultLabel.Contains("Dialogue"));
             Assert.DoesNotContain(gizmos, g => g.defaultLabel.Contains("Mode"));
         }
 
         [Fact]
-        public void CompGetGizmosExtra_ModeSwitchGizmo_ShowsCurrentMode()
+        public void CompGetGizmosExtra_AgentControl_DoesNotCreateAgent()
         {
-            var agent = new StubAgentControl(AgentState.Active, AgentModeId.Proactive);
-            var comp = CreateCompWithAgent(agent);
-
+            var comp = new CompPawnAgent { Agent = null };
             var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
+            var controlGizmo = gizmos.First(g => g.defaultLabel.Contains("Control"));
 
-            var modeGizmo = gizmos.FirstOrDefault(g => g.defaultLabel.Contains("Mode"));
-            Assert.NotNull(modeGizmo);
-            Assert.Contains("Proactive", modeGizmo.defaultLabel);
-        }
+            // Clicking Agent Control should not create an agent
+            Assert.Null(comp.Agent);
+            Assert.NotNull(controlGizmo.action);
 
-        [Fact]
-        public void CompGetGizmosExtra_ModeSwitchAction_OpensFloatMenu()
-        {
-            var agent = new StubAgentControl(AgentState.Active, AgentModeId.Reactive);
-            var comp = CreateCompWithAgent(agent);
-
-            var gizmos = comp.CompGetGizmosExtra().OfType<Command_Action>().ToList();
-            var modeGizmo = gizmos.FirstOrDefault(g => g.defaultLabel.Contains("Mode"));
-
-            Assert.NotNull(modeGizmo);
-            Assert.NotNull(modeGizmo.action);
-
-            // C-1: Mode switch now opens a FloatMenu instead of cycling
-            // Invoking the action should not throw (FloatMenu creation)
-            modeGizmo.action!();
-
-            // Mode should NOT change directly — FloatMenu is shown instead
-            Assert.Equal(AgentModeId.Reactive, agent.CurrentModeId);
+            // Actually invoke the action — it opens a window but must not create an Agent
+            controlGizmo.action!();
+            Assert.Null(comp.Agent);
         }
     }
 }

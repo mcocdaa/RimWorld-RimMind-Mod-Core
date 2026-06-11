@@ -1,11 +1,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Llm;
 using Verse;
 
 namespace RimMind.Presentation.Agent
 {
-    public class StrategyOptimizer : IExposable
+    public class StrategyOptimizer : IStrategyOptimizer, IExposable
     {
         private ConcurrentDictionary<string, float> _actionWeights = new ConcurrentDictionary<string, float>();
 
@@ -61,15 +62,5 @@ namespace RimMind.Presentation.Agent
             }
         }
 
-        public void ApplyNeedUrgencyBoost()
-        {
-            string[] needActions = { "force_rest", "eat_food" };
-            foreach (var action in needActions)
-            {
-                _actionWeights.AddOrUpdate(action,
-                    2.0f,
-                    (_, current) => UnityEngine.Mathf.Min(current + 0.5f, 5f));
-            }
-        }
     }
 }

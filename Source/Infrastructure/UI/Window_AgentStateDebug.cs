@@ -5,10 +5,8 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation;
+using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
-using RimMind.Presentation.Runtime;
-using RimMind.Presentation.UI;
 using UnityEngine;
 using Verse;
 
@@ -279,7 +277,7 @@ namespace RimMind.Infrastructure.UI
             float y = viewRect.y + RimMindUI.Padding;
 
             CompPawnAgent? comp = CompPawnAgent.GetComp(pawn);
-            IAgentControl? agent = comp?.Agent;
+            var agent = comp?.Agent;
 
             // ── Section: Pawn Info ──
             y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.SectionPawnInfo".Translate()) + viewRect.y;
@@ -305,8 +303,7 @@ namespace RimMind.Infrastructure.UI
 
                 y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.Mode".Translate(), (string)agent.CurrentModeId) + viewRect.y;
 
-                bool isThinking = agent is IPawnAgent pawnAgent
-                    && pawnAgent.WorkflowPhase == AgentWorkflowPhase.Thinking;
+                bool isThinking = agent.WorkflowPhase == AgentWorkflowPhase.Thinking;
                 string thinkingLabel = isThinking.ToString();
                 Color thinkingColor = isThinking ? RimMindUI.ColorActive : RimMindUI.ColorMuted;
                 y = RimMindUI.DrawKeyValueRow(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.Thinking".Translate(), thinkingLabel) + viewRect.y;
@@ -376,7 +373,7 @@ namespace RimMind.Infrastructure.UI
             float h = RimMindUI.Padding;
 
             CompPawnAgent? comp = CompPawnAgent.GetComp(pawn);
-            IAgentControl? agent = comp?.Agent;
+            var agent = comp?.Agent;
 
             // Pawn Info section
             h += RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // header
@@ -424,7 +421,7 @@ namespace RimMind.Infrastructure.UI
             Rect createAgentBtn = new Rect(x, y, btnW, RimMindUI.BtnHeight);
             if (Widgets.ButtonText(createAgentBtn, "RimMind.UI.AgentStateDebug.CreateAgent".Translate()))
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
                 var agentBus = RimMindServiceLocator.Get<IAgentBus>();
                 if (factory != null && agentBus != null)
                 {
@@ -433,7 +430,7 @@ namespace RimMind.Infrastructure.UI
                     {
                         var comp = CompPawnAgent.GetComp(pawn);
                         if (comp != null && comp.Agent == null)
-                            comp.Agent = createdAgent;
+                            comp.Agent = createdAgent as IPawnAgentVerse;
                     }
                 }
             }

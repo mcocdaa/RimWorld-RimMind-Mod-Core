@@ -9,7 +9,7 @@ namespace RimMind.Application.Common.Models.Agent
     /// Located in Application layer so sub-mods can reference it
     /// via 1_RimMindApplication.dll without depending on the Presentation layer.
     /// IExposable serialization is handled by the Presentation-layer subclass
-    /// <see cref="RimMind.Presentation.Agent.SerializableAgentIdentity"/>.
+    /// <see cref="RimMind.Application.Common.Models.Agent.SerializableAgentIdentity"/>.
     /// </summary>
     public class AgentIdentity : IAgentIdentity
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 using Xunit;
-using RimMind.Presentation.UI;
+using RimMind.Infrastructure.UI;
 
 namespace RimMind.Tests.Presentation.UI
 {

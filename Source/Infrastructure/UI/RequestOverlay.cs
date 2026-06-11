@@ -295,10 +295,19 @@ namespace RimMind.Infrastructure.UI
         {
             var s = GetOverlaySettings();
             if (s == null) return;
+
+            bool changed = Mathf.Abs(s.RequestOverlayX - _windowRect.x) > 0.1f
+                || Mathf.Abs(s.RequestOverlayY - _windowRect.y) > 0.1f
+                || Mathf.Abs(s.RequestOverlayW - _windowRect.width) > 0.1f
+                || Mathf.Abs(s.RequestOverlayH - _windowRect.height) > 0.1f;
+
             s.RequestOverlayX = _windowRect.x;
             s.RequestOverlayY = _windowRect.y;
             s.RequestOverlayW = _windowRect.width;
             s.RequestOverlayH = _windowRect.height;
+
+            if (changed)
+                s.Persist();
         }
     }
 }

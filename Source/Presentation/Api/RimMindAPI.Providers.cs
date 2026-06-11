@@ -4,7 +4,7 @@ using RimMind.Presentation.Runtime;
 using Verse;
 using System.Collections.Generic;
 
-namespace RimMind.Presentation
+namespace RimMind.Application.Api
 {
     public static partial class RimMindAPI
     {

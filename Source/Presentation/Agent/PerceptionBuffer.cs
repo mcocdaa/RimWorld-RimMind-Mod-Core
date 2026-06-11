@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PerceptionBuffer
+    public class PerceptionBuffer : IPerceptionBuffer
     {
         private readonly List<PerceptionBufferEntry> _entries = new List<PerceptionBufferEntry>();
         private const int MaxCapacity = RimMindDefaults.PerceptionBufferCapacity;
@@ -25,11 +26,6 @@ namespace RimMind.Presentation.Agent
             var result = new List<PerceptionBufferEntry>(_entries);
             _entries.Clear();
             return result;
-        }
-
-        public IReadOnlyList<PerceptionBufferEntry> Get()
-        {
-            return _entries;
         }
 
         public void Clear()

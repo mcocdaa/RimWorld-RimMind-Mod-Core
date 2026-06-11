@@ -101,7 +101,7 @@ namespace RimMind.Infrastructure.UI
             envelope.Messages.Add(new ChatMessage { Role = "system", Content = "You are a test assistant. Always reply in JSON format." });
             envelope.Messages.Add(new ChatMessage { Role = "user", Content = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}" });
 
-            RimMind.Presentation.RimMindAPI.Send(envelope, result =>
+            RimMind.Application.Api.RimMindAPI.Send(envelope, result =>
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {

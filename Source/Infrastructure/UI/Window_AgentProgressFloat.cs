@@ -6,7 +6,6 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation.Agent;
 using UnityEngine;
 using Verse;
 

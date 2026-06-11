@@ -1,10 +1,10 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Enums;
-using RimMind.Presentation;
+using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
-using RimMind.Presentation.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -60,36 +60,30 @@ namespace RimMind.Infrastructure.Verse
 
             curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "Mode", agent.CurrentModeId.Value);
 
-            if (agent is IPawnAgent pawnAgent)
-            {
-                curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "WorkflowPhase", pawnAgent.WorkflowPhase.ToString());
-                curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "Autonomy", pawnAgent.AutonomyLevel.ToString());
-            }
+            curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "WorkflowPhase", agent.WorkflowPhase.ToString());
+            curY = RimMindUI.DrawKeyValueRow(contentRect, curY, "Autonomy", agent.AutonomyLevel.ToString());
 
             // ── Section: Goals ──
             curY = RimMindUI.DrawDivider(contentRect, curY);
             curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Goals".Translate());
 
-            if (agent is IPawnAgent pa2)
+            var goals = agent.GoalStack.Goals;
+            if (goals.Count == 0)
             {
-                var goals = pa2.GoalStack.Goals;
-                if (goals.Count == 0)
+                curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (none)", RimMindUI.ColorMuted);
+            }
+            else
+            {
+                foreach (var goal in goals)
                 {
-                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (none)", RimMindUI.ColorMuted);
-                }
-                else
-                {
-                    foreach (var goal in goals)
-                    {
-                        string statusMarker = goal.Status.ToString();
-                        Color markerColor = goal.Status == GoalStatus.Achieved
-                            ? RimMindUI.ColorActive
-                            : goal.Status == GoalStatus.Abandoned
-                                ? RimMindUI.ColorError
-                                : RimMindUI.ColorValue;
-                        string goalText = $"[{statusMarker}] {goal.Description} (P:{goal.Priority:F1})";
-                        curY = RimMindUI.DrawWrappedLabel(contentRect, curY, goalText, markerColor);
-                    }
+                    string statusMarker = goal.Status.ToString();
+                    Color markerColor = goal.Status == GoalStatus.Achieved
+                        ? RimMindUI.ColorActive
+                        : goal.Status == GoalStatus.Abandoned
+                            ? RimMindUI.ColorError
+                            : RimMindUI.ColorValue;
+                    string goalText = $"[{statusMarker}] {goal.Description} (P:{goal.Priority:F1})";
+                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, goalText, markerColor);
                 }
             }
 
@@ -97,19 +91,16 @@ namespace RimMind.Infrastructure.Verse
             curY = RimMindUI.DrawDivider(contentRect, curY);
             curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.Strategy".Translate());
 
-            if (agent is IPawnAgent pa3)
+            var topW = agent.StrategyOptimizer.GetTopN(5);
+            if (topW.Count == 0)
             {
-                var topW = pa3.StrategyOptimizer.GetTopN(5);
-                if (topW.Count == 0)
+                curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (no data)", RimMindUI.ColorMuted);
+            }
+            else
+            {
+                foreach (var kv in topW)
                 {
-                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (no data)", RimMindUI.ColorMuted);
-                }
-                else
-                {
-                    foreach (var kv in topW)
-                    {
-                        curY = RimMindUI.DrawKeyValueRow(contentRect, curY, kv.Key, kv.Value.ToString("F2"));
-                    }
+                    curY = RimMindUI.DrawKeyValueRow(contentRect, curY, kv.Key, kv.Value.ToString("F2"));
                 }
             }
 
@@ -117,25 +108,22 @@ namespace RimMind.Infrastructure.Verse
             curY = RimMindUI.DrawDivider(contentRect, curY);
             curY = RimMindUI.DrawSectionHeader(contentRect, curY, "RimMind.Agent.ITab.History".Translate());
 
-            if (agent is IPawnAgent pa4)
+            var recent = agent.GetRecentHistory(5);
+            if (recent.Count == 0)
             {
-                var recent = pa4.GetRecentHistory(5);
-                if (recent.Count == 0)
+                curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (no history)", RimMindUI.ColorMuted);
+            }
+            else
+            {
+                Text.Font = GameFont.Tiny;
+                foreach (var record in recent)
                 {
-                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, "  (no history)", RimMindUI.ColorMuted);
+                    var marker = record.Success ? "OK" : "FAIL";
+                    Color markerColor = record.Success ? RimMindUI.ColorActive : RimMindUI.ColorError;
+                    string recordText = $"[{marker}] {record.Action} - {record.Reason}";
+                    curY = RimMindUI.DrawWrappedLabel(contentRect, curY, recordText, markerColor);
                 }
-                else
-                {
-                    Text.Font = GameFont.Tiny;
-                    foreach (var record in recent)
-                    {
-                        var marker = record.Success ? "OK" : "FAIL";
-                        Color markerColor = record.Success ? RimMindUI.ColorActive : RimMindUI.ColorError;
-                        string recordText = $"[{marker}] {record.Action} - {record.Reason}";
-                        curY = RimMindUI.DrawWrappedLabel(contentRect, curY, recordText, markerColor);
-                    }
-                    Text.Font = GameFont.Small;
-                }
+                Text.Font = GameFont.Small;
             }
 
             Widgets.EndScrollView();
@@ -152,7 +140,7 @@ namespace RimMind.Infrastructure.Verse
             Rect createBtn = new Rect(rect.x, y, 160f, 28f);
             if (Widgets.ButtonText(createBtn, "RimMind.Agent.ITab.CreateAgent".Translate()))
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
                 var agentBus = RimMindServiceLocator.Get<IAgentBus>();
                 if (factory != null && agentBus != null)
                 {
@@ -160,7 +148,7 @@ namespace RimMind.Infrastructure.Verse
                     if (createdAgent != null)
                     {
                         if (comp != null && comp.Agent == null)
-                            comp.Agent = createdAgent;
+                            comp.Agent = createdAgent as IPawnAgentVerse;
                     }
                 }
                 else
@@ -171,7 +159,7 @@ namespace RimMind.Infrastructure.Verse
             }
         }
 
-        private float CalculateContentHeight(IAgentControl agent, float width)
+        private float CalculateContentHeight(IPawnAgentVerse agent, float width)
         {
             float h = 0f;
 
@@ -179,60 +167,48 @@ namespace RimMind.Infrastructure.Verse
             h += RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // header
             h += RimMindUI.LineHeight + RimMindUI.Padding * 0.5f; // badge
             h += RimMindUI.LineHeight + RimMindUI.Padding * 0.5f; // mode
-            if (agent is IPawnAgent pa1)
-            {
-                h += (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * 2; // workflow, autonomy
-            }
+            h += (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * 2; // workflow, autonomy
 
             // Goals section
             h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // divider + header
-            if (agent is IPawnAgent pa2)
+            var goals = agent.GoalStack.Goals;
+            if (goals.Count == 0)
             {
-                var goals = pa2.GoalStack.Goals;
-                if (goals.Count == 0)
+                h += RimMindUI.LineHeight;
+            }
+            else
+            {
+                Text.Font = GameFont.Small;
+                foreach (var goal in goals)
                 {
-                    h += RimMindUI.LineHeight;
-                }
-                else
-                {
-                    Text.Font = GameFont.Small;
-                    foreach (var goal in goals)
-                    {
-                        string goalText = $"[{goal.Status}] {goal.Description} (P:{goal.Priority:F1})";
-                        h += Text.CalcHeight(goalText, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
-                    }
+                    string goalText = $"[{goal.Status}] {goal.Description} (P:{goal.Priority:F1})";
+                    h += Text.CalcHeight(goalText, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
                 }
             }
 
             // Strategy section
             h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
-            if (agent is IPawnAgent pa3)
-            {
-                var topW = pa3.StrategyOptimizer.GetTopN(5);
-                h += topW.Count > 0
-                    ? (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * topW.Count
-                    : RimMindUI.LineHeight;
-            }
+            var topW = agent.StrategyOptimizer.GetTopN(5);
+            h += topW.Count > 0
+                ? (RimMindUI.LineHeight + RimMindUI.Padding * 0.5f) * topW.Count
+                : RimMindUI.LineHeight;
 
             // History section
             h += RimMindUI.SectionGap * 0.5f + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
-            if (agent is IPawnAgent pa4)
+            var recent = agent.GetRecentHistory(5);
+            if (recent.Count == 0)
             {
-                var recent = pa4.GetRecentHistory(5);
-                if (recent.Count == 0)
+                h += RimMindUI.LineHeight;
+            }
+            else
+            {
+                Text.Font = GameFont.Tiny;
+                foreach (var record in recent)
                 {
-                    h += RimMindUI.LineHeight;
+                    string recordText = $"[{(record.Success ? "OK" : "FAIL")}] {record.Action} - {record.Reason}";
+                    h += Text.CalcHeight(recordText, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
                 }
-                else
-                {
-                    Text.Font = GameFont.Tiny;
-                    foreach (var record in recent)
-                    {
-                        string recordText = $"[{(record.Success ? "OK" : "FAIL")}] {record.Action} - {record.Reason}";
-                        h += Text.CalcHeight(recordText, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
-                    }
-                    Text.Font = GameFont.Small;
-                }
+                Text.Font = GameFont.Small;
             }
 
             return h + RimMindUI.Padding;

@@ -273,7 +273,7 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         [Fact]
         public void IScopedAgent_Inherits_IAgentControl()
         {
-            var content = ReadCoreSource("Presentation/Agent/IScopedAgent.cs");
+            var content = ReadCoreSource("Application/Common/Interfaces/Agent/IScopedAgent.cs");
             Assert.Contains("IAgentControl", content);
             Assert.Contains("ScopeId", content);
             Assert.Contains("ScopeType", content);
@@ -294,7 +294,7 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         [Fact]
         public void IScopedAgentFactory_Creates_ScopedAgent()
         {
-            var content = ReadCoreSource("Presentation/Agent/IScopedAgentFactory.cs");
+            var content = ReadCoreSource("Application/Common/Interfaces/Agent/IScopedAgentFactory.cs");
             Assert.Contains("IScopedAgent Create", content);
             Assert.Contains("scopeType", content);
             Assert.Contains("scopeId", content);
@@ -320,7 +320,7 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         [Fact]
         public void IScopedAgentManager_Manages_ScopedAgent_Lifecycle()
         {
-            var content = ReadCoreSource("Presentation/Agent/IScopedAgentManager.cs");
+            var content = ReadCoreSource("Application/Common/Interfaces/Agent/IScopedAgentManager.cs");
             Assert.Contains("GetOrCreate", content);
             Assert.Contains("Find", content);
             Assert.Contains("GetAll", content);

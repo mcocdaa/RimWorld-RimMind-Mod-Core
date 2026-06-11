@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Presentation.Runtime;
@@ -19,7 +20,7 @@ namespace RimMind.Presentation.Tests
 
         private AgentGoalStack CreateStack()
         {
-            return new AgentGoalStack();
+            return new SerializableAgentGoalStack();
         }
 
         [Fact]
@@ -34,7 +35,7 @@ namespace RimMind.Presentation.Tests
         public void TryAdd_ValidGoal_ReturnsTrue()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("survive", GoalCategory.Survival, 0.8f, GoalStatus.Proposed);
+            var goal = new SerializableAgentGoal("survive", GoalCategory.Survival, 0.8f, GoalStatus.Proposed);
             bool result = stack.TryAdd(goal, TestPawnId);
             Assert.True(result);
         }
@@ -43,7 +44,7 @@ namespace RimMind.Presentation.Tests
         public void TryAdd_ProposedGoal_PromotedToActiveWhenSlotAvailable()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("eat", GoalCategory.Survival, 0.8f, GoalStatus.Proposed);
+            var goal = new SerializableAgentGoal("eat", GoalCategory.Survival, 0.8f, GoalStatus.Proposed);
             stack.TryAdd(goal, TestPawnId);
             Assert.Equal(GoalStatus.Active, goal.Status);
             Assert.Equal(1, stack.ActiveCount);
@@ -53,9 +54,9 @@ namespace RimMind.Presentation.Tests
         public void TryAdd_MultipleGoals_SortedByPriority()
         {
             var stack = CreateStack();
-            var low = new AgentGoal("low", GoalCategory.Other, 0.2f, GoalStatus.Proposed);
-            var high = new AgentGoal("high", GoalCategory.Survival, 0.9f, GoalStatus.Proposed);
-            var mid = new AgentGoal("mid", GoalCategory.Work, 0.5f, GoalStatus.Proposed);
+            var low = new SerializableAgentGoal("low", GoalCategory.Other, 0.2f, GoalStatus.Proposed);
+            var high = new SerializableAgentGoal("high", GoalCategory.Survival, 0.9f, GoalStatus.Proposed);
+            var mid = new SerializableAgentGoal("mid", GoalCategory.Work, 0.5f, GoalStatus.Proposed);
 
             stack.TryAdd(low, TestPawnId);
             stack.TryAdd(high, TestPawnId);
@@ -72,7 +73,7 @@ namespace RimMind.Presentation.Tests
             var stack = CreateStack();
             for (int i = 0; i < 5; i++)
             {
-                stack.TryAdd(new AgentGoal($"goal_{i}", GoalCategory.Survival, 0.5f + i * 0.1f, GoalStatus.Proposed), TestPawnId);
+                stack.TryAdd(new SerializableAgentGoal($"goal_{i}", GoalCategory.Survival, 0.5f + i * 0.1f, GoalStatus.Proposed), TestPawnId);
             }
 
             Assert.Equal(3, stack.ActiveCount);
@@ -85,13 +86,13 @@ namespace RimMind.Presentation.Tests
             var stack = CreateStack();
             for (int i = 0; i < 10; i++)
             {
-                stack.TryAdd(new AgentGoal($"goal_{i}", GoalCategory.Survival, 0.5f, GoalStatus.Proposed), TestPawnId);
+                stack.TryAdd(new SerializableAgentGoal($"goal_{i}", GoalCategory.Survival, 0.5f, GoalStatus.Proposed), TestPawnId);
             }
 
             Assert.Equal(10, stack.TotalCount);
             Assert.Equal(3, stack.ActiveCount);
 
-            bool added = stack.TryAdd(new AgentGoal("overflow", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            bool added = stack.TryAdd(new SerializableAgentGoal("overflow", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
             Assert.True(added);
             Assert.Equal(10, stack.TotalCount);
         }
@@ -102,7 +103,7 @@ namespace RimMind.Presentation.Tests
             var stack = CreateStack();
             for (int i = 0; i < 10; i++)
             {
-                stack.TryAdd(new AgentGoal($"goal_{i}", GoalCategory.Survival, 0.5f, GoalStatus.Proposed), TestPawnId);
+                stack.TryAdd(new SerializableAgentGoal($"goal_{i}", GoalCategory.Survival, 0.5f, GoalStatus.Proposed), TestPawnId);
             }
 
             Assert.Equal(10, stack.TotalCount);
@@ -116,7 +117,7 @@ namespace RimMind.Presentation.Tests
             int actualActive = stack.Goals.Count(g => g.Status == GoalStatus.Active);
             Assert.Equal(10, actualActive);
 
-            bool added = stack.TryAdd(new AgentGoal("no_room", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            bool added = stack.TryAdd(new SerializableAgentGoal("no_room", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
             Assert.False(added);
         }
 
@@ -124,7 +125,7 @@ namespace RimMind.Presentation.Tests
         public void Remove_ExistingGoal_ReturnsTrue()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("target", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("target", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
 
             bool removed = stack.Remove("target", TestPawnId);
             Assert.True(removed);
@@ -143,7 +144,7 @@ namespace RimMind.Presentation.Tests
         public void Remove_ActiveGoal_DecrementsActiveCount()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("active_goal", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("active_goal", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
             Assert.Equal(1, stack.ActiveCount);
 
             stack.Remove("active_goal", TestPawnId);
@@ -154,10 +155,10 @@ namespace RimMind.Presentation.Tests
         public void Remove_ActiveGoal_PromotesProposedGoal()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g4", GoalCategory.Survival, 0.6f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g4", GoalCategory.Survival, 0.6f, GoalStatus.Proposed), TestPawnId);
 
             Assert.Equal(3, stack.ActiveCount);
             Assert.Equal(4, stack.TotalCount);
@@ -173,7 +174,7 @@ namespace RimMind.Presentation.Tests
         public void CheckExpired_RemovesExpiredGoals()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("expiring", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
+            var goal = new SerializableAgentGoal("expiring", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
             {
                 ExpirationTick = 100
             };
@@ -181,8 +182,7 @@ namespace RimMind.Presentation.Tests
             Assert.Equal(1, stack.TotalCount);
             Assert.Equal(1, stack.ActiveCount);
 
-            Find.TickManager.TicksGame = 200;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 200);
 
             Assert.Equal(0, stack.TotalCount);
             Assert.Equal(0, stack.ActiveCount);
@@ -192,14 +192,13 @@ namespace RimMind.Presentation.Tests
         public void CheckExpired_DoesNotRemoveUnexpiredGoals()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("not_expired", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
+            var goal = new SerializableAgentGoal("not_expired", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
             {
                 ExpirationTick = 999999
             };
             stack.TryAdd(goal, TestPawnId);
 
-            Find.TickManager.TicksGame = 200;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 200);
 
             Assert.Equal(1, stack.TotalCount);
         }
@@ -208,15 +207,14 @@ namespace RimMind.Presentation.Tests
         public void CheckExpired_ExpiredActiveGoal_DecrementsActiveCount()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("exp_active", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
+            var goal = new SerializableAgentGoal("exp_active", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
             {
                 ExpirationTick = 100
             };
             stack.TryAdd(goal, TestPawnId);
             Assert.Equal(1, stack.ActiveCount);
 
-            Find.TickManager.TicksGame = 200;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 200);
 
             Assert.Equal(0, stack.ActiveCount);
         }
@@ -225,18 +223,17 @@ namespace RimMind.Presentation.Tests
         public void CheckExpired_ExpiredGoal_PromotesProposed()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("a1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("a2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("a3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
-            var proposed = new AgentGoal("a4", GoalCategory.Survival, 0.6f, GoalStatus.Proposed);
+            stack.TryAdd(new SerializableAgentGoal("a1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("a2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("a3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
+            var proposed = new SerializableAgentGoal("a4", GoalCategory.Survival, 0.6f, GoalStatus.Proposed);
             proposed.ExpirationTick = 0;
             stack.TryAdd(proposed, TestPawnId);
 
             Assert.Equal(3, stack.ActiveCount);
             Assert.Equal(4, stack.TotalCount);
 
-            Find.TickManager.TicksGame = 100;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 100);
 
             Assert.Equal(3, stack.ActiveCount);
         }
@@ -246,7 +243,7 @@ namespace RimMind.Presentation.Tests
         {
             var stack = CreateStack();
             for (int i = 0; i < 5; i++)
-                stack.TryAdd(new AgentGoal($"g_{i}", GoalCategory.Survival, 0.5f, GoalStatus.Proposed), TestPawnId);
+                stack.TryAdd(new SerializableAgentGoal($"g_{i}", GoalCategory.Survival, 0.5f, GoalStatus.Proposed), TestPawnId);
 
             Assert.True(stack.TotalCount > 0);
 
@@ -260,8 +257,8 @@ namespace RimMind.Presentation.Tests
         public void ActiveGoals_ReturnsOnlyActiveGoals()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("active1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("active2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("active1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("active2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
 
             var activeGoals = stack.ActiveGoals;
             Assert.All(activeGoals, g => Assert.Equal(GoalStatus.Active, g.Status));
@@ -271,11 +268,11 @@ namespace RimMind.Presentation.Tests
         public void ActiveGoals_Cached_InvalidatedOnMutation()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("g1", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g1", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
             var first = stack.ActiveGoals;
             Assert.Single(first);
 
-            stack.TryAdd(new AgentGoal("g2", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g2", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
             var second = stack.ActiveGoals;
             Assert.Equal(2, second.Count);
         }
@@ -284,9 +281,9 @@ namespace RimMind.Presentation.Tests
         public void ActiveCount_StayInSyncWithGoals()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
 
             int actualActive = 0;
             foreach (var g in stack.Goals)
@@ -299,8 +296,8 @@ namespace RimMind.Presentation.Tests
         public void ActiveCount_AfterRemove_StayInSync()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
 
             stack.Remove("g1", TestPawnId);
 
@@ -315,14 +312,13 @@ namespace RimMind.Presentation.Tests
         public void ActiveCount_AfterCheckExpired_StayInSync()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("exp", GoalCategory.Survival, 0.9f, GoalStatus.Proposed)
+            var goal = new SerializableAgentGoal("exp", GoalCategory.Survival, 0.9f, GoalStatus.Proposed)
             {
                 ExpirationTick = 100
             };
             stack.TryAdd(goal, TestPawnId);
 
-            Find.TickManager.TicksGame = 200;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 200);
 
             int actualActive = 0;
             foreach (var g in stack.Goals)
@@ -335,14 +331,13 @@ namespace RimMind.Presentation.Tests
         public void TryAdd_GoalWithZeroExpirationTick_DoesNotExpireImmediately()
         {
             var stack = CreateStack();
-            var goal = new AgentGoal("no_expire", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
+            var goal = new SerializableAgentGoal("no_expire", GoalCategory.Survival, 0.8f, GoalStatus.Proposed)
             {
                 ExpirationTick = 0
             };
             stack.TryAdd(goal, TestPawnId);
 
-            Find.TickManager.TicksGame = 100000;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 100000);
 
             Assert.Equal(1, stack.TotalCount);
         }
@@ -351,8 +346,8 @@ namespace RimMind.Presentation.Tests
         public void Goals_ReturnsAllGoals()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("g2", GoalCategory.Work, 0.5f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g2", GoalCategory.Work, 0.5f, GoalStatus.Proposed), TestPawnId);
 
             Assert.Equal(2, stack.Goals.Count);
         }
@@ -363,10 +358,10 @@ namespace RimMind.Presentation.Tests
             var stack = CreateStack();
             Assert.Equal(0, stack.TotalCount);
 
-            stack.TryAdd(new AgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
             Assert.Equal(1, stack.TotalCount);
 
-            stack.TryAdd(new AgentGoal("g2", GoalCategory.Work, 0.5f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("g2", GoalCategory.Work, 0.5f, GoalStatus.Proposed), TestPawnId);
             Assert.Equal(2, stack.TotalCount);
         }
 
@@ -374,10 +369,10 @@ namespace RimMind.Presentation.Tests
         public void PromoteProposed_FillsActiveSlots()
         {
             var stack = CreateStack();
-            stack.TryAdd(new AgentGoal("a1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("a2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("a3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
-            stack.TryAdd(new AgentGoal("p1", GoalCategory.Work, 0.6f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("a1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("a2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("a3", GoalCategory.Survival, 0.7f, GoalStatus.Proposed), TestPawnId);
+            stack.TryAdd(new SerializableAgentGoal("p1", GoalCategory.Work, 0.6f, GoalStatus.Proposed), TestPawnId);
 
             Assert.Equal(3, stack.ActiveCount);
 
@@ -391,13 +386,12 @@ namespace RimMind.Presentation.Tests
         public void CheckExpired_MultipleExpired_AllRemoved()
         {
             var stack = CreateStack();
-            var g1 = new AgentGoal("exp1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed) { ExpirationTick = 100 };
-            var g2 = new AgentGoal("exp2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed) { ExpirationTick = 100 };
+            var g1 = new SerializableAgentGoal("exp1", GoalCategory.Survival, 0.9f, GoalStatus.Proposed) { ExpirationTick = 100 };
+            var g2 = new SerializableAgentGoal("exp2", GoalCategory.Survival, 0.8f, GoalStatus.Proposed) { ExpirationTick = 100 };
             stack.TryAdd(g1, TestPawnId);
             stack.TryAdd(g2, TestPawnId);
 
-            Find.TickManager.TicksGame = 200;
-            stack.CheckExpired(TestPawnId);
+            stack.CheckExpired(TestPawnId, 200);
 
             Assert.Equal(0, stack.TotalCount);
         }

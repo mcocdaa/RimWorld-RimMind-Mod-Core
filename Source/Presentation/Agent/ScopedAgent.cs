@@ -11,7 +11,7 @@ using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation;
+using RimMind.Application.Api;
 
 namespace RimMind.Presentation.Agent
 {

@@ -73,6 +73,9 @@ namespace RimMind.Infrastructure
             var player2Lifecycle = new Player2LifecycleService(settingsProvider);
             RimMindServiceLocator.Register<IPlayer2Lifecycle>(player2Lifecycle);
 
+            var requestTraceLog = new AIRequestTraceLog();
+            RimMindServiceLocator.Register<IAIRequestTraceLog>(requestTraceLog);
+
             return new InfrastructureServiceBag
             {
                 AudioPlayer = audioPlayer,

@@ -2,7 +2,7 @@ using HarmonyLib;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.UI;
-using RimMind.Presentation;
+using RimMind.Application.Api;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -22,6 +22,9 @@ namespace RimMind.Infrastructure.Patches
         {
             if (worldView || row == null) return;
 
+            // Sync icon visual state from toggle registry before rendering.
+            // ToggleableIcon flips _iconState via ref on click, so we compare
+            // prev vs post to detect user interaction, then route by modifier.
             _iconState = IsAnyToggleActive();
 
             bool prev = _iconState;
@@ -49,6 +52,7 @@ namespace RimMind.Infrastructure.Patches
                 ToggleCoreOverlay();
             }
 
+            // Reset visual state to match actual toggle state (not the widget flip)
             _iconState = IsAnyToggleActive();
         }
 

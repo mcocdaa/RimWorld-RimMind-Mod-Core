@@ -49,6 +49,7 @@ namespace RimMind.Application.Features.Queue
         public FlywheelAutoApplyMode AutoApplyMode { get => FlywheelAutoApplyMode.Off; set { } }
         public float AutoApplyConfidenceThreshold { get => RimMindDefaults.AutoApplyConfidenceThreshold; set { } }
         public bool IsOpenAIConfigured() => false;
+        public void Persist() { /* Null Object: defaults are immutable, nothing to persist */ }
 
         AgentAutonomyLevel IAgentAutonomySettings.AutonomyLevel { get => AgentAutonomyLevel.Autonomous; set { } }
         bool IAgentAutonomySettings.ShouldApproveAction(RiskLevel risk) => risk <= RiskLevel.Medium;

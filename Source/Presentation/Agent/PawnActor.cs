@@ -16,15 +16,15 @@ using Verse.AI;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnActor : IPawnActor
+    public class PawnActor : IPawnActorVerse
     {
-        private readonly IPawnAgent _agent;
+        private readonly IPawnAgentVerse _agent;
         private readonly IActionExecutor? _actionExecutor;
         private Verse.AI.Job? _pendingJob;
         private int _lastActionTick;
         private int _actionCooldown = RimMindDefaults.DefaultActionCooldown;
 
-        public PawnActor(IPawnAgent agent, IActionExecutor? actionExecutor = null)
+        public PawnActor(IPawnAgentVerse agent, IActionExecutor? actionExecutor = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _actionExecutor = actionExecutor;

@@ -1,7 +1,7 @@
 using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Interfaces.Extension;
 
-namespace RimMind.Presentation
+namespace RimMind.Application.Api
 {
     public static partial class RimMindAPI
     {

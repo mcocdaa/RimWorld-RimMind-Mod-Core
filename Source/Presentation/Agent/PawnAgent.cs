@@ -12,6 +12,7 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
 using RimMind.Domain.ValueObjects;
+using RimMind.Application.Api;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimWorld;
@@ -20,7 +21,7 @@ using Verse.AI;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnAgent : IPawnAgent
+    public class PawnAgent : IPawnAgentVerse
     {
         public Pawn Pawn { get; }
         private AgentState _state = AgentState.Dormant;
@@ -29,11 +30,12 @@ namespace RimMind.Presentation.Agent
         public AgentWorkflowPhase WorkflowPhase { get => _workflowPhase; private set => _workflowPhase = value; }
         private AgentIdentity _identity = null!;
         public AgentIdentity Identity { get => _identity; private set => _identity = value; }
-        private AgentGoalStack _goalStack = new AgentGoalStack();
-        public AgentGoalStack GoalStack { get => _goalStack; private set => _goalStack = value; }
+        private SerializableAgentGoalStack _goalStack = new SerializableAgentGoalStack();
+        public AgentGoalStack GoalStack => _goalStack;
         private StrategyOptimizer _strategyOptimizer = new StrategyOptimizer();
-        public StrategyOptimizer StrategyOptimizer { get => _strategyOptimizer; private set => _strategyOptimizer = value; }
-        public PerceptionBuffer PerceptionBuffer { get; } = new PerceptionBuffer();
+        public IStrategyOptimizer StrategyOptimizer => _strategyOptimizer;
+        private readonly PerceptionBuffer _perceptionBuffer = new PerceptionBuffer();
+        public IPerceptionBuffer PerceptionBuffer => _perceptionBuffer;
         public bool IsActive => State == AgentState.Active;
         public bool IsPawnValid => Pawn != null && !Pawn.Dead;
 
@@ -49,7 +51,7 @@ namespace RimMind.Presentation.Agent
 
         private IPawnPerceiver _perceiver;
         private IPawnThinker _thinker;
-        private IPawnActor _actor;
+        private IPawnActorVerse _actor;
         private IPawnRecorder _recorder;
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;
@@ -95,7 +97,7 @@ namespace RimMind.Presentation.Agent
 
         public PawnAgent(Pawn pawn, IAgentTickSettings tickSettings, IAgentBus agentBus,
             IPawnPerceiver? perceiver = null, IPawnThinker? thinker = null,
-            IPawnActor? actor = null, IPawnRecorder? recorder = null,
+            IPawnActorVerse? actor = null, IPawnRecorder? recorder = null,
             ILogSink? log = null)
         {
             Pawn = pawn ?? throw new ArgumentNullException(nameof(pawn));
@@ -110,7 +112,7 @@ namespace RimMind.Presentation.Agent
             Identity = new SerializableAgentIdentity($"NPC-{pawn.thingIDNumber}", pawn.thingIDNumber, pawn.Name?.ToStringFull ?? pawn.Label ?? "Unknown");
         }
 
-        internal void RebuildCollaborators(IPawnPerceiver perceiver, IPawnThinker thinker, IPawnActor actor, IPawnRecorder recorder)
+        internal void RebuildCollaborators(IPawnPerceiver perceiver, IPawnThinker thinker, IPawnActorVerse actor, IPawnRecorder recorder)
         {
             _perceiver = perceiver ?? throw new ArgumentNullException(nameof(perceiver));
             _thinker = thinker ?? throw new ArgumentNullException(nameof(thinker));
@@ -135,7 +137,7 @@ namespace RimMind.Presentation.Agent
             if (now - _lastTick < TickInterval) return;
             _lastTick = now;
 
-            GoalStack.CheckExpired(Pawn.thingIDNumber);
+            GoalStack.CheckExpired(Pawn.thingIDNumber, now);
 
             // Phase-driven workflow: only one phase active at a time
             switch (WorkflowPhase)
@@ -208,6 +210,8 @@ namespace RimMind.Presentation.Agent
 
         public void AddGoal(AgentGoal goal)
         {
+            if (goal != null && goal is not SerializableAgentGoal)
+                _log?.Warning($"[RimMind.Agent] action=NonSerializableGoal npcId={Identity.NpcId} goal={goal.Description}");
             GoalStack.TryAdd(goal, Pawn.thingIDNumber);
         }
 

@@ -35,11 +35,6 @@ namespace RimWorld
         public static MessageTypeDef RejectInput = new();
         public static MessageTypeDef PositiveEvent = new();
     }
-
-    public static class BaseContent
-    {
-        public static UnityEngine.Texture2D BadTex = new();
-    }
 }
 
 namespace Verse
@@ -124,6 +119,12 @@ namespace Verse
         public static void Error(string msg) { }
     }
 
+    /// <summary>Stub for Verse.BaseContent used in CompPawnAgent compilation.</summary>
+    public static class BaseContent
+    {
+        public static UnityEngine.Texture2D BadTex = new();
+    }
+
     /// <summary>Stub for Verse.FloatMenuOption used in Gizmo tests.</summary>
     public class FloatMenuOption
     {
@@ -151,7 +152,7 @@ namespace Verse
     /// <summary>Stub for Verse.TickManager used in Gizmo tests.</summary>
     public class TickManager
     {
-        public int TicksGame => 0;
+        public int TicksGame { get; set; }
     }
 
     /// <summary>Stub for Verse.WindowStack used in Gizmo tests.</summary>
@@ -170,6 +171,48 @@ namespace Verse
         public static string Translate(this string key, string arg1) => $"{key}:{arg1}";
         public static string Translate(this string key, object arg1) => $"{key}:{arg1}";
     }
+
+    /// <summary>Stub for Verse.IExposable used in test compilation.</summary>
+    public interface IExposable { }
+
+    /// <summary>Stub for Verse.LoadSaveMode used in test compilation.</summary>
+    public enum LoadSaveMode
+    {
+        Inactive,
+        Saving,
+        LoadingVars,
+        ResolvingCrossRefs,
+        PostLoadInit
+    }
+
+    /// <summary>Stub for Verse.LookMode used in test compilation.</summary>
+    public enum LookMode
+    {
+        Reference,
+        Value,
+        Deep,
+        Undef
+    }
+
+    /// <summary>Stub for Verse.Scribe used in test compilation.</summary>
+    public static class Scribe
+    {
+        public static LoadSaveMode mode = LoadSaveMode.Inactive;
+    }
+
+    /// <summary>Stub for Verse.Scribe_Values used in test compilation.</summary>
+    public static class Scribe_Values
+    {
+        public static void Look<T>(ref T value, string label, T defaultValue = default!) { }
+        public static void Look<T>(ref T value, string label, bool saveDestroyedThings) { }
+    }
+
+    /// <summary>Stub for Verse.Scribe_Collections used in test compilation.</summary>
+    public static class Scribe_Collections
+    {
+        public static void Look<T>(ref System.Collections.Generic.List<T>? list, string label, LookMode lookMode = LookMode.Undef) where T : new() { }
+        public static void Look<T>(ref System.Collections.Generic.List<T>? list, string label, bool saveDestroyedThings) where T : new() { }
+    }
 }
 
 namespace Verse.AI
@@ -184,36 +227,31 @@ namespace RimMind.Presentation.Agent
 {
     using RimMind.Application.Common.Interfaces;
     using RimMind.Application.Common.Interfaces.Agent;
-    using RimMind.Application.Common.Interfaces.Agent.Modes;
     using Verse;
 
-    /// <summary>Stub for IExposable used in test compilation.</summary>
-    public interface IExposable { }
-
-    /// <summary>Stub for IPawnAgent used in test compilation.</summary>
-    public interface IPawnAgent : IAgentControl, IExposable
+    /// <summary>Stub for IPawnAgentVerse used in test compilation.</summary>
+    public interface IPawnAgentVerse : IPawnAgent, IExposable
     {
-        AgentAutonomyLevel AutonomyLevel { get; }
+        Pawn Pawn { get; }
+        new Verse.AI.Job? ConsumePendingJob();
+        void SetPendingJob(Verse.AI.Job job);
+    }
+
+    /// <summary>Stub for IPawnAgentFactoryVerse used in test compilation.</summary>
+    public interface IPawnAgentFactoryVerse : IPawnAgentFactory
+    {
+        IPawnAgent Create(Pawn pawn, IAgentBus agentBus);
+    }
+
+    /// <summary>Stub for IPawnActorVerse used in test compilation.</summary>
+    public interface IPawnActorVerse : IPawnActor
+    {
         Verse.AI.Job? ConsumePendingJob();
         void SetPendingJob(Verse.AI.Job job);
-        PerceptionBuffer PerceptionBuffer { get; }
-    }
-
-    /// <summary>Stub for PerceptionBuffer used in test compilation.</summary>
-    public class PerceptionBuffer
-    {
-        public void Clear() { }
-    }
-
-    /// <summary>Stub for IPawnAgentFactory used in test compilation.</summary>
-    public interface IPawnAgentFactory
-    {
-        IPawnAgent? Create(Pawn pawn, IAgentBus? agentBus);
-        void SerializeAgent(ref IPawnAgent? agent, string label);
     }
 }
 
-namespace RimMind.Presentation
+namespace RimMind.Application.Api
 {
     using RimMind.Application.Common.Interfaces.Agent.Modes;
     using RimMind.Application.Common.Interfaces.Extension;
@@ -237,6 +275,13 @@ namespace RimMind.Infrastructure.UI
     {
         public Window_AgentStateDebug() { }
         public Window_AgentStateDebug(global::Verse.Pawn? pawn) { }
+    }
+
+    public class Window_RimMindHub : global::Verse.Window
+    {
+        public Window_RimMindHub() { }
+        public static Window_RimMindHub OpenAgentsForPawn(global::Verse.Pawn selectedPawn) => new();
+        public static Window_RimMindHub OpenAIRequests() => new();
     }
 }
 

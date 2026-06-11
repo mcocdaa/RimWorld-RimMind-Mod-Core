@@ -8,7 +8,6 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Queue;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation;
 using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Presentation.Runtime;
 using System;
@@ -16,7 +15,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Verse;
 
-namespace RimMind.Presentation
+namespace RimMind.Application.Api
 {
     public static partial class RimMindAPI
     {

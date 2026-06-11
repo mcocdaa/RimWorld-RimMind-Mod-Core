@@ -48,6 +48,7 @@
     <Compile Include="ArchTests\PhaseP4\*.cs" />
     <Compile Include="ArchTests\PhaseP5\*.cs" />
     <Compile Include="ArchTests\PhaseP6\*.cs" />
+    <Compile Include="ArchTests\PhaseP7\*.cs" />
     <Compile Include="Agent\*.cs" Exclude="Agent\PawnThinkerTimeoutTests.cs" />
     <Compile Include="Agent\PhaseO\*.cs" />
     <Compile Include="Domain\*.cs" />
@@ -71,7 +72,10 @@
     <Compile Include="../Source/Domain/**/*.cs" Exclude="../Source/Domain/**/obj/**;../Source/Domain/Common/NetStandardCompat.cs" />
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs" />
     <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
-    <Compile Include="../Source/Presentation/UI/RimMindUITheme.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/AIRequestTraceLog.cs" />
+    <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
+    <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
+    <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/MessageDto.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/OpenAIRequestSerializer.cs" />
   </ItemGroup>

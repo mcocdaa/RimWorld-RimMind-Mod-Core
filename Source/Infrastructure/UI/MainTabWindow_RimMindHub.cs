@@ -3,37 +3,54 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.AgentsPage;
+using RimMind.Infrastructure.UI.AIRequestsPage;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation;
-using RimMind.Presentation.UI;
+using RimMind.Infrastructure.UI;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
+    public enum RimMindHubPage
+    {
+        Overview,
+        Agents,
+        AIRequests,
+        ToolCalls,
+        Mechanisms,
+        ContextKeys
+    }
+
     public class Window_RimMindHub : Window
     {
-        private HubPage _page;
-        private int _requestPage;
-        private readonly Window_RequestLog _requestLog = new Window_RequestLog();
-        private readonly Window_AIDebugLog _aiDebugLog = new Window_AIDebugLog();
+        private RimMindHubPage _page;
+        private Pawn? _selectedPawn;
+        private readonly AgentsPageDrawer _agentsPage = new AgentsPageDrawer();
+        private readonly AIRequestsPageDrawer _aiRequestsPage = new AIRequestsPageDrawer();
 
         public override Vector2 InitialSize => new Vector2(780f, 580f);
 
         public Window_RimMindHub()
-            : this(HubPage.Requests, 1)
+            : this(RimMindHubPage.Overview, selectedPawn: null)
         {
         }
 
-        private Window_RimMindHub(HubPage initialPage, int requestPage)
+        private Window_RimMindHub(RimMindHubPage initialPage, Pawn? selectedPawn)
         {
             _page = initialPage;
-            _requestPage = requestPage;
+            _selectedPawn = selectedPawn;
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
             doCloseX = true;
         }
+
+        public static Window_RimMindHub OpenAgentsForPawn(Pawn selectedPawn)
+            => new Window_RimMindHub(RimMindHubPage.Agents, selectedPawn);
+
+        public static Window_RimMindHub OpenAIRequests()
+            => new Window_RimMindHub(RimMindHubPage.AIRequests, selectedPawn: null);
 
         public override void DoWindowContents(Rect inRect)
         {
@@ -48,28 +65,51 @@ namespace RimMind.Infrastructure.UI
 
             switch (_page)
             {
-                case HubPage.Overview:
+                case RimMindHubPage.Overview:
                     DrawOverview(contentRect);
                     break;
-                case HubPage.Requests:
+                case RimMindHubPage.Agents:
+                    _agentsPage.Draw(contentRect, _selectedPawn);
+                    break;
+                case RimMindHubPage.AIRequests:
                     DrawRequests(contentRect);
                     break;
-                case HubPage.Agent:
-                    DrawAgentTools(contentRect);
+                case RimMindHubPage.ToolCalls:
+                    DrawToolCalls(contentRect);
                     break;
-                case HubPage.Debug:
-                    DrawDebugTools(contentRect);
+                case RimMindHubPage.Mechanisms:
+                    DrawMechanisms(contentRect);
+                    break;
+                case RimMindHubPage.ContextKeys:
+                    DrawContextKeys(contentRect);
                     break;
             }
         }
 
         private void DrawTabs(Rect rect)
         {
-            float tabW = rect.width / 4f;
-            var pages = new[] { HubPage.Overview, HubPage.Requests, HubPage.Agent, HubPage.Debug };
-            var labels = new[] { "RimMind.UI.Hub.Tab.Overview", "RimMind.UI.Hub.Tab.Requests", "RimMind.UI.Hub.Tab.Agent", "RimMind.UI.Hub.Tab.Debug" };
+            var pages = new[]
+            {
+                RimMindHubPage.Overview,
+                RimMindHubPage.Agents,
+                RimMindHubPage.AIRequests,
+                RimMindHubPage.ToolCalls,
+                RimMindHubPage.Mechanisms,
+                RimMindHubPage.ContextKeys
+            };
 
-            for (int i = 0; i < 4; i++)
+            var labels = new[]
+            {
+                "RimMind.UI.Hub.Tab.Overview",
+                "RimMind.UI.Hub.Tab.Agents",
+                "RimMind.UI.Hub.Tab.AIRequests",
+                "RimMind.UI.Hub.Tab.ToolCalls",
+                "RimMind.UI.Hub.Tab.Mechanisms",
+                "RimMind.UI.Hub.Tab.ContextKeys"
+            };
+
+            float tabW = rect.width / pages.Length;
+            for (int i = 0; i < pages.Length; i++)
             {
                 Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
                 bool selected = _page == pages[i];
@@ -169,42 +209,25 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawRequests(Rect rect)
         {
-            Rect tabs = new Rect(rect.x, rect.y, rect.width, RimMindUI.TabHeight);
-            float halfW = (tabs.width - RimMindUI.Padding) / 2f;
-            Rect pendingTab = new Rect(tabs.x, tabs.y, halfW, tabs.height);
-            Rect resultsTab = new Rect(pendingTab.xMax + RimMindUI.Padding, tabs.y, halfW, tabs.height);
-
-            if (RimMindUI.DrawTabButton(pendingTab, "RimMind.UI.Hub.RequestPending".Translate(), _requestPage == 0))
-                _requestPage = 0;
-            if (RimMindUI.DrawTabButton(resultsTab, "RimMind.UI.Hub.RequestResults".Translate(), _requestPage == 1))
-                _requestPage = 1;
-
-            Rect body = new Rect(rect.x, tabs.yMax + RimMindUI.Padding, rect.width, rect.height - tabs.height - RimMindUI.Padding);
-            if (_requestPage == 0)
-                _requestLog.DrawEmbedded(body);
-            else
-                _aiDebugLog.DrawEmbedded(body);
+            _aiRequestsPage.Draw(rect);
         }
 
-        private static void DrawAgentTools(Rect rect)
+        private static void DrawToolCalls(Rect rect)
         {
-            Pawn? selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
             DrawToolGrid(rect,
-                ("RimMind.UI.Hub.AgentFlowLab", () => Find.WindowStack.Add(new Window_AgentFlowLab(selectedPawn))),
-                ("RimMind.UI.Hub.AgentState", () => Find.WindowStack.Add(new Window_AgentStateDebug(selectedPawn))),
-                ("RimMind.UI.Hub.AgentMode", () => Find.WindowStack.Add(new Window_AgentModeDebug(selectedPawn))),
-                ("RimMind.UI.Hub.AgentProgress", () => Find.WindowStack.Add(new Window_AgentProgressFloat())));
+                ("RimMind.UI.Hub.ToolCallDebug", () => Find.WindowStack.Add(new Window_ToolCallDebug())));
         }
 
-        private static void DrawDebugTools(Rect rect)
+        private static void DrawMechanisms(Rect rect)
         {
             DrawToolGrid(rect,
-                ("RimMind.UI.Hub.RequestLog", () => Find.WindowStack.Add(new Window_RequestLog())),
-                ("RimMind.UI.Hub.AIDebugLog", () => Find.WindowStack.Add(new Window_AIDebugLog())),
-                ("RimMind.UI.Hub.ToolCallDebug", () => Find.WindowStack.Add(new Window_ToolCallDebug())),
-                ("RimMind.UI.Hub.MechanismStatus", () => Find.WindowStack.Add(new Window_MechanismStatus())),
-                ("RimMind.UI.Hub.ContextKeys", () => Find.WindowStack.Add(new Window_ContextKeyDebug())),
-                ("RimMind.UI.Hub.Settings", OpenSettings));
+                ("RimMind.UI.Hub.MechanismStatus", () => Find.WindowStack.Add(new Window_MechanismStatus())));
+        }
+
+        private static void DrawContextKeys(Rect rect)
+        {
+            DrawToolGrid(rect,
+                ("RimMind.UI.Hub.ContextKeys", () => Find.WindowStack.Add(new Window_ContextKeyDebug())));
         }
 
         private static void DrawToolGrid(Rect rect, params (string LabelKey, Action Action)[] tools)
@@ -226,20 +249,6 @@ namespace RimMind.Infrastructure.UI
                 action();
         }
 
-        private static void OpenSettings()
-        {
-            var sp = RimMindServiceLocator.TryGet<ISettingsProvider>();
-            if (sp != null)
-                Find.WindowStack.Add(new Window_RimMindSettings(sp));
-        }
-
-        private enum HubPage
-        {
-            Overview,
-            Requests,
-            Agent,
-            Debug
-        }
     }
 
     public class MainTabWindow_RimMindHub : Window_RimMindHub

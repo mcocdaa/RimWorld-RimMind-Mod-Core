@@ -94,7 +94,7 @@ namespace RimMind.Presentation.Runtime
             public ISensorManager SensorManager { get; init; } = null!;
             public IOverlayService OverlayService { get; init; } = null!;
             public IContextEngine ContextEngine { get; init; } = null!;
-            public IPawnAgentFactory PawnAgentFactory { get; init; } = null!;
+            public IPawnAgentFactoryVerse PawnAgentFactory { get; init; } = null!;
             public IGameContextBuilder GameContextBuilder { get; init; } = null!;
             public IResponseDispatcher ResponseDispatcher { get; init; } = null!;
             public IContextKeyRegistry ContextKeyRegistry { get; init; } = null!;
@@ -251,6 +251,7 @@ namespace RimMind.Presentation.Runtime
 
             var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor, logSink,
                 GetExtensionRegistry<IPerceptionSource>());
+            RimMindServiceLocator.Register<IPawnAgentFactoryVerse>(pawnAgentFactory);
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
             var scopedAgentFactory = new ScopedAgentFactory();

@@ -10,6 +10,7 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Json;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Context;
+using RimMind.Application.Api;
 using RimMind.Presentation.Context;
 using RimMind.Presentation.UI;
 using RimMind.Presentation.Runtime;
@@ -70,7 +71,7 @@ namespace RimMind.Presentation
             JsonTagExtractor.OnWarning = msg => RimMindErrors.Warn(msg);
             new Harmony("mcocdaa.RimMindCore").PatchAll();
 
-            RimMindAPI.Extensions<IToggleBehavior>().Register(new CoreOverlayToggle(Settings));
+            RimMindAPI.Extensions<IToggleBehavior>().Register(new CoreOverlayToggle(sp));
 
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
 
@@ -101,15 +102,15 @@ namespace RimMind.Presentation
 
     internal sealed class CoreOverlayToggle : IToggleBehavior
     {
-        private readonly RimMindCoreSettings _settings;
-        public CoreOverlayToggle(RimMindCoreSettings settings) { _settings = settings; }
+        private readonly IOverlaySettings _settings;
+        public CoreOverlayToggle(IOverlaySettings settings) { _settings = settings; }
         public string Id => "request_overlay";
         public string OwnerModId => "RimMindCore";
-        public bool IsActive => _settings.requestOverlayEnabled;
+        public bool IsActive => _settings.RequestOverlayEnabled;
         public void Toggle()
         {
-            _settings.requestOverlayEnabled = !_settings.requestOverlayEnabled;
-            _settings.Write();
+            _settings.RequestOverlayEnabled = !_settings.RequestOverlayEnabled;
+            _settings.Persist();
         }
     }
 

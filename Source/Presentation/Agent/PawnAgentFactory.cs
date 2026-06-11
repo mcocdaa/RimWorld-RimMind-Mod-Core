@@ -8,7 +8,7 @@ using Verse;
 
 namespace RimMind.Presentation.Agent
 {
-    public class PawnAgentFactory : IPawnAgentFactory
+    public class PawnAgentFactory : IPawnAgentFactoryVerse
     {
         private readonly IAgentTickSettings? _tickSettings;
         private readonly IAgentBus _agentBus;

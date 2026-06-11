@@ -1,5 +1,6 @@
 using System;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
@@ -62,7 +63,7 @@ namespace RimMind.Presentation.Tests
         public void Tick_WithActiveGoal_DoesNotThrow()
         {
             _agent.TransitionTo(AgentState.Active);
-            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            _agent.AddGoal(new SerializableAgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
             var exception = Record.Exception(() => _agent.Tick());
             Assert.Null(exception);
         }
@@ -71,7 +72,7 @@ namespace RimMind.Presentation.Tests
         public void Tick_WithPerceptions_DoesNotThrow()
         {
             _agent.TransitionTo(AgentState.Active);
-            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            _agent.AddGoal(new SerializableAgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
             _agent.PerceptionBuffer.Add(new PerceptionBufferEntry
             {
                 PerceptionType = "sight",
@@ -86,7 +87,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void Tick_WhenNotActive_DoesNotThink()
         {
-            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            _agent.AddGoal(new SerializableAgentGoal("test goal", GoalCategory.Survival, 0.8f, GoalStatus.Active));
             var exception = Record.Exception(() => _agent.Tick());
             Assert.Null(exception);
         }

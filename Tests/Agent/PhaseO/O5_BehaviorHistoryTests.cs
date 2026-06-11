@@ -43,7 +43,7 @@ namespace RimMind.Tests.Agent.PhaseO
         [Fact]
         public void IPawnRecorder_Defines_GetRecentHistory()
         {
-            var iface = GetPresentationType("RimMind.Presentation.Agent.IPawnRecorder");
+            var iface = GetPresentationType("RimMind.Application.Common.Interfaces.Agent.IPawnRecorder");
             if (iface == null)
             {
                 // Fallback: verify the method signature exists in the interface definition source
@@ -64,7 +64,7 @@ namespace RimMind.Tests.Agent.PhaseO
         [Fact]
         public void IPawnRecorder_Defines_GetRecentSuccessRate()
         {
-            var iface = GetPresentationType("RimMind.Presentation.Agent.IPawnRecorder");
+            var iface = GetPresentationType("RimMind.Application.Common.Interfaces.Agent.IPawnRecorder");
             if (iface == null)
             {
                 Assert.True(true, "IPawnRecorder is in Presentation layer; verified by source inspection");
@@ -160,7 +160,7 @@ namespace RimMind.Tests.Agent.PhaseO
         [Fact]
         public void IPawnAgent_Defines_GetRecentHistory()
         {
-            var iface = GetPresentationType("RimMind.Presentation.Agent.IPawnAgent");
+            var iface = GetPresentationType("RimMind.Application.Common.Interfaces.Agent.IPawnAgent");
             if (iface == null)
             {
                 Assert.True(true, "IPawnAgent is in Presentation layer; verified by source inspection");
@@ -179,7 +179,7 @@ namespace RimMind.Tests.Agent.PhaseO
         [Fact]
         public void IPawnAgent_Defines_GetRecentSuccessRate()
         {
-            var iface = GetPresentationType("RimMind.Presentation.Agent.IPawnAgent");
+            var iface = GetPresentationType("RimMind.Application.Common.Interfaces.Agent.IPawnAgent");
             if (iface == null)
             {
                 Assert.True(true, "IPawnAgent is in Presentation layer; verified by source inspection");

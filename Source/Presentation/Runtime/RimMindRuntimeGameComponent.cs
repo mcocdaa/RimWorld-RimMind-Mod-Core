@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -12,7 +13,7 @@ namespace RimMind.Presentation.Runtime
 {
     public class RimMindRuntimeGameComponent : GameComponent
     {
-        private readonly Dictionary<int, IPawnAgent> _agents = new Dictionary<int, IPawnAgent>();
+        private readonly Dictionary<int, IPawnAgentVerse> _agents = new Dictionary<int, IPawnAgentVerse>();
         private int _lastTick;
         private bool _initialized;
 
@@ -35,14 +36,16 @@ namespace RimMind.Presentation.Runtime
                 agent.Tick();
         }
 
-        public IPawnAgent GetOrCreateAgent(Pawn pawn)
+        public IPawnAgentVerse GetOrCreateAgent(Pawn pawn)
         {
             if (pawn == null) throw new System.ArgumentNullException(nameof(pawn));
             if (!_agents.TryGetValue(pawn.thingIDNumber, out var agent))
             {
-                var factory = RimMindRuntime.Instance.GetService<IPawnAgentFactory>();
+                var factory = RimMindRuntime.Instance.GetService<IPawnAgentFactoryVerse>();
                 var agentBus = RimMindRuntime.Instance.GetService<IAgentBus>();
-                agent = factory!.Create(pawn, agentBus!);
+                var created = factory!.Create(pawn, agentBus!);
+                agent = created as IPawnAgentVerse
+                    ?? throw new System.InvalidOperationException("IPawnAgentFactoryVerse.Create must return an IPawnAgentVerse implementation");
                 agent.TransitionTo(AgentState.Active);
                 _agents[pawn.thingIDNumber] = agent;
             }

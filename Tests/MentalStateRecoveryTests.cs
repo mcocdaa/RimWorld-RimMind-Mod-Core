@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Events;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;

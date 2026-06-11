@@ -60,22 +60,10 @@
   <RimMind.Settings.Player2.BalanceUnknown>余额：未知</RimMind.Settings.Player2.BalanceUnknown>
   <RimMind.Settings.Player2.RefreshBalance>刷新余额</RimMind.Settings.Player2.RefreshBalance>
   <!-- Agent Gizmo -->
-  <RimMind.Agent.Gizmo.Activate>激活 Agent</RimMind.Agent.Gizmo.Activate>
-  <RimMind.Agent.Gizmo.Deactivate>停用 Agent</RimMind.Agent.Gizmo.Deactivate>
-  <RimMind.Agent.Gizmo.ToggleDesc>切换 PawnAgent 的激活状态</RimMind.Agent.Gizmo.ToggleDesc>
-  <RimMind.Agent.Gizmo.AgentState>Agent: {0}</RimMind.Agent.Gizmo.AgentState>
+  <RimMind.Agent.Gizmo.Control>Agent 控制</RimMind.Agent.Gizmo.Control>
+  <RimMind.Agent.Gizmo.ControlDesc>打开此小人的 RimMind 调试中心 Agent 页面。</RimMind.Agent.Gizmo.ControlDesc>
   <RimMind.Agent.Gizmo.DevView>Dev: 查看 Agent</RimMind.Agent.Gizmo.DevView>
   <RimMind.Agent.Gizmo.DevViewDesc>在日志中输出 Agent 内部状态</RimMind.Agent.Gizmo.DevViewDesc>
-  <RimMind.Agent.Gizmo.CreateAgent>创建 Agent</RimMind.Agent.Gizmo.CreateAgent>
-  <RimMind.Agent.Gizmo.CreateAgentDesc>为此小人创建 RimMind Agent</RimMind.Agent.Gizmo.CreateAgentDesc>
-  <RimMind.Agent.Gizmo.CreateAgentFailed>Agent 创建失败：服务不可用</RimMind.Agent.Gizmo.CreateAgentFailed>
-  <RimMind.Agent.Gizmo.AgentCreated>已为 {0} 创建 Agent</RimMind.Agent.Gizmo.AgentCreated>
-  <RimMind.Agent.Gizmo.ViewState>查看 Agent 状态</RimMind.Agent.Gizmo.ViewState>
-  <RimMind.Agent.Gizmo.ViewStateDesc>打开此小人的 Agent 状态调试窗口</RimMind.Agent.Gizmo.ViewStateDesc>
-  <RimMind.Agent.Gizmo.MustBeActive>Agent 必须处于激活状态才能执行此操作</RimMind.Agent.Gizmo.MustBeActive>
-  <RimMind.Agent.Gizmo.ForceThinkInactiveDesc>Agent 未激活，无法强制思考</RimMind.Agent.Gizmo.ForceThinkInactiveDesc>
-  <RimMind.Agent.Gizmo.AlreadyInMode>已在 {0} 模式中</RimMind.Agent.Gizmo.AlreadyInMode>
-  <RimMind.Agent.Gizmo.ModeNotApplicable>{0} 模式不适用于当前 Agent</RimMind.Agent.Gizmo.ModeNotApplicable>
   <RimMind.Agent.State.Active>激活</RimMind.Agent.State.Active>
   <RimMind.Agent.State.Dormant>休眠</RimMind.Agent.State.Dormant>
   <RimMind.Agent.State.Paused>暂停</RimMind.Agent.State.Paused>
@@ -357,29 +345,8 @@
   <RimMind.Prompt.Combat.NotInCombat>未在战斗中</RimMind.Prompt.Combat.NotInCombat>
   <RimMind.Prompt.Colony.Status>人口：{0} 财富：{1} 威胁：{2}</RimMind.Prompt.Colony.Status>
   <RimMind.Prompt.Target.Info>目标：{0}</RimMind.Prompt.Target.Info>
-  <!-- Agent Gizmo - Dialogue -->
-  <RimMind.Agent.Gizmo.Dialogue>对话</RimMind.Agent.Gizmo.Dialogue>
-  <RimMind.Agent.Gizmo.DialogueDesc>与 AI 接管的小人对话</RimMind.Agent.Gizmo.DialogueDesc>
   <!-- Agent Mode Switch Notification -->
   <RimMind.Agent.ModeChanged>{0} 切换为 {1} 模式</RimMind.Agent.ModeChanged>
-  <!-- Agent Gizmo - Mode Switch -->
-  <RimMind.Agent.Gizmo.Mode>模式: {0}</RimMind.Agent.Gizmo.Mode>
-  <RimMind.Agent.Gizmo.ModeDesc>切换小人行为模式（被动/主动）</RimMind.Agent.Gizmo.ModeDesc>
-  <RimMind.Agent.Gizmo.SelectMode>选择模式</RimMind.Agent.Gizmo.SelectMode>
-  <RimMind.Agent.Gizmo.SelectModeDesc>选择智能体行为模式</RimMind.Agent.Gizmo.SelectModeDesc>
-  <RimMind.Agent.Gizmo.CurrentMode>{0}（当前）</RimMind.Agent.Gizmo.CurrentMode>
-  <RimMind.Agent.Gizmo.InactiveMode>{0}</RimMind.Agent.Gizmo.InactiveMode>
-  <!-- Agent Gizmo - Pause/Resume -->
-  <RimMind.Agent.Gizmo.Pause>暂停</RimMind.Agent.Gizmo.Pause>
-  <RimMind.Agent.Gizmo.PauseDesc>暂停智能体思考循环</RimMind.Agent.Gizmo.PauseDesc>
-  <RimMind.Agent.Gizmo.Resume>恢复</RimMind.Agent.Gizmo.Resume>
-  <RimMind.Agent.Gizmo.ResumeDesc>恢复智能体思考循环</RimMind.Agent.Gizmo.ResumeDesc>
-  <!-- Agent Gizmo - Emergency Stop -->
-  <RimMind.Agent.Gizmo.EmergencyStop>紧急停止</RimMind.Agent.Gizmo.EmergencyStop>
-  <RimMind.Agent.Gizmo.EmergencyStopDesc>立即停止智能体并清空感知缓冲区</RimMind.Agent.Gizmo.EmergencyStopDesc>
-  <!-- Agent Gizmo - Force Think -->
-  <RimMind.Agent.Gizmo.ForceThink>强制思考</RimMind.Agent.Gizmo.ForceThink>
-  <RimMind.Agent.Gizmo.ForceThinkDesc>强制立即执行一次 AI 思考循环</RimMind.Agent.Gizmo.ForceThinkDesc>
   <!-- Flywheel autoApplyMode UI -->
   <RimMind.UI.FlywheelAutoApply>自动应用参数建议</RimMind.UI.FlywheelAutoApply>
   <RimMind.UI.FlywheelAutoApply.Desc>开启后 Flywheel 自动应用推荐的上下文参数调整</RimMind.UI.FlywheelAutoApply.Desc>
@@ -493,10 +460,12 @@
   <RimMind.UI.OverlayMenu.Settings>设置</RimMind.UI.OverlayMenu.Settings>
   <!-- MainTabWindow_RimMindHub.cs -->
   <RimMind.UI.Hub.Title>RimMind 调试中心</RimMind.UI.Hub.Title>
-  <RimMind.UI.Hub.Tab.Overview>状态</RimMind.UI.Hub.Tab.Overview>
-  <RimMind.UI.Hub.Tab.Requests>AI 请求</RimMind.UI.Hub.Tab.Requests>
-  <RimMind.UI.Hub.Tab.Agent>Agent 控制台</RimMind.UI.Hub.Tab.Agent>
-  <RimMind.UI.Hub.Tab.Debug>系统调试</RimMind.UI.Hub.Tab.Debug>
+  <RimMind.UI.Hub.Tab.Overview>概览</RimMind.UI.Hub.Tab.Overview>
+  <RimMind.UI.Hub.Tab.Agents>Agent</RimMind.UI.Hub.Tab.Agents>
+  <RimMind.UI.Hub.Tab.AIRequests>AI 请求</RimMind.UI.Hub.Tab.AIRequests>
+  <RimMind.UI.Hub.Tab.ToolCalls>ToolCall</RimMind.UI.Hub.Tab.ToolCalls>
+  <RimMind.UI.Hub.Tab.Mechanisms>机制</RimMind.UI.Hub.Tab.Mechanisms>
+  <RimMind.UI.Hub.Tab.ContextKeys>上下文键</RimMind.UI.Hub.Tab.ContextKeys>
   <RimMind.UI.Hub.SelectedPawn>已选择小人</RimMind.UI.Hub.SelectedPawn>
   <RimMind.UI.Hub.NoPawn>未选择小人</RimMind.UI.Hub.NoPawn>
   <RimMind.UI.Hub.AgentSummary>当前地图 Agent</RimMind.UI.Hub.AgentSummary>
@@ -648,4 +617,28 @@
   <RimMind.UI.AgentProgressFloat.Details>详情</RimMind.UI.AgentProgressFloat.Details>
   <!-- RimMindPlaySettingsPatch.cs - Core menu -->
   <RimMind.UI.OverlayMenu.AgentProgress>智能体进度</RimMind.UI.OverlayMenu.AgentProgress>
+  <!-- AgentsPageDrawer.cs -->
+  <RimMind.UI.AgentsPage.Active>活跃</RimMind.UI.AgentsPage.Active>
+  <RimMind.UI.AgentsPage.Paused>暂停</RimMind.UI.AgentsPage.Paused>
+  <RimMind.UI.AgentsPage.Pending>待创建</RimMind.UI.AgentsPage.Pending>
+  <RimMind.UI.AgentsPage.Other>其他</RimMind.UI.AgentsPage.Other>
+  <RimMind.UI.AgentsPage.Dormant>休眠</RimMind.UI.AgentsPage.Dormant>
+  <RimMind.UI.AgentsPage.Terminated>已终止</RimMind.UI.AgentsPage.Terminated>
+  <RimMind.UI.AgentsPage.CreateStart>创建/启动</RimMind.UI.AgentsPage.CreateStart>
+  <RimMind.UI.AgentsPage.Activate>激活</RimMind.UI.AgentsPage.Activate>
+  <RimMind.UI.AgentsPage.Restart>重启</RimMind.UI.AgentsPage.Restart>
+  <RimMind.UI.AgentsPage.Pause>暂停</RimMind.UI.AgentsPage.Pause>
+  <RimMind.UI.AgentsPage.Resume>恢复</RimMind.UI.AgentsPage.Resume>
+  <RimMind.UI.AgentsPage.ForceThink>强制思考</RimMind.UI.AgentsPage.ForceThink>
+  <RimMind.UI.AgentsPage.Send>发送</RimMind.UI.AgentsPage.Send>
+  <RimMind.UI.AgentsPage.State>状态</RimMind.UI.AgentsPage.State>
+  <RimMind.UI.AgentsPage.CreateFailed>创建智能体失败，请检查服务是否可用。</RimMind.UI.AgentsPage.CreateFailed>
+  <RimMind.UI.AgentsPage.MessageSent>消息已发送至智能体。</RimMind.UI.AgentsPage.MessageSent>
+  <!-- AIRequestsPageDrawer.cs -->
+  <RimMind.UI.AIRequestsPage.TraceUnavailable>AI 请求追踪日志不可用。</RimMind.UI.AIRequestsPage.TraceUnavailable>
+  <RimMind.UI.AIRequestsPage.Empty>暂无 AI 请求记录。</RimMind.UI.AIRequestsPage.Empty>
+  <RimMind.UI.AIRequestsPage.Detail>请求: {0}\n状态: {1}\n提示词: {2}\n响应: {3}\n错误: {4}\nToolCall: {5}</RimMind.UI.AIRequestsPage.Detail>
+  <RimMind.UI.AIRequestsPage.State.Running>运行中</RimMind.UI.AIRequestsPage.State.Running>
+  <RimMind.UI.AIRequestsPage.State.Completed>已完成</RimMind.UI.AIRequestsPage.State.Completed>
+  <RimMind.UI.AIRequestsPage.State.Failed>已失败</RimMind.UI.AIRequestsPage.State.Failed>
 </LanguageData>

@@ -19,7 +19,7 @@ using RimMind.Domain.Enums;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Services.Verse;
-using RimMind.Presentation.Runtime;
+using RimMind.Application.Api;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -27,7 +27,7 @@ namespace RimMind.Presentation.Agent
     public class PawnThinker : IPawnThinker
     {
         private const int DefaultThinkCooldownTicks = RimMindDefaults.ThinkCooldownTicks;
-        private readonly IPawnAgent _agent;
+        private readonly IPawnAgentVerse _agent;
         private readonly IAgentBus _agentBus;
         private readonly IAgentTickSettings? _tickSettings;
         private readonly ProactiveBehaviorExecutor _proactiveExecutor;
@@ -47,7 +47,7 @@ namespace RimMind.Presentation.Agent
         private int _pendingToolCallRound;
         private string? _pendingTraceId;
 
-        public PawnThinker(IPawnAgent agent, IAgentTickSettings tickSettings, IAgentBus agentBus, ILogSink? log = null)
+        public PawnThinker(IPawnAgentVerse agent, IAgentTickSettings tickSettings, IAgentBus agentBus, ILogSink? log = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _tickSettings = tickSettings;

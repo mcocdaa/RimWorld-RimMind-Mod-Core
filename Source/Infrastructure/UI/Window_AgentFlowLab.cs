@@ -20,8 +20,8 @@ using RimMind.Domain.Enums;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
-using RimMind.Presentation;
 using RimMind.Presentation.Agent;
+using RimMind.Application.Api;
 using UnityEngine;
 using Verse;
 
@@ -443,7 +443,7 @@ namespace RimMind.Infrastructure.UI
                         }
                         else
                         {
-                            var factory = RimMindServiceLocator.Get<IPawnAgentFactory>();
+                            var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
                             var agentBus = RimMindServiceLocator.Get<IAgentBus>();
                             if (factory != null && agentBus != null)
                             {
@@ -462,7 +462,7 @@ namespace RimMind.Infrastructure.UI
                             }
                             else
                             {
-                                _lastError = "IPawnAgentFactory or IAgentBus not available";
+                                _lastError = "IPawnAgentFactoryVerse or IAgentBus not available";
                                 SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Failed);
                             }
                         }

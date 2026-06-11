@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Infrastructure.Patches;
 using RimMind.Application.Features.AgentBus;

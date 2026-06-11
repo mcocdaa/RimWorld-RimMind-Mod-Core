@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 
 namespace RimMind.Presentation.Agent
 {

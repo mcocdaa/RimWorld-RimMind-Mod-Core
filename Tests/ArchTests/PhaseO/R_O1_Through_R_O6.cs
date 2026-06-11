@@ -95,7 +95,7 @@ namespace RimMind.Tests.ArchTests.PhaseO
         [Fact]
         public void R_O5_IPawnRecorder_Defines_GetRecentHistory()
         {
-            var iface = GetPresentationType("RimMind.Presentation.Agent.IPawnRecorder");
+            var iface = GetPresentationType("RimMind.Application.Common.Interfaces.Agent.IPawnRecorder");
             if (iface == null)
             {
                 // Presentation layer not compiled in test project; verified by source inspection
@@ -111,7 +111,7 @@ namespace RimMind.Tests.ArchTests.PhaseO
         [Fact]
         public void R_O5_IPawnRecorder_Defines_GetRecentSuccessRate()
         {
-            var iface = GetPresentationType("RimMind.Presentation.Agent.IPawnRecorder");
+            var iface = GetPresentationType("RimMind.Application.Common.Interfaces.Agent.IPawnRecorder");
             if (iface == null)
             {
                 Assert.True(true, "IPawnRecorder is in Presentation layer; verified by source inspection");

@@ -19,86 +19,17 @@ namespace RimMind.Tests.ArchTests.PhaseP2
         private const string WindowAgentModeDebugRelative = "Infrastructure/UI/Window_AgentModeDebug.cs";
         private const string WindowAgentFlowLabRelative = "Infrastructure/UI/Window_AgentFlowLab.cs";
 
-        [Fact]
-        public void CompPawnAgent_Shows_Gizmos_When_Agent_Null()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("RimMind.Agent.Gizmo.CreateAgent", content);
-            Assert.Contains("RimMind.Agent.Gizmo.ViewState", content);
-        }
+        // --- Plan C: CompPawnAgent gizmo collapse ---
+        // Overlapping assertions (Control key, PostSpawnSetup, EnsureAgentCreated) are covered by P7C.
 
         [Fact]
-        public void CompPawnAgent_CreateAgent_Gizmo_Uses_Independent_Agent_Icon()
+        public void CompPawnAgent_AgentControl_Uses_Independent_Agent_Icon()
         {
             var content = ReadSourceFile(CompPawnAgentRelative);
-            var agentNullBlockStart = content.IndexOf("if (Agent == null)");
-            Assert.True(agentNullBlockStart > 0, "Agent == null block must exist");
-            var yieldBreakPos = content.IndexOf("yield break", agentNullBlockStart);
-            Assert.True(yieldBreakPos > 0, "Agent == null block must end with yield break");
-            var blockContent = content.Substring(agentNullBlockStart, yieldBreakPos - agentNullBlockStart);
-            Assert.Contains("AgentIcon", blockContent);
-            Assert.DoesNotContain("RimMindIcon", blockContent);
+            Assert.Contains("AgentIcon", content);
         }
 
-        [Fact]
-        public void CompPawnAgent_ViewState_Gizmo_Exists_When_Agent_Present()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            var viewStateCount = 0;
-            var idx = 0;
-            while ((idx = content.IndexOf("RimMind.Agent.Gizmo.ViewState", idx)) != -1)
-            {
-                viewStateCount++;
-                idx++;
-            }
-            Assert.True(viewStateCount >= 2,
-                "ViewState gizmo must appear at least twice: once in Agent==null branch, once when Agent exists");
-        }
-
-        [Fact]
-        public void CompPawnAgent_Has_MustBeActive_Reject_Message()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("RimMind.Agent.Gizmo.MustBeActive", content);
-            Assert.Contains("MessageTypeDefOf.RejectInput", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Has_AlreadyInMode_Reject_Message()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("RimMind.Agent.Gizmo.AlreadyInMode", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Has_ModeNotApplicable_Reject_Message()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("RimMind.Agent.Gizmo.ModeNotApplicable", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_CreateAgent_Success_Uses_PositiveEvent()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("RimMind.Agent.Gizmo.AgentCreated", content);
-            Assert.Contains("MessageTypeDefOf.PositiveEvent", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_CreateAgent_Failure_Uses_RejectInput()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("RimMind.Agent.Gizmo.CreateAgentFailed", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Inactive_ForceThink_Shows_Reject()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            var elseBranchIdx = content.IndexOf("RimMind.Agent.Gizmo.ForceThinkInactiveDesc");
-            Assert.True(elseBranchIdx > 0, "ForceThinkInactiveDesc translation key must exist for inactive agent");
-        }
+        // --- Window_AgentStateDebug (unchanged by Plan C) ---
 
         [Fact]
         public void Window_AgentStateDebug_Accepts_Pawn_Constructor()
@@ -123,6 +54,8 @@ namespace RimMind.Tests.ArchTests.PhaseP2
             Assert.Contains("Find.Selector.SingleSelectedThing", content);
         }
 
+        // --- Window_AgentModeDebug (unchanged by Plan C) ---
+
         [Fact]
         public void Window_AgentModeDebug_Accepts_Pawn_Constructor()
         {
@@ -145,6 +78,8 @@ namespace RimMind.Tests.ArchTests.PhaseP2
             Assert.Contains("_initialPawn", content);
             Assert.Contains("_cachedPawns.IndexOf(_initialPawn)", content);
         }
+
+        // --- Window_AgentFlowLab (unchanged by Plan C) ---
 
         [Fact]
         public void Window_AgentFlowLab_Accepts_Pawn_Constructor()

@@ -1,6 +1,8 @@
 ?using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Agent.Modes;
@@ -150,7 +152,7 @@ namespace RimMind.Presentation.Tests
         public void TransitionTo_Terminated_CallsCleanup()
         {
             _agent.TransitionTo(AgentState.Active);
-            _agent.AddGoal(new AgentGoal("test goal", GoalCategory.Survival, 0.5f, GoalStatus.Active));
+            _agent.AddGoal(new SerializableAgentGoal("test goal", GoalCategory.Survival, 0.5f, GoalStatus.Active));
             Assert.True(_agent.GoalStack.TotalCount > 0);
 
             _agent.TransitionTo(AgentState.Terminated);
@@ -169,7 +171,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void AddGoal_AddsToGoalStack()
         {
-            var goal = new AgentGoal("survive", GoalCategory.Survival, 0.8f, GoalStatus.Proposed);
+            var goal = new SerializableAgentGoal("survive", GoalCategory.Survival, 0.8f, GoalStatus.Proposed);
             _agent.AddGoal(goal);
             Assert.True(_agent.GoalStack.TotalCount > 0);
         }
@@ -184,7 +186,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void RemoveGoal_RemovesExistingGoal()
         {
-            _agent.AddGoal(new AgentGoal("find food", GoalCategory.Survival, 0.8f, GoalStatus.Active));
+            _agent.AddGoal(new SerializableAgentGoal("find food", GoalCategory.Survival, 0.8f, GoalStatus.Active));
             Assert.True(_agent.GoalStack.TotalCount > 0);
 
             bool removed = _agent.RemoveGoal("find food");
@@ -241,7 +243,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void Tick_WhenNotActive_DoesNothing()
         {
-            _agent.AddGoal(new AgentGoal("goal", GoalCategory.Survival, 0.5f, GoalStatus.Active));
+            _agent.AddGoal(new SerializableAgentGoal("goal", GoalCategory.Survival, 0.5f, GoalStatus.Active));
             int countBefore = _agent.GoalStack.TotalCount;
             _agent.Tick();
             Assert.Equal(countBefore, _agent.GoalStack.TotalCount);

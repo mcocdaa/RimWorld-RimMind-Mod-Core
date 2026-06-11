@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Agent;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces;
@@ -145,7 +146,7 @@ namespace RimMind.Tests.Lifecycle
             var pawn = new Pawn { thingIDNumber = 1 };
             var agentBus = new AgentBusImpl();
             var agent = new PawnAgent(pawn, agentBus);
-            agent.GoalStack.TryAdd(new AgentGoal("test", GoalCategory.Survival, 1f, GoalStatus.Active), pawn.thingIDNumber);
+            agent.GoalStack.TryAdd(new SerializableAgentGoal("test", GoalCategory.Survival, 1f, GoalStatus.Active), pawn.thingIDNumber);
 
             agent.Cleanup();
 

@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Common;
+using RimMind.Presentation.Agent;
 using Verse;
 
 namespace RimMind.Presentation.Agent.Perception
@@ -19,7 +20,7 @@ namespace RimMind.Presentation.Agent.Perception
         public IReadOnlyList<PerceptionBufferEntry> Sense(IAgentInfo agent)
         {
             var entries = new List<PerceptionBufferEntry>();
-            if (agent is IPawnAgent pawnAgent)
+            if (agent is IPawnAgentVerse pawnAgent)
             {
                 var pawn = pawnAgent.Pawn;
                 if (pawn?.Drafted == true)

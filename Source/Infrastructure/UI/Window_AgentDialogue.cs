@@ -191,7 +191,7 @@ namespace RimMind.Infrastructure.UI
             {
                 try
                 {
-                    var result = await RimMind.Presentation.RimMindAPI.SendAsync(envelope);
+                    var result = await RimMind.Application.Api.RimMindAPI.SendAsync(envelope);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
                         _isStreaming = false;

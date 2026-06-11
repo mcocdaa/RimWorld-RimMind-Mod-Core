@@ -7,7 +7,7 @@ using RimMind.Presentation.Perception;
 using RimMind.Presentation.Runtime;
 using System.Collections.Generic;
 
-namespace RimMind.Presentation
+namespace RimMind.Application.Api
 {
     public static partial class RimMindAPI
     {

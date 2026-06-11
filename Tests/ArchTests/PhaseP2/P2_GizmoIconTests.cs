@@ -29,55 +29,6 @@ namespace RimMind.Tests.ArchTests.PhaseP2
         }
 
         [Fact]
-        public void CompPawnAgent_AgentState_Gizmo_Uses_State_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentStateIcon", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Pause_Gizmo_Uses_Pause_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentPauseIcon", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_ForceThink_Gizmo_Uses_Think_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentThinkIcon", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Dialogue_Gizmo_Uses_Dialogue_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentDialogueIcon", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Mode_Gizmo_Uses_Mode_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentModeIcon", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_EmergencyStop_Gizmo_Uses_Stop_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentStopIcon", content);
-        }
-
-        [Fact]
-        public void CompPawnAgent_Resume_Gizmo_Uses_Resume_Icon()
-        {
-            var content = ReadSourceFile(CompPawnAgentRelative);
-            Assert.Contains("UI/AgentResumeIcon", content);
-        }
-
-        [Fact]
         public void CompPawnAgent_DevView_Gizmo_Uses_Dev_Icon()
         {
             var content = ReadSourceFile(CompPawnAgentRelative);
@@ -85,26 +36,24 @@ namespace RimMind.Tests.ArchTests.PhaseP2
         }
 
         [Fact]
+        public void CompPawnAgent_OldIndividualGizmoIcons_Removed()
+        {
+            var content = ReadSourceFile(CompPawnAgentRelative);
+            // Old individual gizmo icons have been moved into Debug Center Agents page
+            Assert.DoesNotContain("UI/AgentStateIcon", content);
+            Assert.DoesNotContain("UI/AgentPauseIcon", content);
+            Assert.DoesNotContain("UI/AgentThinkIcon", content);
+            Assert.DoesNotContain("UI/AgentDialogueIcon", content);
+            Assert.DoesNotContain("UI/AgentModeIcon", content);
+            Assert.DoesNotContain("UI/AgentStopIcon", content);
+            Assert.DoesNotContain("UI/AgentResumeIcon", content);
+        }
+
+        [Fact]
         public void AgentIcon_Texture_File_Exists()
         {
             var path = Path.Combine(ProjectRoot, "Textures", "UI", "AgentIcon.png");
             Assert.True(File.Exists(path), $"Agent icon texture must exist: {path}");
-        }
-
-        [Fact]
-        public void All_Referenced_Gizmo_Icon_Textures_Exist()
-        {
-            var iconNames = new[]
-            {
-                "AgentIcon", "AgentStateIcon", "AgentPauseIcon",
-                "AgentThinkIcon", "AgentDialogueIcon", "AgentModeIcon",
-                "AgentStopIcon", "AgentResumeIcon", "AgentDevIcon"
-            };
-            foreach (var name in iconNames)
-            {
-                var path = Path.Combine(ProjectRoot, "Textures", "UI", $"{name}.png");
-                Assert.True(File.Exists(path), $"Gizmo icon texture must exist: {path}");
-            }
         }
 
         [Fact]

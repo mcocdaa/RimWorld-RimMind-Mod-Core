@@ -4,7 +4,7 @@ using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
 
-namespace RimMind.Presentation
+namespace RimMind.Application.Api
 {
     public static partial class RimMindAPI
     {

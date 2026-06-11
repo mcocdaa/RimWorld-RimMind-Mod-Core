@@ -22,14 +22,14 @@ namespace RimMind.Presentation.Agent
         private const float HealthImportance = RimMindDefaults.PerceptionHighThreshold;
         private const float CombatImportance = RimMindDefaults.PerceptionCriticalThreshold;
 
-        private readonly IPawnAgent _agent;
+        private readonly IPawnAgentVerse _agent;
         private readonly IAgentBus _agentBus;
         private readonly IExtensionRegistry<IPerceptionSource>? _sourceRegistry;
         private readonly HashSet<string> _sensedHediffs = new HashSet<string>();
         private int _lastPerceptionTick;
         private int _perceptionInterval = DefaultPerceptionInterval;
 
-        public PawnPerceiver(IPawnAgent agent, IAgentBus agentBus,
+        public PawnPerceiver(IPawnAgentVerse agent, IAgentBus agentBus,
             IExtensionRegistry<IPerceptionSource>? sourceRegistry = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));

@@ -7,5 +7,7 @@ namespace RimMind.Application.Common.Interfaces.Internal
         float RequestOverlayY { get; set; }
         float RequestOverlayW { get; set; }
         float RequestOverlayH { get; set; }
+
+        void Persist();
     }
 }

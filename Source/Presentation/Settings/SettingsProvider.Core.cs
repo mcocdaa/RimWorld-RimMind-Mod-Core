@@ -148,6 +148,8 @@ namespace RimMind.Presentation.Settings
             set => _settings.requestOverlayH = value;
         }
 
+        public void Persist() => RimMindCoreMod.Settings.Write();
+
         // IPromptSettings
         public string CustomPawnPrompt
         {
