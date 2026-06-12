@@ -638,6 +638,14 @@
   <RimMind.UI.AIRequestsPage.TraceUnavailable>AI 请求追踪日志不可用。</RimMind.UI.AIRequestsPage.TraceUnavailable>
   <RimMind.UI.AIRequestsPage.Empty>暂无 AI 请求记录。</RimMind.UI.AIRequestsPage.Empty>
   <RimMind.UI.AIRequestsPage.Detail>请求: {0}\n状态: {1}\n提示词: {2}\n响应: {3}\n错误: {4}\nToolCall: {5}</RimMind.UI.AIRequestsPage.Detail>
+  <RimMind.UI.AIRequestsPage.Detail.Meta>请求</RimMind.UI.AIRequestsPage.Detail.Meta>
+  <RimMind.UI.AIRequestsPage.Detail.System>系统提示</RimMind.UI.AIRequestsPage.Detail.System>
+  <RimMind.UI.AIRequestsPage.Detail.User>用户提示</RimMind.UI.AIRequestsPage.Detail.User>
+  <RimMind.UI.AIRequestsPage.Detail.Assistant>助手上下文</RimMind.UI.AIRequestsPage.Detail.Assistant>
+  <RimMind.UI.AIRequestsPage.Detail.Response>响应</RimMind.UI.AIRequestsPage.Detail.Response>
+  <RimMind.UI.AIRequestsPage.Detail.Error>错误</RimMind.UI.AIRequestsPage.Detail.Error>
+  <RimMind.UI.AIRequestsPage.Detail.ToolCalls>工具调用</RimMind.UI.AIRequestsPage.Detail.ToolCalls>
+  <RimMind.UI.AIRequestsPage.Detail.EmptySection>空</RimMind.UI.AIRequestsPage.Detail.EmptySection>
   <RimMind.UI.AIRequestsPage.State.Running>运行中</RimMind.UI.AIRequestsPage.State.Running>
   <RimMind.UI.AIRequestsPage.State.Completed>已完成</RimMind.UI.AIRequestsPage.State.Completed>
   <RimMind.UI.AIRequestsPage.State.Failed>已失败</RimMind.UI.AIRequestsPage.State.Failed>

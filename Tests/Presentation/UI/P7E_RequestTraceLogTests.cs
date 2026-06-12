@@ -22,7 +22,7 @@ namespace RimMind.Tests.Presentation.UI
         {
             var log = new AIRequestTraceLog();
 
-            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "hello");
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
 
             var entry = Assert.Single(log.Entries);
             Assert.Equal("req-1", entry.RequestId);
@@ -35,7 +35,7 @@ namespace RimMind.Tests.Presentation.UI
         {
             var log = new AIRequestTraceLog();
 
-            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "hello");
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
             log.CompleteRequest("req-1", "ok", tokensUsed: 12, elapsedMs: 30);
 
             var entry = Assert.Single(log.Entries);
@@ -49,7 +49,7 @@ namespace RimMind.Tests.Presentation.UI
         {
             var log = new AIRequestTraceLog();
 
-            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "hello");
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
             log.FailRequest("req-1", "missing api key");
 
             var entry = Assert.Single(log.Entries);
@@ -62,7 +62,7 @@ namespace RimMind.Tests.Presentation.UI
         {
             var log = new AIRequestTraceLog();
 
-            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "hello");
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
             log.AddToolCall("req-1", "tool-1", "pawn.job.set", succeeded: true, error: null);
 
             var entry = Assert.Single(log.Entries);
@@ -75,8 +75,8 @@ namespace RimMind.Tests.Presentation.UI
         public void Clear_Removes_All_Entries()
         {
             var log = new AIRequestTraceLog();
-            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "hello");
-            log.StartRequest("req-2", "pawn:43", "deepseek-chat", "world");
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
+            log.StartRequest("req-2", "pawn:43", "deepseek-chat", "", "world", "");
 
             log.Clear();
 
@@ -100,17 +100,19 @@ namespace RimMind.Tests.Presentation.UI
         public void StartRequest_Duplicate_Resets_Existing_Entry()
         {
             var log = new AIRequestTraceLog();
-            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "hello");
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
             log.CompleteRequest("req-1", "ok", tokensUsed: 5, elapsedMs: 10);
             log.AddToolCall("req-1", "tool-1", "pawn.job.set", succeeded: true, error: null);
 
-            log.StartRequest("req-1", "pawn:99", "gpt-4", "restart");
+            log.StartRequest("req-1", "pawn:99", "gpt-4", "new system", "restart", "new assistant");
 
             var entry = Assert.Single(log.Entries);
             Assert.Equal(AIRequestTraceState.Running, entry.State);
             Assert.Equal("pawn:99", entry.Source);
             Assert.Equal("gpt-4", entry.Model);
+            Assert.Equal("new system", entry.SystemPrompt);
             Assert.Equal("restart", entry.UserPrompt);
+            Assert.Equal("new assistant", entry.AssistantPrompt);
             Assert.Empty(entry.ToolCalls);
         }
 
@@ -134,10 +136,40 @@ namespace RimMind.Tests.Presentation.UI
             const int maxEntries = RimMindDefaults.DebugMaxEntries;
 
             for (int i = 0; i < maxEntries + 50; i++)
-                log.StartRequest($"req-{i}", "src", "model", "prompt");
+                log.StartRequest($"req-{i}", "src", "model", "", "prompt", "");
 
             Assert.Equal(maxEntries, log.Entries.Count);
             Assert.Equal("req-50", log.Entries[0].RequestId);
+        }
+
+        [Fact]
+        public void StartRequest_Stores_System_User_And_Assistant_Prompts()
+        {
+            var log = new AIRequestTraceLog();
+
+            log.StartRequest(
+                requestId: "req-1",
+                source: "pawn:42",
+                model: "deepseek-chat",
+                systemPrompt: "system rules",
+                userPrompt: "user asks",
+                assistantPrompt: "assistant prior");
+
+            var entry = Assert.Single(log.Entries);
+            Assert.Equal("system rules", entry.SystemPrompt);
+            Assert.Equal("user asks", entry.UserPrompt);
+            Assert.Equal("assistant prior", entry.AssistantPrompt);
+        }
+
+        [Fact]
+        public void RimMindApiRequest_StartTrace_Uses_All_Message_Roles()
+        {
+            string content = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
+
+            Assert.Contains("BuildTracePrompt(envelope, \"system\")", content);
+            Assert.Contains("BuildTracePrompt(envelope, \"user\")", content);
+            Assert.Contains("BuildTracePrompt(envelope, \"assistant\")", content);
+            Assert.DoesNotContain("GetTracePrompt(envelope)", content);
         }
 
         [Fact]

@@ -130,7 +130,7 @@ namespace RimMind.Tests.Pipeline.Unified
             var registry = new StubToolRegistry2();
             registry.Register(handler);
             var traceLog = new AIRequestTraceLog();
-            traceLog.StartRequest("req-1", "test", "model", "prompt");
+            traceLog.StartRequest("req-1", "test", "model", "", "prompt", "");
 
             var middleware = new ToolCallDispatchMiddleware(registry, traceLog: traceLog);
             var context = CreateContext();

@@ -20,7 +20,9 @@ namespace RimMind.Application.Common.Models.Debug
         public string RequestId { get; set; } = string.Empty;
         public string Source { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
+        public string SystemPrompt { get; set; } = string.Empty;
         public string UserPrompt { get; set; } = string.Empty;
+        public string AssistantPrompt { get; set; } = string.Empty;
         public string Response { get; set; } = string.Empty;
         public string? Error { get; set; }
         public int TokensUsed { get; set; }

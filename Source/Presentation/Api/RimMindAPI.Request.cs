@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Verse;
 
@@ -61,7 +62,9 @@ namespace RimMind.Application.Api
                     envelope.RequestId,
                     GetTraceSource(envelope),
                     RimMindServiceLocator.TryGet<IAIModelSettings>()?.ModelName ?? string.Empty,
-                    GetTracePrompt(envelope));
+                    BuildTracePrompt(envelope, "system"),
+                    BuildTracePrompt(envelope, "user"),
+                    BuildTracePrompt(envelope, "assistant"));
 
                 RimMindRuntime.Instance.UnifiedPipeline.ExecuteAsync(ctx).ContinueWith(task =>
                 {
@@ -105,10 +108,31 @@ namespace RimMind.Application.Api
                 return "unknown";
             }
 
-            private static string GetTracePrompt(LlmRequestEnvelope envelope)
-                => envelope.Messages.LastOrDefault(m => m.Role == "user")?.Content
-                   ?? envelope.Messages.LastOrDefault()?.Content
-                   ?? string.Empty;
+            private static string BuildTracePrompt(LlmRequestEnvelope envelope, string role)
+            {
+                if (envelope.Messages == null || envelope.Messages.Count == 0)
+                    return string.Empty;
+
+                var sb = new StringBuilder();
+                foreach (var message in envelope.Messages)
+                {
+                    if (!string.Equals(message.Role, role, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (string.IsNullOrWhiteSpace(message.Content))
+                        continue;
+
+                    if (sb.Length > 0)
+                        sb.AppendLine().AppendLine();
+
+                    if (!string.IsNullOrWhiteSpace(message.LayerTag))
+                        sb.Append('[').Append(message.LayerTag).Append("] ");
+
+                    sb.Append(message.Content);
+                }
+
+                return sb.ToString();
+            }
         }
     }
 }

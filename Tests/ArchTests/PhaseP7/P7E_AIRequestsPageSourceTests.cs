@@ -30,5 +30,28 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("DrawHighlight", content);
             Assert.Contains("AIRequestsPage.Empty", content);
         }
+
+        [Fact]
+        public void AIRequestsPage_Draws_Full_Prompt_Response_And_ToolCall_Sections()
+        {
+            string content = ReadSource("Infrastructure/UI/AIRequestsPage/AIRequestsPageDrawer.cs");
+
+            Assert.Contains("entry.SystemPrompt", content);
+            Assert.Contains("entry.UserPrompt", content);
+            Assert.Contains("entry.AssistantPrompt", content);
+            Assert.Contains("entry.Response", content);
+            Assert.Contains("entry.ToolCalls", content);
+            Assert.Contains("DrawSection", content);
+        }
+
+        [Fact]
+        public void AIRequestsPage_Truncates_List_Row_Text_But_Not_Detail_Text()
+        {
+            string content = ReadSource("Infrastructure/UI/AIRequestsPage/AIRequestsPageDrawer.cs");
+
+            Assert.Contains("TruncateForRow", content);
+            Assert.Contains("DrawDetail", content);
+            Assert.Contains("_detailScrollPosition", content);
+        }
     }
 }

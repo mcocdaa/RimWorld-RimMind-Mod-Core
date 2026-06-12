@@ -11,8 +11,10 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
     {
         private int _selectedIndex;
         private Vector2 _scrollPosition;
+        private Vector2 _detailScrollPosition;
         private const float RowHeight = 48f;
         private const float RowContentHeight = 44f;
+        private const int RowPreviewChars = 120;
 
         public void Draw(Rect rect)
         {
@@ -56,7 +58,7 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
                 if (Widgets.ButtonInvisible(row))
                     _selectedIndex = i;
                 Widgets.Label(new Rect(row.x + 8f, row.y + 2f, row.width - 12f, 22f), entry.Source);
-                Widgets.Label(new Rect(row.x + 8f, row.y + 22f, row.width - 12f, 22f), entry.UserPrompt);
+                Widgets.Label(new Rect(row.x + 8f, row.y + 22f, row.width - 12f, 22f), TruncateForRow(entry.UserPrompt));
                 if (entry.State == AIRequestTraceState.Failed && !string.IsNullOrWhiteSpace(entry.Error))
                     TooltipHandler.TipRegion(row, entry.Error);
             }
@@ -65,18 +67,55 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 
         private void DrawDetail(Rect rect, AIRequestTraceEntry entry)
         {
-            // Snapshot ToolCalls to avoid concurrent modification if background thread adds entries
-            var toolCallNames = entry.ToolCalls.Select(t => t.ToolName).ToList();
-            string toolCalls = string.Join(", ", toolCallNames);
-            string stateLabel = StateLabelFor(entry.State);
-            Widgets.Label(rect,
-                "RimMind.UI.AIRequestsPage.Detail".Translate(
-                    entry.RequestId,
-                    stateLabel,
-                    entry.UserPrompt,
-                    entry.Response,
-                    entry.Error ?? string.Empty,
-                    toolCalls));
+            float viewHeight = Mathf.Max(rect.height + 1f, 1200f);
+            Rect view = new(rect.x, rect.y, rect.width - 16f, viewHeight);
+            Widgets.BeginScrollView(rect, ref _detailScrollPosition, view);
+
+            float y = view.y;
+            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Meta".Translate(),
+                $"{entry.RequestId}\n{StateLabelFor(entry.State)}\n{entry.Source}\n{entry.Model}\n{entry.ElapsedMs} ms\n{entry.TokensUsed} tokens");
+            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.System".Translate(), entry.SystemPrompt);
+            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.User".Translate(), entry.UserPrompt);
+            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Assistant".Translate(), entry.AssistantPrompt);
+            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Response".Translate(), entry.Response);
+            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Error".Translate(), entry.Error ?? string.Empty);
+            DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.ToolCalls".Translate(), FormatToolCalls(entry));
+
+            Widgets.EndScrollView();
+        }
+
+        private static float DrawSection(Rect view, float y, string title, string body)
+        {
+            Text.Font = GameFont.Small;
+            Widgets.Label(new Rect(view.x, y, view.width, 24f), title);
+            y += 24f;
+
+            string text = string.IsNullOrWhiteSpace(body)
+                ? "RimMind.UI.AIRequestsPage.Detail.EmptySection".Translate()
+                : body;
+            float height = Mathf.Max(32f, Text.CalcHeight(text, view.width));
+            Widgets.Label(new Rect(view.x, y, view.width, height), text);
+            return y + height + 12f;
+        }
+
+        private static string FormatToolCalls(AIRequestTraceEntry entry)
+        {
+            if (entry.ToolCalls.Count == 0)
+                return string.Empty;
+
+            return string.Join("\n", entry.ToolCalls.Select(t =>
+                $"{t.ToolName} [{(t.Succeeded ? "ok" : "error")}] {t.Error ?? string.Empty}"));
+        }
+
+        private static string TruncateForRow(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            string oneLine = value.Replace("\r", " ").Replace("\n", " ");
+            return oneLine.Length <= RowPreviewChars
+                ? oneLine
+                : oneLine.Substring(0, RowPreviewChars) + "...";
         }
 
         private static string StateLabelFor(AIRequestTraceState state)

@@ -24,7 +24,7 @@ namespace RimMind.Infrastructure.Verse
             }
         }
 
-        public void StartRequest(string requestId, string source, string model, string userPrompt)
+        public void StartRequest(string requestId, string source, string model, string systemPrompt, string userPrompt, string assistantPrompt)
         {
             lock (_lock)
             {
@@ -33,7 +33,9 @@ namespace RimMind.Infrastructure.Verse
                 {
                     existing.Source = source;
                     existing.Model = model;
+                    existing.SystemPrompt = systemPrompt;
                     existing.UserPrompt = userPrompt;
+                    existing.AssistantPrompt = assistantPrompt;
                     existing.Response = string.Empty;
                     existing.Error = null;
                     existing.TokensUsed = 0;
@@ -49,7 +51,9 @@ namespace RimMind.Infrastructure.Verse
                     RequestId = requestId,
                     Source = source,
                     Model = model,
+                    SystemPrompt = systemPrompt,
                     UserPrompt = userPrompt,
+                    AssistantPrompt = assistantPrompt,
                     State = AIRequestTraceState.Running
                 });
             }
