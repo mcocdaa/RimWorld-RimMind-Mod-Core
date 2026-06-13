@@ -20,8 +20,6 @@ namespace RimMind.Application.Features.Queue
     {
         private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;
 
-        private static AIRequestQueueImpl? _instance;
-
         private readonly ConcurrentQueue<(Result<LlmResponse, RimMindError> result, Action<Result<LlmResponse, RimMindError>> callback)> _results
             = new ConcurrentQueue<(Result<LlmResponse, RimMindError>, Action<Result<LlmResponse, RimMindError>>)>();
         private readonly ConcurrentQueue<(string msg, bool isWarning)> _pendingLogs
@@ -57,20 +55,11 @@ namespace RimMind.Application.Features.Queue
 
         private int QueueProcessInterval => Settings.QueueProcessInterval;
 
-        public static IAIRequestQueue Instance
-        {
-            get => _instance ?? throw new InvalidOperationException("AIRequestQueue has not been initialized.");
-        }
-
-        public static void LogFromBackground(string msg, bool isWarning = false)
-            => _instance?.EnqueueLog(msg, isWarning);
-
         public AIRequestQueueImpl(Func<ISettingsProvider?>? settingsFactory = null, ILogSink? logSink = null)
         {
             _settingsFactory = settingsFactory;
             _logSink = logSink;
             _circuitBreaker = new QueueCircuitBreaker(Settings, logSink);
-            _instance = this;
         }
 
         public void Tick()
@@ -301,6 +290,7 @@ namespace RimMind.Application.Features.Queue
         public IReadOnlyList<TrackedRequest> GetAllQueuedRequests() { lock (_queueLock) { var r = new List<TrackedRequest>(); foreach (var kvp in _modQueues) r.AddRange(kvp.Value); return r; } }
         public int TotalQueuedCount { get { lock (_queueLock) { return _modQueues.Values.Sum(q => q.Count); } } }
         public void EnqueueLog(string msg, bool isWarning = false) => _pendingLogs.Enqueue((msg, isWarning));
+        public void LogFromBackground(string msg, bool isWarning = false) => EnqueueLog(msg, isWarning);
         internal CancellationTokenSource GetCts() => _cts;
     }
 }

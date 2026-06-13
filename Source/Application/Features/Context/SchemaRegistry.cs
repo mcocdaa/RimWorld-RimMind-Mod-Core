@@ -11,9 +11,6 @@ namespace RimMind.Application.Features.Context
             = new ConcurrentDictionary<string, string>();
         private readonly ILogSink? _log;
 
-        private static SchemaRegistry? _instance;
-        public static SchemaRegistry Instance => _instance ??= new SchemaRegistry();
-
         public SchemaRegistry(ILogSink? log = null) { _log = log; }
 
         public void Register(string key, string schema) => _schemas[key] = schema;
@@ -21,8 +18,8 @@ namespace RimMind.Application.Features.Context
         public IReadOnlyDictionary<string, string> All => _schemas;
         public void Reset() => _schemas.Clear();
 
-        public static string PersonalityOutput => Instance.Find("PersonalityOutput") ?? "";
-        public static string IncidentOutput => Instance.Find("IncidentOutput") ?? "";
-        public static string DarkMemoryOutput => Instance.Find("DarkMemoryOutput") ?? "";
+        public string PersonalityOutput => Find("PersonalityOutput") ?? "";
+        public string IncidentOutput => Find("IncidentOutput") ?? "";
+        public string DarkMemoryOutput => Find("DarkMemoryOutput") ?? "";
     }
 }

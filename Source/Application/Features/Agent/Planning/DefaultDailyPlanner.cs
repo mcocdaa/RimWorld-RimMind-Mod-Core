@@ -11,7 +11,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Planning
 {
-    internal sealed class DefaultDailyPlanner : IDailyPlanner
+    public sealed class DefaultDailyPlanner : IDailyPlanner
     {
         private const int PlanningHour = 6; // 6:00 AM game time
         private const int TicksPerHour = 2500; // RimWorld: 60000 ticks/day, 24 hours/day

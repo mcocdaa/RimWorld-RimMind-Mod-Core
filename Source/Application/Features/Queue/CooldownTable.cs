@@ -5,7 +5,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 
 namespace RimMind.Application.Features.Queue
 {
-    internal sealed class CooldownTable
+    public sealed class CooldownTable
     {
         private readonly ConcurrentDictionary<string, int> _table
             = new ConcurrentDictionary<string, int>();

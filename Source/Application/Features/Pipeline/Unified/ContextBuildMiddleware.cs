@@ -29,16 +29,25 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
         public async Task InvokeAsync(LlmRequestContext context, MiddlewareDelegate<LlmRequestContext> next)
         {
-            // If messages are already populated, skip context building
-            if (context.Envelope.Messages != null && context.Envelope.Messages.Count > 0)
+            var envelope = context.Envelope;
+            if (envelope == null)
             {
-                _log?.Message($"[UnifiedContextBuild] Messages already populated ({context.Envelope.Messages.Count}), skipping context build");
+                context.Result = Result<LlmResponse, RimMindError>.Err(
+                    RimMindErrors.Internal("Null envelope"));
+                context.ShortCircuit("NullEnvelope");
+                return;
+            }
+
+            // If messages are already populated, skip context building
+            if (envelope.Messages != null && envelope.Messages.Count > 0)
+            {
+                _log?.Message($"[UnifiedContextBuild] Messages already populated ({envelope.Messages.Count}), skipping context build");
                 await next(context);
                 return;
             }
 
             // Build context via IContextEngine if available and NPC mode
-            if (_contextEngine == null || string.IsNullOrEmpty(context.Envelope.NpcId))
+            if (_contextEngine == null || envelope.NpcId is not { Length: > 0 } npcId)
             {
                 _log?.Message("[UnifiedContextBuild] No context engine or NpcId, skipping context build");
                 await next(context);
@@ -47,25 +56,25 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
             // Build snapshot directly from envelope fields (no ContextRequest needed)
             var skipLayers = new HashSet<string>();
-            if (context.Envelope.GameStateInfo != null
-                && context.Envelope.GameStateInfo.ContainsSection("perceptions"))
+            if (envelope.GameStateInfo != null
+                && envelope.GameStateInfo.ContainsSection("perceptions"))
             {
                 skipLayers.Add("L3");
             }
 
             var snapshot = await _contextEngine.BuildSnapshotFromEnvelopeAsync(
-                context.Envelope.NpcId,
-                context.Envelope.GameStateInfo,
-                context.Envelope.MaxTokens,
-                context.Envelope.Temperature,
-                context.Envelope.ScenarioId,
+                npcId,
+                envelope.GameStateInfo,
+                envelope.MaxTokens,
+                envelope.Temperature,
+                envelope.ScenarioId,
                 skipLayers);
 
             if (snapshot == null)
             {
-                _log?.Warning($"[UnifiedContextBuild] Context build returned null for NPC {context.Envelope.NpcId}");
+                _log?.Warning($"[UnifiedContextBuild] Context build returned null for NPC {npcId}");
                 context.Result = Result<LlmResponse, RimMindError>.Err(
-                    RimMindErrors.ContextBuildFailed($"Context build returned null for NPC {context.Envelope.NpcId}"));
+                    RimMindErrors.ContextBuildFailed($"Context build returned null for NPC {npcId}"));
                 context.ShortCircuit("context_build_null");
                 return;
             }
@@ -73,12 +82,21 @@ namespace RimMind.Application.Features.Pipeline.Unified
             context.Snapshot = snapshot;
 
             // Populate envelope messages from snapshot (both are Domain.Llm.ChatMessage now)
-            foreach (var msg in snapshot.Messages)
+            var messages = envelope.Messages;
+            if (messages == null)
             {
-                context.Envelope.Messages.Add(msg);
+                context.Result = Result<LlmResponse, RimMindError>.Err(
+                    RimMindErrors.Internal("Envelope messages collection is null"));
+                context.ShortCircuit("NullMessages");
+                return;
             }
 
-            _log?.Message($"[UnifiedContextBuild] Built context for NPC {context.Envelope.NpcId}: {snapshot.Messages.Count} messages, {snapshot.EstimatedTokens} tokens");
+            foreach (var msg in snapshot.Messages)
+            {
+                messages.Add(msg);
+            }
+
+            _log?.Message($"[UnifiedContextBuild] Built context for NPC {npcId}: {snapshot.Messages.Count} messages, {snapshot.EstimatedTokens} tokens");
 
             await next(context);
         }

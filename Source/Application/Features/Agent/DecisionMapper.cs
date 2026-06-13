@@ -44,7 +44,7 @@ namespace RimMind.Application.Features.Agent
         /// <summary>
         /// Infer the preferred MechanismOperationType from the action prefix.
         /// </summary>
-        internal static MechanismOperationType InferOperationType(string action)
+        public static MechanismOperationType InferOperationType(string action)
         {
             if (string.IsNullOrEmpty(action)) return MechanismOperationType.Set;
 
@@ -67,7 +67,7 @@ namespace RimMind.Application.Features.Agent
         /// "pawn.job.force_rest" -> ("pawn.job", "force_rest")
         /// "force_rest" -> ("pawn.job", "force_rest")
         /// </summary>
-        internal static (string mechanismId, string action) ParseActionIntent(string actionIntent)
+        public static (string mechanismId, string action) ParseActionIntent(string actionIntent)
         {
             if (string.IsNullOrEmpty(actionIntent))
                 return ("pawn.job", "");

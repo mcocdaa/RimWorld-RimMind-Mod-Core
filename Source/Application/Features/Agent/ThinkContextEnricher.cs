@@ -10,7 +10,7 @@ using RimMind.Domain.Llm;
 
 namespace RimMind.Application.Features.Agent
 {
-    internal sealed class ThinkContextEnricher : IEnvelopeEnricher
+    public sealed class ThinkContextEnricher : IEnvelopeEnricher
     {
         private readonly InnerVoiceHandler? _innerVoiceHandler;
         private readonly IPsychologyWatcher? _psychologyWatcher;
@@ -52,8 +52,9 @@ namespace RimMind.Application.Features.Agent
 
             envelope.GameStateInfo ??= new GameStateInfo();
 
-            if (!string.IsNullOrEmpty(voiceText))
-                envelope.GameStateInfo.AddSection("inner_voice", voiceText);
+            var voice = voiceText ?? "";
+            if (voice.Length > 0)
+                envelope.GameStateInfo.AddSection("inner_voice", voice);
 
             if (_psychologyWatcher?.HasUrgentEvent(npcId) == true)
                 envelope.GameStateInfo.AddSection("psychology_alert", "Urgent psychological event pending");

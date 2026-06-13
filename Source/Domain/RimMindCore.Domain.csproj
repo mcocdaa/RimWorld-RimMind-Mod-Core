@@ -13,10 +13,4 @@
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="1_RimMindApplication" />
-    <InternalsVisibleTo Include="2_RimMindCore" />
-    <InternalsVisibleTo Include="RimMindTest" />
-  </ItemGroup>
-
 </Project>

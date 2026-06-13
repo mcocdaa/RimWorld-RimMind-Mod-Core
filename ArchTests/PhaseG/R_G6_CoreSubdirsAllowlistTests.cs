@@ -11,6 +11,7 @@ namespace RimMind.Core.ArchTests.PhaseG
         {
             "Agent",
             "Api",
+            "Common",
             "Context",
             "Llm",
             "Perception",

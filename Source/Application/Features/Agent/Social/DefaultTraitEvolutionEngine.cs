@@ -12,7 +12,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Social;
 
-internal sealed class DefaultTraitEvolutionEngine : ITraitEvolutionEngine
+public sealed class DefaultTraitEvolutionEngine : ITraitEvolutionEngine
 {
     private readonly ITickProvider _tickProvider;
     private readonly IPsychologyWatcher? _psychologyWatcher;

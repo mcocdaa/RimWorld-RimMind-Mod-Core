@@ -45,20 +45,23 @@ namespace RimMind.Presentation.Api
 
             // ── SchemaRegistry ──
 
+            private static SchemaRegistry Schemas => RimMindRuntime.Instance.GetService<SchemaRegistry>()
+                ?? throw new System.InvalidOperationException("[RimMind-Core] SchemaRegistry is not registered.");
+
             public static string SchemaPersonalityOutput
-                => SchemaRegistry.PersonalityOutput;
+                => Schemas.PersonalityOutput;
 
             public static string SchemaIncidentOutput
-                => SchemaRegistry.IncidentOutput;
+                => Schemas.IncidentOutput;
 
             public static string SchemaDarkMemoryOutput
-                => SchemaRegistry.DarkMemoryOutput;
+                => Schemas.DarkMemoryOutput;
 
             public static void RegisterSchema(string key, string schema)
-                => SchemaRegistry.Instance.Register(key, schema);
+                => Schemas.Register(key, schema);
 
             public static string? FindSchema(string key)
-                => SchemaRegistry.Instance.Find(key);
+                => Schemas.Find(key);
         }
     }
 }

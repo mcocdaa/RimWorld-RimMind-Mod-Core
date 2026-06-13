@@ -179,6 +179,7 @@ namespace RimMind.Presentation.Runtime
             var relevanceLearner = new RelevanceLearner(tickProvider);
             var budgetScheduler = new BudgetScheduler(relevanceTableImpl, relevanceLearner, tickProvider, cacheManager.EmbedCache);
             var providerCache = new ProviderCache(agentBus, logSink, tickProvider);
+            var schemaRegistry = new SchemaRegistry(logSink);
 
             var buildServices = new ContextBuildServices(cacheManager, diffTracker, layerBuilder, budgetScheduler);
 
@@ -189,6 +190,7 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IContextKeyRegistry>(keyRegistryImpl);
             RimMindServiceLocator.Register<IRelevanceTable>(relevanceTableImpl);
             RimMindServiceLocator.Register<IRelevanceLearner>(relevanceLearner);
+            RimMindServiceLocator.Register(schemaRegistry);
 
             // Phase 4: Resolve GameComponent services (Verse-instantiated, may be null)
             var npcManager = RimMindServiceLocator.TryGet<INpcManager>();

@@ -25,7 +25,7 @@ namespace RimMind.Application.Common.Models.Agent
             _agentBus = agentBus;
         }
 
-        internal void SetAgentBus(IAgentBus agentBus)
+        public void SetAgentBus(IAgentBus agentBus)
         {
             _agentBus = agentBus;
         }

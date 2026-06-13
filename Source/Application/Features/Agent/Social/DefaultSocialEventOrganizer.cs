@@ -11,7 +11,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Social;
 
-internal sealed class DefaultSocialEventOrganizer : ISocialEventOrganizer
+public sealed class DefaultSocialEventOrganizer : ISocialEventOrganizer
 {
     private readonly ITickProvider _tickProvider;
     private readonly IAgentBus _agentBus;

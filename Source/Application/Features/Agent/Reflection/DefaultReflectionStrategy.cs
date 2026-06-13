@@ -11,7 +11,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Reflection
 {
-    internal sealed class DefaultReflectionStrategy : IReflectionStrategy
+    public sealed class DefaultReflectionStrategy : IReflectionStrategy
     {
         private const int ReflectionIntervalTicks = RimMindDefaults.ProactiveTickInterval; // 60000 = 1 day
         private readonly ITickProvider _tickProvider;

@@ -4,7 +4,7 @@ using RimMind.Domain.Events;
 
 namespace RimMind.Application.Common.Defaults;
 
-internal sealed class AgentBusCoreSubscriber
+public sealed class AgentBusCoreSubscriber
 {
     private readonly ILogSink _logSink;
 

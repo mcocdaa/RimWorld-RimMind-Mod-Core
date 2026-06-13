@@ -19,12 +19,9 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.*" />
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="$(GameVersion).*-*" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="2_RimMindCore" />
-    <InternalsVisibleTo Include="RimMindTest" />
     <InternalsVisibleTo Include="RimMindCore.Integration.Tests" />
   </ItemGroup>
 

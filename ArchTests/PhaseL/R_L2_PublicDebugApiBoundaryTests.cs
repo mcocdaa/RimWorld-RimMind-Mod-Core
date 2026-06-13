@@ -23,7 +23,9 @@ namespace RimMind.Core.ArchTests.PhaseL
 
             content.Should().Contain("public static class Debug");
             content.Should().Contain("OpenAIRequests");
-            content.Should().Contain("Window_RimMindHub.OpenAIRequests()");
+            content.Should().Contain("RimMindRuntime.Instance.WindowService?.OpenAIRequests()");
+            content.Should().NotContain("Window_RimMindHub.OpenAIRequests()");
+            content.Should().NotContain("Find.WindowStack");
         }
 
         [Fact]

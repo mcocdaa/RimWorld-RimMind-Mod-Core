@@ -7,7 +7,7 @@ using RimMind.Application.Features.Utility;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class RelevanceLearner : IRelevanceLearner
+    public sealed class RelevanceLearner : IRelevanceLearner
     {
         private readonly ConcurrentDictionary<(string Scenario, string Key), RingBuffer<bool>> _stats = new();
         private readonly ConcurrentDictionary<string, (string Scenario, IReadOnlyList<string> Keys, int TimestampTick)> _pendingTraces = new();

@@ -10,7 +10,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Social;
 
-internal sealed class DefaultDreamGenerator : IDreamGenerator
+public sealed class DefaultDreamGenerator : IDreamGenerator
 {
     private readonly ITickProvider _tickProvider;
     private readonly ISleepDetector _sleepDetector;

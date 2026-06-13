@@ -309,8 +309,11 @@ namespace RimMind.Infrastructure.UI
             {
                 GUI.color = new Color(0.4f, 1f, 0.4f);
                 Widgets.Label(new Rect(Padding, y, w - Padding * 2, LineH),
-                    "RimMind.UI.AgentFlowLab.ScopedAgentActive".Translate(
-                        _scopedAgent.ScopeType, _scopedAgent.ScopeId, _scopedAgent.State));
+                    string.Format(
+                        "RimMind.UI.AgentFlowLab.ScopedAgentActive".Translate().ToString(),
+                        _scopedAgent.ScopeType,
+                        _scopedAgent.ScopeId,
+                        _scopedAgent.State));
                 GUI.color = Color.white;
             }
             else

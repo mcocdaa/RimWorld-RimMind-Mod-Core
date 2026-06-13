@@ -10,7 +10,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Social;
 
-internal sealed class DefaultInformationDiffuser : IInformationDiffuser
+public sealed class DefaultInformationDiffuser : IInformationDiffuser
 {
     private readonly IAgentBus _agentBus;
     private readonly ITickProvider _tickProvider;

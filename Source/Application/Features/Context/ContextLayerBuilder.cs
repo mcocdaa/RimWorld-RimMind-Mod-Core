@@ -10,7 +10,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class ContextLayerBuilder : IContextLayerBuilder
+    public sealed class ContextLayerBuilder : IContextLayerBuilder
     {
         private readonly IContextKeyProvider _keyProvider;
         private readonly ILogSink? _log;

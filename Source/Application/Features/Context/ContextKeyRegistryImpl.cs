@@ -6,7 +6,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class ContextKeyRegistryImpl : IContextKeyRegistry
+    public sealed class ContextKeyRegistryImpl : IContextKeyRegistry
     {
         private readonly ConcurrentDictionary<string, KeyMeta> _keys = new ConcurrentDictionary<string, KeyMeta>();
         private readonly ILogSink? _logSink;
@@ -30,7 +30,7 @@ namespace RimMind.Application.Features.Context
 
         public void Register(ContextProviderDef def)
         {
-            var meta = new KeyMeta(def.Key, def.Layer, def.Priority, null, def.OwnerMod ?? "Unknown",
+            var meta = new KeyMeta(def.Key, def.Layer, def.Priority, _ => new List<ContextEntry>(), def.OwnerMod ?? "Unknown",
                 cacheScope: def.CacheScope)
             {
                 Def = def

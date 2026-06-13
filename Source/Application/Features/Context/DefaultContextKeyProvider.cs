@@ -4,7 +4,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class DefaultContextKeyProvider : IContextKeyProvider
+    public sealed class DefaultContextKeyProvider : IContextKeyProvider
     {
         public List<ContextEntry> BuildMapContextEntries(object map) => new List<ContextEntry>();
         public string ExtractPawnBaseInfo(object pawn) => "";

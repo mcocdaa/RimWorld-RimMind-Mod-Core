@@ -42,9 +42,9 @@ namespace RimMind.Application.Features.Pipeline.Unified
                     {
                         msg.Content = PromptSanitizer.Sanitize(msg.Content);
                     }
-                    if (!string.IsNullOrEmpty(msg.ReasoningContent))
+                    if (msg.ReasoningContent is { Length: > 0 } reasoning)
                     {
-                        msg.ReasoningContent = PromptSanitizer.Sanitize(msg.ReasoningContent);
+                        msg.ReasoningContent = PromptSanitizer.Sanitize(reasoning);
                     }
                 }
             }

@@ -5,7 +5,7 @@ using RimMind.Application.Common.Models.Context;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class RelevanceTableImpl : IRelevanceTable
+    public sealed class RelevanceTableImpl : IRelevanceTable
     {
         private readonly ConcurrentDictionary<(string, string), float> _table = new ConcurrentDictionary<(string, string), float>();
         private bool _coreRegistered = false;

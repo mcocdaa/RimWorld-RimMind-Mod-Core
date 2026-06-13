@@ -14,7 +14,7 @@ using RimMind.Application.Features.Context;
 
 namespace RimMind.Application.Features.Pipeline.Unified
 {
-    internal static class UnifiedRequestPipelineFactory
+    public static class UnifiedRequestPipelineFactory
     {
         public static MutablePipeline<LlmRequestContext> Build(
             IToolRegistry toolRegistry,

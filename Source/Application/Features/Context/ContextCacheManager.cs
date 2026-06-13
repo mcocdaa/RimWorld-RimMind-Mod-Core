@@ -7,7 +7,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class ContextCacheManager : IContextCacheManager
+    public sealed class ContextCacheManager : IContextCacheManager
     {
         private readonly ConcurrentDictionary<string, ChatMessage> _l0Cache
             = new ConcurrentDictionary<string, ChatMessage>();

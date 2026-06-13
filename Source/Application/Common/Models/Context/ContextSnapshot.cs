@@ -40,6 +40,16 @@ namespace RimMind.Application.Common.Models.Context
         public void AddEntry(ContextEntry entry) => _allEntries.Add(entry);
         public void AddEntries(IEnumerable<ContextEntry> entries) => _allEntries.AddRange(entries);
         public void SetCacheHitEvent(string key, bool value) => _cacheHitEvents[key] = value;
+
+        public void SetCommitPayload(List<KeyMeta>? filteredKeys, BudgetAllocation? schedule, object? pawn)
+        {
+            _commitPayload = new CommitPayload
+            {
+                FilteredKeys = filteredKeys,
+                Schedule = schedule,
+                Pawn = pawn
+            };
+        }
     }
 
     internal class CommitPayload

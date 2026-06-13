@@ -16,7 +16,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Modes;
 
-internal sealed class ReactiveAgentMode : IAgentMode
+public sealed class ReactiveAgentMode : IAgentMode
 {
     public AgentModeId ModeId => AgentModeId.Reactive;
         public string DisplayName => "Reactive";

@@ -21,7 +21,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Agent.Modes;
 
-internal sealed class ProactiveAgentMode : IAgentMode, IProactiveExtensions
+public sealed class ProactiveAgentMode : IAgentMode, IProactiveExtensions
 {
     private readonly ITickProvider _tickProvider;
     private readonly IReflectionStrategy? _reflectionStrategy;

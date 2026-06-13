@@ -1,5 +1,4 @@
-using RimMind.Infrastructure.UI;
-using Verse;
+using RimMind.Presentation.Runtime;
 
 namespace RimMind.Presentation.Api
 {
@@ -9,7 +8,7 @@ namespace RimMind.Presentation.Api
         {
             public static void OpenAIRequests()
             {
-                Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
+                RimMindRuntime.Instance.WindowService?.OpenAIRequests();
             }
         }
     }

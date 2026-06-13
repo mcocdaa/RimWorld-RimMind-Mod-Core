@@ -138,12 +138,7 @@ namespace RimMind.Presentation.Context
 
             ApplyBudgetTrim(snapshot);
 
-            snapshot._commitPayload = new CommitPayload
-            {
-                FilteredKeys = filteredKeys,
-                Schedule = schedule,
-                Pawn = pawn
-            };
+            snapshot.SetCommitPayload(filteredKeys, schedule, pawn);
 
             return snapshot;
         }
@@ -270,12 +265,7 @@ namespace RimMind.Presentation.Context
 
             ApplyBudgetTrim(snapshot);
 
-            snapshot._commitPayload = new CommitPayload
-            {
-                FilteredKeys = filteredKeys,
-                Schedule = schedule,
-                Pawn = pawn
-            };
+            snapshot.SetCommitPayload(filteredKeys, schedule, pawn);
 
             return snapshot;
         }

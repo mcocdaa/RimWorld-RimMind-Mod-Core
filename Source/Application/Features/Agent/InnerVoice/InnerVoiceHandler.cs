@@ -7,7 +7,7 @@ using RimMind.Domain.Events;
 
 namespace RimMind.Application.Features.Agent.InnerVoice
 {
-    internal sealed class InnerVoiceHandler
+    public sealed class InnerVoiceHandler
     {
         private readonly IAgentBus _agentBus;
         private readonly ITickProvider _tickProvider;

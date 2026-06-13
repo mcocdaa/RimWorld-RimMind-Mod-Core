@@ -6,7 +6,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class ContextDiffTracker : IContextDiffTracker
+    public sealed class ContextDiffTracker : IContextDiffTracker
     {
         private readonly DiffComputer _computer = new();
         private readonly DiffRecorder _recorder;

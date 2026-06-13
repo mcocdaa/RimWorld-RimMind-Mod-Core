@@ -6,7 +6,7 @@ namespace RimMind.Application.Features.Storage
     /// Centralized key naming for IRemoteBackend operations.
     /// All keys MUST start with "rimmind:" prefix.
     /// </summary>
-    internal static class RemoteKeys
+    public static class RemoteKeys
     {
         public const string Prefix = "rimmind:";
 

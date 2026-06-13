@@ -17,7 +17,6 @@ namespace RimMind.Application.Features.Llm
         private int _promptTokens;
         private int _completionTokens;
         private int _cachedTokens;
-        private AIRequestState _state = AIRequestState.Processing;
         private int _chunkCount;
         private RimMindError? _error;
 

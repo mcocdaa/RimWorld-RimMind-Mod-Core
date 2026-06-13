@@ -27,38 +27,39 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
         public async Task InvokeAsync(LlmRequestContext context, MiddlewareDelegate<LlmRequestContext> next)
         {
-            var npcId = context.Envelope?.NpcId;
-            if (!string.IsNullOrEmpty(npcId))
+            var envelope = context.Envelope;
+            var npcId = envelope?.NpcId;
+            if (npcId is { Length: > 0 } npcIdText)
             {
-                if (_npcManager != null && !_npcManager.IsNpcAlive(npcId))
+                if (_npcManager != null && !_npcManager.IsNpcAlive(npcIdText))
                 {
-                    var profile = _npcManager.GetNpc(npcId);
+                    var profile = _npcManager.GetNpc(npcIdText);
                     if (profile != null)
                     {
-                        _log?.Message($"[UnifiedNpcEnrich] NPC {npcId} not alive, respawning");
+                        _log?.Message($"[UnifiedNpcEnrich] NPC {npcIdText} not alive, respawning");
                         _npcManager.SpawnNpc(profile);
                     }
                     else
                     {
-                        _log?.Warning($"[UnifiedNpcEnrich] NPC {npcId} not found, cannot respawn");
+                        _log?.Warning($"[UnifiedNpcEnrich] NPC {npcIdText} not found, cannot respawn");
                         context.Result = Result<LlmResponse, RimMindError>.Err(
-                            RimMindErrors.NpcNotFound(npcId));
+                            RimMindErrors.NpcNotFound(npcIdText));
                         context.ShortCircuit("npc_not_found");
                         return;
                     }
                 }
 
                 // Inject game state info if not already set
-                if (context.Envelope.GameStateInfo == null)
+                if (envelope!.GameStateInfo == null)
                 {
-                    var npcProfile = _npcManager?.GetNpc(npcId);
+                    var npcProfile = _npcManager?.GetNpc(npcIdText);
                     if (npcProfile != null)
                     {
                         context.Items["NpcProfile"] = npcProfile;
                     }
                 }
 
-                _log?.Message($"[UnifiedNpcEnrich] NPC {npcId} enriched");
+                _log?.Message($"[UnifiedNpcEnrich] NPC {npcIdText} enriched");
             }
 
             await next(context);

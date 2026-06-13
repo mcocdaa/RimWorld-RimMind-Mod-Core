@@ -40,10 +40,10 @@ namespace RimMind.Application.Features.Agent
                 return ValidationResult.Fail($"Operation '{actionSuffix}' not supported by mechanism '{mechanismId}'. Supported: {string.Join(", ", supportedSuffixes)}");
             }
 
-            if (!string.IsNullOrEmpty(decision.Param))
+            if (decision.Param is { Length: > 0 } param)
             {
-                try { JToken.Parse(decision.Param); }
-                catch (JsonReaderException) { return ValidationResult.Fail($"Param is not valid JSON: {decision.Param}"); }
+                try { JToken.Parse(param); }
+                catch (JsonReaderException) { return ValidationResult.Fail($"Param is not valid JSON: {param}"); }
             }
 
             return ValidationResult.Ok();

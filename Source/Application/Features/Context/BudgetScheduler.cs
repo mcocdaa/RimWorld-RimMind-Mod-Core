@@ -9,7 +9,7 @@ using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    internal sealed class BudgetScheduler : IBudgetScheduler
+    public sealed class BudgetScheduler : IBudgetScheduler
     {
         private BudgetSchedulerConfig _config = new BudgetSchedulerConfig();
         private readonly IRelevanceTable? _relevanceTable;
@@ -140,10 +140,10 @@ namespace RimMind.Application.Features.Context
 
         private float ComputeQuerySimilarity(string? query, KeyMeta key)
         {
-            if (string.IsNullOrEmpty(query) || _embedCache == null) return 0f;
+            if (query is not { Length: > 0 } queryText || _embedCache == null) return 0f;
             if (key.LastValueEmbedding == null) return 0f;
 
-            var queryEmbed = _embedCache.GetOrComputeQueryEmbedding(query);
+            var queryEmbed = _embedCache.GetOrComputeQueryEmbedding(queryText);
             if (queryEmbed == null) return 0f;
 
             return CosineSimilarity(queryEmbed, key.LastValueEmbedding);

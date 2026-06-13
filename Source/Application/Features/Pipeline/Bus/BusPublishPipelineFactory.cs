@@ -9,7 +9,7 @@ using RimMind.Domain.Events;
 
 namespace RimMind.Application.Features.Pipeline.Bus
 {
-    internal static class BusPublishPipelineFactory
+    public static class BusPublishPipelineFactory
     {
         public static IPipeline<BusPublishContext> Build(
             Action<AgentBusEvent> dispatch,

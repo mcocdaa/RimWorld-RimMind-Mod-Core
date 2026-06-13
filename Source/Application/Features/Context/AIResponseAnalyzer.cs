@@ -10,7 +10,7 @@ namespace RimMind.Application.Features.Context
     /// from context messages, indicating the AI actually used that context.
     /// Returns the LayerTag values of messages whose content was referenced.
     /// </summary>
-    internal sealed class AIResponseAnalyzer
+    public sealed class AIResponseAnalyzer
     {
         private const int MinSampleLength = 20;
         private const int SampleHeadLength = 50;

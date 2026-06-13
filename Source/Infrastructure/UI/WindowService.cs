@@ -14,4 +14,9 @@ public class WindowService : IWindowService
     {
         Find.WindowStack.Add(new Window_RequestLog());
     }
+
+    public void OpenAIRequests()
+    {
+        Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
+    }
 }
