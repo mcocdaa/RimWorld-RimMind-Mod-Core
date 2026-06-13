@@ -18,7 +18,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Verse;
 
-namespace RimMind.Application.Api
+namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {
@@ -56,12 +56,12 @@ namespace RimMind.Application.Api
                 }
 
                 var ctx = new LlmRequestContext { Envelope = envelope, Client = client };
-                var traceLog = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
+                var traceLog = RimMindRuntime.Instance.GetService<IAIRequestTraceLog>();
                 var elapsed = Stopwatch.StartNew();
                 traceLog?.StartRequest(
                     envelope.RequestId,
                     GetTraceSource(envelope),
-                    RimMindServiceLocator.TryGet<IAIModelSettings>()?.ModelName ?? string.Empty,
+                    RimMindRuntime.Instance.GetService<IAIModelSettings>()?.ModelName ?? string.Empty,
                     BuildTracePrompt(envelope, "system"),
                     BuildTracePrompt(envelope, "user"),
                     BuildTracePrompt(envelope, "assistant"));

@@ -19,6 +19,7 @@ namespace RimMind.Core.ArchTests.PhaseG
             "ConfiguredValueTaskAwaitable",
             "ConfiguredValueTaskAwaiter",
             "HistoryEntry",
+            "ThinkContextEnricher",
         };
 
         [Fact]

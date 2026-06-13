@@ -16,6 +16,8 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
         private const float RowContentHeight = 44f;
         private const int RowPreviewChars = 120;
 
+        private sealed record DetailSection(string Title, string Body);
+
         public void Draw(Rect rect)
         {
             var log = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
@@ -67,22 +69,58 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 
         private void DrawDetail(Rect rect, AIRequestTraceEntry entry)
         {
-            float viewHeight = Mathf.Max(rect.height + 1f, 1200f);
-            Rect view = new(rect.x, rect.y, rect.width - 16f, viewHeight);
+            var sections = BuildDetailSections(entry);
+            float contentWidth = CalculateDetailContentWidth(rect.width);
+            float viewHeight = Mathf.Max(rect.height + 1f, CalculateDetailViewHeight(sections, contentWidth));
+            Rect view = new(rect.x, rect.y, contentWidth, viewHeight);
             Widgets.BeginScrollView(rect, ref _detailScrollPosition, view);
 
             float y = view.y;
-            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Meta".Translate(),
-                $"{entry.RequestId}\n{StateLabelFor(entry.State)}\n{entry.Source}\n{entry.Model}\n{entry.ElapsedMs} ms\n{entry.TokensUsed} tokens");
-            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.System".Translate(), entry.SystemPrompt);
-            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.User".Translate(), entry.UserPrompt);
-            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Assistant".Translate(), entry.AssistantPrompt);
-            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Response".Translate(), entry.Response);
-            y = DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.Error".Translate(), entry.Error ?? string.Empty);
-            DrawSection(view, y, "RimMind.UI.AIRequestsPage.Detail.ToolCalls".Translate(), FormatToolCalls(entry));
+            foreach (var section in sections)
+                y = DrawSection(view, y, section.Title, section.Body);
 
             Widgets.EndScrollView();
         }
+
+        private static List<DetailSection> BuildDetailSections(AIRequestTraceEntry entry)
+        {
+            return new List<DetailSection>
+            {
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.Meta".Translate(),
+                    $"{entry.RequestId}\n{StateLabelFor(entry.State)}\n{entry.Source}\n{entry.Model}\n{entry.ElapsedMs} ms\n{entry.TokensUsed} tokens"),
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.System".Translate(), entry.SystemPrompt),
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.User".Translate(), entry.UserPrompt),
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.Assistant".Translate(), entry.AssistantPrompt),
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.Response".Translate(), entry.Response),
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.Error".Translate(), entry.Error ?? string.Empty),
+                new DetailSection("RimMind.UI.AIRequestsPage.Detail.ToolCalls".Translate(), FormatToolCalls(entry))
+            };
+        }
+
+        private static float CalculateDetailContentWidth(float rectWidth)
+            => Mathf.Max(1f, rectWidth - 16f);
+
+        private static float CalculateDetailViewHeight(IReadOnlyList<DetailSection> sections, float width)
+        {
+            Text.Font = GameFont.Small;
+            float y = 0f;
+            foreach (var section in sections)
+            {
+                y += 24f;
+                y += CalculateSectionHeight(section.Body, width);
+                y += 12f;
+            }
+
+            return Mathf.Max(1f, y + 16f);
+        }
+
+        private static string ResolveSectionBody(string body)
+            => string.IsNullOrWhiteSpace(body)
+                ? "RimMind.UI.AIRequestsPage.Detail.EmptySection".Translate()
+                : body;
+
+        private static float CalculateSectionHeight(string body, float width)
+            => Mathf.Max(32f, Text.CalcHeight(ResolveSectionBody(body), width));
 
         private static float DrawSection(Rect view, float y, string title, string body)
         {
@@ -90,10 +128,8 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
             Widgets.Label(new Rect(view.x, y, view.width, 24f), title);
             y += 24f;
 
-            string text = string.IsNullOrWhiteSpace(body)
-                ? "RimMind.UI.AIRequestsPage.Detail.EmptySection".Translate()
-                : body;
-            float height = Mathf.Max(32f, Text.CalcHeight(text, view.width));
+            string text = ResolveSectionBody(body);
+            float height = CalculateSectionHeight(body, view.width);
             Widgets.Label(new Rect(view.x, y, view.width, height), text);
             return y + height + 12f;
         }

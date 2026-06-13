@@ -251,7 +251,7 @@ namespace RimMind.Presentation.Agent
     }
 }
 
-namespace RimMind.Application.Api
+namespace RimMind.Presentation.Api
 {
     using RimMind.Application.Common.Interfaces.Agent.Modes;
     using RimMind.Application.Common.Interfaces.Extension;
@@ -265,6 +265,12 @@ namespace RimMind.Application.Api
         {
             get => _modes;
             set => _modes = value;
+        }
+
+        public static class Request
+        {
+            public static void Send(RimMind.Domain.Llm.LlmRequestEnvelope envelope, System.Action<RimMind.Domain.ValueObjects.Result<RimMind.Domain.Llm.LlmResponse, RimMind.Domain.ValueObjects.RimMindError>> onComplete) { }
+            public static System.Threading.Tasks.Task<RimMind.Domain.ValueObjects.Result<RimMind.Domain.Llm.LlmResponse, RimMind.Domain.ValueObjects.RimMindError>> SendAsync(RimMind.Domain.Llm.LlmRequestEnvelope envelope) => null!;
         }
     }
 }

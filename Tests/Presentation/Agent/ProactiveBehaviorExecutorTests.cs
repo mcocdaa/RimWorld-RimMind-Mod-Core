@@ -103,6 +103,57 @@ namespace RimMind.Tests.Presentation.Agent
             Assert.DoesNotContain("ProactiveAgentMode", source);
         }
 
+        // --- Source-level tests: verify constructor injection replaces ServiceLocator ---
+
+        [Fact]
+        public void Constructor_Accepts_IDreamThoughtInjector_Parameter()
+        {
+            var source = ReadSource();
+            Assert.Contains("IDreamThoughtInjector? dreamThoughtInjector", source);
+        }
+
+        [Fact]
+        public void Constructor_Accepts_ITraitEvolver_Parameter()
+        {
+            var source = ReadSource();
+            Assert.Contains("ITraitEvolver traitEvolver", source);
+        }
+
+        [Fact]
+        public void No_ServiceLocator_Get_Calls()
+        {
+            var source = ReadSource();
+            Assert.DoesNotContain("RimMindServiceLocator.Get<", source);
+        }
+
+        [Fact]
+        public void No_Internal_Using_After_SL_Removal()
+        {
+            var source = ReadSource();
+            Assert.DoesNotContain("using RimMind.Application.Common.Interfaces.Internal;", source);
+        }
+
+        [Fact]
+        public void Constructor_Rejects_Null_DreamGenerator()
+        {
+            var source = ReadSource();
+            Assert.Contains("throw new ArgumentNullException(nameof(dreamGenerator))", source);
+        }
+
+        [Fact]
+        public void Constructor_Accepts_Nullable_DreamThoughtInjector()
+        {
+            var source = ReadSource();
+            Assert.Contains("IDreamThoughtInjector? dreamThoughtInjector", source);
+        }
+
+        [Fact]
+        public void Constructor_Rejects_Null_TraitEvolver()
+        {
+            var source = ReadSource();
+            Assert.Contains("throw new ArgumentNullException(nameof(traitEvolver))", source);
+        }
+
         // --- Test helpers ---
 
         private class TestTickProvider : RimMind.Application.Common.Interfaces.Abstractions.ITickProvider

@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using FluentAssertions;
+using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using Xunit;
@@ -46,7 +47,7 @@ namespace RimMind.Core.ArchTests.PhaseK
         public void R_K1_LlmRequestEnvelopeBuilder_Exists()
         {
             var type = typeof(LlmRequestEnvelopeBuilder);
-            type.Should().NotBeNull("LlmRequestEnvelopeBuilder must exist in Domain.Llm");
+            type.Should().NotBeNull("LlmRequestEnvelopeBuilder must exist in Application.Features.Llm");
 
             var buildMethod = type.GetMethod("Build");
             buildMethod.Should().NotBeNull("LlmRequestEnvelopeBuilder must have a Build method");
@@ -137,8 +138,8 @@ namespace RimMind.Core.ArchTests.PhaseK
         [Trait("Phase", "K")]
         public void R_K4_RimMindAPI_Has_Send_Method()
         {
-            var apiType = typeof(RimMind.Application.Api.RimMindAPI);
-            var requestType = apiType.GetNestedType("Request");
+            var apiType = typeof(RimMind.Presentation.Api.RimMindAPI);
+            var requestType = apiType.GetNestedType("Request", BindingFlags.Public | BindingFlags.Static);
             requestType.Should().NotBeNull("RimMindAPI must have nested Request type");
 
             var sendMethod = requestType!.GetMethod("Send", new[] { typeof(LlmRequestEnvelope), typeof(Action<Result<LlmResponse, RimMindError>>) });
@@ -149,8 +150,8 @@ namespace RimMind.Core.ArchTests.PhaseK
         [Trait("Phase", "K")]
         public void R_K4_RimMindAPI_Has_SendAsync_Method()
         {
-            var apiType = typeof(RimMind.Application.Api.RimMindAPI);
-            var requestType = apiType.GetNestedType("Request");
+            var apiType = typeof(RimMind.Presentation.Api.RimMindAPI);
+            var requestType = apiType.GetNestedType("Request", BindingFlags.Public | BindingFlags.Static);
             requestType.Should().NotBeNull("RimMindAPI must have nested Request type");
 
             var sendAsyncMethod = requestType!.GetMethod("SendAsync", new[] { typeof(LlmRequestEnvelope) });

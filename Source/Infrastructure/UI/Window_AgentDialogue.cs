@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Storage;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Agent;
@@ -191,7 +192,7 @@ namespace RimMind.Infrastructure.UI
             {
                 try
                 {
-                    var result = await RimMind.Application.Api.RimMindAPI.SendAsync(envelope);
+                    var result = await RimMind.Presentation.Api.RimMindAPI.SendAsync(envelope);
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
                         _isStreaming = false;

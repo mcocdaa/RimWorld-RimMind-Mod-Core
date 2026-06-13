@@ -3,7 +3,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Features.Json;
 using RimMind.Application.Features.Prompt;
 
-namespace RimMind.Application.Api
+namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {

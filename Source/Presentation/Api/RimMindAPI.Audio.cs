@@ -1,7 +1,7 @@
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Presentation.Runtime;
 
-namespace RimMind.Application.Api
+namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {

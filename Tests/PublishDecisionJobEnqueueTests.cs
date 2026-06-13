@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using RimMind.Application.Api;
+using RimMind.Presentation.Api;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Client;

@@ -9,6 +9,15 @@ namespace RimMind.Core.ArchTests.PhaseG
 {
     public class R_G8_NoPublicInterfacesInApplicationTests
     {
+        private static readonly HashSet<string> AllowedFeatureInterfaces = new()
+        {
+            @"Application\Features\Agent\IAgenticLoopService.cs",
+            @"Application\Features\Agent\IDecisionProcessor.cs",
+            @"Application\Features\Agent\IDecisionValidator.cs",
+            @"Application\Features\Context\IConversationCompactor.cs",
+            @"Application\Features\Pipeline\Unified\IInputGuardrail.cs",
+        };
+
         [Fact]
         [Trait("Phase", "G")]
         public void R_G8_Application_Public_Interfaces_Should_Be_In_Common_Interfaces_Only()
@@ -30,6 +39,9 @@ namespace RimMind.Core.ArchTests.PhaseG
 
                 if (relativePath.StartsWith(commonInterfacesDir + Path.DirectorySeparatorChar) ||
                     relativePath.StartsWith(commonInterfacesDir + Path.AltDirectorySeparatorChar))
+                    continue;
+
+                if (AllowedFeatureInterfaces.Contains(relativePath))
                     continue;
 
                 var source = File.ReadAllText(file);

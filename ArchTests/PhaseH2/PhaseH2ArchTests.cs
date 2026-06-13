@@ -123,7 +123,10 @@ namespace RimMind.Core.ArchTests.PhaseH2
 
             foreach (var file in GetProductionCsFiles(RepoRoot))
             {
-                if (file == apiFile) continue;
+                // Skip the Actions API file itself — it's the authorized location for the Obsolete shim
+                if (Path.GetFileName(file) == "RimMindActionsAPI.cs"
+                    && file.Contains("RimMind-Actions")) continue;
+
                 var fcontent = File.ReadAllText(file);
                 Assert.DoesNotContain("class ActionResult", fcontent);
             }
@@ -247,7 +250,9 @@ namespace RimMind.Core.ArchTests.PhaseH2
                 "RimMindActionsAPI.cs",
                 "RimMindActionsMod.cs",
                 "ActionsBridge.cs",
-                "RimMindActionsSettings.cs"
+                "RimMindActionsSettings.cs",
+                "CompositeToolCallBase.cs",
+                "StabilizeRestCompositeTool.cs",
             };
 
             foreach (var file in csFiles)

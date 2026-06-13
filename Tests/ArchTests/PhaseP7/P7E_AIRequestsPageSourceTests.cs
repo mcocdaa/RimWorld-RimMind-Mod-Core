@@ -53,5 +53,45 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("DrawDetail", content);
             Assert.Contains("_detailScrollPosition", content);
         }
+
+        [Fact]
+        public void AIRequestsPage_Detail_View_Height_Is_Calculated_From_Sections()
+        {
+            string content = ReadSource("Infrastructure/UI/AIRequestsPage/AIRequestsPageDrawer.cs");
+
+            Assert.DoesNotContain("1200f", content);
+            Assert.Contains("CalculateDetailViewHeight", content);
+            Assert.Contains("BuildDetailSections", content);
+            Assert.Contains("float contentWidth = CalculateDetailContentWidth(rect.width);", content);
+            Assert.Contains("CalculateDetailViewHeight(sections, contentWidth)", content);
+            Assert.Contains("Rect view = new(rect.x, rect.y, contentWidth, viewHeight)", content);
+            Assert.DoesNotContain("CalculateDetailViewHeight(sections, rect.width - 16f)", content);
+            Assert.DoesNotContain("new(rect.x, rect.y, rect.width - 16f", content);
+        }
+
+        [Fact]
+        public void AIRequestsPage_Detail_Section_Height_Uses_Shared_Text_Helpers()
+        {
+            string content = ReadSource("Infrastructure/UI/AIRequestsPage/AIRequestsPageDrawer.cs");
+
+            Assert.Contains("ResolveSectionBody", content);
+            Assert.Contains("CalculateSectionHeight", content);
+            Assert.True(CountOccurrences(content, "CalculateSectionHeight(") >= 3);
+            Assert.True(CountOccurrences(content, "ResolveSectionBody(") >= 2);
+            Assert.DoesNotContain("Text.CalcHeight(text, view.width)", content);
+        }
+
+        private static int CountOccurrences(string content, string value)
+        {
+            int count = 0;
+            int index = 0;
+            while ((index = content.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+            {
+                count++;
+                index += value.Length;
+            }
+
+            return count;
+        }
     }
 }

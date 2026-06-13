@@ -6,6 +6,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
+using RimMind.Application.Common.Interfaces.Agent.Social;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
@@ -17,8 +18,7 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
-using RimMind.Infrastructure.Services.Verse;
-using RimMind.Application.Api;
+using RimMind.Presentation.Api;
 using Verse;
 
 namespace RimMind.Presentation.Agent
@@ -33,6 +33,12 @@ namespace RimMind.Presentation.Agent
         private readonly ThinkContextEnricher _contextEnricher;
         private readonly ILogSink? _log;
         private readonly IDecisionProcessor _decisionProcessor;
+        private readonly InnerVoiceHandler? _innerVoiceHandler;
+        private readonly IPsychologyWatcher? _psychologyWatcher;
+        private readonly ITickProvider _tickProvider;
+        private readonly IDreamGenerator _dreamGenerator;
+        private readonly IDreamThoughtInjector? _dreamThoughtInjector;
+        private readonly ITraitEvolver _traitEvolver;
         private int _lastThinkTick;
         private int ThinkCooldownTicks => _tickSettings?.ThinkCooldownTicks ?? DefaultThinkCooldownTicks;
         private volatile bool _thinking;
@@ -46,18 +52,39 @@ namespace RimMind.Presentation.Agent
         private int _pendingToolCallRound;
         private string? _pendingTraceId;
 
-        public PawnThinker(IPawnAgentVerse agent, IAgentTickSettings tickSettings, IAgentBus agentBus, ILogSink? log = null)
+        internal PawnThinker(
+            IPawnAgentVerse agent,
+            IAgentTickSettings tickSettings,
+            IAgentBus agentBus,
+            InnerVoiceHandler? innerVoiceHandler,
+            IPsychologyWatcher? psychologyWatcher,
+            ITickProvider tickProvider,
+            IDreamGenerator dreamGenerator,
+            IDreamThoughtInjector? dreamThoughtInjector,
+            ITraitEvolver traitEvolver,
+            ILogSink? log = null)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _tickSettings = tickSettings;
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _innerVoiceHandler = innerVoiceHandler;
+            _psychologyWatcher = psychologyWatcher;
+            _tickProvider = tickProvider ?? throw new ArgumentNullException(nameof(tickProvider));
+            _dreamGenerator = dreamGenerator ?? throw new ArgumentNullException(nameof(dreamGenerator));
+            _dreamThoughtInjector = dreamThoughtInjector;
+            _traitEvolver = traitEvolver ?? throw new ArgumentNullException(nameof(traitEvolver));
             _log = log;
-            _proactiveExecutor = new ProactiveBehaviorExecutor(agentBus, log);
+            _proactiveExecutor = new ProactiveBehaviorExecutor(
+                agentBus,
+                _dreamGenerator,
+                _dreamThoughtInjector,
+                _traitEvolver,
+                log);
             _contextEnricher = new ThinkContextEnricher(
-                RimMindServiceLocator.TryGet<InnerVoiceHandler>(),
-                RimMindServiceLocator.TryGet<IPsychologyWatcher>());
+                _innerVoiceHandler,
+                _psychologyWatcher);
             _decisionProcessor = new DecisionProcessor(
-                agent, agentBus, new VerseTickProvider(),
+                agent, agentBus, _tickProvider,
                 RequestFollowUpThink, ResetThinkingState,
                 phase => agent.TransitionWorkflow(phase),
                 decision => agent.ExecuteDecision(decision),

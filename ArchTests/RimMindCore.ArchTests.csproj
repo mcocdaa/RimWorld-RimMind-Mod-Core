@@ -32,6 +32,7 @@
     <Compile Include="PhaseG\**\*.cs" />
     <Compile Include="PhaseJ\**\*.cs" />
     <Compile Include="PhaseK\**\*.cs" />
+    <Compile Include="PhaseL\**\*.cs" />
     <Compile Include="PhaseH1\**\*.cs" />
     <Compile Include="PhaseH2\**\*.cs" />
     <Compile Include="PhaseI\**\*.cs" />

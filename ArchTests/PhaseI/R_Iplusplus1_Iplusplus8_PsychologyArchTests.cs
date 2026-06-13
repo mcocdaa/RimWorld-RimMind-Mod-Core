@@ -188,12 +188,12 @@ namespace RimMind.Core.ArchTests.PhaseI
 
         [Fact]
         [Trait("Phase", "I++")]
-        public void ProactiveBehaviorExecutor_Source_Should_Use_IThoughtInjector_Interface()
+        public void ProactiveBehaviorExecutor_Source_Should_Use_IDreamThoughtInjector_Interface()
         {
             var sourceDir = ArchTestExtensions.FindSourceDirectory();
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
 
-            // After refactoring, IThoughtInjector usage moved to ProactiveBehaviorExecutor (dream thought injection)
+            // After refactoring, ProactiveBehaviorExecutor uses IDreamThoughtInjector interface via constructor injection
             var executorPath = Path.Combine(sourceDir, "Presentation", "Agent", "ProactiveBehaviorExecutor.cs");
 
             File.Exists(executorPath).Should().BeTrue(
@@ -201,8 +201,10 @@ namespace RimMind.Core.ArchTests.PhaseI
 
             var source = File.ReadAllText(executorPath);
 
-            source.Should().Contain("VerseDreamThoughtInjector",
-                "ProactiveBehaviorExecutor must use VerseDreamThoughtInjector (which wraps IThoughtInjector) for dream thought injection (R-I++6)");
+            source.Should().Contain("IDreamThoughtInjector",
+                "ProactiveBehaviorExecutor must use IDreamThoughtInjector interface for dream thought injection (R-I++6)");
+            source.Should().NotContain("VerseDreamThoughtInjector",
+                "ProactiveBehaviorExecutor must not reference concrete VerseDreamThoughtInjector — use IDreamThoughtInjector interface instead (R-I++6)");
         }
     }
 

@@ -15,6 +15,7 @@ using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
+using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 

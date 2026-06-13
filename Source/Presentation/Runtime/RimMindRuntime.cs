@@ -63,6 +63,7 @@ namespace RimMind.Presentation.Runtime
         public IContextKeyRegistry ContextKeys => _composition.ContextKeyRegistry;
         public IRelevanceTable RelevanceTable => _composition.RelevanceTable;
         public IRelevanceLearner ContextLearner => _composition.RelevanceLearner;
+        public IGameContextBuilder GameContextBuilder => _composition.GameContextBuilder;
 
         public IPipeline<BusPublishContext> BusPublishPipeline => _composition.BusPublishPipeline;
         public IPipeline<LlmRequestContext> UnifiedPipeline => _composition.UnifiedPipeline;

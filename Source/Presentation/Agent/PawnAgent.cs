@@ -12,7 +12,7 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Api;
+using RimMind.Presentation.Api;
 using RimMind.Presentation.Runtime;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimWorld;
@@ -431,7 +431,7 @@ namespace RimMind.Presentation.Agent
             {
                 concrete.RebuildCollaborators(
                     new PawnPerceiver(concrete, factory.AgentBus),
-                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus, factory.LogSink),
+                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus, factory.InnerVoiceHandler, factory.PsychologyWatcher, factory.TickProvider, factory.DreamGenerator, factory.DreamThoughtInjector, factory.TraitEvolver, factory.LogSink),
                     new PawnActor(concrete, factory.ActionExecutor),
                     new PawnRecorder(concrete, factory.AgentBus));
 

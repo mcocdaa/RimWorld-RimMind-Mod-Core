@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using RimMind.Domain.Llm;
 
-namespace RimMind.Domain.Llm
+namespace RimMind.Application.Features.Llm
 {
     public sealed class LlmRequestEnvelopeBuilder
     {
@@ -60,9 +61,13 @@ namespace RimMind.Domain.Llm
 
         public LlmRequestEnvelopeBuilder WithGameStateInfo(string? gameStateInfo)
         {
-            _gameStateInfo = !string.IsNullOrEmpty(gameStateInfo)
-                ? new GameStateInfo().AddSection("perceptions", gameStateInfo)
-                : null;
+            if (string.IsNullOrEmpty(gameStateInfo))
+            {
+                _gameStateInfo = null;
+                return this;
+            }
+
+            _gameStateInfo = new GameStateInfo().AddSection("perceptions", gameStateInfo!);
             return this;
         }
 

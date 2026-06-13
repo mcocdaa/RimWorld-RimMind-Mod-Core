@@ -13,6 +13,9 @@ namespace RimMind.Tests.ArchTests.PhaseP3
         private static readonly string DomainLlm = Path.Combine(
             ProjectRoot, "Source", "Domain", "Llm");
 
+        private static readonly string ApplicationLlm = Path.Combine(
+            ProjectRoot, "Source", "Application", "Features", "Llm");
+
         private static readonly string AgentModes = Path.Combine(
             ProjectRoot, "Source", "Application", "Features", "Agent", "Modes");
 
@@ -26,7 +29,7 @@ namespace RimMind.Tests.ArchTests.PhaseP3
         [Fact]
         public void LlmRequestEnvelopeBuilder_HasWithExamplesMethod()
         {
-            var code = File.ReadAllText(Path.Combine(DomainLlm, "LlmRequestEnvelopeBuilder.cs"));
+            var code = File.ReadAllText(Path.Combine(ApplicationLlm, "LlmRequestEnvelopeBuilder.cs"));
             Assert.Contains("WithExamples", code);
         }
 

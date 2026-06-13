@@ -1,5 +1,4 @@
 using System.Threading;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Storage;
 using RimMind.Domain.Settings;
 using RimMind.Presentation.Settings;
@@ -14,18 +13,18 @@ namespace RimMind.Presentation.UI
         public string OwnerModId => "RimMindCore";
         public string Label => "RimMind.Settings.Tab.RemoteSync".Translate();
 
+        private readonly RemoteSyncSettings _settings;
+        private readonly IRemoteSyncService _syncService;
+
         private static Vector2 _scrollPos = Vector2.zero;
         private static string _statusText = "";
         private static Color _statusColor = Color.white;
 
-        private static RemoteSyncSettings? _cachedSettings;
-        private static IRemoteSyncService? _cachedSyncService;
-
-        private static RemoteSyncSettings? GetSettings()
-            => _cachedSettings ??= RimMindServiceLocator.Get<RemoteSyncSettings>();
-
-        private static IRemoteSyncService? GetSyncService()
-            => _cachedSyncService ??= RimMindServiceLocator.Get<IRemoteSyncService>();
+        public RemoteSyncSettingsUI(RemoteSyncSettings settings, IRemoteSyncService syncService)
+        {
+            _settings = settings;
+            _syncService = syncService;
+        }
 
         public void Draw(Rect inRect)
         {
@@ -36,23 +35,12 @@ namespace RimMind.Presentation.UI
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
 
-            var settings = GetSettings();
-            var syncService = GetSyncService();
-
-            if (settings == null)
-            {
-                listing.Label("RimMind.Settings.RemoteSync.NotAvailable".Translate());
-                listing.End();
-                Widgets.EndScrollView();
-                return;
-            }
-
             // Copy to local for CheckboxLabeled ref parameters
-            bool autoPull = settings.AutoPull;
-            bool autoPush = settings.AutoPush;
-            bool syncMemory = settings.SyncMemory;
-            bool syncSettings = settings.SyncSettings;
-            bool syncAgentIdentity = settings.SyncAgentIdentity;
+            bool autoPull = _settings.AutoPull;
+            bool autoPush = _settings.AutoPush;
+            bool syncMemory = _settings.SyncMemory;
+            bool syncSettings = _settings.SyncSettings;
+            bool syncAgentIdentity = _settings.SyncAgentIdentity;
 
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.RemoteSync.Section.AutoSync".Translate());
 
@@ -84,15 +72,15 @@ namespace RimMind.Presentation.UI
                 "RimMind.Settings.RemoteSync.SyncAgentIdentity.Desc".Translate());
 
             // Write back from locals to properties
-            settings.AutoPull = autoPull;
-            settings.AutoPush = autoPush;
-            settings.SyncMemory = syncMemory;
-            settings.SyncSettings = syncSettings;
-            settings.SyncAgentIdentity = syncAgentIdentity;
+            _settings.AutoPull = autoPull;
+            _settings.AutoPush = autoPush;
+            _settings.SyncMemory = syncMemory;
+            _settings.SyncSettings = syncSettings;
+            _settings.SyncAgentIdentity = syncAgentIdentity;
 
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.RemoteSync.Section.Manual".Translate());
 
-            bool isConfigured = syncService?.IsConfigured ?? false;
+            bool isConfigured = _syncService.IsConfigured;
 
             if (!isConfigured)
             {
@@ -104,7 +92,7 @@ namespace RimMind.Presentation.UI
             Rect pullRow = listing.GetRect(30f);
             if (Widgets.ButtonText(pullRow, "RimMind.Settings.RemoteSync.ManualPull".Translate()))
             {
-                if (isConfigured && syncService != null)
+                if (isConfigured)
                 {
                     _statusText = "RimMind.Settings.RemoteSync.Pulling".Translate();
                     _statusColor = Color.cyan;
@@ -112,7 +100,7 @@ namespace RimMind.Presentation.UI
                     {
                         try
                         {
-                            var result = await syncService.ManualPullAsync("all", CancellationToken.None);
+                            var result = await _syncService.ManualPullAsync("all", CancellationToken.None);
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
                                 _statusText = result.IsOk
@@ -136,7 +124,7 @@ namespace RimMind.Presentation.UI
             Rect pushRow = listing.GetRect(30f);
             if (Widgets.ButtonText(pushRow, "RimMind.Settings.RemoteSync.ManualPush".Translate()))
             {
-                if (isConfigured && syncService != null)
+                if (isConfigured)
                 {
                     _statusText = "RimMind.Settings.RemoteSync.Pushing".Translate();
                     _statusColor = Color.cyan;
@@ -144,7 +132,7 @@ namespace RimMind.Presentation.UI
                     {
                         try
                         {
-                            var result = await syncService.ManualPushAsync("all", "{}", 0, CancellationToken.None);
+                            var result = await _syncService.ManualPushAsync("all", "{}", 0, CancellationToken.None);
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
                                 _statusText = result.IsOk

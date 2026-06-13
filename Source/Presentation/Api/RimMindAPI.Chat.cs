@@ -1,10 +1,9 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.Runtime;
 using Verse;
 
-namespace RimMind.Application.Api
+namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {
@@ -12,7 +11,7 @@ namespace RimMind.Application.Api
         {
             public static string BuildMapContext(Map map, bool brief = false)
             {
-                var builder = RimMindServiceLocator.Get<IGameContextBuilder>();
+                var builder = RimMindRuntime.Instance.GameContextBuilder;
                 return builder.BuildMapContextInstance(map, brief);
             }
         }

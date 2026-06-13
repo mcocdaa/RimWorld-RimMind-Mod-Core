@@ -17,11 +17,12 @@ using RimMind.Application.Features.Agent.Modes;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
+using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Agent;
-using RimMind.Application.Api;
+using RimMind.Presentation.Api;
 using UnityEngine;
 using Verse;
 

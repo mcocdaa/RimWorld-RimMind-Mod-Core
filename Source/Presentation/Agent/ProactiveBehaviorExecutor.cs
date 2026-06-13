@@ -4,7 +4,6 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Agent.Social;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Agent;
 
 namespace RimMind.Presentation.Agent
@@ -12,11 +11,22 @@ namespace RimMind.Presentation.Agent
     internal sealed class ProactiveBehaviorExecutor
     {
         private readonly IAgentBus _agentBus;
+        private readonly IDreamGenerator _dreamGenerator;
+        private readonly IDreamThoughtInjector? _dreamThoughtInjector;
+        private readonly ITraitEvolver _traitEvolver;
         private readonly ILogSink? _log;
 
-        public ProactiveBehaviorExecutor(IAgentBus agentBus, ILogSink? log = null)
+        public ProactiveBehaviorExecutor(
+            IAgentBus agentBus,
+            IDreamGenerator dreamGenerator,
+            IDreamThoughtInjector? dreamThoughtInjector,
+            ITraitEvolver traitEvolver,
+            ILogSink? log = null)
         {
             _agentBus = agentBus ?? throw new ArgumentNullException(nameof(agentBus));
+            _dreamGenerator = dreamGenerator ?? throw new ArgumentNullException(nameof(dreamGenerator));
+            _dreamThoughtInjector = dreamThoughtInjector;
+            _traitEvolver = traitEvolver ?? throw new ArgumentNullException(nameof(traitEvolver));
             _log = log;
         }
 
@@ -26,10 +36,10 @@ namespace RimMind.Presentation.Agent
             var orchestrator = new ProactiveBehaviorOrchestrator(
                 proactive.ReflectionStrategy,
                 proactive.DailyPlanner,
-                RimMindServiceLocator.Get<IDreamGenerator>(),
-                RimMindServiceLocator.Get<IDreamThoughtInjector>(),
+                _dreamGenerator,
+                _dreamThoughtInjector,
                 proactive.TraitEvolutionEngine,
-                RimMindServiceLocator.Get<ITraitEvolver>(),
+                _traitEvolver,
                 _agentBus,
                 pawnId,
                 _log);

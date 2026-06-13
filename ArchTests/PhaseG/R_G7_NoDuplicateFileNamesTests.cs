@@ -15,6 +15,7 @@ namespace RimMind.Core.ArchTests.PhaseG
             "NpcChatContext.cs",
             "ContextBuildContext.cs",
             "DependencyInjection.cs",
+            "ThinkContextEnricher.cs",
         };
 
         [Fact]

@@ -109,16 +109,22 @@ namespace RimMind.Tests.Presentation.Agent
         }
 
         [Fact]
-        public void PawnThinker_PassesServiceLocatorResults_ToThinkContextEnricher()
+        public void PawnThinker_PassesConstructorInjectedDeps_ToThinkContextEnricher()
         {
             var thinkerPath = Path.Combine(
                 RepoRoot, "RimMind-Core", "Source", "Presentation", "Agent", "PawnThinker.cs");
             Assert.True(File.Exists(thinkerPath), $"PawnThinker.cs must exist at {thinkerPath}");
 
             var source = File.ReadAllText(thinkerPath);
-            Assert.Contains("RimMindServiceLocator.TryGet<InnerVoiceHandler>()", source);
-            Assert.Contains("RimMindServiceLocator.TryGet<IPsychologyWatcher>()", source);
+            // PawnThinker should pass constructor-injected fields, not SL pulls
+            Assert.Contains("InnerVoiceHandler? innerVoiceHandler", source);
+            Assert.Contains("IPsychologyWatcher? psychologyWatcher", source);
+            Assert.Contains("_innerVoiceHandler", source);
+            Assert.Contains("_psychologyWatcher", source);
             Assert.Contains("new ThinkContextEnricher(", source);
+            // Should NOT use ServiceLocator for these dependencies
+            Assert.DoesNotContain("RimMindServiceLocator.TryGet<InnerVoiceHandler>()", source);
+            Assert.DoesNotContain("RimMindServiceLocator.TryGet<IPsychologyWatcher>()", source);
         }
     }
 }

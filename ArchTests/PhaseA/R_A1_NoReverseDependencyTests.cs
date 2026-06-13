@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System.Collections.Generic;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -24,7 +24,8 @@ namespace RimMind.Core.ArchTests.PhaseA
             "AgentGoalStack.cs",
             "JobDriver_RimMindAction.cs",
             "PawnAgent.cs",
-            "PawnThinker.cs"
+            "PawnThinker.cs",
+            "ScopedAgent.cs"
         };
 
         [Fact]

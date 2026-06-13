@@ -250,8 +250,38 @@ namespace RimMind.Presentation.Runtime
 
             RimMindServiceLocator.Register<IAgentIdentityProvider>(new AgentIdentityProviderAdapter());
 
-            var pawnAgentFactory = new PawnAgentFactory(RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor, logSink,
-                GetExtensionRegistry<IPerceptionSource>());
+            // Social & Emergence services (before PawnAgentFactory, which depends on them)
+            var informationDiffuser = new DefaultInformationDiffuser(agentBus, tickProvider);
+            RimMindServiceLocator.Register<IInformationDiffuser>(informationDiffuser);
+
+            var socialEventOrganizer = new DefaultSocialEventOrganizer(tickProvider, agentBus);
+            RimMindServiceLocator.Register<ISocialEventOrganizer>(socialEventOrganizer);
+
+            var psychologyWatcher = RimMindServiceLocator.TryGet<IPsychologyWatcher>();
+            var traitEvolutionEngine = new DefaultTraitEvolutionEngine(tickProvider, psychologyWatcher, agentBus);
+            RimMindServiceLocator.Register<ITraitEvolutionEngine>(traitEvolutionEngine);
+
+            var sleepDetector = new VersePawnSleepDetector();
+            RimMindServiceLocator.Register<ISleepDetector>(sleepDetector);
+
+            var dreamGenerator = new DefaultDreamGenerator(tickProvider, sleepDetector, agentBus);
+            RimMindServiceLocator.Register<IDreamGenerator>(dreamGenerator);
+
+            var traitEvolver = new VerseTraitEvolver();
+            RimMindServiceLocator.Register<ITraitEvolver>(traitEvolver);
+
+            var thoughtInjector = RimMindServiceLocator.TryGet<IThoughtInjector>();
+            if (thoughtInjector != null)
+            {
+                var dreamThoughtInjector = new VerseDreamThoughtInjector(thoughtInjector);
+                RimMindServiceLocator.Register<IDreamThoughtInjector>(dreamThoughtInjector);
+            }
+
+            var pawnAgentFactory = new PawnAgentFactory(
+                RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor,
+                innerVoiceHandler, psychologyWatcher, tickProvider,
+                dreamGenerator, RimMindServiceLocator.TryGet<IDreamThoughtInjector>(), traitEvolver,
+                logSink, GetExtensionRegistry<IPerceptionSource>());
             RimMindServiceLocator.Register<IPawnAgentFactoryVerse>(pawnAgentFactory);
             RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
 
@@ -273,10 +303,6 @@ namespace RimMind.Presentation.Runtime
             RimMindServiceLocator.Register<IContextKeyRegistry>(contextKeyRegistry);
 
             RimMindServiceLocator.Register(GetExtensionRegistry<ISettingsTab>());
-
-            // Register built-in RemoteSync settings tab
-            var settingsTabRegistry = RimMindServiceLocator.TryGet<IExtensionRegistry<ISettingsTab>>();
-            settingsTabRegistry?.Register(new RimMind.Presentation.UI.RemoteSyncSettingsUI());
 
             // Register restored extension interfaces with null defaults
             var modCooldownRegistry = new ExtensionRegistry<IModCooldown>();
@@ -322,32 +348,9 @@ namespace RimMind.Presentation.Runtime
             var remoteSyncService = new RimMind.Infrastructure.Services.Storage.RemoteSyncService(remoteSyncOrchestrator);
             RimMindServiceLocator.Register<RimMind.Application.Common.Interfaces.Storage.IRemoteSyncService>(remoteSyncService);
 
-            // Social & Emergence services
-            var informationDiffuser = new DefaultInformationDiffuser(agentBus, tickProvider);
-            RimMindServiceLocator.Register<IInformationDiffuser>(informationDiffuser);
-
-            var socialEventOrganizer = new DefaultSocialEventOrganizer(tickProvider, agentBus);
-            RimMindServiceLocator.Register<ISocialEventOrganizer>(socialEventOrganizer);
-
-            var psychologyWatcher = RimMindServiceLocator.TryGet<IPsychologyWatcher>();
-            var traitEvolutionEngine = new DefaultTraitEvolutionEngine(tickProvider, psychologyWatcher, agentBus);
-            RimMindServiceLocator.Register<ITraitEvolutionEngine>(traitEvolutionEngine);
-
-            var sleepDetector = new VersePawnSleepDetector();
-            RimMindServiceLocator.Register<ISleepDetector>(sleepDetector);
-
-            var dreamGenerator = new DefaultDreamGenerator(tickProvider, sleepDetector, agentBus);
-            RimMindServiceLocator.Register<IDreamGenerator>(dreamGenerator);
-
-            var traitEvolver = new VerseTraitEvolver();
-            RimMindServiceLocator.Register<ITraitEvolver>(traitEvolver);
-
-            var thoughtInjector = RimMindServiceLocator.TryGet<IThoughtInjector>();
-            if (thoughtInjector != null)
-            {
-                var dreamThoughtInjector = new VerseDreamThoughtInjector(thoughtInjector);
-                RimMindServiceLocator.Register<IDreamThoughtInjector>(dreamThoughtInjector);
-            }
+            // Register built-in RemoteSync settings tab (after dependencies are available)
+            var settingsTabRegistry = RimMindServiceLocator.TryGet<IExtensionRegistry<ISettingsTab>>();
+            settingsTabRegistry?.Register(new RimMind.Presentation.UI.RemoteSyncSettingsUI(remoteSyncSettings, remoteSyncService));
 
             RimMindCoreDebugActions.Initialize(
                 resolvedSettings,

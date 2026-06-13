@@ -13,6 +13,7 @@ using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Common;
+using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
@@ -101,7 +102,7 @@ namespace RimMind.Infrastructure.UI
             envelope.Messages.Add(new ChatMessage { Role = "system", Content = "You are a test assistant. Always reply in JSON format." });
             envelope.Messages.Add(new ChatMessage { Role = "user", Content = "Reply with: {\"status\":\"ok\",\"message\":\"RimMind works\"}" });
 
-            RimMind.Application.Api.RimMindAPI.Send(envelope, result =>
+            RimMind.Presentation.Api.RimMindAPI.Send(envelope, result =>
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {

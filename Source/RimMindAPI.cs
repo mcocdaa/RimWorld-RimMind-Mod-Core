@@ -29,7 +29,7 @@ using System.Threading.Tasks;
 using ClientTrackedRequest = RimMind.Application.Common.Models.Client.TrackedRequest;
 using UIRequestEntry = RimMind.Application.Common.Models.UI.RequestEntry;
 
-namespace RimMind.Application.Api
+namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {

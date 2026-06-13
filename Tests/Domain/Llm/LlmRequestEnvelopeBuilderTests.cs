@@ -1,4 +1,6 @@
 using System;
+using RimMind.Application.Features.Llm;
+using RimMind.Domain.Llm;
 using Xunit;
 
 namespace RimMind.Tests.Domain.Llm

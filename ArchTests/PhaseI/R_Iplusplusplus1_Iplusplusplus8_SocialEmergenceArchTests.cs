@@ -296,12 +296,12 @@ namespace RimMind.Core.ArchTests.PhaseI
 
         [Fact]
         [Trait("Phase", "I+++")]
-        public void PawnThinker_Or_ProactiveExecutor_Source_Should_Use_ServiceLocator_For_VerseTraitEvolver()
+        public void PawnThinker_Or_ProactiveExecutor_Source_Should_Use_ConstructorInjection_For_VerseTraitEvolver()
         {
             var sourceDir = ArchTestExtensions.FindSourceDirectory();
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
 
-            // After refactoring, VerseTraitEvolver usage moved from PawnThinker to ProactiveBehaviorExecutor
+            // After refactoring, VerseTraitEvolver usage is injected via constructor (ITraitEvolver)
             var pawnThinkerPath = Path.Combine(sourceDir, "Presentation", "Agent", "PawnThinker.cs");
             var executorPath = Path.Combine(sourceDir, "Presentation", "Agent", "ProactiveBehaviorExecutor.cs");
 
@@ -309,8 +309,10 @@ namespace RimMind.Core.ArchTests.PhaseI
             var executorSource = File.Exists(executorPath) ? File.ReadAllText(executorPath) : "";
 
             var combined = pawnThinkerSource + executorSource;
-            combined.Should().Contain("RimMindServiceLocator.Get<VerseTraitEvolver>",
-                "PawnThinker or ProactiveBehaviorExecutor should obtain VerseTraitEvolver via service locator (R-I+++7)");
+            combined.Should().Contain("ITraitEvolver",
+                "PawnThinker or ProactiveBehaviorExecutor should use ITraitEvolver via constructor injection (R-I+++7)");
+            combined.Should().NotContain("RimMindServiceLocator.Get<ITraitEvolver>",
+                "PawnThinker or ProactiveBehaviorExecutor should not use ServiceLocator for ITraitEvolver (R-I+++7)");
         }
     }
 
