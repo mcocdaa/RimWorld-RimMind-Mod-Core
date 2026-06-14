@@ -86,7 +86,8 @@ namespace RimMind.Tests.Pipeline.Unified
                 return Task.CompletedTask;
             });
 
-            Assert.True(context.Result?.IsOk);
+            Assert.NotNull(context.Result);
+            Assert.True(context.Result.Value.IsOk);
             Assert.Equal("no tools", context.Result.Value.Value.Content);
         }
 

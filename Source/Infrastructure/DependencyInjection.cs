@@ -34,6 +34,7 @@ namespace RimMind.Infrastructure
         public IWindowService WindowService { get; init; } = null!;
         public IAgentActiveChecker AgentActiveChecker { get; init; } = null!;
         public IPlayer2Lifecycle Player2Lifecycle { get; init; } = null!;
+        public IAIRequestTraceLog RequestTraceLog { get; init; } = null!;
     }
 
     public static class DependencyInjection
@@ -43,38 +44,26 @@ namespace RimMind.Infrastructure
             ISettingsProvider? settingsProvider = null)
         {
             var audioPlayer = new NullAudioPlayer();
-            RimMindServiceLocator.Register<IAudioPlayer>(audioPlayer);
 
             var tickProvider = new VerseTickProvider();
-            RimMindServiceLocator.Register<ITickProvider>(tickProvider);
 
             var threadChecker = new VerseThreadChecker();
-            RimMindServiceLocator.Register<IThreadChecker>(threadChecker);
 
             var pathProvider = new VersePathProvider();
-            RimMindServiceLocator.Register<IPathProvider>(pathProvider);
 
             var logSink = new VerseLogSink();
-            RimMindServiceLocator.Register<ILogSink>(logSink);
 
             var translationService = new VerseTranslationService();
-            RimMindServiceLocator.Register<ITranslationService>(translationService);
 
             var mechanismRegistry = new GameMechanismRegistry(toolRegistry, jsonExtractor);
-            RimMindServiceLocator.Register<IGameMechanismRegistry>(mechanismRegistry);
-            RimMindServiceLocator.Register(mechanismRegistry);
 
             var windowService = new WindowService();
-            RimMindServiceLocator.Register<IWindowService>(windowService);
 
             var agentActiveChecker = new AgentActiveChecker();
-            RimMindServiceLocator.Register<IAgentActiveChecker>(agentActiveChecker);
 
             var player2Lifecycle = new Player2LifecycleService(settingsProvider);
-            RimMindServiceLocator.Register<IPlayer2Lifecycle>(player2Lifecycle);
 
             var requestTraceLog = new AIRequestTraceLog();
-            RimMindServiceLocator.Register<IAIRequestTraceLog>(requestTraceLog);
 
             return new InfrastructureServiceBag
             {
@@ -87,7 +76,8 @@ namespace RimMind.Infrastructure
                 MechanismRegistry = mechanismRegistry,
                 WindowService = windowService,
                 AgentActiveChecker = agentActiveChecker,
-                Player2Lifecycle = player2Lifecycle
+                Player2Lifecycle = player2Lifecycle,
+                RequestTraceLog = requestTraceLog
             };
         }
 

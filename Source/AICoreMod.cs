@@ -36,34 +36,16 @@ namespace RimMind.Presentation
             Settings = GetSettings<RimMindCoreSettings>();
             var sp = new SettingsProvider(Settings);
             _cachedSettingsProvider = sp;
-            RimMindServiceLocator.Register<ISettingsProvider>(sp);
-            RimMindServiceLocator.Register<IContextSettings>(sp);
-            RimMindServiceLocator.Register<IContextBudgetSettings>(sp);
-            RimMindServiceLocator.Register<IContextIncludeSettings>(sp);
-            RimMindServiceLocator.Register<IContextEnvironmentSettings>(sp);
-            RimMindServiceLocator.Register<IAIModelSettings>(sp);
-            RimMindServiceLocator.Register<IApiCredentialSettings>(sp);
-            RimMindServiceLocator.Register<ICircuitBreakerSettings>(sp);
-            RimMindServiceLocator.Register<IContextCalibrationSettings>(sp);
-            RimMindServiceLocator.Register<IQueueSettings>(sp);
-            RimMindServiceLocator.Register<IAgentTickSettings>(sp);
-            RimMindServiceLocator.Register<IDebugSettings>(sp);
-            RimMindServiceLocator.Register<IOverlaySettings>(sp);
-            RimMindServiceLocator.Register<IPromptSettings>(sp);
-            RimMindServiceLocator.Register<IFlywheelSettings>(sp);
-            RimMindServiceLocator.Register<IOpenAISettings>(Settings);
 
             RimMindRuntime.Initialize(sp, Settings);
+            var runtime = RimMindRuntime.Instance;
 
             if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
                     RimMindErrors.Warn("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
-                    Find.WindowStack.Add(new Verse.Dialog_MessageBox(
-                        "RimMind.UpgradeWarning".Translate(),
-                        "OK".Translate(),
-                        null));
+                    runtime.WindowService?.OpenUpgradeWarning();
                 });
             }
             Settings.SavedModVersion = "2.0.0";
@@ -75,8 +57,6 @@ namespace RimMind.Presentation
 
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
 
-            // Route through RimMindRuntime facade instead of direct ServiceLocator access
-            var runtime = RimMindRuntime.Instance;
             ScenarioRegistry.RegisterCoreScenarios(
                 null,
                 runtime.GetService<ILogSink>());
@@ -89,7 +69,7 @@ namespace RimMind.Presentation
                 runtime.ContextKeys,
                 runtime.GetService<ITranslationService>(),
                 runtime.GetService<IContextKeyProvider>(),
-                RimMindServiceLocator.TryGet<INpcManager>());
+                runtime.GetService<INpcManager>());
         }
 
         public override string SettingsCategory() => "RimMind";

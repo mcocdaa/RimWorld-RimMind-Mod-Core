@@ -44,8 +44,11 @@ namespace RimMind.Tests.Domain
         [Fact]
         public void EqualityOperators_AlwaysTrue()
         {
-            Assert.True(Unit.Value == Unit.Value);
-            Assert.False(Unit.Value != Unit.Value);
+            var left = Unit.Value;
+            var right = new Unit();
+
+            Assert.True(left == right);
+            Assert.False(left != right);
         }
     }
 }

@@ -38,13 +38,13 @@ public sealed class R_M1_CsprojCleanArchitectureBoundaryTests
         var forbiddenFriends = FindInternalsVisibleToIncludes(text).Where(a => !IsTestAssembly(a)).ToList();
 
         analysis.ProjectReferences.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Domain must not reference any project. File: {0}",
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Domain must not reference any project. Violating file: {0}. Fix: move dependencies outward into Application/Core.",
             path);
         analysis.PackageReferences.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Domain must not reference any package. File: {0}",
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Domain must not reference any package. Violating file: {0}. Fix: keep Domain pure and move framework/library usage outward.",
             path);
         forbiddenFriends.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Domain internals must not be visible to production assemblies; promote required contracts to public types instead. Violations: {0}",
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Domain internals must not be visible to production assemblies. Violating friends: {0}. Fix: promote required contracts to public types instead.",
             string.Join(", ", forbiddenFriends));
     }
 
@@ -61,12 +61,13 @@ public sealed class R_M1_CsprojCleanArchitectureBoundaryTests
         var forbiddenFriends = FindInternalsVisibleToIncludes(text).Where(a => !IsTestAssembly(a)).ToList();
 
         analysis.HasProjectRef("RimMindCore.Domain").Should().BeTrue(
-            "Application must depend inward on Domain");
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Application must depend inward on Domain. Violating file: {0}. Fix: add only the Domain project reference.",
+            path);
         forbiddenPackages.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Application must not reference RimWorld/Harmony packages. Violations: {0}",
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Application must not reference RimWorld/Harmony packages. Violating packages: {0}. Fix: move game/framework adapter code into Core/Infrastructure.",
             string.Join(", ", forbiddenPackages));
         forbiddenFriends.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Application internals must not be visible to production assemblies. Violations: {0}",
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Application internals must not be visible to production assemblies. Violating friends: {0}. Fix: expose intentional contracts publicly or move wiring into CompositionRoot.",
             string.Join(", ", forbiddenFriends));
     }
 
@@ -77,8 +78,14 @@ public sealed class R_M1_CsprojCleanArchitectureBoundaryTests
         string path = Path.Combine(SourceDir, "RimMindCore.csproj");
         var analysis = ArchTestExtensions.AnalyzeCsproj(path);
 
-        analysis.HasProjectRef("RimMindCore.Application").Should().BeTrue();
-        analysis.HasPackageRef("Krafs.Rimworld.Ref").Should().BeTrue();
-        analysis.HasPackageRef("Lib.Harmony.Ref").Should().BeTrue();
+        analysis.HasProjectRef("RimMindCore.Application").Should().BeTrue(
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Core must reference Application as the outer adapter/composition assembly. Violating file: {0}. Fix: restore the Application project reference.",
+            path);
+        analysis.HasPackageRef("Krafs.Rimworld.Ref").Should().BeTrue(
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Core must be the only RimWorld adapter project and keep the RimWorld package reference. Violating file: {0}. Fix: keep RimWorld package references in Core only.",
+            path);
+        analysis.HasPackageRef("Lib.Harmony.Ref").Should().BeTrue(
+            "CLEAN_ARCH_ERROR R-M1-CSPROJ: Core must be the only Harmony adapter project and keep the Harmony package reference. Violating file: {0}. Fix: keep Harmony package references in Core only.",
+            path);
     }
 }

@@ -7,6 +7,7 @@
     <AssemblyName>RimMindCore.ArchTests</AssemblyName>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);NU1702;CS0436</NoWarn>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>

@@ -16,11 +16,6 @@ namespace RimMind.Presentation.Context
         public static IHistoryManager? Instance
         {
             get => RimMindRuntime.Instance.GetService<IHistoryManager>();
-            private set
-            {
-                if (value != null)
-                    RimMindRuntime.Instance.RegisterService<IHistoryManager>(value);
-            }
         }
 
         private readonly ConcurrentDictionary<string, List<HistoryEntry>> _histories =

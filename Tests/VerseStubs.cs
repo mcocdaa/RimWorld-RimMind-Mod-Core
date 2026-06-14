@@ -46,7 +46,7 @@ namespace Verse
         public bool Dead;
         public Pawn_Name Name => new Pawn_Name();
         public string LabelShort => "TestPawn";
-        public object jobs;
+        public object jobs = new();
 
         public T? GetComp<T>() where T : ThingComp
         {

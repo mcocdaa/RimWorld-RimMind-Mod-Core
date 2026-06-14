@@ -19,4 +19,12 @@ public class WindowService : IWindowService
     {
         Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
     }
+
+    public void OpenUpgradeWarning()
+    {
+        Find.WindowStack.Add(new Dialog_MessageBox(
+            "RimMind.UpgradeWarning".Translate(),
+            "OK".Translate(),
+            null));
+    }
 }

@@ -122,18 +122,15 @@ namespace RimMind.Presentation.Runtime
             // Phase 1: Use injected settings (passed from AICoreMod) — no SL fallback needed
             var resolvedSettings = settingsProvider!;
 
-            // Register settings sub-interfaces so downstream code can resolve them without casting
-            if (resolvedSettings is IAgentTickSettings tickSettings)
-                RimMindServiceLocator.Register(tickSettings);
-            if (resolvedSettings is IOpenAISettings openAISettingsFromProvider)
-                RimMindServiceLocator.Register(openAISettingsFromProvider);
-            if (resolvedSettings is IApiCredentialSettings apiCredSettings)
-                RimMindServiceLocator.Register(apiCredSettings);
+            RegisterSettings(resolvedSettings, openAISettings);
 
             // Phase 2: Register Application and Infrastructure services, capture direct references
             var appBag = Application.DependencyInjection.AddApplicationServices(resolvedSettings);
+            RegisterApplicationServices(appBag);
+
             var infraBag = Infrastructure.DependencyInjection.AddInfrastructureServices(
                 appBag.ToolRegistry, appBag.JsonExtractor, resolvedSettings);
+            RegisterInfrastructureServices(infraBag);
 
             var logSink = infraBag.LogSink;
             var tickProvider = infraBag.TickProvider;
@@ -428,6 +425,72 @@ namespace RimMind.Presentation.Runtime
             var newRegistry = new ExtensionRegistry<T>();
             RimMindServiceLocator.Register(newRegistry);
             return newRegistry;
+        }
+
+        private static void RegisterSettings(ISettingsProvider resolvedSettings, IOpenAISettings? openAISettings)
+        {
+            RimMindServiceLocator.Register(resolvedSettings);
+
+            if (resolvedSettings is IContextSettings contextSettings)
+                RimMindServiceLocator.Register(contextSettings);
+            if (resolvedSettings is IContextBudgetSettings budgetSettings)
+                RimMindServiceLocator.Register(budgetSettings);
+            if (resolvedSettings is IContextIncludeSettings includeSettings)
+                RimMindServiceLocator.Register(includeSettings);
+            if (resolvedSettings is IContextEnvironmentSettings environmentSettings)
+                RimMindServiceLocator.Register(environmentSettings);
+            if (resolvedSettings is IAIModelSettings aiModelSettings)
+                RimMindServiceLocator.Register(aiModelSettings);
+            if (resolvedSettings is IApiCredentialSettings apiCredSettings)
+                RimMindServiceLocator.Register(apiCredSettings);
+            if (resolvedSettings is ICircuitBreakerSettings circuitBreakerSettings)
+                RimMindServiceLocator.Register(circuitBreakerSettings);
+            if (resolvedSettings is IContextCalibrationSettings calibrationSettings)
+                RimMindServiceLocator.Register(calibrationSettings);
+            if (resolvedSettings is IQueueSettings queueSettings)
+                RimMindServiceLocator.Register(queueSettings);
+            if (resolvedSettings is IAgentTickSettings tickSettings)
+                RimMindServiceLocator.Register(tickSettings);
+            if (resolvedSettings is IDebugSettings debugSettings)
+                RimMindServiceLocator.Register(debugSettings);
+            if (resolvedSettings is IOverlaySettings overlaySettings)
+                RimMindServiceLocator.Register(overlaySettings);
+            if (resolvedSettings is IPromptSettings promptSettings)
+                RimMindServiceLocator.Register(promptSettings);
+            if (resolvedSettings is IFlywheelSettings flywheelSettings)
+                RimMindServiceLocator.Register(flywheelSettings);
+
+            if (openAISettings != null)
+                RimMindServiceLocator.Register(openAISettings);
+            else if (resolvedSettings is IOpenAISettings openAISettingsFromProvider)
+                RimMindServiceLocator.Register(openAISettingsFromProvider);
+        }
+
+        private static void RegisterApplicationServices(Application.ApplicationServiceBag appBag)
+        {
+            RimMindServiceLocator.Register(appBag.AgentBus);
+            RimMindServiceLocator.Register(appBag.ToolRegistry);
+            RimMindServiceLocator.Register(appBag.ParameterStore);
+            RimMindServiceLocator.Register(appBag.RuleEngine);
+            RimMindServiceLocator.Register(appBag.Queue);
+            RimMindServiceLocator.Register<IAIRequestQueueTickable>((IAIRequestQueueTickable)appBag.Queue);
+            RimMindServiceLocator.Register(appBag.JsonExtractor);
+            RimMindServiceLocator.Register(appBag.Telemetry);
+        }
+
+        private static void RegisterInfrastructureServices(InfrastructureServiceBag infraBag)
+        {
+            RimMindServiceLocator.Register(infraBag.AudioPlayer);
+            RimMindServiceLocator.Register(infraBag.TickProvider);
+            RimMindServiceLocator.Register(infraBag.ThreadChecker);
+            RimMindServiceLocator.Register(infraBag.PathProvider);
+            RimMindServiceLocator.Register(infraBag.LogSink);
+            RimMindServiceLocator.Register(infraBag.TranslationService);
+            RimMindServiceLocator.Register(infraBag.MechanismRegistry);
+            RimMindServiceLocator.Register(infraBag.WindowService);
+            RimMindServiceLocator.Register(infraBag.AgentActiveChecker);
+            RimMindServiceLocator.Register(infraBag.Player2Lifecycle);
+            RimMindServiceLocator.Register(infraBag.RequestTraceLog);
         }
 
         /// <summary>

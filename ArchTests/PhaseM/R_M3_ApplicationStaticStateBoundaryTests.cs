@@ -32,7 +32,7 @@ public sealed class R_M3_ApplicationStaticStateBoundaryTests
             .ToList();
 
         violations.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M3-STATIC-STATE: Application services must be provided through composition, not global Instance singletons. Violations:\n{0}",
+            "CLEAN_ARCH_ERROR R-M3-STATIC-STATE: Application services must be provided through composition, not global Instance singletons. Violating files:\n{0}\nFix: inject services through constructors or register them from RimMindCompositionRoot.",
             string.Join("\n", violations));
     }
 }

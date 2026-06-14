@@ -166,6 +166,5 @@ namespace RimMind.Presentation.Runtime
         public ISettingsProvider? GetSettingsProvider() => _composition.SettingsProvider;
 
         public T? GetService<T>() where T : class => RimMindServiceLocator.Get<T>();
-        public void RegisterService<T>(T instance) where T : class => RimMindServiceLocator.Register<T>(instance);
     }
 }

@@ -57,7 +57,7 @@ public sealed class R_M2_NamespaceCleanArchitectureBoundaryTests
             @"using\s+RimWorld");
 
         violations.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Domain must not know outer layers or game frameworks. Violations:\n{0}",
+            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Domain must not know outer layers or game frameworks. Violating files:\n{0}\nFix: move outer-layer/framework usage into Application/Core adapters.",
             string.Join("\n", violations));
     }
 
@@ -74,7 +74,7 @@ public sealed class R_M2_NamespaceCleanArchitectureBoundaryTests
             @"using\s+RimWorld");
 
         violations.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Application must not know outer layers or game frameworks. Violations:\n{0}",
+            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Application must not know outer layers or game frameworks. Violating files:\n{0}\nFix: depend on Application interfaces and implement adapters in Core/Infrastructure.",
             string.Join("\n", violations));
     }
 
@@ -100,7 +100,7 @@ public sealed class R_M2_NamespaceCleanArchitectureBoundaryTests
         }
 
         violations.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Presentation may depend on Infrastructure only in RimMindCompositionRoot.cs. Violations:\n{0}",
+            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Presentation may depend on Infrastructure only in RimMindCompositionRoot.cs. Violating files:\n{0}\nFix: move concrete Infrastructure references into RimMindCompositionRoot or an Application interface.",
             string.Join("\n", violations));
     }
 
@@ -120,7 +120,7 @@ public sealed class R_M2_NamespaceCleanArchitectureBoundaryTests
         }
 
         violations.Should().BeEmpty(
-            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Presentation/Api must call runtime/window abstractions, not concrete Verse windows. Violations:\n{0}",
+            "CLEAN_ARCH_ERROR R-M2-NAMESPACE: Presentation/Api must call runtime/window abstractions, not concrete Verse windows. Violating files:\n{0}\nFix: call RimMindRuntime/IWindowService instead of Find.WindowStack or Window_RimMind*.",
             string.Join("\n", violations));
     }
 }
