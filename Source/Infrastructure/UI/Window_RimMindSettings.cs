@@ -24,5 +24,11 @@ namespace RimMind.Infrastructure.UI
         {
             RimMindCoreSettingsUI.Draw(inRect, _settingsProvider);
         }
+
+        public override void PreClose()
+        {
+            _settingsProvider.Persist();
+            base.PreClose();
+        }
     }
 }

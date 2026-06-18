@@ -252,7 +252,7 @@ namespace RimMind.Infrastructure.UI
         {
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentHeight);
             Widgets.BeginScrollView(rect, ref scrollPos, viewRect);
-            return (rect, viewRect);
+            return (viewRect, viewRect);
         }
     }
 }

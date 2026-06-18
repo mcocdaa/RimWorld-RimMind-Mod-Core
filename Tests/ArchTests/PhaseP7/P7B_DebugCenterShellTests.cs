@@ -33,12 +33,12 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
-        public void DebugCenter_Default_Constructor_Opens_Overview()
+        public void DebugCenter_Default_Constructor_Opens_AIRequests()
         {
             string content = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
 
             Assert.Contains("public Window_RimMindHub()", content);
-            Assert.Contains("RimMindHubPage.Overview", content);
+            Assert.Contains("RimMindHubPage.AIRequests", content);
         }
 
         [Fact]
@@ -81,6 +81,16 @@ namespace RimMind.Tests.ArchTests.PhaseP7
                 Assert.Contains($"<{key}>", en);
                 Assert.Contains($"<{key}>", zh);
             }
+        }
+
+        [Fact]
+        public void RimMindUI_ScrollView_Returns_ViewRect_For_Content_Coordinates()
+        {
+            string content = ReadSource("Infrastructure/UI/RimMindUI.cs");
+
+            Assert.Contains("Rect viewRect = new Rect", content);
+            Assert.Contains("return (viewRect, viewRect);", content);
+            Assert.DoesNotContain("return (rect, viewRect);", content);
         }
     }
 }

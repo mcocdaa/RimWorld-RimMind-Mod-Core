@@ -32,7 +32,7 @@ namespace RimMind.Infrastructure.UI
         public override Vector2 InitialSize => new Vector2(780f, 580f);
 
         public Window_RimMindHub()
-            : this(RimMindHubPage.Overview, selectedPawn: null)
+            : this(RimMindHubPage.AIRequests, selectedPawn: null)
         {
         }
 
@@ -61,7 +61,7 @@ namespace RimMind.Infrastructure.UI
             DrawTabs(tabRect);
             y = tabRect.yMax + RimMindUI.Padding;
 
-            Rect contentRect = new Rect(inRect.x, y, inRect.width, inRect.height - y + inRect.y);
+            Rect contentRect = new Rect(inRect.x, y, inRect.width, inRect.yMax - y);
 
             switch (_page)
             {
@@ -113,9 +113,11 @@ namespace RimMind.Infrastructure.UI
             {
                 Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
                 bool selected = _page == pages[i];
-                if (RimMindUI.DrawTabButton(tabBtn, labels[i].Translate(), selected))
+                GUI.color = selected ? Color.white : Color.gray;
+                if (Widgets.ButtonText(tabBtn, labels[i].Translate()))
                     _page = pages[i];
             }
+            GUI.color = Color.white;
         }
 
         private static void DrawOverview(Rect rect)

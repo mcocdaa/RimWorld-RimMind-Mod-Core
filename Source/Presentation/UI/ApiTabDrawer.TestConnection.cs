@@ -22,6 +22,7 @@ namespace RimMind.Presentation.UI
         private static void RunConnectionTest(ISettingsProvider s)
         {
             NormalizeConnectionSettings(s);
+            s.Persist();
             GetClientManager()?.InvalidateCache();
             Log.Message(BuildConnectionDebugLine("start", s, null, null));
 
@@ -196,9 +197,19 @@ namespace RimMind.Presentation.UI
 
         internal static string GetProviderLabel(string p)
         {
-            string key = $"RimMind.Settings.Provider.{p}";
+            string key = $"RimMind.Settings.Provider.{NormalizeProviderTranslationSuffix(p)}";
             var translation = key.Translate();
             return translation == key ? p : translation;
+        }
+
+        private static string NormalizeProviderTranslationSuffix(string providerId)
+        {
+            return providerId?.ToLowerInvariant() switch
+            {
+                "openai" => "OpenAI",
+                "player2" => "Player2",
+                _ => providerId ?? string.Empty
+            };
         }
 
         private static string GetAutoApplyModeLabel(FlywheelAutoApplyMode mode)
