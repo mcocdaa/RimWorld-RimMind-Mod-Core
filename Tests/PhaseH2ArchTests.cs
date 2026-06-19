@@ -16,7 +16,7 @@ namespace RimMind.Presentation.Tests
         private static IEnumerable<string> GetProductionCsFiles(string root)
         {
             return Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\obj\\") && !f.Contains("\\bin\\") && !f.Contains("\\Tests\\") && !f.Contains("\\Refs\\"));
+                .Where(f => !f.Contains("\\obj\\") && !f.Contains("\\bin\\") && !f.Contains("\\Tests\\") && !f.Contains("\\Refs\\") && !f.Contains("\\_backup\\"));
         }
 
         [Fact]
@@ -109,27 +109,6 @@ namespace RimMind.Presentation.Tests
         }
 
         [Fact]
-        public void R_H7_ActionResult_MustOnlyExistAsObsoleteShim()
-        {
-            var apiFile = Path.Combine(ActionsSourceDir, "RimMindActionsAPI.cs");
-            if (!File.Exists(apiFile)) return;
-
-            var content = File.ReadAllText(apiFile);
-            if (content.Contains("class ActionResult"))
-            {
-                Assert.True(content.Contains("[Obsolete") || content.Contains("[ObsoleteAttribute"),
-                    "ActionResult class must be marked [Obsolete] if it exists as a compatibility shim");
-            }
-
-            foreach (var file in GetProductionCsFiles(RepoRoot))
-            {
-                if (file == apiFile) continue;
-                var fcontent = File.ReadAllText(file);
-                Assert.DoesNotContain("class ActionResult", fcontent);
-            }
-        }
-
-        [Fact]
         public void R_H7_RiskLevel_MustNotExistInMechanismLayer()
         {
             var mechanismFiles = Directory.GetFiles(MechanismsDir, "*.cs", SearchOption.AllDirectories)
@@ -141,40 +120,6 @@ namespace RimMind.Presentation.Tests
                 var content = File.ReadAllText(file);
                 Assert.DoesNotContain("RiskLevel", content);
             }
-        }
-
-        [Fact]
-        public void R_H8_RimMindActionsAPI_PublicMethods_MustBeObsolete()
-        {
-            var apiFile = Directory.GetFiles(ActionsSourceDir, "RimMindActionsAPI.cs", SearchOption.AllDirectories)
-                .FirstOrDefault();
-
-            Assert.NotNull(apiFile);
-
-            var content = File.ReadAllText(apiFile);
-
-            var publicMethods = new[] { "RegisterAction", "Execute", "GetStructuredTools" };
-
-            foreach (var method in publicMethods)
-            {
-                Assert.True(content.Contains("[Obsolete") || content.Contains("[ObsoleteAttribute"),
-                    $"RimMindActionsAPI.{method} must be marked [Obsolete]");
-            }
-        }
-
-        [Fact]
-        public void R_H8_ActionsBridge_MustBeEmptyShell()
-        {
-            var bridgeFile = Directory.GetFiles(ActionsSourceDir, "ActionsBridge.cs", SearchOption.AllDirectories)
-                .FirstOrDefault();
-
-            Assert.NotNull(bridgeFile);
-
-            var content = File.ReadAllText(bridgeFile);
-
-            Assert.DoesNotContain("IActionRule", content);
-            Assert.True(content.Contains("[Obsolete") || content.Contains("no-op") || content.Contains("No-op"),
-                "ActionsBridge should be an empty shell with [Obsolete] or no-op markers");
         }
 
         [Fact]
@@ -238,16 +183,16 @@ namespace RimMind.Presentation.Tests
             if (!Directory.Exists(ActionsSourceDir)) return;
 
             var csFiles = Directory.GetFiles(ActionsSourceDir, "*.cs", SearchOption.AllDirectories)
-                .Where(f => !f.Contains("\\obj\\") && !f.Contains("\\bin\\"))
+                .Where(f => !f.Contains("\\obj\\") && !f.Contains("\\bin\\") && !f.Contains("\\_backup\\"))
                 .Select(f => Path.GetFileName(f))
                 .ToList();
 
             var allowedFiles = new HashSet<string>
             {
-                "RimMindActionsAPI.cs",
                 "RimMindActionsMod.cs",
-                "ActionsBridge.cs",
-                "RimMindActionsSettings.cs"
+                "CompositeToolCallBase.cs",
+                "StabilizeRestCompositeTool.cs",
+                "CompositeToolRegistrar.cs",
             };
 
             foreach (var file in csFiles)
