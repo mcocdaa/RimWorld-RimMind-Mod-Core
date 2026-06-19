@@ -115,6 +115,8 @@ namespace RimMind.Tests.Agent
             public void Register(IToolHandler handler) { }
             public bool Unregister(string toolId) => false;
             public IReadOnlyList<IToolHandler> All => Array.Empty<IToolHandler>();
+            public IReadOnlyList<IToolHandler> GetHandlersForScope(AgentScopeKind scopeKind) => All;
+            public IReadOnlyList<ToolDefinition> GetDefinitionsForScope(AgentScopeKind scopeKind) => _defs;
         }
     }
 }

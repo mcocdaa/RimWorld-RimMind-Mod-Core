@@ -397,6 +397,8 @@ namespace RimMind.Tests.Pipeline.Unified
         public IToolHandler? FindById(string toolId) => _handlers.TryGetValue(toolId, out var h) ? h : null;
         public IReadOnlyList<IToolHandler> All => new List<IToolHandler>(_handlers.Values).AsReadOnly();
         public IReadOnlyList<ToolDefinition> GetAllDefinitions() => new List<ToolDefinition>().AsReadOnly();
+        public IReadOnlyList<IToolHandler> GetHandlersForScope(AgentScopeKind scopeKind) => All;
+        public IReadOnlyList<ToolDefinition> GetDefinitionsForScope(AgentScopeKind scopeKind) => GetAllDefinitions();
     }
 
     internal sealed class StubAgentInfo : IAgentInfo

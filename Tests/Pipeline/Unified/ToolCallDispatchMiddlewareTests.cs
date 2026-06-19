@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Debug;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Application.Features.Pipeline.Unified;
@@ -44,6 +45,8 @@ namespace RimMind.Tests.Pipeline.Unified
         public IToolHandler? FindById(string toolId) => _handlers.TryGetValue(toolId, out var h) ? h : null;
         public IReadOnlyList<IToolHandler> All => new List<IToolHandler>(_handlers.Values).AsReadOnly();
         public IReadOnlyList<ToolDefinition> GetAllDefinitions() => new List<ToolDefinition>().AsReadOnly();
+        public IReadOnlyList<IToolHandler> GetHandlersForScope(AgentScopeKind scopeKind) => All;
+        public IReadOnlyList<ToolDefinition> GetDefinitionsForScope(AgentScopeKind scopeKind) => GetAllDefinitions();
     }
 
     public class ToolCallDispatchMiddlewareTests

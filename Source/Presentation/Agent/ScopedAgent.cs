@@ -19,9 +19,10 @@ namespace RimMind.Presentation.Agent
     {
         private const int ThinkCooldownTicks = 300;
 
-        public string ScopeId { get; }
-        public string ScopeType { get; }
-        public int? MapId { get; }
+        public AgentScope Scope { get; }
+        public string ScopeId => Scope.Id;
+        public string ScopeType => Scope.ScopeType;
+        public int? MapId => Scope.MapId;
 
         private readonly IAgentBus _agentBus;
         private AgentState _state = AgentState.Dormant;
@@ -33,12 +34,15 @@ namespace RimMind.Presentation.Agent
         private Result<AgentDecision, RimMindError> _pendingDecision;
         private int _requestSentTick;
 
-        public ScopedAgent(string scopeId, string scopeType, IAgentBus agentBus, int? mapId = null)
+        public ScopedAgent(AgentScope scope, IAgentBus agentBus)
         {
-            ScopeId = scopeId ?? "unknown";
-            ScopeType = scopeType ?? "unknown";
+            Scope = scope ?? AgentScope.Custom("unknown", "unknown");
             _agentBus = agentBus;
-            MapId = mapId;
+        }
+
+        public ScopedAgent(string scopeId, string scopeType, IAgentBus agentBus, int? mapId = null)
+            : this(AgentScope.Custom(scopeType, scopeId, mapId), agentBus)
+        {
         }
 
         public bool IsActive => _state == AgentState.Active;

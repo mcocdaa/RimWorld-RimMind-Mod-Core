@@ -1,45 +1,31 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
-using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Agent;
-using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Infrastructure.UI.AgentsPage;
-using RimMind.Infrastructure.UI.AIRequestsPage;
-using RimMind.Infrastructure.Verse;
-using RimMind.Infrastructure.UI;
+using RimMind.Infrastructure.UI.DebugCenter;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public enum RimMindHubPage
-    {
-        Overview,
-        Agents,
-        AIRequests,
-        ToolCalls,
-        Mechanisms,
-        ContextKeys
-    }
-
     public class Window_RimMindHub : Window
     {
-        private RimMindHubPage _page;
-        private Pawn? _selectedPawn;
-        private readonly AgentsPageDrawer _agentsPage = new AgentsPageDrawer();
-        private readonly AIRequestsPageDrawer _aiRequestsPage = new AIRequestsPageDrawer();
+        private string _pageId;
+        private readonly Pawn? _selectedPawn;
+        private readonly DebugCenterPageContext _context;
+        private readonly IReadOnlyList<IDebugCenterPageDrawer> _pages;
 
         public override Vector2 InitialSize => new Vector2(780f, 580f);
 
         public Window_RimMindHub()
-            : this(RimMindHubPage.AIRequests, selectedPawn: null)
+            : this(DebugCenterPageRegistry.DefaultPageId, selectedPawn: null)
         {
         }
 
-        private Window_RimMindHub(RimMindHubPage initialPage, Pawn? selectedPawn)
+        private Window_RimMindHub(string initialPageId, Pawn? selectedPawn)
         {
-            _page = initialPage;
+            _pages = DebugCenterPageRegistry.CreateAll();
+            _pageId = ResolvePageId(initialPageId);
             _selectedPawn = selectedPawn;
+            _context = new DebugCenterPageContext(selectedPawn);
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -47,210 +33,60 @@ namespace RimMind.Infrastructure.UI
         }
 
         public static Window_RimMindHub OpenAgentsForPawn(Pawn selectedPawn)
-            => new Window_RimMindHub(RimMindHubPage.Agents, selectedPawn);
+            => new Window_RimMindHub("agents", selectedPawn);
 
         public static Window_RimMindHub OpenAIRequests()
-            => new Window_RimMindHub(RimMindHubPage.AIRequests, selectedPawn: null);
+            => new Window_RimMindHub("ai_requests", selectedPawn: null);
 
         public override void DoWindowContents(Rect inRect)
         {
             float y = RimMindUI.DrawWindowHeader(inRect, "RimMind.UI.Hub.Title".Translate());
 
-            // Tab bar
             Rect tabRect = new Rect(inRect.x, y, inRect.width, RimMindUI.TabHeight);
             DrawTabs(tabRect);
             y = tabRect.yMax + RimMindUI.Padding;
 
             Rect contentRect = new Rect(inRect.x, y, inRect.width, inRect.yMax - y);
-
-            switch (_page)
-            {
-                case RimMindHubPage.Overview:
-                    DrawOverview(contentRect);
-                    break;
-                case RimMindHubPage.Agents:
-                    _agentsPage.Draw(contentRect, _selectedPawn);
-                    break;
-                case RimMindHubPage.AIRequests:
-                    DrawRequests(contentRect);
-                    break;
-                case RimMindHubPage.ToolCalls:
-                    DrawToolCalls(contentRect);
-                    break;
-                case RimMindHubPage.Mechanisms:
-                    DrawMechanisms(contentRect);
-                    break;
-                case RimMindHubPage.ContextKeys:
-                    DrawContextKeys(contentRect);
-                    break;
-            }
+            IDebugCenterPageDrawer? selectedPage = ResolveSelectedPage();
+            selectedPage?.Draw(contentRect, _context);
         }
 
         private void DrawTabs(Rect rect)
         {
-            var pages = new[]
-            {
-                RimMindHubPage.Overview,
-                RimMindHubPage.Agents,
-                RimMindHubPage.AIRequests,
-                RimMindHubPage.ToolCalls,
-                RimMindHubPage.Mechanisms,
-                RimMindHubPage.ContextKeys
-            };
+            if (_pages.Count == 0)
+                return;
 
-            var labels = new[]
+            float tabW = rect.width / _pages.Count;
+            for (int i = 0; i < _pages.Count; i++)
             {
-                "RimMind.UI.Hub.Tab.Overview",
-                "RimMind.UI.Hub.Tab.Agents",
-                "RimMind.UI.Hub.Tab.AIRequests",
-                "RimMind.UI.Hub.Tab.ToolCalls",
-                "RimMind.UI.Hub.Tab.Mechanisms",
-                "RimMind.UI.Hub.Tab.ContextKeys"
-            };
-
-            float tabW = rect.width / pages.Length;
-            for (int i = 0; i < pages.Length; i++)
-            {
+                var page = _pages[i];
                 Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
-                bool selected = _page == pages[i];
+                bool selected = _pageId == page.Descriptor.Id;
                 GUI.color = selected ? Color.white : Color.gray;
-                if (Widgets.ButtonText(tabBtn, labels[i].Translate()))
-                    _page = pages[i];
+                if (Widgets.ButtonText(tabBtn, page.Descriptor.LabelKey.Translate()))
+                    _pageId = page.Descriptor.Id;
             }
+
             GUI.color = Color.white;
         }
 
-        private static void DrawOverview(Rect rect)
+        private IDebugCenterPageDrawer? ResolveSelectedPage()
         {
-            Pawn? selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
-            int agentCount = 0;
-            int activeCount = 0;
-            var map = Find.CurrentMap;
+            var selectedPage = _pages.FirstOrDefault(page => page.Descriptor.Id == _pageId)
+                ?? _pages.FirstOrDefault(page => page.Descriptor.IsDefault)
+                ?? _pages.FirstOrDefault();
 
-            if (map != null)
-            {
-                foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
-                {
-                    var agent = CompPawnAgent.GetComp(pawn)?.Agent;
-                    if (agent == null) continue;
-                    agentCount++;
-                    if (agent.IsActive)
-                        activeCount++;
-                }
-            }
+            if (selectedPage != null)
+                _pageId = selectedPage.Descriptor.Id;
 
-            var queue = RimMindServiceLocator.TryGet<IAIRequestQueue>();
-            string queueText = queue == null
-                ? "RimMind.UI.Hub.QueueMissing".Translate()
-                : queue.IsPaused
-                    ? "RimMind.Settings.QueuePaused".Translate()
-                    : "RimMind.Settings.QueueRunning".Translate();
-
-            float y = rect.y;
-
-            // ── Status Cards ──
-            float cardW = (rect.width - RimMindUI.Padding) / 2f;
-            float cardH = 60f;
-
-            // Agent card
-            Rect agentCard = new Rect(rect.x, y, cardW, cardH);
-            Widgets.DrawBoxSolid(agentCard, RimMindUI.ColorCardBg);
-            float innerY = agentCard.y + RimMindUI.Padding;
-            GUI.color = RimMindUI.ColorSectionTitle;
-            Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(agentCard.x + RimMindUI.Padding, innerY, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
-                "RimMind.UI.Hub.AgentSummary".Translate());
-            Text.Font = GameFont.Medium;
-            GUI.color = activeCount > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted;
-            Widgets.Label(new Rect(agentCard.x + RimMindUI.Padding, innerY + RimMindUI.LineHeight, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
-                $"{activeCount} / {agentCount}");
-            Text.Font = GameFont.Small;
-            GUI.color = Color.white;
-
-            // Queue card
-            Rect queueCard = new Rect(rect.x + cardW + RimMindUI.Padding, y, cardW, cardH);
-            Widgets.DrawBoxSolid(queueCard, RimMindUI.ColorCardBg);
-            innerY = queueCard.y + RimMindUI.Padding;
-            GUI.color = RimMindUI.ColorSectionTitle;
-            Text.Font = GameFont.Tiny;
-            Widgets.Label(new Rect(queueCard.x + RimMindUI.Padding, innerY, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
-                "RimMind.UI.Hub.QueueState".Translate());
-            Text.Font = GameFont.Medium;
-            bool isQueueRunning = queue != null && !queue.IsPaused;
-            GUI.color = isQueueRunning ? RimMindUI.ColorActive : RimMindUI.ColorPaused;
-            Widgets.Label(new Rect(queueCard.x + RimMindUI.Padding, innerY + RimMindUI.LineHeight, cardW - RimMindUI.Padding * 2, RimMindUI.LineHeight),
-                queueText);
-            Text.Font = GameFont.Small;
-            GUI.color = Color.white;
-
-            y += cardH + RimMindUI.SectionGap;
-
-            // ── Selected Pawn Info ──
-            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.SelectedPawn".Translate()) + rect.y;
-            string pawnText = selectedPawn?.LabelShortCap ?? "RimMind.UI.Hub.NoPawn".Translate();
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.SelectedPawn".Translate(), pawnText) + rect.y;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.PendingRequests".Translate(), RequestOverlay.Pending.Count.ToString()) + rect.y;
-
-            y += RimMindUI.SectionGap;
-
-            // ── Quick Actions ──
-            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.QuickActions".Translate()) + rect.y;
-
-            float colW = (rect.width - RimMindUI.Padding) / 2f;
-            DrawButton(new Rect(rect.x, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentFlowLab",
-                () => Find.WindowStack.Add(new Window_AgentFlowLab(selectedPawn)));
-            DrawButton(new Rect(rect.x + colW + RimMindUI.Padding, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentProgress",
-                () => Find.WindowStack.Add(new Window_AgentProgressFloat()));
-            y += RimMindUI.BtnHeight + RimMindUI.Padding;
-
-            DrawButton(new Rect(rect.x, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentState",
-                () => Find.WindowStack.Add(new Window_AgentStateDebug(selectedPawn)));
-            DrawButton(new Rect(rect.x + colW + RimMindUI.Padding, y, colW, RimMindUI.BtnHeight), "RimMind.UI.Hub.AgentMode",
-                () => Find.WindowStack.Add(new Window_AgentModeDebug(selectedPawn)));
+            return selectedPage;
         }
 
-        private void DrawRequests(Rect rect)
+        private static string ResolvePageId(string pageId)
         {
-            _aiRequestsPage.Draw(rect);
+            return DebugCenterPageRegistry.Find(pageId)?.Id
+                ?? DebugCenterPageRegistry.DefaultPageId;
         }
-
-        private static void DrawToolCalls(Rect rect)
-        {
-            DrawToolGrid(rect,
-                ("RimMind.UI.Hub.ToolCallDebug", () => Find.WindowStack.Add(new Window_ToolCallDebug())));
-        }
-
-        private static void DrawMechanisms(Rect rect)
-        {
-            DrawToolGrid(rect,
-                ("RimMind.UI.Hub.MechanismStatus", () => Find.WindowStack.Add(new Window_MechanismStatus())));
-        }
-
-        private static void DrawContextKeys(Rect rect)
-        {
-            DrawToolGrid(rect,
-                ("RimMind.UI.Hub.ContextKeys", () => Find.WindowStack.Add(new Window_ContextKeyDebug())));
-        }
-
-        private static void DrawToolGrid(Rect rect, params (string LabelKey, Action Action)[] tools)
-        {
-            float colW = (rect.width - RimMindUI.Padding) / 2f;
-            for (int i = 0; i < tools.Length; i++)
-            {
-                int col = i % 2;
-                int row = i / 2;
-                Rect button = new Rect(rect.x + col * (colW + RimMindUI.Padding),
-                    rect.y + row * (RimMindUI.BtnHeight + RimMindUI.Padding), colW, RimMindUI.BtnHeight);
-                DrawButton(button, tools[i].LabelKey, tools[i].Action);
-            }
-        }
-
-        private static void DrawButton(Rect rect, string labelKey, Action action)
-        {
-            if (Widgets.ButtonText(rect, labelKey.Translate()))
-                action();
-        }
-
     }
 
     public class MainTabWindow_RimMindHub : Window_RimMindHub

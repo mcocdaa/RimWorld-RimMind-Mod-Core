@@ -312,7 +312,7 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         [Fact]
         public void CompositionRoot_Registers_ScopedAgentFactory()
         {
-            var content = ReadCoreSource("Presentation/Runtime/RimMindCompositionRoot.cs");
+            var content = ReadCoreSource("Presentation/Runtime/Composition/AgentComposition.cs");
             Assert.Contains("IScopedAgentFactory", content);
             Assert.Contains("ScopedAgentFactory", content);
         }
@@ -341,7 +341,7 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         [Fact]
         public void CompositionRoot_Registers_ScopedAgentManager()
         {
-            var content = ReadCoreSource("Presentation/Runtime/RimMindCompositionRoot.cs");
+            var content = ReadCoreSource("Presentation/Runtime/Composition/AgentComposition.cs");
             Assert.Contains("IScopedAgentManager", content);
             Assert.Contains("ScopedAgentManager", content);
         }

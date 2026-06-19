@@ -19,26 +19,29 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             => File.ReadAllText(Path.Combine(RepoRoot, relativePath.Replace('/', Path.DirectorySeparatorChar)));
 
         [Fact]
-        public void DebugCenter_Has_Public_Page_Enum()
+        public void DebugCenter_Has_Registerable_Default_Pages()
         {
-            string content = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
+            string registry = ReadSource("Infrastructure/UI/DebugCenter/DebugCenterPageRegistry.cs");
 
-            Assert.Contains("public enum RimMindHubPage", content);
-            Assert.Contains("Overview", content);
-            Assert.Contains("Agents", content);
-            Assert.Contains("AIRequests", content);
-            Assert.Contains("ToolCalls", content);
-            Assert.Contains("Mechanisms", content);
-            Assert.Contains("ContextKeys", content);
+            Assert.Contains("() => new OverviewDebugCenterPageDrawer", registry);
+            Assert.Contains("() => new AgentsDebugCenterPageDrawer", registry);
+            Assert.Contains("() => new AIRequestsDebugCenterPageDrawer", registry);
+            Assert.Contains("() => new ToolCallsDebugCenterPageDrawer", registry);
+            Assert.Contains("() => new MechanismsDebugCenterPageDrawer", registry);
+            Assert.Contains("() => new ContextKeysDebugCenterPageDrawer", registry);
         }
 
         [Fact]
         public void DebugCenter_Default_Constructor_Opens_AIRequests()
         {
-            string content = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
+            string hub = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
+            string aiRequestsPage = ReadSource("Infrastructure/UI/DebugCenter/Pages/AIRequestsDebugCenterPageDrawer.cs");
 
-            Assert.Contains("public Window_RimMindHub()", content);
-            Assert.Contains("RimMindHubPage.AIRequests", content);
+            Assert.Contains("public Window_RimMindHub()", hub);
+            Assert.Contains("DebugCenterPageRegistry.DefaultPageId", hub);
+            Assert.Contains("DebugCenterPageRegistry.CreateAll()", hub);
+            Assert.Contains("\"ai_requests\"", aiRequestsPage);
+            Assert.Contains("IsDefault: true", aiRequestsPage);
         }
 
         [Fact]

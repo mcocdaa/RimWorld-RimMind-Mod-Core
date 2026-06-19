@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Tools;
 
 namespace RimMind.Application.Features.Tools
@@ -36,6 +37,20 @@ namespace RimMind.Application.Features.Tools
         public IReadOnlyList<ToolDefinition> GetAllDefinitions()
         {
             return _handlers.Values.Select(h => h.Definition).ToList();
+        }
+
+        public IReadOnlyList<IToolHandler> GetHandlersForScope(AgentScopeKind scopeKind)
+        {
+            return _handlers.Values
+                .Where(h => h.Definition.Manifest?.AllowedScopes?.Contains(scopeKind) == true)
+                .ToList();
+        }
+
+        public IReadOnlyList<ToolDefinition> GetDefinitionsForScope(AgentScopeKind scopeKind)
+        {
+            return GetHandlersForScope(scopeKind)
+                .Select(h => h.Definition)
+                .ToList();
         }
     }
 }

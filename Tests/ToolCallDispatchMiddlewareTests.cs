@@ -9,6 +9,7 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Features.Pipeline.AI;
 using RimMind.Application.Features.Tools;
 using Xunit;
@@ -119,6 +120,10 @@ namespace RimMind.Presentation.Tests
 
             public IReadOnlyList<ToolDefinition> GetAllDefinitions() =>
                 new List<ToolDefinition>().AsReadOnly();
+
+            public IReadOnlyList<IToolHandler> GetHandlersForScope(AgentScopeKind scopeKind) => All;
+
+            public IReadOnlyList<ToolDefinition> GetDefinitionsForScope(AgentScopeKind scopeKind) => GetAllDefinitions();
         }
 
         private static AIRequestContext CreateContext(

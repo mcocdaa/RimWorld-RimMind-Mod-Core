@@ -265,8 +265,8 @@ namespace RimMind.Core.ArchTests.PhaseH2
         [Fact]
         public void H2_RegisterAllMechanisms_InCompositionRoot()
         {
-            var compositionRootFile = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Presentation", "Runtime", "RimMindCompositionRoot.cs");
-            Assert.True(File.Exists(compositionRootFile), "RimMindCompositionRoot.cs must exist");
+            var compositionRootFile = Path.Combine(RepoRoot, "RimMind-Core", "Source", "Presentation", "Runtime", "Composition", "ToolMechanismComposition.cs");
+            Assert.True(File.Exists(compositionRootFile), "ToolMechanismComposition.cs must exist");
 
             var content = File.ReadAllText(compositionRootFile);
 
@@ -283,7 +283,7 @@ namespace RimMind.Core.ArchTests.PhaseH2
             foreach (var mechanism in requiredMechanisms)
             {
                 Assert.True(content.Contains(mechanism),
-                    $"RimMindCompositionRoot must register {mechanism}");
+                    $"ToolMechanismComposition must register {mechanism}");
             }
         }
     }

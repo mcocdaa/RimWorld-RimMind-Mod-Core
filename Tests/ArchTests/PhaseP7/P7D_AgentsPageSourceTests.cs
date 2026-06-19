@@ -18,9 +18,13 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         public void Hub_Delegates_Agents_Page_To_AgentsPageDrawer()
         {
             string content = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
+            string page = ReadSource("Infrastructure/UI/DebugCenter/Pages/AgentsDebugCenterPageDrawer.cs");
 
-            Assert.Contains("AgentsPageDrawer", content);
-            Assert.Contains("_agentsPage.Draw", content);
+            Assert.Contains("DebugCenterPageRegistry.CreateAll()", content);
+            Assert.Contains("AgentsPageDrawer", page);
+            Assert.Contains("_drawer.Draw", page);
+            Assert.Contains("context.SelectedPawn", page);
+            Assert.DoesNotContain("DebugCenterPageRegistry.SelectedPawn", page);
             Assert.Contains("_selectedPawn", content);
         }
 

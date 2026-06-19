@@ -28,7 +28,7 @@ namespace RimMind.Tests.ArchTests.PhaseP1
             ProjectRoot, "Source", "RimMindAPI.cs");
 
         private static readonly string CompositionRootPath = Path.Combine(
-            ProjectRoot, "Source", "Presentation", "Runtime", "RimMindCompositionRoot.cs");
+            ProjectRoot, "Source", "Presentation", "Runtime", "Composition", "AgentComposition.cs");
 
         [Fact]
         public void IModeTransitionPolicy_Interface_Exists()

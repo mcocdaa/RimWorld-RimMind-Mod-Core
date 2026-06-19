@@ -40,12 +40,14 @@ namespace RimMind.Core.ArchTests.PhaseL
             {
                 if (WhitelistFiles.Contains(Path.GetFileName(file))) continue;
 
+                var relativePath = file.Substring(sourceDir.Length + 1);
+                if (relativePath.StartsWith(@"Presentation\Runtime\Composition\", StringComparison.OrdinalIgnoreCase)) continue;
+
                 var source = File.ReadAllText(file);
 
                 // Check for SL pulls (Get/TryGet) but not Register
                 if (Regex.IsMatch(source, @"RimMindServiceLocator\.(Get|TryGet)<"))
                 {
-                    var relativePath = file.Substring(sourceDir.Length + 1);
                     violations.Add(relativePath);
                 }
             }

@@ -73,6 +73,10 @@
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs;../Source/Application/Common/IsExternalInit.cs" />
     <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
     <Compile Include="../Source/Infrastructure/Verse/AIRequestTraceLog.cs" />
+    <Compile Include="../Source/Presentation/Agent/ScopedAgent.cs" />
+    <Compile Include="../Source/Presentation/Agent/ScopedAgentFactory.cs" />
+    <Compile Include="../Source/Presentation/Agent/ScopedAgentManager.cs" />
+    <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
