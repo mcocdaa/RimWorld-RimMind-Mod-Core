@@ -1,3 +1,7 @@
+// BACKUP: This file is orphaned — not included in any csproj.
+// The canonical version lives at ArchTests/PhaseH2/PhaseH2ArchTests.cs
+// Moved here on 2026-06-19 to prevent silent divergence.
+
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
