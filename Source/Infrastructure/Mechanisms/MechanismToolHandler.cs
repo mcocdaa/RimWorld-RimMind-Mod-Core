@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Json;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
@@ -35,7 +36,7 @@ namespace RimMind.Infrastructure.Mechanisms
         }
 
         public string Id => Definition.Id;
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public ToolDefinition Definition { get; }
 
         public async Task<Result<ToolResult, RimMindError>> ExecuteAsync(ToolCallArgs args, CancellationToken ct)

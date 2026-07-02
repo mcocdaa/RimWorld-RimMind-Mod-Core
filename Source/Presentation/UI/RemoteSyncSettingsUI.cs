@@ -1,4 +1,5 @@
 using System.Threading;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Storage;
 using RimMind.Domain.Settings;
 using RimMind.Presentation.Settings;
@@ -10,7 +11,7 @@ namespace RimMind.Presentation.UI
     public class RemoteSyncSettingsUI : ISettingsTab
     {
         public string Id => "remotesync";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public string Label => "RimMind.Settings.Tab.RemoteSync".Translate();
 
         private readonly RemoteSyncSettings _settings;

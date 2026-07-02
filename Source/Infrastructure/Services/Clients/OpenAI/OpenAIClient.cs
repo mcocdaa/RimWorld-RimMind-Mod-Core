@@ -12,6 +12,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.Services.Clients.Shared;
 using Newtonsoft.Json;
 using Verse;
 
@@ -111,54 +112,24 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
                 if (toolCallsDto != null && toolCallsDto.Count > 0)
                 {
-                    var converted = toolCallsDto.Select(tc => new
-                    {
-                        id = tc.Id,
-                        type = tc.Type,
-                        function = new
+                    var toolCallsJson = ToolCallJsonNormalizer.Normalize(
+                        toolCallsDto.Select(tc => new ToolCallEntry
                         {
-                            name = tc.Function?.Name,
-                            arguments = tc.Function?.Arguments,
-                        }
-                    }).ToList();
-                    response = new RimMind.Domain.Llm.LlmResponse
-                    {
-                        RequestId = response.RequestId,
-                        Content = response.Content,
-                        ToolCallsJson = JsonConvert.SerializeObject(converted),
-                        ReasoningContent = response.ReasoningContent,
-                        TokensUsed = response.TokensUsed,
-                        PromptTokens = response.PromptTokens,
-                        CompletionTokens = response.CompletionTokens,
-                        CachedTokens = response.CachedTokens,
-                        State = RimMind.Domain.Llm.AIRequestState.Completed,
-                        Priority = response.Priority,
-                        AttemptCount = response.AttemptCount,
-                        QueueWaitMs = response.QueueWaitMs,
-                        ProcessingMs = response.ProcessingMs,
-                        HttpStatusCode = response.HttpStatusCode,
-                    };
+                            Id = tc.Id,
+                            Type = tc.Type,
+                            FunctionName = tc.Function?.Name,
+                            FunctionArguments = tc.Function?.Arguments,
+                        }));
+                    if (toolCallsJson != null)
+                        response = response.With(toolCallsJson: toolCallsJson);
                 }
 
                 return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Ok(response);
             }
-            catch (HttpTransport.HttpException ex)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
-            }
-            catch (TaskCanceledException)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Request cancelled ({envelope.RequestId})", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-            }
             catch (Exception ex)
             {
                 sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Request failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI request failed: {ex.Message}", ex));
+                return ClientExceptionMapper.MapException(ex, nameof(OpenAIClient), envelope.RequestId, "request", _logSink);
             }
         }
 
@@ -197,22 +168,15 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 using var stream = await response.Content.ReadAsStreamAsync();
                 using var reader = new System.IO.StreamReader(stream);
 
-                while (!reader.EndOfStream && !ct.IsCancellationRequested)
+                await SseStreamReader.ReadDataLinesAsync(reader, async data =>
                 {
-                    string? line = await reader.ReadLineAsync();
-                    if (string.IsNullOrEmpty(line)) continue;
-                    if (!line.StartsWith("data: ")) continue;
-
-                    string data = line.Substring(6);
-                    if (data == "[DONE]") break;
-
                     try
                     {
                         var chunk = JsonConvert.DeserializeObject<OpenAIStreamChunkDto>(data);
-                        if (chunk == null) continue;
+                        if (chunk == null) return;
 
                         var delta = chunk.choices?[0]?.delta;
-                        if (delta == null) continue;
+                        if (delta == null) return;
 
                         if (delta.content != null)
                         {
@@ -260,22 +224,11 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                     {
                         // Skip malformed SSE chunks
                     }
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                _logSink?.LogFromBackground($"[RimMind-Core] Stream cancelled ({envelope.RequestId})", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-            }
-            catch (HttpTransport.HttpException ex)
-            {
-                _logSink?.LogFromBackground($"[RimMind-Core] Stream failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
+                }, ct);
             }
             catch (Exception ex)
             {
-                _logSink?.LogFromBackground($"[RimMind-Core] Stream failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Internal($"OpenAI stream failed: {ex.Message}", ex));
+                return ClientExceptionMapper.MapException(ex, nameof(OpenAIClient), envelope.RequestId, "stream", _logSink);
             }
 
             var finalResponse = new RimMind.Domain.Llm.LlmResponse

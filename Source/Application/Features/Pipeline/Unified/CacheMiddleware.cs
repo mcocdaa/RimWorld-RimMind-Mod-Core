@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models;
@@ -13,7 +14,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedCache";
         public int Order => RimMindDefaults.MiddlewareOrder.Cache;
         public string Id => "UnifiedCache";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ILogSink? _log;
 

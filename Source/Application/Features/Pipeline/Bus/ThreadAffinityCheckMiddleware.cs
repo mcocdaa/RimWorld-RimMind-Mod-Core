@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
@@ -12,7 +13,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusThreadAffinity";
         public int Order => 50;
         public string Id => "BusThreadAffinity";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly IThreadChecker? _threadChecker;
         private readonly ILogSink? _log;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -16,7 +17,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedContextBuild";
         public int Order => RimMindDefaults.MiddlewareOrder.ContextBuild;
         public string Id => "UnifiedContextBuild";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly IContextEngine? _contextEngine;
         private readonly ILogSink? _log;

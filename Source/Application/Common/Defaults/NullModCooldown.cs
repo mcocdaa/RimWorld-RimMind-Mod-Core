@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Extension;
 
 namespace RimMind.Application.Common.Defaults
@@ -7,7 +8,7 @@ namespace RimMind.Application.Common.Defaults
         public static readonly NullModCooldown Instance = new NullModCooldown();
 
         public string Id => "null.mod-cooldown";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public int CooldownTicks => 0;
     }
 }

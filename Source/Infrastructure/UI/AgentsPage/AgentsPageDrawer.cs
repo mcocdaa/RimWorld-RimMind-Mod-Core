@@ -3,6 +3,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI;
+using RimMind.Infrastructure.UI.DebugCenter;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -14,19 +15,19 @@ namespace RimMind.Infrastructure.UI.AgentsPage
         private string _chatDraft = string.Empty;
         private string? _listSelectedPawnId;
         private Vector2 _listScrollPos;
+        private Vector2 _activityScrollPos;
         private readonly List<AgentListItem> _agents = new();
         private readonly Dictionary<string, Pawn> _pawnById = new();
 
         public void Draw(Rect rect, Pawn? hubSelectedPawn)
         {
-            Rect left = new(rect.x, rect.y, 260f, rect.height);
-            Rect right = new(left.xMax + 8f, rect.y, rect.width - left.width - 8f, rect.height);
+            AgentPageLayoutRects layout = DebugCenterLayout.CalculateAgentPage(rect);
 
-            DrawList(left, hubSelectedPawn);
+            DrawList(layout.List, hubSelectedPawn);
 
             // Resolve detail pawn: list selection takes priority, fall back to hub selection
             Pawn? detailPawn = ResolveDetailPawn(hubSelectedPawn);
-            DrawDetail(right, detailPawn);
+            DrawDetail(layout, detailPawn);
         }
 
         private Pawn? ResolveDetailPawn(Pawn? hubSelectedPawn)
@@ -40,6 +41,8 @@ namespace RimMind.Infrastructure.UI.AgentsPage
 
         private void DrawList(Rect rect, Pawn? hubSelectedPawn)
         {
+            Widgets.DrawBoxSolid(rect, RimMindUI.ColorSectionBg);
+
             // Reuse collections to reduce GC pressure
             _agents.Clear();
             _pawnById.Clear();
@@ -68,8 +71,9 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             if (hubSelectedPawn != null && _listSelectedPawnId == null)
                 _listSelectedPawnId = hubSelectedPawn.ThingID;
 
-            float contentH = CalcListHeight(groups);
-            var (bodyRect, viewRect) = RimMindUI.BeginScrollView(rect, ref _listScrollPos, contentH);
+            Rect innerRect = rect.ContractedBy(RimMindUI.Padding);
+            float contentH = Mathf.Max(innerRect.height + 1f, CalcListHeight(groups));
+            var (bodyRect, _) = RimMindUI.BeginScrollView(innerRect, ref _listScrollPos, contentH);
 
             float y = 0f;
 
@@ -77,7 +81,7 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             y = RimMindUI.DrawSectionHeader(bodyRect, y,
                 "RimMind.UI.AgentsPage.Active".Translate() + $" ({groups.Active.Count})");
             foreach (var item in groups.Active)
-                y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width - 16f, RimMindUI.LineHeight), item);
+                y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width, RimMindUI.LineHeight), item);
 
             y += RimMindUI.Padding;
 
@@ -85,7 +89,7 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             y = RimMindUI.DrawSectionHeader(bodyRect, y,
                 "RimMind.UI.AgentsPage.Paused".Translate() + $" ({groups.Paused.Count})");
             foreach (var item in groups.Paused)
-                y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width - 16f, RimMindUI.LineHeight), item);
+                y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width, RimMindUI.LineHeight), item);
 
             y += RimMindUI.Padding;
 
@@ -95,7 +99,7 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                 y = RimMindUI.DrawSectionHeader(bodyRect, y,
                     "RimMind.UI.AgentsPage.Pending".Translate());
                 foreach (var item in groups.PendingCreation)
-                    y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width - 16f, RimMindUI.LineHeight), item);
+                    y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width, RimMindUI.LineHeight), item);
             }
 
             // Other section (Dormant/Terminated)
@@ -105,7 +109,7 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                 y = RimMindUI.DrawSectionHeader(bodyRect, y,
                     "RimMind.UI.AgentsPage.Other".Translate() + $" ({groups.Other.Count})");
                 foreach (var item in groups.Other)
-                    y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width - 16f, RimMindUI.LineHeight), item);
+                    y = DrawAgentRow(new Rect(bodyRect.x, y, bodyRect.width, RimMindUI.LineHeight), item);
             }
 
             Widgets.EndScrollView();
@@ -156,102 +160,147 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             return h;
         }
 
-        private void DrawDetail(Rect rect, Pawn? selectedPawn)
+        private void DrawDetail(AgentPageLayoutRects layout, Pawn? selectedPawn)
         {
+            Rect rect = layout.Detail;
+            Widgets.DrawBoxSolid(rect, RimMindUI.ColorCardBg);
+
             if (selectedPawn == null)
             {
                 RimMindUI.DrawEmptyState(rect, "RimMind.UI.AgentStateDebug.NoPawn".Translate());
                 return;
             }
 
-            float y = rect.y;
-            float chatZoneTop = rect.yMax - 34f;
-
-            // Pawn name header
-            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, selectedPawn.LabelShortCap) + rect.y;
-            y += RimMindUI.Padding;
-
             var comp = CompPawnAgent.GetComp(selectedPawn);
+            DrawDetailHeader(layout.Header, selectedPawn, comp?.Agent);
+
             if (comp?.Agent == null)
             {
-                // Pending-created state: show Create/Start button
-                if (y + RimMindUI.BtnHeight < chatZoneTop)
+                if (Widgets.ButtonText(
+                    new Rect(layout.Actions.x, layout.Actions.y, 160f, RimMindUI.BtnHeight),
+                    "RimMind.UI.AgentsPage.CreateStart".Translate()))
                 {
-                    if (Widgets.ButtonText(new Rect(rect.x, y, 160f, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.CreateStart".Translate()))
-                    {
-                        if (comp != null && comp.EnsureAgentCreated())
-                            SafeTransitionTo(comp.Agent, AgentState.Active);
-                        else
-                            Messages.Message("RimMind.UI.AgentsPage.CreateFailed".Translate(),
-                                MessageTypeDefOf.RejectInput, false);
-                    }
+                    if (comp != null && comp.EnsureAgentCreated())
+                        SafeTransitionTo(comp.Agent, AgentState.Active);
+                    else
+                        Messages.Message("RimMind.UI.AgentsPage.CreateFailed".Translate(),
+                            MessageTypeDefOf.RejectInput, false);
                 }
+
+                DrawActivity(layout.Activity, "RimMind.UI.AgentsPage.Pending".Translate(), RequestOverlay.Pending.Count);
                 return;
             }
 
             var agent = comp.Agent;
+            DrawActions(layout.Actions, agent);
+            DrawActivity(layout.Activity, StateLabel(agent.State), RequestOverlay.Pending.Count);
 
-            // Agent state info
-            string stateLabel = agent.State switch
+            if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
+                DrawChat(layout.Chat, selectedPawn);
+        }
+
+        private static void DrawDetailHeader(Rect rect, Pawn pawn, IAgentControl? agent)
+        {
+            Rect inner = rect.ContractedBy(RimMindUI.Padding);
+
+            Text.Font = GameFont.Medium;
+            GUI.color = RimMindUI.ColorHeader;
+            Widgets.Label(new Rect(inner.x, inner.y, inner.width, RimMindUI.LineHeight), pawn.LabelShortCap);
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+
+            string stateLabel = "RimMind.UI.AgentsPage.Pending".Translate();
+            AgentState? state = null;
+            if (agent != null)
+            {
+                state = agent.State;
+                stateLabel = StateLabel(agent.State);
+            }
+
+            var (textColor, bgColor) = state.HasValue
+                ? RimMindUI.GetStateBadgeColors(state.Value)
+                : RimMindUI.GetStateBadgeColors(AgentState.Dormant, isPendingCreation: true);
+            RimMindUI.DrawStatusBadge(inner, inner.y + RimMindUI.LineHeight + RimMindUI.Padding - inner.y,
+                "RimMind.UI.AgentsPage.State".Translate() + ": " + stateLabel, textColor, bgColor);
+        }
+
+        private static void DrawActions(Rect rect, IAgentControl agent)
+        {
+            float buttonW = Mathf.Min(130f, (rect.width - RimMindUI.Padding * 2f) / 3f);
+            float x = rect.x;
+
+            switch (agent.State)
+            {
+                case AgentState.Active:
+                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
+                        "RimMind.UI.AgentsPage.Pause".Translate()))
+                        SafeTransitionTo(agent, AgentState.Paused);
+                    break;
+                case AgentState.Paused:
+                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
+                        "RimMind.UI.AgentsPage.Resume".Translate()))
+                        SafeTransitionTo(agent, AgentState.Active);
+                    break;
+                case AgentState.Dormant:
+                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
+                        "RimMind.UI.AgentsPage.Activate".Translate()))
+                        SafeTransitionTo(agent, AgentState.Active);
+                    break;
+                case AgentState.Terminated:
+                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
+                        "RimMind.UI.AgentsPage.Restart".Translate()))
+                        SafeTransitionTo(agent, AgentState.Active);
+                    break;
+            }
+
+            x += buttonW + RimMindUI.Padding;
+            if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
+            {
+                if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
+                    "RimMind.UI.AgentsPage.ForceThink".Translate()))
+                {
+                    agent.ForceThink();
+                }
+
+                x += buttonW + RimMindUI.Padding;
+                if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
+                    "RimMind.UI.AgentsPage.OpenRequests".Translate()))
+                {
+                    Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
+                }
+            }
+        }
+
+        private void DrawActivity(Rect rect, string stateLabel, int pendingRequests)
+        {
+            Widgets.DrawBoxSolid(rect, RimMindUI.ColorSectionBg);
+            Rect inner = rect.ContractedBy(RimMindUI.Padding);
+
+            float contentHeight = RimMindUI.LineHeight * 5f + RimMindUI.SectionGap;
+            var (bodyRect, _) = RimMindUI.BeginScrollView(inner, ref _activityScrollPos,
+                Mathf.Max(inner.height + 1f, contentHeight));
+
+            float y = RimMindUI.DrawSectionHeader(bodyRect, 0f,
+                "RimMind.UI.AgentsPage.Activity".Translate());
+            y = RimMindUI.DrawKeyValueRow(bodyRect, y,
+                "RimMind.UI.AgentsPage.State".Translate(), stateLabel);
+            y = RimMindUI.DrawKeyValueRow(bodyRect, y,
+                "RimMind.UI.Hub.PendingRequests".Translate(), pendingRequests.ToString());
+            RimMindUI.DrawWrappedLabel(bodyRect, y,
+                "RimMind.UI.AgentsPage.Activity.Empty".Translate(), RimMindUI.ColorMuted);
+
+            Widgets.EndScrollView();
+        }
+
+        private static string StateLabel(AgentState state)
+        {
+            return state switch
             {
                 AgentState.Active => "RimMind.UI.AgentsPage.Active".Translate(),
                 AgentState.Paused => "RimMind.UI.AgentsPage.Paused".Translate(),
                 AgentState.Terminated => "RimMind.UI.AgentsPage.Terminated".Translate(),
                 _ => "RimMind.UI.AgentsPage.Dormant".Translate()
             };
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y,
-                "RimMind.UI.AgentsPage.State".Translate(), stateLabel) + rect.y;
-            y += RimMindUI.Padding;
-
-            // Action buttons — only draw if not overlapping chat zone
-            if (y + RimMindUI.BtnHeight < chatZoneTop)
-            {
-                // State-dependent primary action
-                switch (agent.State)
-                {
-                    case AgentState.Active:
-                        if (Widgets.ButtonText(new Rect(rect.x, y, 120f, RimMindUI.BtnHeight),
-                            "RimMind.UI.AgentsPage.Pause".Translate()))
-                            SafeTransitionTo(agent, AgentState.Paused);
-                        break;
-                    case AgentState.Paused:
-                        if (Widgets.ButtonText(new Rect(rect.x, y, 120f, RimMindUI.BtnHeight),
-                            "RimMind.UI.AgentsPage.Resume".Translate()))
-                            SafeTransitionTo(agent, AgentState.Active);
-                        break;
-                    case AgentState.Dormant:
-                        if (Widgets.ButtonText(new Rect(rect.x, y, 120f, RimMindUI.BtnHeight),
-                            "RimMind.UI.AgentsPage.Activate".Translate()))
-                            SafeTransitionTo(agent, AgentState.Active);
-                        break;
-                    case AgentState.Terminated:
-                        if (Widgets.ButtonText(new Rect(rect.x, y, 120f, RimMindUI.BtnHeight),
-                            "RimMind.UI.AgentsPage.Restart".Translate()))
-                            SafeTransitionTo(agent, AgentState.Active);
-                        break;
-                }
-
-                // Force Think — only meaningful for Active/Paused agents
-                if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
-                {
-                    if (Widgets.ButtonText(new Rect(rect.x + 130f, y, 120f, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.ForceThink".Translate()))
-                    {
-                        agent.ForceThink();
-                    }
-
-                    if (Widgets.ButtonText(new Rect(rect.x + 260f, y, 140f, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.OpenRequests".Translate()))
-                    {
-                        Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
-                    }
-                }
-            }
-
-            // Chat input at bottom — only for Active/Paused agents
-            if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
-                DrawChat(new Rect(rect.x, chatZoneTop, rect.width, 34f), selectedPawn);
         }
 
         private void DrawChat(Rect rect, Pawn pawn)

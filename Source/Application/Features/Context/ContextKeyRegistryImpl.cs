@@ -1,12 +1,15 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Registry;
 using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
-    public sealed class ContextKeyRegistryImpl : IContextKeyRegistry
+    public sealed class ContextKeyRegistryImpl : IContextKeyRegistry, IOwnedRegistry
     {
         private readonly ConcurrentDictionary<string, KeyMeta> _keys = new ConcurrentDictionary<string, KeyMeta>();
         private readonly ILogSink? _logSink;
@@ -41,6 +44,24 @@ namespace RimMind.Application.Features.Context
         public bool Unregister(string key)
         {
             return _keys.TryRemove(key, out _);
+        }
+
+        /// <inheritdoc/>
+        /// <remarks>
+        /// KeyMeta 使用 <c>OwnerMod</c> 字段（非 <c>OwnerModId</c>），语义一致。
+        /// </remarks>
+        public int UnregisterByOwner(string ownerModId)
+        {
+            if (ownerModId == null) throw new ArgumentNullException(nameof(ownerModId));
+            var toRemove = _keys.Values
+                .Where(k => k.OwnerMod == ownerModId)
+                .Select(k => k.Key)
+                .ToList();
+            foreach (var key in toRemove)
+            {
+                _keys.TryRemove(key, out _);
+            }
+            return toRemove.Count;
         }
 
         public IReadOnlyList<KeyMeta> GetAll()

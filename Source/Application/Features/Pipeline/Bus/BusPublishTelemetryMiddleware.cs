@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
@@ -11,7 +12,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusPublishTelemetry";
         public int Order => int.MinValue;
         public string Id => "BusPublishTelemetry";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ILogSink? _log;
 

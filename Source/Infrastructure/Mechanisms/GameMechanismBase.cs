@@ -1,52 +1,31 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
 using Verse;
-using VersePawn = Verse.Pawn;
 using VerseMap = Verse.Map;
 
 namespace RimMind.Infrastructure.Mechanisms
 {
-    public abstract class GameMechanismBase<TDef> : IGameMechanism
+    /// <summary>
+    /// 泛型 Mechanism 基类，继承 <see cref="GameMechanismBaseNoDef"/>，
+    /// 仅 override <see cref="ExecuteListAsync"/> 以枚举 <see cref="DefDatabase{TDef}"/>。
+    /// 其余共享逻辑（IExtension 成员、Execute*Async 默认实现、FindPawn、ResolveMap）
+    /// 均由 <see cref="GameMechanismBaseNoDef"/> 提供，消除约 67 行重复代码。
+    /// </summary>
+    /// <typeparam name="TDef">枚举的 Def 类型，用于 ExecuteListAsync。</typeparam>
+    public abstract class GameMechanismBase<TDef> : GameMechanismBaseNoDef
         where TDef : Def, new()
     {
-        string IExtension.Id => MechanismId;
-        string IExtension.OwnerModId => "RimMindCore";
-        public abstract string MechanismId { get; }
-        public abstract MechanismScope Scope { get; }
-        public abstract MechanismRisk Risk { get; }
-        public abstract IReadOnlyList<MechanismOperationType> SupportedOperations { get; }
-        public abstract MechanismDocs Docs { get; }
-        public virtual IReadOnlyList<MechanismActionInfo>? GetWriteActions() => null;
-        public virtual MechanismRisk GetRiskForOperation(MechanismOperationType operation) => Risk;
-
-        public virtual Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct)
-            => Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "query")));
-
-        public virtual Task<Result<bool, RimMindError>> ExecuteSetAsync(MechanismWriteArgs args, CancellationToken ct)
-            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "set")));
-
-        public virtual Task<Result<bool, RimMindError>> ExecuteAddAsync(MechanismWriteArgs args, CancellationToken ct)
-            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "add")));
-
-        public virtual Task<Result<bool, RimMindError>> ExecuteRemoveAsync(MechanismWriteArgs args, CancellationToken ct)
-            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "remove")));
-
-        public virtual Task<Result<bool, RimMindError>> ExecuteToggleAsync(MechanismWriteArgs args, CancellationToken ct)
-            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "toggle")));
-
-        public virtual Task<Result<bool, RimMindError>> ExecuteTriggerAsync(MechanismWriteArgs args, CancellationToken ct)
-            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "trigger")));
-
-        public virtual Task<Result<IReadOnlyList<MechanismEnumResult>, RimMindError>> ExecuteListAsync(int? pawnId, CancellationToken ct)
+        /// <summary>
+        /// 枚举 <see cref="DefDatabase{TDef}"/> 中所有 Def 作为可选项。
+        /// 非 Def 类型的 Mechanism（继承 NoDef 直接）保持返回 Err 的默认行为。
+        /// </summary>
+        public override Task<Result<IReadOnlyList<MechanismEnumResult>, RimMindError>> ExecuteListAsync(int? pawnId, CancellationToken ct)
         {
             var results = DefDatabase<TDef>.AllDefsListForReading
                 .Select(d => new MechanismEnumResult
@@ -60,55 +39,19 @@ namespace RimMind.Infrastructure.Mechanisms
             return Task.FromResult(Result<IReadOnlyList<MechanismEnumResult>, RimMindError>.Ok(results.AsReadOnly()));
         }
 
-        public virtual Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
-            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "watch")));
-
-        protected static VersePawn? FindPawn(int pawnId)
-        {
-            foreach (var map in Find.Maps)
-            {
-                var pawn = map.mapPawns?.AllPawns.FirstOrDefault(p => p.thingIDNumber == pawnId);
-                if (pawn != null) return pawn;
-            }
-
-            var worldPawn = Find.WorldPawns?.AllPawnsAlive.FirstOrDefault(p => p.thingIDNumber == pawnId);
-            return worldPawn;
-        }
-
+        /// <summary>
+        /// 按 defName 查找 <typeparamref name="TDef"/>。仅 Def 类型 Mechanism 需要。
+        /// </summary>
         protected static TDef? FindDef(string defName)
         {
             if (string.IsNullOrEmpty(defName)) return null;
             return DefDatabase<TDef>.GetNamed(defName);
         }
 
-        protected static VerseMap? ResolveMap(MechanismReadArgs args)
-        {
-            if (args.MapId.HasValue)
-            {
-                foreach (var map in Find.Maps)
-                {
-                    if (map.uniqueID == args.MapId.Value)
-                        return map;
-                }
-                return null;
-            }
-            return Find.AnyPlayerHomeMap;
-        }
-
-        protected static VerseMap? ResolveMap(MechanismWriteArgs args)
-        {
-            if (args.MapId.HasValue)
-            {
-                foreach (var map in Find.Maps)
-                {
-                    if (map.uniqueID == args.MapId.Value)
-                        return map;
-                }
-                return null;
-            }
-            return Find.AnyPlayerHomeMap;
-        }
-
+        /// <summary>
+        /// 验证地图非空，否则返回 <see cref="RimMindErrors.MapNotFound"/> 错误。
+        /// 仅 Def 类型 Mechanism 需要。
+        /// </summary>
         protected static Result<T, RimMindError> ValidateMapOrErr<T>(VerseMap? map)
         {
             if (map == null)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
@@ -49,7 +50,7 @@ public sealed class ProactiveAgentMode : IAgentMode, IProactiveExtensions
         public string DisplayName => "Proactive";
         public string Description => "Periodically initiates decisions even without perception triggers";
         public string Id => ModeId.Value;
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
     private const int ProactiveTickInterval = RimMindDefaults.ProactiveTickInterval;
 

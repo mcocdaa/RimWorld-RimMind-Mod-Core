@@ -33,6 +33,7 @@ namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static void Shutdown()
         {
             if (RimMindRuntime.Instance.IsShutdown) return;
@@ -50,11 +51,14 @@ namespace RimMind.Presentation.Api
         public static void PauseQueue() => Request.PauseQueue();
         public static void ResumeQueue() => Request.ResumeQueue();
         public static int ActiveRequestCount => Request.ActiveRequestCount;
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IReadOnlyList<ClientTrackedRequest> GetActiveRequests() => Request.GetActiveRequests();
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IReadOnlyList<ClientTrackedRequest> GetAllQueuedRequests() => Request.GetAllQueuedRequests();
         public static int TotalQueuedCount => Request.TotalQueuedCount;
         public static void ClearModCooldown(string modId) => Request.ClearModCooldown(modId);
 
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static string BuildMapContext(Map map, bool brief = false) => ChatFlow.BuildMapContext(map, brief);
 
         public static IToolRegistry Tools => ToolSet.Registry;
@@ -71,10 +75,13 @@ namespace RimMind.Presentation.Api
         public static void NotifyIncidentExecuted() => Ext.NotifyIncidentExecuted();
         public static bool CanTriggerDialogue => Ext.CanTriggerDialogue;
         public static void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider) => Ext.RegisterAgentIdentityProvider(provider);
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static AgentIdentity? GetAgentIdentity(Pawn pawn) => Ext.GetAgentIdentity(pawn);
         public static void RegisterAgentActionBridge(IAgentActionBridge bridge) => Ext.RegisterAgentActionBridge(bridge);
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IAgentActionBridge GetAgentActionBridge() => Ext.GetAgentActionBridge();
         public static void RegisterParameterTuner(IParameterTuner tuner) => Ext.RegisterParameterTuner(tuner);
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IReadOnlyList<IParameterTuner> ParameterTuners => Ext.ParameterTuners;
 
         public static Result<string?, RimMindError> GetProviderData(string category, Pawn pawn) => Providers.GetProviderData(category, pawn);
@@ -86,16 +93,20 @@ namespace RimMind.Presentation.Api
         public static IContextEngine GetContextEngine() => Settings.GetContextEngine();
         internal static IBudgetScheduler? GetContextScheduler() => Settings.GetContextScheduler();
         internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => Settings.GetEmbeddingSnapshotStore();
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static ITelemetryCollector Telemetry => Settings.Telemetry;
 
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IAudioPlayer AudioPlayer => Audio.AudioPlayer;
 
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IAgentBus GetAgentBus() => Bus.GetAgentBus();
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f) => Bus.PublishPerception(pawnId, type, content, importance);
         public static void RegisterPendingRequest(UIRequestEntry entry) => Bus.RegisterPendingRequest(entry);
         public static IReadOnlyList<UIRequestEntry> GetPendingRequests() => Bus.GetPendingRequests();
         internal static IAIClient? GetClient() => Bus.GetClient();
         public static void InvalidateClientCache() => Bus.InvalidateClientCache();
+        [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static IAIClient? GetPlayer2Client() => Bus.GetPlayer2Client();
 
         public static string? GetNpcForMap(Map map)

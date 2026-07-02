@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Models;
@@ -12,7 +13,7 @@ namespace RimMind.Presentation.Agent.Perception
     public sealed class CombatPerceptionSource : IPerceptionSource
     {
         public string Id => "rimmind.perception.combat";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public int Priority => 30;
 
         public bool ShouldSense(IAgentInfo agent) => agent.State == Domain.Enums.AgentState.Active;

@@ -15,6 +15,7 @@ using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Helpers;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.Services.Clients.Shared;
 using Newtonsoft.Json;
 
 namespace RimMind.Infrastructure.Services.Clients.Player2
@@ -195,53 +196,24 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
 
                 if (toolCallsDto != null && toolCallsDto.Count > 0)
                 {
-                    var converted = toolCallsDto.Select(tc => new
-                    {
-                        id = tc.Id,
-                        type = tc.Type,
-                        function = new
+                    var toolCallsJson = ToolCallJsonNormalizer.Normalize(
+                        toolCallsDto.Select(tc => new ToolCallEntry
                         {
-                            name = tc.Function?.Name,
-                            arguments = tc.Function?.Arguments,
-                        }
-                    }).ToList();
-                    response = new RimMind.Domain.Llm.LlmResponse
-                    {
-                        RequestId = response.RequestId,
-                        Content = response.Content,
-                        ToolCallsJson = JsonConvert.SerializeObject(converted),
-                        TokensUsed = response.TokensUsed,
-                        PromptTokens = response.PromptTokens,
-                        CompletionTokens = response.CompletionTokens,
-                        CachedTokens = response.CachedTokens,
-                        State = response.State,
-                        Priority = response.Priority,
-                        AttemptCount = response.AttemptCount,
-                        QueueWaitMs = response.QueueWaitMs,
-                        ProcessingMs = response.ProcessingMs,
-                        HttpStatusCode = response.HttpStatusCode,
-                    };
+                            Id = tc.Id,
+                            Type = tc.Type,
+                            FunctionName = tc.Function?.Name,
+                            FunctionArguments = tc.Function?.Arguments,
+                        }));
+                    if (toolCallsJson != null)
+                        response = response.With(toolCallsJson: toolCallsJson);
                 }
 
                 return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Ok(response);
             }
-            catch (TaskCanceledException)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2 request cancelled ({envelope.RequestId})", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled());
-            }
-            catch (HttpTransport.HttpException ex)
-            {
-                sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2 request failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
-            }
             catch (Exception ex)
             {
                 sw.Stop();
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2 request failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Internal($"Player2 request failed: {ex.Message}", ex));
+                return ClientExceptionMapper.MapException(ex, nameof(Player2Client), envelope.RequestId, "request", _logSink);
             }
         }
 
@@ -308,19 +280,12 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 using var stream = await response.Content.ReadAsStreamAsync();
                 using var reader = new System.IO.StreamReader(stream);
 
-                while (!reader.EndOfStream && !ct.IsCancellationRequested)
+                await SseStreamReader.ReadDataLinesAsync(reader, async data =>
                 {
-                    string? line = await reader.ReadLineAsync();
-                    if (string.IsNullOrEmpty(line)) continue;
-                    if (!line.StartsWith("data: ")) continue;
-
-                    string data = line.Substring(6);
-                    if (data == "[DONE]") break;
-
                     try
                     {
                         var chunk = JsonConvert.DeserializeObject<Player2StreamChunkDto>(data);
-                        if (chunk == null) continue;
+                        if (chunk == null) return;
 
                         var delta = chunk.Choices?[0]?.Delta;
                         if (delta != null && delta.Content != null)
@@ -373,17 +338,12 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                     {
                         // Skip malformed SSE chunks
                     }
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2 stream cancelled ({envelope.RequestId})", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled());
+                }, ct);
             }
             catch (Exception ex)
             {
-                _logSink?.LogFromBackground($"[RimMind-Core] Player2 stream failed ({envelope.RequestId}): {ex.Message}", isWarning: true);
-                return Result<RimMind.Domain.Llm.LlmResponse, RimMindError>.Err(RimMindErrors.ClientTransient(ex.Message, ex));
+                return ClientExceptionMapper.MapException(ex, nameof(Player2Client), envelope.RequestId, "stream", _logSink,
+                    useClientTransientForGeneric: true);
             }
 
             var finalResponse = new RimMind.Domain.Llm.LlmResponse

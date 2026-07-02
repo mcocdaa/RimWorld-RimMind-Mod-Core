@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models;
@@ -13,7 +14,7 @@ namespace RimMind.Application.Features.Pipeline.Bus
         public string Name => "BusDispatch";
         public int Order => RimMindDefaults.MiddlewareOrder.Dispatch;
         public string Id => "BusDispatch";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly Action<AgentBusEvent> _dispatch;
         private readonly ILogSink? _log;

@@ -1,14 +1,16 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Registry;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Tools;
 
 namespace RimMind.Application.Features.Tools
 {
-    public sealed class ToolRegistry : IToolRegistry
+    public sealed class ToolRegistry : IToolRegistry, IOwnedRegistry
     {
         private readonly ConcurrentDictionary<string, IToolHandler> _handlers
             = new ConcurrentDictionary<string, IToolHandler>();
@@ -25,6 +27,21 @@ namespace RimMind.Application.Features.Tools
         public bool Unregister(string toolId)
         {
             return _handlers.TryRemove(toolId, out _);
+        }
+
+        /// <inheritdoc/>
+        public int UnregisterByOwner(string ownerModId)
+        {
+            if (ownerModId == null) throw new ArgumentNullException(nameof(ownerModId));
+            var toRemove = _handlers.Values
+                .Where(h => h.OwnerModId == ownerModId)
+                .Select(h => h.Definition.Id)
+                .ToList();
+            foreach (var id in toRemove)
+            {
+                _handlers.TryRemove(id, out _);
+            }
+            return toRemove.Count;
         }
 
         public IToolHandler? FindById(string toolId)

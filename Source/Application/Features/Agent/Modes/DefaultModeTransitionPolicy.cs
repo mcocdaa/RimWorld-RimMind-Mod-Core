@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
@@ -13,7 +14,7 @@ namespace RimMind.Application.Features.Agent.Modes
     public class DefaultModeTransitionPolicy : IModeTransitionPolicy
     {
         public string Id => "DefaultModeTransitionPolicy";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public string? DenyReason => null;
 
         public bool CanTransition(IAgentInfo agent, AgentModeId from, AgentModeId to)

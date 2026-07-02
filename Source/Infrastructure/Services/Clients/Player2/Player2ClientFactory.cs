@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -17,7 +18,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         }
 
         public string Id => AIProviders.Player2;
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public string ProviderId => AIProviders.Player2;
         public bool RequiresApiKey => false;
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Models.Pipeline;
@@ -10,7 +11,7 @@ namespace RimMind.Presentation.Agent.Perception
     public sealed class SocialPerceptionSource : IPerceptionSource
     {
         public string Id => "rimmind.perception.social";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public int Priority => 50;
 
         public bool ShouldSense(IAgentInfo agent) => agent.State == Domain.Enums.AgentState.Active;

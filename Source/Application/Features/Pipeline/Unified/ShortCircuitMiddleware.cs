@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Interfaces.Runtime;
@@ -14,7 +15,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedShortCircuit";
         public int Order => RimMindDefaults.MiddlewareOrder.ShortCircuit;
         public string Id => "UnifiedShortCircuit";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ILogSink? _log;
         private readonly IRimMindRuntime? _runtime;

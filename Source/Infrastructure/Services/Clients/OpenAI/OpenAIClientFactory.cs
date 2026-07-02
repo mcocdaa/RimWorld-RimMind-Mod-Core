@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -19,7 +20,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
         }
 
         public string Id => AIProviders.OpenAI;
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public string ProviderId => AIProviders.OpenAI;
         public bool RequiresApiKey => true;
 

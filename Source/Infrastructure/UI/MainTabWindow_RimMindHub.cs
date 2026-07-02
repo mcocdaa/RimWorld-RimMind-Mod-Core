@@ -40,15 +40,12 @@ namespace RimMind.Infrastructure.UI
 
         public override void DoWindowContents(Rect inRect)
         {
-            float y = RimMindUI.DrawWindowHeader(inRect, "RimMind.UI.Hub.Title".Translate());
+            HubLayoutRects layout = DebugCenterLayout.CalculateHub(inRect);
 
-            Rect tabRect = new Rect(inRect.x, y, inRect.width, RimMindUI.TabHeight);
-            DrawTabs(tabRect);
-            y = tabRect.yMax + RimMindUI.Padding;
-
-            Rect contentRect = new Rect(inRect.x, y, inRect.width, inRect.yMax - y);
+            RimMindUI.DrawWindowHeader(layout.Body, "RimMind.UI.Hub.Title".Translate());
+            DrawTabs(layout.Tabs);
             IDebugCenterPageDrawer? selectedPage = ResolveSelectedPage();
-            selectedPage?.Draw(contentRect, _context);
+            selectedPage?.Draw(layout.Content, _context);
         }
 
         private void DrawTabs(Rect rect)
@@ -62,12 +59,9 @@ namespace RimMind.Infrastructure.UI
                 var page = _pages[i];
                 Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
                 bool selected = _pageId == page.Descriptor.Id;
-                GUI.color = selected ? Color.white : Color.gray;
-                if (Widgets.ButtonText(tabBtn, page.Descriptor.LabelKey.Translate()))
+                if (RimMindUI.DrawTabButton(tabBtn, page.Descriptor.LabelKey.Translate(), selected))
                     _pageId = page.Descriptor.Id;
             }
-
-            GUI.color = Color.white;
         }
 
         private IDebugCenterPageDrawer? ResolveSelectedPage()

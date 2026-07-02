@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -15,7 +16,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedCircuitBreaker";
         public int Order => RimMindDefaults.MiddlewareOrder.CircuitBreaker;
         public string Id => "UnifiedCircuitBreaker";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ICircuitBreakerSettings? _settings;
         private readonly ILogSink? _log;

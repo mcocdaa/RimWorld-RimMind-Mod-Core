@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -20,7 +21,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedToolCallDispatch";
         public int Order => RimMindDefaults.MiddlewareOrder.ToolCallDispatch;
         public string Id => "UnifiedToolCallDispatch";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly IToolRegistry _toolRegistry;
         private readonly ILogSink? _log;

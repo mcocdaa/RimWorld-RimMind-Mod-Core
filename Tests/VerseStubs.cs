@@ -7,6 +7,34 @@ namespace UnityEngine
     /// <summary>Stub for Unity Texture2D used in test compilation.</summary>
     public class Texture2D { }
 
+    public struct Vector2
+    {
+        public float x, y;
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+    }
+
+    public struct Rect
+    {
+        public float x, y, width, height;
+        public Rect(float x, float y, float width, float height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        public float xMax => x + width;
+        public float yMax => y + height;
+    }
+
+    public static class Mathf
+    {
+        public static float Max(float a, float b) => Math.Max(a, b);
+        public static float Min(float a, float b) => Math.Min(a, b);
+        public static float Clamp(float value, float min, float max) => Math.Min(Math.Max(value, min), max);
+    }
+
     /// <summary>Stub for Unity Color struct used in UI theme tests.</summary>
     public struct Color
     {

@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models;
@@ -14,7 +15,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedRetry";
         public int Order => RimMindDefaults.MiddlewareOrder.UnifiedRetry;
         public string Id => "UnifiedRetry";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly int _maxRetries;
         private readonly TimeSpan _delay;

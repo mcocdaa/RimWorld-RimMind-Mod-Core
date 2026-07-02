@@ -1,5 +1,6 @@
 using System;
 using HarmonyLib;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
@@ -85,7 +86,7 @@ namespace RimMind.Presentation
         private readonly IOverlaySettings _settings;
         public CoreOverlayToggle(IOverlaySettings settings) { _settings = settings; }
         public string Id => "request_overlay";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public bool IsActive => _settings.RequestOverlayEnabled;
         public void Toggle()
         {

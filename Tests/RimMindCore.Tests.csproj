@@ -66,6 +66,9 @@
     <Compile Include="Presentation\UI\*.cs" />
     <Compile Include="Infrastructure\Verse\*.cs" />
     <Compile Include="Infrastructure\OpenAI\*.cs" />
+    <Compile Include="Infrastructure\Clients\Shared\*.cs" />
+    <Compile Include="Constants\*.cs" />
+    <Compile Include="Registry\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -79,9 +82,16 @@
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
+    <Compile Include="../Source/Infrastructure/UI/DebugCenter/DebugCenterLayout.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/MessageDto.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/OpenAIRequestSerializer.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/HttpTransport.cs" />
+    <Compile Include="../Source/Infrastructure/Services/Clients/Shared/*.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/GameMechanismRegistry.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHandler.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/MechanismListToolHandler.cs" />
+    <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHelper.cs" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -15,7 +16,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "ContextFeedback";
         public int Order => RimMindDefaults.MiddlewareOrder.ContextFeedback;
         public string Id => "ContextFeedback";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly IRelevanceLearner _learner;
         private readonly AIResponseAnalyzer _analyzer;

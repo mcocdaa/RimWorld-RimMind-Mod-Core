@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -15,7 +16,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedTelemetry";
         public int Order => RimMindDefaults.MiddlewareOrder.Telemetry;
         public string Id => "UnifiedTelemetry";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ITelemetryCollector? _telemetry;
         private readonly ILogSink? _log;

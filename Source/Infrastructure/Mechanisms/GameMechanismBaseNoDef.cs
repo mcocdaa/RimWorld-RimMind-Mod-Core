@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Models.Mechanisms;
@@ -16,7 +17,7 @@ namespace RimMind.Infrastructure.Mechanisms
     public abstract class GameMechanismBaseNoDef : IGameMechanism
     {
         string IExtension.Id => MechanismId;
-        string IExtension.OwnerModId => "RimMindCore";
+        string IExtension.OwnerModId => RimMindOwnerConsts.CoreModId;
         public abstract string MechanismId { get; }
         public abstract MechanismScope Scope { get; }
         public abstract MechanismRisk Risk { get; }

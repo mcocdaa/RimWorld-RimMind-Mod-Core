@@ -1,6 +1,7 @@
 using System;
 using RimMind.Application.Features.Llm;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Pipeline;
@@ -16,7 +17,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Name => "UnifiedClientInvoke";
         public int Order => RimMindDefaults.MiddlewareOrder.ClientInvoke;
         public string Id => "UnifiedClientInvoke";
-        public string OwnerModId => "RimMindCore";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ILogSink? _log;
 
