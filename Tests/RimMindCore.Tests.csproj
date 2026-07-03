@@ -67,6 +67,7 @@
     <Compile Include="Infrastructure\Verse\*.cs" />
     <Compile Include="Infrastructure\OpenAI\*.cs" />
     <Compile Include="Infrastructure\Clients\Shared\*.cs" />
+    <Compile Include="Infrastructure\UI\Layout\*.cs" />
     <Compile Include="Constants\*.cs" />
     <Compile Include="Registry\*.cs" />
   </ItemGroup>
@@ -84,6 +85,7 @@
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
     <Compile Include="../Source/Infrastructure/UI/DebugCenter/DebugCenterLayout.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
+    <Compile Include="../Source/Infrastructure/UI/Layout/LayoutConflict.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/MessageDto.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/OpenAIRequestSerializer.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/HttpTransport.cs" />
