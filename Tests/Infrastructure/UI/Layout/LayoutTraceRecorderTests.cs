@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Xunit;
 using RimMind.Infrastructure.UI.Layout;
@@ -103,6 +102,29 @@ namespace RimMind.Tests.Infrastructure.UI.Layout
             var view = new Rect(1, 2, 3, 4);
             var r = new LayoutTraceRecorder(view);
             Assert.Equal(view, r.ViewRect);
+        }
+
+        [Fact]
+        public void DetectConflicts_ZeroSize_NotFlaggedAsNegative()
+        {
+            var r = NewRecorder();
+            r.Record(new Rect(0, 0, 0, 10), "zeroW", "src");
+            r.Record(new Rect(0, 0, 10, 0), "zeroH", "src");
+            Assert.Empty(r.DetectConflicts());
+        }
+
+        [Fact]
+        public void DetectConflicts_NegativeSize_SkippedInOverflowAndOverlap()
+        {
+            var r = NewRecorder(viewH: 50f);
+            r.Record(new Rect(0, 40, -5, 20), "neg", "src");       // negative size, would overflow if not skipped
+            r.Record(new Rect(0, 0, 10, 10), "a", "srcA");          // valid
+            r.Record(new Rect(5, 0, 10, 10), "b", "srcB");          // overlaps a
+            var conflicts = r.DetectConflicts();
+            // 1 NegativeSize (neg) + 1 Overlap (a,b), no Overflow/Overlap involving neg
+            Assert.Equal(2, conflicts.Count);
+            Assert.Single(conflicts, c => c.Kind == ConflictKind.NegativeSize);
+            Assert.Single(conflicts, c => c.Kind == ConflictKind.Overlap);
         }
     }
 }
