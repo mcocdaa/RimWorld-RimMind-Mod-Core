@@ -87,6 +87,7 @@
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Infrastructure/UI/Layout/LayoutConflict.cs" />
     <Compile Include="../Source/Infrastructure/UI/Layout/LayoutTraceRecorder.cs" />
+    <Compile Include="../Source/Infrastructure/UI/Layout/LayoutConflictStore.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/MessageDto.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/OpenAI/OpenAIRequestSerializer.cs" />
     <Compile Include="../Source/Infrastructure/Services/Clients/HttpTransport.cs" />
