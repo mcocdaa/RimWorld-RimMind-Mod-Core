@@ -84,6 +84,33 @@ namespace RimMind.Presentation.Tests.Result
         }
 
         [Fact]
+        public void Optional_Properties_Default_To_Null()
+        {
+            var error = new RimMindError(RimMindErrorCode.InternalError, "internal");
+            Assert.Null(error.TraceId);
+            Assert.Null(error.Source);
+            Assert.Null(error.Details);
+            Assert.Null(error.InnerException);
+        }
+
+        [Fact]
+        public void Record_Equality_Same_Code_And_Message_Are_Equal()
+        {
+            var error1 = new RimMindError(RimMindErrorCode.ToolNotFound, "not found");
+            var error2 = new RimMindError(RimMindErrorCode.ToolNotFound, "not found");
+            Assert.Equal(error1, error2);
+            Assert.Equal(error1.GetHashCode(), error2.GetHashCode());
+        }
+
+        [Fact]
+        public void Record_Equality_Different_Code_Are_Not_Equal()
+        {
+            var error1 = new RimMindError(RimMindErrorCode.ToolNotFound, "not found");
+            var error2 = new RimMindError(RimMindErrorCode.ToolExecutionFailed, "not found");
+            Assert.NotEqual(error1, error2);
+        }
+
+        [Fact]
         public void ToolNotFound_Contains_Details_With_ToolId()
         {
             var error = RimMindErrors.ToolNotFound("my-tool");
