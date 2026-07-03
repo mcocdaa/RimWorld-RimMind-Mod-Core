@@ -24,6 +24,8 @@ namespace UnityEngine
             this.height = height;
         }
 
+        public float xMin => x;
+        public float yMin => y;
         public float xMax => x + width;
         public float yMax => y + height;
     }
