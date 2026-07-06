@@ -74,6 +74,9 @@
   <RimMind.Settings.Section.ModelBehavior>Model Behavior</RimMind.Settings.Section.ModelBehavior>
   <RimMind.Settings.Section.Request>Request Settings</RimMind.Settings.Section.Request>
   <RimMind.Settings.Section.Debug>Debug</RimMind.Settings.Section.Debug>
+  <RimMind.Settings.Section.ModelOutput>Model Output</RimMind.Settings.Section.ModelOutput>
+  <RimMind.Settings.Section.NetworkRetry>Network &amp; Retry</RimMind.Settings.Section.NetworkRetry>
+  <RimMind.Settings.Section.AgentCadence>Agent Cadence</RimMind.Settings.Section.AgentCadence>
   <RimMind.Settings.MaxConcurrent>Max Concurrent Requests</RimMind.Settings.MaxConcurrent>
   <RimMind.Settings.MaxConcurrent.Desc>Maximum number of simultaneous AI requests. Higher values improve responsiveness but increase API costs.</RimMind.Settings.MaxConcurrent.Desc>
   <RimMind.Settings.MaxRetry>Max Retry Count</RimMind.Settings.MaxRetry>

@@ -232,6 +232,20 @@ namespace RimMind.Presentation.UI
         private static void DrawRequestSection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.Request".Translate());
+            scope?.Record(listing.GetRect(0f), "Section:Request");
+
+            DrawModelOutputSubsection(listing, s, scope);
+            listing.Gap(8f);
+            DrawNetworkRetrySubsection(listing, s, scope);
+            listing.Gap(8f);
+            DrawAgentCadenceSubsection(listing, s, scope);
+        }
+
+        private static void DrawModelOutputSubsection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        {
+            SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.ModelOutput".Translate());
+            scope?.Record(listing.GetRect(0f), "Section:ModelOutput");
+
             listing.Label($"{"RimMind.Settings.MaxTokens".Translate()}: {s.MaxTokens}");
             GUI.color = Color.gray;
             listing.Label("  " + "RimMind.Settings.MaxTokens.Desc".Translate());
@@ -243,6 +257,12 @@ namespace RimMind.Presentation.UI
             listing.Label("  " + "RimMind.Settings.Temperature.Desc".Translate());
             GUI.color = Color.white;
             s.DefaultTemperature = listing.Slider(s.DefaultTemperature, 0f, 2f);
+        }
+
+        private static void DrawNetworkRetrySubsection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        {
+            SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.NetworkRetry".Translate());
+            scope?.Record(listing.GetRect(0f), "Section:NetworkRetry");
 
             listing.Label($"{"RimMind.Settings.MaxConcurrent".Translate()}: {s.MaxConcurrentRequests}");
             GUI.color = Color.gray;
@@ -267,6 +287,12 @@ namespace RimMind.Presentation.UI
             listing.Label("  " + "RimMind.Settings.RequestExpireTicks.Desc".Translate());
             GUI.color = Color.white;
             s.RequestExpireTicks = (int)listing.Slider(s.RequestExpireTicks, 6000f, 120000f);
+        }
+
+        private static void DrawAgentCadenceSubsection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        {
+            SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.AgentCadence".Translate());
+            scope?.Record(listing.GetRect(0f), "Section:AgentCadence");
 
             listing.Label($"{"RimMind.Settings.BehaviorHistoryMax".Translate()}: {s.BehaviorHistoryMax}");
             GUI.color = Color.gray;

@@ -192,6 +192,8 @@ namespace RimMind.Presentation.UI
             h += 24f;
             h += 24f + 24f;
             h += 24f + 24f + 32f;
+            h += 24f + 24f + 24f;
+            h += 8f + 8f;
             return h + 40f;
         }
 

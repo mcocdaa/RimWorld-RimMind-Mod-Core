@@ -74,6 +74,9 @@
   <RimMind.Settings.Section.ModelBehavior>模型行为</RimMind.Settings.Section.ModelBehavior>
   <RimMind.Settings.Section.Request>请求设置</RimMind.Settings.Section.Request>
   <RimMind.Settings.Section.Debug>调试</RimMind.Settings.Section.Debug>
+  <RimMind.Settings.Section.ModelOutput>模型输出</RimMind.Settings.Section.ModelOutput>
+  <RimMind.Settings.Section.NetworkRetry>网络与重试</RimMind.Settings.Section.NetworkRetry>
+  <RimMind.Settings.Section.AgentCadence>Agent 节奏</RimMind.Settings.Section.AgentCadence>
   <RimMind.Settings.MaxConcurrent>最大并发请求数</RimMind.Settings.MaxConcurrent>
   <RimMind.Settings.MaxConcurrent.Desc>同时向 AI 发送请求的上限。增大可提高响应速度，但会增加 API 费用。</RimMind.Settings.MaxConcurrent.Desc>
   <RimMind.Settings.MaxRetry>最大重试次数</RimMind.Settings.MaxRetry>
