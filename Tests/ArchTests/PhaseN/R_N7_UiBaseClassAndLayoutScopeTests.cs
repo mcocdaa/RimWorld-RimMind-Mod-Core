@@ -80,6 +80,16 @@ namespace RimMind.Tests.ArchTests.PhaseN
         }
 
         [Fact]
+        public void R_N7_DebugCenterPageDrawer_Contract_Requires_LayoutScope()
+        {
+            var path = Path.Combine(SourceDir, "Infrastructure", "UI", "DebugCenter", "IDebugCenterPageDrawer.cs");
+            string text = File.ReadAllText(path);
+
+            Assert.Contains("using RimMind.Infrastructure.UI.Layout;", text);
+            Assert.Contains("void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope);", text);
+        }
+
+        [Fact]
         [Trait("Phase", "N")]
         public void R_N7_No_Window_File_Overrides_DoWindowContents_Directly()
         {

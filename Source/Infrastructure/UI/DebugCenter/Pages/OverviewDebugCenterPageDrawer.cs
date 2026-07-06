@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.UI;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
 using Verse;
@@ -14,7 +15,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             0,
             IsDefault: false);
 
-        public void Draw(Rect rect, DebugCenterPageContext context)
+        public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
             Pawn? selectedPawn = context.SelectedPawn
                 ?? Find.Selector.SingleSelectedThing as Pawn;

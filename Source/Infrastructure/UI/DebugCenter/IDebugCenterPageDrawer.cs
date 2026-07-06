@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Models.UI;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter
@@ -7,6 +8,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter
     {
         DebugCenterPageDescriptor Descriptor { get; }
 
-        void Draw(Rect rect, DebugCenterPageContext context);
+        void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope);
     }
 }

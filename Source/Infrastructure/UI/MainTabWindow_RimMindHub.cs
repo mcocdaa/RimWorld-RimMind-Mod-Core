@@ -49,7 +49,7 @@ namespace RimMind.Infrastructure.UI
             RimMindUI.DrawWindowHeader(layout.Body, "RimMind.UI.Hub.Title".Translate());
             DrawTabs(layout.Tabs, scope);
             IDebugCenterPageDrawer? selectedPage = ResolveSelectedPage();
-            selectedPage?.Draw(layout.Content, _context);
+            selectedPage?.Draw(layout.Content, _context, scope);
         }
 
         private void DrawTabs(Rect rect, RimMindLayoutScope scope)

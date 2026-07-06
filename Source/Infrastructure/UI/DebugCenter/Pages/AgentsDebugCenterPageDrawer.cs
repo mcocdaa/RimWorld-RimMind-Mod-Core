@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Models.UI;
 using RimMind.Infrastructure.UI.AgentsPage;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
@@ -14,9 +15,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             10,
             IsDefault: false);
 
-        public void Draw(Rect rect, DebugCenterPageContext context)
+        public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
-            _drawer.Draw(rect, context.SelectedPawn);
+            _drawer.Draw(rect, context.SelectedPawn, scope);
         }
     }
 }

@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Models.UI;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
@@ -12,7 +13,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             50,
             IsDefault: false);
 
-        public void Draw(Rect rect, DebugCenterPageContext context)
+        public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
             DebugCenterToolGrid.Draw(
                 rect,

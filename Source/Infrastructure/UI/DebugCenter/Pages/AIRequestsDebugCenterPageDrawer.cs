@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Models.UI;
 using RimMind.Infrastructure.UI.AIRequestsPage;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
@@ -14,9 +15,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             20,
             IsDefault: true);
 
-        public void Draw(Rect rect, DebugCenterPageContext context)
+        public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
-            _drawer.Draw(rect);
+            _drawer.Draw(rect, scope);
         }
     }
 }
