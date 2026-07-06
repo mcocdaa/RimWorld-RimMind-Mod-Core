@@ -30,6 +30,10 @@ namespace RimMind.Infrastructure.UI.AgentsPage
 
             if (comp?.Agent == null)
             {
+                var model = AgentPageViewModel.PendingCreation(
+                    selectedPawn.LabelShortCap,
+                    RequestOverlay.Pending.Count);
+
                 if (Widgets.ButtonText(
                     new Rect(layout.Actions.x, layout.Actions.y, 160f, RimMindUI.BtnHeight),
                     "RimMind.UI.AgentsPage.CreateStart".Translate()))
@@ -41,13 +45,28 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                             MessageTypeDefOf.RejectInput, false);
                 }
 
-                _activityDrawer.Draw(layout.Activity, "RimMind.UI.AgentsPage.Pending".Translate(), RequestOverlay.Pending.Count, scope);
+                _activityDrawer.Draw(
+                    layout.Activity,
+                    "RimMind.UI.AgentsPage.Pending".Translate(),
+                    model.PendingRequests,
+                    model.TraceRows,
+                    scope);
                 return;
             }
 
             var agent = comp.Agent;
+            var agentModel = AgentPageViewModel.FromState(
+                selectedPawn.LabelShortCap,
+                agent.State,
+                RequestOverlay.Pending.Count,
+                requestRows: 0);
             DrawActions(layout.Actions, agent);
-            _activityDrawer.Draw(layout.Activity, agent.State, RequestOverlay.Pending.Count, scope);
+            _activityDrawer.Draw(
+                layout.Activity,
+                agentModel.State,
+                agentModel.PendingRequests,
+                agentModel.TraceRows,
+                scope);
 
             if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
                 _chatDrawer.Draw(layout.Chat, selectedPawn, ref chatDraft, scope);

@@ -95,32 +95,52 @@ namespace RimMind.Infrastructure.UI.AgentsPage
 
         public bool ShowEmptyActivity { get; }
 
-        public static AgentPageViewModel PendingCreation(string displayName)
-            => new(
+        public static AgentPageViewModel PendingCreation(
+            string displayName,
+            int pendingRequests = 0,
+            IEnumerable<AgentRequestTraceRow>? traceRows = null)
+        {
+            IReadOnlyList<AgentRequestTraceRow> traceRowSnapshot = SnapshotTraceRows(traceRows);
+            return new AgentPageViewModel(
                 displayName,
                 AgentState.Dormant,
                 isPendingCreation: true,
-                pendingRequests: 0,
-                requestRows: 0,
-                traceRows: EmptyTraceRows,
+                pendingRequests,
+                requestRows: traceRows == null ? 0 : traceRowSnapshot.Count,
+                traceRows: traceRowSnapshot,
                 actions: new ReadOnlyCollection<AgentPageAction>(
                     new List<AgentPageAction> { AgentPageAction.CreateStart }),
                 canChat: false);
+        }
 
         public static AgentPageViewModel FromState(
             string displayName,
             AgentState state,
             int pendingRequests,
-            int requestRows)
-            => new(
+            int requestRows,
+            IEnumerable<AgentRequestTraceRow>? traceRows = null)
+        {
+            IReadOnlyList<AgentRequestTraceRow> traceRowSnapshot = SnapshotTraceRows(traceRows);
+            return new AgentPageViewModel(
                 displayName,
                 state,
                 isPendingCreation: false,
                 pendingRequests,
-                requestRows,
-                traceRows: EmptyTraceRows,
+                traceRows == null ? requestRows : traceRowSnapshot.Count,
+                traceRows: traceRowSnapshot,
                 actions: GetActions(state),
                 canChat: CanChatFor(state));
+        }
+
+        private static IReadOnlyList<AgentRequestTraceRow> SnapshotTraceRows(
+            IEnumerable<AgentRequestTraceRow>? traceRows)
+        {
+            if (traceRows == null)
+                return EmptyTraceRows;
+
+            return new ReadOnlyCollection<AgentRequestTraceRow>(
+                new List<AgentRequestTraceRow>(traceRows));
+        }
 
         private static IReadOnlyList<AgentPageAction> GetActions(AgentState state)
         {

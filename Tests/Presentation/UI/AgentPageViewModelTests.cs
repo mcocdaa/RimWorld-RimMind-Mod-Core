@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI.AgentsPage;
 using Xunit;
@@ -70,6 +72,58 @@ namespace RimMind.Tests.Presentation.UI
                 viewModel.Actions);
             Assert.True(viewModel.CanChat);
             Assert.True(viewModel.ShowEmptyActivity);
+        }
+
+        [Fact]
+        public void FromState_TraceRows_AreSnapshottedAndReadOnly()
+        {
+            var rows = new List<AgentRequestTraceRow>
+            {
+                new AgentRequestTraceRow(
+                    AgentRequestTraceStatus.Pending,
+                    "toolcall: wait",
+                    "",
+                    error: null)
+            };
+
+            var viewModel = AgentPageViewModel.FromState(
+                "Mira",
+                AgentState.Active,
+                pendingRequests: 0,
+                requestRows: 0,
+                traceRows: rows);
+
+            rows.Add(new AgentRequestTraceRow(
+                AgentRequestTraceStatus.Success,
+                "toolcall: move",
+                "",
+                error: null));
+
+            Assert.Single(viewModel.TraceRows);
+            Assert.Equal("toolcall: wait", viewModel.TraceRows[0].Summary);
+            Assert.Throws<NotSupportedException>(() =>
+                ((IList<AgentRequestTraceRow>)viewModel.TraceRows).Add(rows[1]));
+        }
+
+        [Fact]
+        public void FromState_TraceRows_ControlEmptyActivityState()
+        {
+            var viewModel = AgentPageViewModel.FromState(
+                "Busy",
+                AgentState.Paused,
+                pendingRequests: 0,
+                requestRows: 0,
+                traceRows: new[]
+                {
+                    new AgentRequestTraceRow(
+                        AgentRequestTraceStatus.Success,
+                        "",
+                        "completed request",
+                        error: null)
+                });
+
+            Assert.Equal(1, viewModel.RequestRows);
+            Assert.False(viewModel.ShowEmptyActivity);
         }
 
         [Fact]
