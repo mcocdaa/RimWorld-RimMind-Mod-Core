@@ -805,5 +805,83 @@ namespace RimMind.Infrastructure.UI
             LayoutConflictStore.ShowOverlay = !LayoutConflictStore.ShowOverlay;
             Log.Message($"[RimMind-Core] UI layout conflict overlay: {(LayoutConflictStore.ShowOverlay ? "ON" : "OFF")}");
         }
+
+        [DebugAction("Autotests", "Test UI Layout Conflict Detector", actionType = DebugActionType.Action)]
+        public static void TestUiLayoutConflictDetector()
+        {
+            LayoutConflictStore.Clear();
+            var sb = new StringBuilder();
+            sb.AppendLine("[Autotests] === UI Layout Conflict Detector ===");
+
+            Window[] windows =
+            {
+                new Window_RequestLog(),
+                new Window_AIDebugLog(),
+                new Window_ToolCallDebug(),
+                new Window_MechanismStatus(),
+                new Window_ContextKeyDebug(),
+                new Window_AgentStateDebug(),
+                new Window_AgentModeDebug(),
+                new Window_AgentFlowLab(),
+                new Window_AgentProgressFloat(),
+            };
+
+            foreach (var w in windows)
+            {
+                Find.WindowStack.Add(w);
+            }
+
+            LongEventHandler.ExecuteWhenFinished(() =>
+            {
+                int pass = 0, fail = 0, skip = 0;
+                foreach (var w in windows)
+                {
+                    string name = w.GetType().Name;
+                    if (LayoutConflictStore.TryGet(name, out var report))
+                    {
+                        if (report!.HasConflicts)
+                        {
+                            fail++;
+                            sb.AppendLine($"  [FAIL] {name}: {report.Conflicts.Count} conflict(s)");
+                            foreach (var c in report.Conflicts)
+                                sb.AppendLine($"    - {c.Message}");
+                        }
+                        else
+                        {
+                            pass++;
+                            sb.AppendLine($"  [PASS] {name}: no conflicts");
+                        }
+                    }
+                    else
+                    {
+                        skip++;
+                        sb.AppendLine($"  [SKIP] {name}: no LayoutReport yet (window may not have drawn)");
+                    }
+                }
+
+                sb.AppendLine($"  Result: {pass} passed, {fail} failed, {skip} skipped");
+                if (fail > 0)
+                {
+                    Log.Error(sb.ToString());
+                }
+                else
+                {
+                    Log.Message(sb.ToString());
+                }
+
+                if (skip > 0)
+                {
+                    Log.Message("[Autotests] Some windows did not publish reports yet. Open them manually and run 'Dump UI Layout Conflicts'.");
+                }
+
+                foreach (var w in windows)
+                {
+                    if (w.IsOpen)
+                    {
+                        w.Close();
+                    }
+                }
+            });
+        }
     }
 }
