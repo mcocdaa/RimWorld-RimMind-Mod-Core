@@ -50,5 +50,13 @@ namespace RimMind.Infrastructure.UI.Layout
                 .FirstOrDefault();
 
         public static void Clear() => _reports.Clear();
+
+        /// <summary>
+        /// When true, RimMindLayoutScope.Dispose draws colored boxes around
+        /// conflicting rects for one frame. Toggled by debug action.
+        /// </summary>
+        public static bool ShowOverlay { get; set; }
+
+        public static int OverlayFrameRemaining { get; set; }
     }
 }

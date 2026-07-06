@@ -651,4 +651,6 @@
   <RimMind.UI.AIRequestsPage.State.Running>Running</RimMind.UI.AIRequestsPage.State.Running>
   <RimMind.UI.AIRequestsPage.State.Completed>Completed</RimMind.UI.AIRequestsPage.State.Completed>
   <RimMind.UI.AIRequestsPage.State.Failed>Failed</RimMind.UI.AIRequestsPage.State.Failed>
+  <RimMind.UI.LayoutConflict.Dump>Dump UI Layout Conflicts</RimMind.UI.LayoutConflict.Dump>
+  <RimMind.UI.LayoutConflict.Overlay>Toggle UI Layout Conflict Overlay</RimMind.UI.LayoutConflict.Overlay>
 </LanguageData>

@@ -17,6 +17,7 @@ using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.UI.Layout;
 using LudeonTK;
 using RimWorld;
 using UnityEngine;
@@ -773,6 +774,36 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  Result: {pass} passed, {fail} failed");
             Log.Message(sb.ToString());
+        }
+
+        [DebugAction("RimMind", "Dump UI Layout Conflicts", actionType = DebugActionType.Action)]
+        public static void DumpUiLayoutConflicts()
+        {
+            var all = LayoutConflictStore.GetAll().ToList();
+            if (all.Count == 0)
+            {
+                Log.Message("[RimMind-Core] No UI layout reports yet. Open a RimMind window first.");
+                return;
+            }
+            var sb = new StringBuilder();
+            sb.AppendLine("[RimMind-Core] === UI Layout Conflict Report ===");
+            foreach (var r in all.OrderBy(r => r.WindowName))
+            {
+                sb.AppendLine($"  [{r.WindowName}] {r.Conflicts.Count} conflict(s)");
+                foreach (var c in r.Conflicts)
+                    sb.AppendLine($"    - {c.Message}");
+            }
+            var worst = LayoutConflictStore.GetWorst();
+            if (worst != null && worst.HasConflicts)
+                sb.AppendLine($"  WORST: {worst.WindowName} ({worst.Conflicts.Count} conflicts)");
+            Log.Message(sb.ToString());
+        }
+
+        [DebugAction("RimMind", "Toggle UI Layout Conflict Overlay", actionType = DebugActionType.Action)]
+        public static void ToggleUiLayoutOverlay()
+        {
+            LayoutConflictStore.ShowOverlay = !LayoutConflictStore.ShowOverlay;
+            Log.Message($"[RimMind-Core] UI layout conflict overlay: {(LayoutConflictStore.ShowOverlay ? "ON" : "OFF")}");
         }
     }
 }

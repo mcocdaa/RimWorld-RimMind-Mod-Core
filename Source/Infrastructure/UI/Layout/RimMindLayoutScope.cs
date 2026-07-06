@@ -1,4 +1,5 @@
 using UnityEngine;
+using Verse;
 
 namespace RimMind.Infrastructure.UI.Layout
 {
@@ -36,6 +37,27 @@ namespace RimMind.Infrastructure.UI.Layout
             var conflicts = Recorder.DetectConflicts();
             var report = new LayoutReport(WindowName, conflicts);
             LayoutConflictStore.Publish(report);
+
+            if (LayoutConflictStore.ShowOverlay && conflicts.Count > 0)
+            {
+                foreach (var c in conflicts)
+                {
+                    foreach (var entry in c.Entries)
+                    {
+                        var color = c.Kind switch
+                        {
+                            ConflictKind.Overlap => new Color(1f, 0.4f, 0.4f, 0.6f),
+                            ConflictKind.Overflow => new Color(1f, 0.7f, 0.2f, 0.6f),
+                            ConflictKind.NegativeSize => new Color(0.8f, 0.2f, 1f, 0.6f),
+                            _ => Color.red
+                        };
+                        var oldColor = GUI.color;
+                        GUI.color = color;
+                        Widgets.DrawBox(entry.Rect, 2);
+                        GUI.color = oldColor;
+                    }
+                }
+            }
         }
     }
 }

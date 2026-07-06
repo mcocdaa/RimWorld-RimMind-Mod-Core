@@ -651,4 +651,6 @@
   <RimMind.UI.AIRequestsPage.State.Running>运行中</RimMind.UI.AIRequestsPage.State.Running>
   <RimMind.UI.AIRequestsPage.State.Completed>已完成</RimMind.UI.AIRequestsPage.State.Completed>
   <RimMind.UI.AIRequestsPage.State.Failed>已失败</RimMind.UI.AIRequestsPage.State.Failed>
+  <RimMind.UI.LayoutConflict.Dump>导出 UI 布局冲突报告</RimMind.UI.LayoutConflict.Dump>
+  <RimMind.UI.LayoutConflict.Overlay>开关 UI 布局冲突高亮</RimMind.UI.LayoutConflict.Overlay>
 </LanguageData>
