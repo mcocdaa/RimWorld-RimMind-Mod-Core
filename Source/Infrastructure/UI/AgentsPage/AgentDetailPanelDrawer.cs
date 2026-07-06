@@ -1,3 +1,4 @@
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI.DebugCenter;
@@ -26,13 +27,15 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             }
 
             var comp = CompPawnAgent.GetComp(selectedPawn);
+            var traceRows = BuildTraceRows();
             DrawDetailHeader(layout.Status, selectedPawn, comp?.Agent);
 
             if (comp?.Agent == null)
             {
                 var model = AgentPageViewModel.PendingCreation(
                     selectedPawn.LabelShortCap,
-                    RequestOverlay.Pending.Count);
+                    RequestOverlay.Pending.Count,
+                    traceRows);
 
                 if (Widgets.ButtonText(
                     new Rect(layout.Actions.x, layout.Actions.y, 160f, RimMindUI.BtnHeight),
@@ -59,7 +62,8 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                 selectedPawn.LabelShortCap,
                 agent.State,
                 RequestOverlay.Pending.Count,
-                requestRows: 0);
+                requestRows: 0,
+                traceRows);
             DrawActions(layout.Actions, agent);
             _activityDrawer.Draw(
                 layout.Activity,
@@ -148,6 +152,12 @@ namespace RimMind.Infrastructure.UI.AgentsPage
         {
             if (agent == null) return;
             agent.TransitionTo(target);
+        }
+
+        private static System.Collections.Generic.IReadOnlyList<AgentRequestTraceRow> BuildTraceRows()
+        {
+            var log = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
+            return AgentRequestTraceRowBuilder.BuildRecent(log?.Entries);
         }
     }
 }
