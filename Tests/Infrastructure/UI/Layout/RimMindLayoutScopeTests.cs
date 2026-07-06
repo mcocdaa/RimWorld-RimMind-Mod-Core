@@ -5,8 +5,14 @@ using RimMind.Infrastructure.UI.Layout;
 
 namespace RimMind.Tests.Infrastructure.UI.Layout
 {
-    public class RimMindLayoutScopeTests
+    [Collection(LayoutConflictStoreCollection.Name)]
+    public class RimMindLayoutScopeTests : System.IDisposable
     {
+        public void Dispose()
+        {
+            LayoutConflictStore.Clear();
+        }
+
         [Fact]
         public void Begin_ReturnsScope_WithRecorder()
         {

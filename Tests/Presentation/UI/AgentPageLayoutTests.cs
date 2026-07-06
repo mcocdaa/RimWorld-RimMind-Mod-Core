@@ -41,6 +41,7 @@ namespace RimMind.Tests.Presentation.UI
             Assert.True(root.Contains(new Vector2(layout.List.xMax - 1f, layout.List.yMax - 1f)));
             Assert.True(root.Contains(new Vector2(layout.Detail.xMin, layout.Detail.yMin)));
             Assert.True(root.Contains(new Vector2(layout.Detail.xMax - 1f, layout.Detail.yMax - 1f)));
+            Assert.True(root.Contains(new Vector2(layout.Chat.xMin, layout.Chat.yMin)));
             Assert.True(root.Contains(new Vector2(layout.Chat.xMax - 1f, layout.Chat.yMax - 1f)));
         }
     }

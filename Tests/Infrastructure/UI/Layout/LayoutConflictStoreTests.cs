@@ -6,8 +6,14 @@ using RimMind.Infrastructure.UI.Layout;
 
 namespace RimMind.Tests.Infrastructure.UI.Layout
 {
-    public class LayoutConflictStoreTests
+    [Collection(LayoutConflictStoreCollection.Name)]
+    public class LayoutConflictStoreTests : System.IDisposable
     {
+        public void Dispose()
+        {
+            LayoutConflictStore.Clear();
+        }
+
         [Fact]
         public void Publish_Then_TryGet_ReturnsLatest()
         {
@@ -22,7 +28,7 @@ namespace RimMind.Tests.Infrastructure.UI.Layout
 
             Assert.True(LayoutConflictStore.TryGet("WinA", out var latest));
             Assert.Same(report2, latest);
-            Assert.Single(latest.Conflicts);
+            Assert.Single(latest!.Conflicts);
         }
 
         [Fact]

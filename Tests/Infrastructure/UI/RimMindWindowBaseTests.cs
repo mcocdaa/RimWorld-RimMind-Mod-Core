@@ -3,6 +3,7 @@ using Xunit;
 using Verse;
 using RimMind.Infrastructure.UI;
 using RimMind.Infrastructure.UI.Layout;
+using RimMind.Tests.Infrastructure.UI.Layout;
 
 namespace RimMind.Tests.Infrastructure.UI
 {
@@ -24,8 +25,14 @@ namespace RimMind.Tests.Infrastructure.UI
         }
     }
 
-    public class RimMindWindowBaseTests
+    [Collection(LayoutConflictStoreCollection.Name)]
+    public class RimMindWindowBaseTests : System.IDisposable
     {
+        public void Dispose()
+        {
+            LayoutConflictStore.Clear();
+        }
+
         [Fact]
         public void DrawContents_IsAbstract_OnRimMindWindowBase()
         {
