@@ -14,6 +14,16 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         private static string ReadSource(string relativePath)
             => File.ReadAllText(Path.Combine(SourceDir, relativePath.Replace('/', Path.DirectorySeparatorChar)));
 
+        private static string ReadAgentsPageSources()
+            => string.Join(Environment.NewLine, new[]
+            {
+                ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs"),
+                ReadSource("Infrastructure/UI/AgentsPage/AgentDetailPanelDrawer.cs"),
+                ReadSource("Infrastructure/UI/AgentsPage/AgentChatPanelDrawer.cs"),
+                ReadSource("Infrastructure/UI/AgentsPage/AgentListPanelDrawer.cs"),
+                ReadSource("Infrastructure/UI/AgentsPage/AgentActivityStreamDrawer.cs")
+            });
+
         [Fact]
         public void Hub_Delegates_Agents_Page_To_AgentsPageDrawer()
         {
@@ -31,7 +41,7 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         [Fact]
         public void AgentsPageDrawer_Has_Create_Pause_Resume_Activate_And_Chat()
         {
-            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs");
+            string content = ReadAgentsPageSources();
 
             Assert.Contains("RimMind.UI.AgentsPage.CreateStart", content);
             Assert.Contains("RimMind.UI.AgentsPage.Activate", content);
@@ -44,8 +54,8 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         [Fact]
         public void AgentsPageDrawer_Does_Not_Fake_Send_Chat_Messages()
         {
-            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs");
-            string sendMethod = content.Substring(content.IndexOf("private void SendAgentMessage", StringComparison.Ordinal));
+            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentChatPanelDrawer.cs");
+            string sendMethod = content.Substring(content.IndexOf("private static void SendAgentMessage", StringComparison.Ordinal));
 
             Assert.Contains("RimMind.UI.AgentsPage.MessageUnavailable", sendMethod);
             Assert.Contains("MessageTypeDefOf.RejectInput", sendMethod);
@@ -56,7 +66,7 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         [Fact]
         public void AgentsPageDrawer_ActivePaused_Detail_Can_Open_AIRequests()
         {
-            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs");
+            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentDetailPanelDrawer.cs");
 
             Assert.Contains("RimMind.UI.AgentsPage.OpenRequests", content);
             Assert.Contains("Window_RimMindHub.OpenAIRequests()", content);
@@ -79,6 +89,27 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.DoesNotContain("AgentFlowScope.Storyteller", content);
             Assert.DoesNotContain("RimMind.UI.AgentFlowLab.ScopeStoryteller", content);
             Assert.DoesNotContain("Find.Storyteller", content);
+        }
+
+        [Fact]
+        public void AgentsPage_IsSplitIntoFocusedPanelDrawers()
+        {
+            Assert.True(File.Exists(Path.Combine(SourceDir, "Infrastructure", "UI", "AgentsPage", "AgentListPanelDrawer.cs")));
+            Assert.True(File.Exists(Path.Combine(SourceDir, "Infrastructure", "UI", "AgentsPage", "AgentDetailPanelDrawer.cs")));
+            Assert.True(File.Exists(Path.Combine(SourceDir, "Infrastructure", "UI", "AgentsPage", "AgentActivityStreamDrawer.cs")));
+            Assert.True(File.Exists(Path.Combine(SourceDir, "Infrastructure", "UI", "AgentsPage", "AgentChatPanelDrawer.cs")));
+        }
+
+        [Fact]
+        public void AgentsPageDrawer_Records_Internal_LayoutScope()
+        {
+            string content = ReadSource("Infrastructure/UI/AgentsPage/AgentsPageDrawer.cs");
+
+            Assert.Contains("RimMindLayoutScope scope", content);
+            Assert.Contains("scope.Record(layout.List", content);
+            Assert.Contains("scope.Record(layout.Detail", content);
+            Assert.Contains("_listDrawer.Draw(", content);
+            Assert.Contains("_detailDrawer.Draw(", content);
         }
     }
 }
