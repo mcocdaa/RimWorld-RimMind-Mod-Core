@@ -21,6 +21,7 @@ using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Api;
 using UnityEngine;
@@ -28,7 +29,7 @@ using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_AgentFlowLab : Window
+    public class Window_AgentFlowLab : RimMindWindowBase
     {
         private enum FlowLabStep
         {
@@ -136,7 +137,7 @@ namespace RimMind.Infrastructure.UI
             } : "\u25CB";
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -144,10 +145,14 @@ namespace RimMind.Infrastructure.UI
             float contentH = CalcTotalContentHeight();
             Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentH);
             Widgets.BeginScrollView(inRect, ref _scrollPos, viewRect);
+            scope.Record(inRect, "ScrollView:FlowLabOuter");
+            scope.Record(viewRect, "ScrollView:FlowLabContent");
 
             float y = 0f;
             float w = viewRect.width;
 
+            Rect titleRect = new Rect(0f, y, w, LineH + 4f);
+            scope.Record(titleRect, "Header:Title");
             DrawSectionHeader(ref y, w, "RimMind.UI.AgentFlowLab.Title");
             DrawOfflineModeToggle(ref y, w);
             DrawScopeSelector(ref y, w);

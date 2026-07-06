@@ -11,12 +11,13 @@ using RimMind.Domain.Events;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Api;
 using RimMind.Infrastructure.UI;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_AgentModeDebug : Window
+    public class Window_AgentModeDebug : RimMindWindowBase
     {
         private Vector2 _pawnListScrollPos = Vector2.zero;
         private Vector2 _detailScrollPos = Vector2.zero;
@@ -43,7 +44,7 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -60,6 +61,8 @@ namespace RimMind.Infrastructure.UI
 
             Rect pawnListRect = new Rect(inRect.x, y, listW, bodyH);
             Rect detailRect = new Rect(inRect.x + listW + RimMindUI.Padding, y, detailW, bodyH);
+            scope.Record(pawnListRect, "List:Pawns");
+            scope.Record(detailRect, "Detail:Panel");
 
             // Divider line between panels
             Widgets.DrawLine(
@@ -67,8 +70,8 @@ namespace RimMind.Infrastructure.UI
                 new Vector2(inRect.x + listW + RimMindUI.Padding * 0.5f, inRect.yMax),
                 RimMindUI.ColorDivider, RimMindUI.DividerThickness);
 
-            DrawPawnList(pawnListRect);
-            DrawDetailPanel(detailRect);
+            DrawPawnList(pawnListRect, scope);
+            DrawDetailPanel(detailRect, scope);
         }
 
         public override void PreClose()
@@ -79,7 +82,7 @@ namespace RimMind.Infrastructure.UI
 
         #region Pawn List (Left Panel)
 
-        private void DrawPawnList(Rect rect)
+        private void DrawPawnList(Rect rect, RimMindLayoutScope scope)
         {
             // Section header
             float y = rect.y;
@@ -97,6 +100,8 @@ namespace RimMind.Infrastructure.UI
             float contentH = _cachedPawns.Count * RimMindUI.LineHeight;
             Rect viewRect = new Rect(listRect.x, listRect.y, listRect.width - 16f, contentH);
             Widgets.BeginScrollView(listRect, ref _pawnListScrollPos, viewRect);
+            scope.Record(listRect, "ScrollView:PawnListOuter");
+            scope.Record(viewRect, "ScrollView:PawnListContent");
 
             float rowY = listRect.y;
             for (int i = 0; i < _cachedPawns.Count; i++)
@@ -109,6 +114,7 @@ namespace RimMind.Infrastructure.UI
                 string label = $"{pawn.Name?.ToStringShort ?? pawn.LabelShort}";
 
                 Rect rowRect = new Rect(viewRect.x, rowY, viewRect.width, RimMindUI.LineHeight);
+                scope.Record(rowRect, $"PawnRow:{i}");
                 if (i == _selectedPawnIndex)
                     Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorTabActive);
 
@@ -137,7 +143,7 @@ namespace RimMind.Infrastructure.UI
 
         #region Detail Panel (Right Panel)
 
-        private void DrawDetailPanel(Rect rect)
+        private void DrawDetailPanel(Rect rect, RimMindLayoutScope scope)
         {
             if (_selectedPawnIndex < 0 || _selectedPawnIndex >= _cachedPawns.Count)
             {
@@ -155,6 +161,8 @@ namespace RimMind.Infrastructure.UI
             float contentH = CalculateDetailContentHeight(agent, currentMode, rect.width);
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _detailScrollPos, viewRect);
+            scope.Record(rect, "ScrollView:DetailOuter");
+            scope.Record(viewRect, "ScrollView:DetailContent");
 
             float y = viewRect.y;
 

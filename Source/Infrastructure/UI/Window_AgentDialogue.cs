@@ -8,6 +8,7 @@ using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Infrastructure.Verse;
 
 using UnityEngine;
@@ -15,7 +16,7 @@ using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_AgentDialogue : Window
+    public class Window_AgentDialogue : RimMindWindowBase
     {
         private readonly Pawn _pawn;
         private readonly IAgentControl? _agent;
@@ -59,27 +60,33 @@ namespace RimMind.Infrastructure.UI
             absorbInputAroundWindow = false;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Medium;
             string title = $"{_pawn.LabelShortCap} - {"RimMind.UI.AgentDialogue.Title".Translate()}";
-            Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), title);
+            Rect titleRect = new Rect(0f, 0f, inRect.width, 30f);
+            scope.Record(titleRect, "Header:Title");
+            Widgets.Label(titleRect, title);
             Text.Font = GameFont.Small;
 
             // NPC sync actions area (below title, above history)
             float syncAreaHeight = 34f;
             var syncRect = new Rect(0f, 35f, inRect.width, syncAreaHeight);
+            scope.Record(syncRect, "Sync:Actions");
             NpcSyncActions.DrawNpcSyncActions(syncRect, _npcId, GetSyncService());
 
             float historyTop = 35f + syncAreaHeight + 4f;
             float historyHeight = inRect.height - 70f - syncAreaHeight - 4f;
             var historyRect = new Rect(0f, historyTop, inRect.width, historyHeight);
+            scope.Record(historyRect, "History:List");
 
             DrawHistory(historyRect);
 
             float inputY = inRect.height - 30f;
             var inputRect = new Rect(0f, inputY, inRect.width - 100f, 30f);
             var sendRect = new Rect(inRect.width - 95f, inputY, 95f, 30f);
+            scope.Record(inputRect, "Input:TextField");
+            scope.Record(sendRect, "Button:Send");
 
             string prevText = _inputText;
             _inputText = Widgets.TextField(inputRect, _inputText);

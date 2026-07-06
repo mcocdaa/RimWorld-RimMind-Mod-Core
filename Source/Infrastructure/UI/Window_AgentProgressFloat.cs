@@ -5,13 +5,14 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_AgentProgressFloat : Window
+    public class Window_AgentProgressFloat : RimMindWindowBase
     {
         private const float Padding = 6f;
         private const float LineH = 22f;
@@ -48,14 +49,15 @@ namespace RimMind.Infrastructure.UI
             UnsubscribeBus();
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            float y = DrawHeader(inRect);
+            float y = DrawHeader(inRect, scope);
 
             Rect bodyRect = new Rect(inRect.x, y, inRect.width, inRect.height - y + inRect.y);
+            scope.Record(bodyRect, "Body");
 
             if (_cachedEntries.Count == 0)
             {
@@ -63,7 +65,7 @@ namespace RimMind.Infrastructure.UI
                 return;
             }
 
-            DrawAgentList(bodyRect);
+            DrawAgentList(bodyRect, scope);
         }
 
         public override void WindowUpdate()
@@ -77,13 +79,15 @@ namespace RimMind.Infrastructure.UI
             }
         }
 
-        private float DrawHeader(Rect inRect)
+        private float DrawHeader(Rect inRect, RimMindLayoutScope scope)
         {
             float y = inRect.y;
 
+            Rect titleRect = new Rect(inRect.x, y, inRect.width, HeaderH);
+            scope.Record(titleRect, "Header:Title");
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(inRect.x, y, inRect.width, HeaderH),
+            Widgets.Label(titleRect,
                 "RimMind.UI.AgentProgressFloat.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
@@ -127,11 +131,13 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
         }
 
-        private void DrawAgentList(Rect rect)
+        private void DrawAgentList(Rect rect, RimMindLayoutScope scope)
         {
             float contentH = _cachedEntries.Count * (EntryH + Padding) + Padding;
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
+            scope.Record(rect, "ScrollView:Outer");
+            scope.Record(viewRect, "ScrollView:Content");
 
             float y = viewRect.y + Padding;
             float entryW = viewRect.width - Padding * 2;
@@ -140,8 +146,9 @@ namespace RimMind.Infrastructure.UI
             {
                 var entry = _cachedEntries[i];
                 Rect entryRect = new Rect(viewRect.x + Padding, y, entryW, EntryH);
+                scope.Record(entryRect, $"AgentEntry:{i}");
 
-                DrawAgentEntry(entryRect, entry);
+                DrawAgentEntry(entryRect, entry, scope);
 
                 y += EntryH + Padding;
             }
@@ -149,7 +156,7 @@ namespace RimMind.Infrastructure.UI
             Widgets.EndScrollView();
         }
 
-        private void DrawAgentEntry(Rect rect, AgentProgressEntry entry)
+        private void DrawAgentEntry(Rect rect, AgentProgressEntry entry, RimMindLayoutScope scope)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.12f, 0.12f, 0.16f, 0.7f));
 
@@ -200,6 +207,7 @@ namespace RimMind.Infrastructure.UI
 
             float btnX = rect.xMax - 76f;
             Rect detailBtn = new Rect(btnX, rect.y + (rect.height - BtnHeight) / 2f, 72f, BtnHeight);
+            scope.Record(detailBtn, "Button:Details");
             if (Widgets.ButtonText(detailBtn, "RimMind.UI.AgentProgressFloat.Details".Translate()))
             {
                 if (entry.IsScopedAgent && entry.AgentControl != null)
