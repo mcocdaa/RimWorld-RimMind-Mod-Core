@@ -1,4 +1,5 @@
 using RimMind.Domain.Enums;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
@@ -56,19 +57,28 @@ namespace RimMind.Infrastructure.UI
         /// Draw a section header with an underline divider. Returns new Y.
         /// </summary>
         public static float DrawSectionHeader(Rect canvas, float y, string label)
+            => DrawSectionHeader(canvas, y, label, null);
+
+        /// <summary>
+        /// Draw a section header with an underline divider. Returns new Y.
+        /// When <paramref name="recorder"/> is non-null, the header label rect is recorded for layout diagnostics.
+        /// </summary>
+        public static float DrawSectionHeader(Rect canvas, float y, string label, LayoutTraceRecorder? recorder)
         {
             float x = canvas.x + Padding;
             float w = canvas.width - Padding * 2;
 
+            Rect headerRect = new Rect(x, y, w, LineHeight);
             GUI.color = ColorSectionTitle;
             Text.Font = GameFont.Small;
-            Widgets.Label(new Rect(x, y, w, LineHeight), label);
+            Widgets.Label(headerRect, label);
             GUI.color = Color.white;
             y += LineHeight;
 
             Widgets.DrawLine(new Vector2(x, y), new Vector2(x + w, y), ColorDivider, DividerThickness);
             y += SectionGap * 0.5f;
 
+            recorder?.Record(headerRect, $"SectionHeader:{label}", nameof(DrawSectionHeader));
             return y;
         }
 
@@ -78,10 +88,18 @@ namespace RimMind.Infrastructure.UI
         /// Draw a "Key: Value" row. Key in muted color, Value in bright color. Returns new Y.
         /// </summary>
         public static float DrawKeyValueRow(Rect canvas, float y, string key, string value)
+            => DrawKeyValueRow(canvas, y, key, value, null);
+
+        /// <summary>
+        /// Draw a "Key: Value" row. Key in muted color, Value in bright color. Returns new Y.
+        /// When <paramref name="recorder"/> is non-null, the row rect is recorded for layout diagnostics.
+        /// </summary>
+        public static float DrawKeyValueRow(Rect canvas, float y, string key, string value, LayoutTraceRecorder? recorder)
         {
             float x = canvas.x + Padding;
             float w = canvas.width - Padding * 2;
 
+            Rect rowRect = new Rect(x, y, w, LineHeight);
             if (!string.IsNullOrEmpty(key))
             {
                 string keyText = key + ": ";
@@ -96,10 +114,11 @@ namespace RimMind.Infrastructure.UI
             else
             {
                 GUI.color = ColorValue;
-                Widgets.Label(new Rect(x, y, w, LineHeight), value);
+                Widgets.Label(rowRect, value);
                 GUI.color = Color.white;
             }
 
+            recorder?.Record(rowRect, $"KV:{key}", nameof(DrawKeyValueRow));
             return y + LineHeight + Padding * 0.5f;
         }
 
@@ -109,6 +128,13 @@ namespace RimMind.Infrastructure.UI
         /// Draw a status badge with colored background. Returns new Y.
         /// </summary>
         public static float DrawStatusBadge(Rect canvas, float y, string label, Color textColor, Color bgColor)
+            => DrawStatusBadge(canvas, y, label, textColor, bgColor, null);
+
+        /// <summary>
+        /// Draw a status badge with colored background. Returns new Y.
+        /// When <paramref name="recorder"/> is non-null, the badge rect is recorded for layout diagnostics.
+        /// </summary>
+        public static float DrawStatusBadge(Rect canvas, float y, string label, Color textColor, Color bgColor, LayoutTraceRecorder? recorder)
         {
             float x = canvas.x + Padding;
             Vector2 textSize = Text.CalcSize(label);
@@ -124,6 +150,7 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
             Text.Anchor = TextAnchor.UpperLeft;
 
+            recorder?.Record(badgeRect, $"Badge:{label}", nameof(DrawStatusBadge));
             return y + badgeH + Padding * 0.5f;
         }
 
@@ -133,10 +160,19 @@ namespace RimMind.Infrastructure.UI
         /// Draw a horizontal divider line. Returns new Y.
         /// </summary>
         public static float DrawDivider(Rect canvas, float y)
+            => DrawDivider(canvas, y, null);
+
+        /// <summary>
+        /// Draw a horizontal divider line. Returns new Y.
+        /// When <paramref name="recorder"/> is non-null, the divider line rect is recorded for layout diagnostics.
+        /// </summary>
+        public static float DrawDivider(Rect canvas, float y, LayoutTraceRecorder? recorder)
         {
             float x = canvas.x + Padding;
             float w = canvas.width - Padding * 2;
+            Rect dividerRect = new Rect(x, y, w, DividerThickness);
             Widgets.DrawLine(new Vector2(x, y), new Vector2(x + w, y), ColorDivider, DividerThickness);
+            recorder?.Record(dividerRect, "Divider", nameof(DrawDivider));
             return y + SectionGap * 0.5f;
         }
 
@@ -189,15 +225,24 @@ namespace RimMind.Infrastructure.UI
         /// Draw a word-wrapped label and return the height consumed.
         /// </summary>
         public static float DrawWrappedLabel(Rect canvas, float y, string text, Color color)
+            => DrawWrappedLabel(canvas, y, text, color, null);
+
+        /// <summary>
+        /// Draw a word-wrapped label and return the height consumed.
+        /// When <paramref name="recorder"/> is non-null, the label rect is recorded for layout diagnostics.
+        /// </summary>
+        public static float DrawWrappedLabel(Rect canvas, float y, string text, Color color, LayoutTraceRecorder? recorder)
         {
             float x = canvas.x + Padding;
             float w = canvas.width - Padding * 2;
 
             GUI.color = color;
             float h = Text.CalcHeight(text, w);
-            Widgets.Label(new Rect(x, y, w, h), text);
+            Rect labelRect = new Rect(x, y, w, h);
+            Widgets.Label(labelRect, text);
             GUI.color = Color.white;
 
+            recorder?.Record(labelRect, $"Label:{text}", nameof(DrawWrappedLabel));
             return y + h + Padding * 0.5f;
         }
 
