@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
 using UnityEngine;
@@ -34,11 +35,13 @@ namespace RimMind.Presentation.UI
         private static IOpenAISettings? GetOpenAISettings()
             => _cachedOpenAISettings ??= RimMindRuntime.Instance.GetService<IOpenAISettings>();
 
-        public static void Draw(Rect inRect, ISettingsProvider s)
+        public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             float contentH = EstimateApiHeight();
             Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentH);
             Widgets.BeginScrollView(inRect, ref _apiScroll, viewRect);
+            scope?.Record(inRect, "ScrollView:ApiOuter");
+            scope?.Record(viewRect, "ScrollView:ApiContent");
 
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
@@ -76,12 +79,12 @@ namespace RimMind.Presentation.UI
 
             if (AIProviderRegistry.RequiresApiKey(s.Provider))
             {
-                DrawApiKeySection(listing, s);
+                DrawApiKeySection(listing, s, scope);
             }
 
             if (!AIProviderRegistry.RequiresApiKey(s.Provider))
             {
-                DrawPlayer2Section(listing, s);
+                DrawPlayer2Section(listing, s, scope);
             }
 
             listing.Gap(10f);
@@ -90,16 +93,16 @@ namespace RimMind.Presentation.UI
 
             listing.Gap(6f);
 
-            DrawModelBehaviorSection(listing, s);
-            DrawRequestSection(listing, s);
-            DrawDebugSection(listing, s);
-            DrawFlywheelSection(listing, s);
+            DrawModelBehaviorSection(listing, s, scope);
+            DrawRequestSection(listing, s, scope);
+            DrawDebugSection(listing, s, scope);
+            DrawFlywheelSection(listing, s, scope);
 
             listing.End();
             Widgets.EndScrollView();
         }
 
-        private static void DrawApiKeySection(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawApiKeySection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             listing.Label("RimMind.Settings.ApiKey".Translate());
             GUI.color = Color.gray;
@@ -142,7 +145,7 @@ namespace RimMind.Presentation.UI
             s.ModelName = listing.TextEntry(s.ModelName);
         }
 
-        private static void DrawPlayer2Section(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawPlayer2Section(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             GUI.color = Color.gray;
             listing.Label("RimMind.Settings.Player2.Desc".Translate());
@@ -215,7 +218,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
         }
 
-        private static void DrawModelBehaviorSection(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawModelBehaviorSection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.ModelBehavior".Translate());
             var forceJsonMode = s.ForceJsonMode;
@@ -226,7 +229,7 @@ namespace RimMind.Presentation.UI
             s.ForceJsonMode = forceJsonMode;
         }
 
-        private static void DrawRequestSection(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawRequestSection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.Request".Translate());
             listing.Label($"{"RimMind.Settings.MaxTokens".Translate()}: {s.MaxTokens}");
@@ -294,7 +297,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
         }
 
-        private static void DrawDebugSection(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawDebugSection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.Debug".Translate());
             var debugLogging = s.DebugLogging;
@@ -303,7 +306,7 @@ namespace RimMind.Presentation.UI
             s.DebugLogging = debugLogging;
         }
 
-        private static void DrawFlywheelSection(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawFlywheelSection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.UI.FlywheelAutoApply".Translate());
             {

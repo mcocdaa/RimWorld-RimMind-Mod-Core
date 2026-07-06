@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Runtime;
 using UnityEngine;
 using Verse;
@@ -17,7 +18,7 @@ namespace RimMind.Presentation.UI
         private static IAIRequestQueue? GetRequestQueue()
             => _cachedRequestQueue ??= RimMindRuntime.Instance.GetService<IAIRequestQueue>();
 
-        public static void Draw(Rect inRect, ISettingsProvider settings)
+        public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
         {
             var queue = GetRequestQueue();
             if (queue == null)

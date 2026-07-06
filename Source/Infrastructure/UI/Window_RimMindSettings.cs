@@ -1,11 +1,12 @@
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.UI;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_RimMindSettings : Window
+    public class Window_RimMindSettings : RimMindWindowBase
     {
         private readonly ISettingsProvider _settingsProvider;
 
@@ -20,9 +21,9 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
-            RimMindCoreSettingsUI.Draw(inRect, _settingsProvider);
+            RimMindCoreSettingsUI.Draw(inRect, _settingsProvider, scope);
         }
 
         public override void PreClose()

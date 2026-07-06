@@ -2,6 +2,7 @@ using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;
@@ -13,7 +14,7 @@ namespace RimMind.Presentation.UI
         private static ContextPreset _selectedPreset = ContextPreset.Standard;
         private static Vector2 _contextScroll;
 
-        public static void Draw(Rect inRect, ISettingsProvider s)
+        public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             var ctx = s.Context;
 

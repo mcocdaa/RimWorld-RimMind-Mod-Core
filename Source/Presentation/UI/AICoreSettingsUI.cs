@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
 using UnityEngine;
@@ -24,22 +25,25 @@ namespace RimMind.Presentation.UI
         private static string _curTab = "api";
         private static float _cachedTabBarHeight = TabBarHeight;
 
-        public static void Draw(Rect inRect, ISettingsProvider settings)
+        public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
         {
             var tabs = CollectTabs();
             _cachedTabBarHeight = CalcTabBarHeight(inRect.width, tabs.Count);
 
-            DrawTabBar(new Rect(inRect.x, inRect.y, inRect.width, _cachedTabBarHeight), tabs);
+            Rect tabBarRect = new Rect(inRect.x, inRect.y, inRect.width, _cachedTabBarHeight);
+            scope?.Record(tabBarRect, "Settings:TabBar");
+            DrawTabBar(tabBarRect, tabs);
 
             Rect content = new Rect(inRect.x, inRect.y + _cachedTabBarHeight + TabBarGap,
                                     inRect.width, inRect.height - _cachedTabBarHeight - TabBarGap);
+            scope?.Record(content, "Settings:Content");
 
             switch (_curTab)
             {
-                case "api": ApiTabDrawer.Draw(content, settings); break;
-                case "queue": QueueTabDrawer.Draw(content, settings); break;
-                case "context": ContextTabDrawer.Draw(content, settings); break;
-                case "prompts": PromptsTabDrawer.Draw(content, settings); break;
+                case "api": ApiTabDrawer.Draw(content, settings, scope); break;
+                case "queue": QueueTabDrawer.Draw(content, settings, scope); break;
+                case "context": ContextTabDrawer.Draw(content, settings, scope); break;
+                case "prompts": PromptsTabDrawer.Draw(content, settings, scope); break;
                 default:
                     var settingsTabRegistry = GetSettingsTabRegistry();
                     if (settingsTabRegistry != null)

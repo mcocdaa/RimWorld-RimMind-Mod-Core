@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
@@ -9,7 +10,7 @@ namespace RimMind.Presentation.UI
     {
         private static Vector2 _promptsScroll;
 
-        public static void Draw(Rect inRect, ISettingsProvider s)
+        public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
             Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 460f);
             Widgets.BeginScrollView(inRect, ref _promptsScroll, viewRect);
