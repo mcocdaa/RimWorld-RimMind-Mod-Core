@@ -1,0 +1,31 @@
+using RimMind.Infrastructure.UI.AgentsPage;
+using UnityEngine;
+using Xunit;
+
+namespace RimMind.Tests.Presentation.UI
+{
+    public sealed class AgentPageLayoutTests
+    {
+        [Fact]
+        public void Calculate_DetailSections_DoNotOverlap()
+        {
+            var layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 740f, 480f));
+
+            Assert.True(layout.Status.y >= layout.Detail.y);
+            Assert.True(layout.Actions.y > layout.Status.yMax);
+            Assert.True(layout.Activity.y > layout.Actions.yMax);
+            Assert.True(layout.Chat.y > layout.Activity.yMax);
+            Assert.Equal(layout.Detail.yMax, layout.Chat.yMax);
+        }
+
+        [Fact]
+        public void Calculate_SupportedSmallWindow_KeepsMinimumDetailWidth()
+        {
+            var layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 620f, 420f));
+
+            Assert.True(layout.List.width >= 180f);
+            Assert.True(layout.Detail.width >= 360f);
+            Assert.True(layout.Activity.height >= 120f);
+        }
+    }
+}

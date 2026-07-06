@@ -84,6 +84,7 @@
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
+    <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageLayout.cs" Link="Infrastructure\UI\AgentsPage\AgentPageLayout.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" Link="Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" />
     <Compile Include="../Source/Infrastructure/UI/DebugCenter/DebugCenterLayout.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
