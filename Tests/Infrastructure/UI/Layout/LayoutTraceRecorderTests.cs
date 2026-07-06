@@ -48,6 +48,39 @@ namespace RimMind.Tests.Infrastructure.UI.Layout
         }
 
         [Fact]
+        public void DetectConflicts_ParentContainsChild_DoesNotOverlap()
+        {
+            var r = NewRecorder();
+            r.Record(new Rect(0, 0, 50, 50), "parent", "srcParent");
+            r.Record(new Rect(10, 10, 20, 20), "child", "srcChild");
+
+            Assert.Empty(r.DetectConflicts());
+        }
+
+        [Fact]
+        public void DetectConflicts_ChildContainsParentSizedRect_DoesNotOverlap()
+        {
+            var r = NewRecorder();
+            r.Record(new Rect(10, 10, 20, 20), "child", "srcChild");
+            r.Record(new Rect(0, 0, 50, 50), "parent", "srcParent");
+
+            Assert.Empty(r.DetectConflicts());
+        }
+
+        [Fact]
+        public void DetectConflicts_PartialIntersectionWithoutContainment_IsFlagged()
+        {
+            var r = NewRecorder();
+            r.Record(new Rect(0, 0, 50, 50), "a", "srcA");
+            r.Record(new Rect(25, 25, 50, 50), "b", "srcB");
+
+            var conflicts = r.DetectConflicts();
+
+            Assert.Single(conflicts);
+            Assert.Equal(ConflictKind.Overlap, conflicts[0].Kind);
+        }
+
+        [Fact]
         public void DetectConflicts_AdjacentRects_DoNotOverlap()
         {
             // Adjacent (share an edge but no interior intersection) must NOT be flagged

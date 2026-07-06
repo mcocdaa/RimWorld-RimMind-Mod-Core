@@ -64,7 +64,9 @@ namespace RimMind.Infrastructure.UI.Layout
                 {
                     var b = _entries[j];
                     if (b.Rect.width < 0f || b.Rect.height < 0f) continue;
-                    if (InteriorsIntersect(a.Rect, b.Rect))
+                    if (InteriorsIntersect(a.Rect, b.Rect) &&
+                        !ContainsRect(a.Rect, b.Rect) &&
+                        !ContainsRect(b.Rect, a.Rect))
                         result.Add(LayoutConflict.Overlap(a, b));
                 }
             }
@@ -81,6 +83,14 @@ namespace RimMind.Infrastructure.UI.Layout
             float xOverlap = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin);
             float yOverlap = Mathf.Min(a.yMax, b.yMax) - Mathf.Max(a.yMin, b.yMin);
             return xOverlap > OverflowEpsilon && yOverlap > OverflowEpsilon;
+        }
+
+        private static bool ContainsRect(Rect outer, Rect inner)
+        {
+            return inner.xMin >= outer.xMin - OverflowEpsilon &&
+                   inner.yMin >= outer.yMin - OverflowEpsilon &&
+                   inner.xMax <= outer.xMax + OverflowEpsilon &&
+                   inner.yMax <= outer.yMax + OverflowEpsilon;
         }
     }
 }
