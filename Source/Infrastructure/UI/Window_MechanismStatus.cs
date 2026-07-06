@@ -3,13 +3,14 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Domain.Enums;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_MechanismStatus : Window
+    public class Window_MechanismStatus : RimMindWindowBase
     {
         private Vector2 _scrollPos = Vector2.zero;
         private MechanismScope? _scopeFilter;
@@ -34,7 +35,7 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -47,22 +48,27 @@ namespace RimMind.Infrastructure.UI
             Rect contentRect = new Rect(inRect.x, inRect.y + headerH + filterH + Padding * 2,
                 inRect.width, inRect.height - headerH - filterH - Padding * 3);
 
+            scope.Record(headerRect, "Header:Title");
+            scope.Record(filterRect, "Filter:Bar");
+            scope.Record(contentRect, "Content:List");
+
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;
             Widgets.Label(headerRect, "RimMind.UI.MechanismStatus.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            DrawFilters(filterRect);
-            DrawContent(contentRect);
+            DrawFilters(filterRect, scope);
+            DrawContent(contentRect, scope);
         }
 
-        private void DrawFilters(Rect rect)
+        private void DrawFilters(Rect rect, RimMindLayoutScope scope)
         {
             float btnW = 140f;
             float gap = 8f;
 
             Rect scopeBtnRect = new Rect(rect.x, rect.y, btnW, BtnHeight);
+            scope.Record(scopeBtnRect, "Button:ScopeFilter");
             string scopeLabel = _scopeFilter.HasValue
                 ? "RimMind.UI.MechanismStatus.Scope".Translate(_scopeFilter.Value.ToString())
                 : "RimMind.UI.MechanismStatus.FilterScope".Translate();
@@ -72,6 +78,7 @@ namespace RimMind.Infrastructure.UI
             }
 
             Rect riskBtnRect = new Rect(rect.x + btnW + gap, rect.y, btnW, BtnHeight);
+            scope.Record(riskBtnRect, "Button:RiskFilter");
             string riskLabel = _riskFilter.HasValue
                 ? "RimMind.UI.MechanismStatus.Risk".Translate(_riskFilter.Value.ToString())
                 : "RimMind.UI.MechanismStatus.FilterRisk".Translate();
@@ -119,7 +126,7 @@ namespace RimMind.Infrastructure.UI
             }
         }
 
-        private void DrawContent(Rect rect)
+        private void DrawContent(Rect rect, RimMindLayoutScope scope)
         {
             IGameMechanismRegistry? registry = RimMindAPI.Mechanisms;
             if (registry == null)
@@ -160,6 +167,8 @@ namespace RimMind.Infrastructure.UI
 
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
+            scope.Record(rect, "ScrollView:Outer");
+            scope.Record(viewRect, "ScrollView:Content");
 
             float y = rect.y;
             for (int i = 0; i < filtered.Count; i++)
@@ -168,6 +177,7 @@ namespace RimMind.Infrastructure.UI
                 float entryH = heights[i];
 
                 Rect entryRect = new Rect(viewRect.x, y, viewRect.width, entryH);
+                scope.Record(entryRect, $"MechanismEntry:{mech.MechanismId}");
                 Widgets.DrawBoxSolid(entryRect, new Color(0.12f, 0.12f, 0.16f, 0.7f));
 
                 DrawMechanismEntry(entryRect, mech, tools);

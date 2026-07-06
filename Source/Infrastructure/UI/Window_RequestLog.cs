@@ -3,13 +3,14 @@ using System.Text;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_RequestLog : Window
+    public class Window_RequestLog : RimMindWindowBase
     {
         private Vector2 _scrollPos = Vector2.zero;
         private const float Padding = 6f;
@@ -27,12 +28,12 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
-            DrawEmbedded(inRect);
+            DrawEmbedded(inRect, scope);
         }
 
-        public void DrawEmbedded(Rect inRect)
+        public void DrawEmbedded(Rect inRect, RimMindLayoutScope? scope = null)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -45,17 +46,21 @@ namespace RimMind.Infrastructure.UI
                 inRect.width, inRect.height - headerH - bottomH - Padding * 2);
             Rect bottomRect = new Rect(inRect.x, inRect.yMax - bottomH, inRect.width, bottomH);
 
+            scope?.Record(headerRect, "Header:Title");
+            scope?.Record(contentRect, "Content:List");
+            scope?.Record(bottomRect, "Bottom:Bar");
+
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;
             Widgets.Label(headerRect, "RimMind.UI.RequestLog.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            DrawContent(contentRect);
-            DrawBottomBar(bottomRect);
+            DrawContent(contentRect, scope);
+            DrawBottomBar(bottomRect, scope);
         }
 
-        private void DrawContent(Rect rect)
+        private void DrawContent(Rect rect, RimMindLayoutScope? scope = null)
         {
             var pending = RequestOverlay.Pending;
             if (pending.Count == 0)
@@ -79,6 +84,8 @@ namespace RimMind.Infrastructure.UI
 
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
+            scope?.Record(rect, "ScrollView:Outer");
+            scope?.Record(viewRect, "ScrollView:Content");
 
             float y = rect.y;
             for (int i = 0; i < pending.Count; i++)
@@ -87,6 +94,7 @@ namespace RimMind.Infrastructure.UI
                 float entryH = heights[i];
 
                 var entryRect = new Rect(viewRect.x, y, viewRect.width, entryH);
+                scope?.Record(entryRect, $"Entry:{i}");
                 Widgets.DrawBoxSolid(entryRect, new Color(0.12f, 0.12f, 0.16f, 0.7f));
 
                 string header = entry.systemBlocked
@@ -181,9 +189,10 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
         }
 
-        private void DrawBottomBar(Rect rect)
+        private void DrawBottomBar(Rect rect, RimMindLayoutScope? scope = null)
         {
             var clearRect = new Rect(rect.xMax - 100f, rect.y, 96f, rect.height - 4f);
+            scope?.Record(clearRect, "Button:ClearAll");
             if (Widgets.ButtonText(clearRect, "RimMind.UI.RequestLog.ClearAll".Translate()))
             {
                 var pending = RequestOverlay.Pending.ToList();

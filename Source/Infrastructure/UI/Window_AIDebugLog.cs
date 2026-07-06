@@ -1,11 +1,12 @@
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_AIDebugLog : Window
+    public class Window_AIDebugLog : RimMindWindowBase
     {
         private Vector2 _listScroll = Vector2.zero;
         private Vector2 _detailScroll = Vector2.zero;
@@ -22,26 +23,30 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
-            DrawEmbedded(inRect);
+            DrawEmbedded(inRect, scope);
         }
 
-        public void DrawEmbedded(Rect inRect)
+        public void DrawEmbedded(Rect inRect, RimMindLayoutScope? scope = null)
         {
             var debugLog = RimMindServiceLocator.TryGet<IAIDebugLog>();
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
             Rect header = new Rect(inRect.x, inRect.y, inRect.width, 30f);
+            scope?.Record(header, "Header:Title");
             Text.Font = GameFont.Medium;
             Widgets.Label(header, "RimMind.UI.DebugLog.Title".Translate());
             Text.Font = GameFont.Small;
 
             Rect toolbar = new Rect(inRect.x, header.yMax + 6f, inRect.width, 30f);
+            scope?.Record(toolbar, "Toolbar:Search");
             _search = Widgets.TextField(new Rect(toolbar.x, toolbar.y, toolbar.width - 92f, toolbar.height),
                 _search ?? string.Empty);
-            if (Widgets.ButtonText(new Rect(toolbar.xMax - 86f, toolbar.y, 86f, toolbar.height),
+            Rect clearBtnRect = new Rect(toolbar.xMax - 86f, toolbar.y, 86f, toolbar.height);
+            scope?.Record(clearBtnRect, "Button:Clear");
+            if (Widgets.ButtonText(clearBtnRect,
                     "RimMind.UI.DebugLog.Clear".Translate()))
             {
                 debugLog?.Clear();
@@ -50,6 +55,7 @@ namespace RimMind.Infrastructure.UI
 
             Rect body = new Rect(inRect.x, toolbar.yMax + 8f, inRect.width,
                 inRect.height - toolbar.yMax - 8f);
+            scope?.Record(body, "Body");
 
             if (debugLog == null)
             {
@@ -75,19 +81,24 @@ namespace RimMind.Infrastructure.UI
 
             Rect listRect = new Rect(body.x, body.y, 250f, body.height);
             Rect detailRect = new Rect(listRect.xMax + 8f, body.y, body.width - listRect.width - 8f, body.height);
-            DrawList(listRect, entries);
-            DrawDetail(detailRect, entries[_selectedIndex]);
+            scope?.Record(listRect, "List:Entries");
+            scope?.Record(detailRect, "Detail:Selected");
+            DrawList(listRect, entries, scope);
+            DrawDetail(detailRect, entries[_selectedIndex], scope);
         }
 
-        private void DrawList(Rect rect, System.Collections.Generic.List<AIDebugEntry> entries)
+        private void DrawList(Rect rect, System.Collections.Generic.List<AIDebugEntry> entries, RimMindLayoutScope? scope = null)
         {
             float entryH = 54f;
             Rect view = new Rect(rect.x, rect.y, rect.width - 16f, entries.Count * entryH);
             Widgets.BeginScrollView(rect, ref _listScroll, view);
+            scope?.Record(rect, "ScrollView:ListOuter");
+            scope?.Record(view, "ScrollView:ListContent");
             for (int i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
                 Rect row = new Rect(view.x, view.y + i * entryH, view.width, entryH - 4f);
+                scope?.Record(row, $"ListRow:{i}");
                 if (i == _selectedIndex)
                     Widgets.DrawHighlightSelected(row);
                 else if (Mouse.IsOver(row))
@@ -106,9 +117,11 @@ namespace RimMind.Infrastructure.UI
             Widgets.EndScrollView();
         }
 
-        private void DrawDetail(Rect rect, AIDebugEntry entry)
+        private void DrawDetail(Rect rect, AIDebugEntry entry, RimMindLayoutScope? scope = null)
         {
-            if (Widgets.ButtonText(new Rect(rect.xMax - 130f, rect.y, 130f, 28f),
+            Rect copyBtnRect = new Rect(rect.xMax - 130f, rect.y, 130f, 28f);
+            scope?.Record(copyBtnRect, "Button:CopyResponse");
+            if (Widgets.ButtonText(copyBtnRect,
                     "RimMind.UI.DebugLog.CopyResponse".Translate()))
             {
                 GUIUtility.systemCopyBuffer = entry.FullResponse ?? string.Empty;
@@ -125,9 +138,12 @@ namespace RimMind.Infrastructure.UI
                 $"[Response]\n{entry.FullResponse}\n\n" +
                 $"[Error]\n{entry.ErrorMsg}";
 
+            Rect detailOuter = new Rect(rect.x, rect.y + 34f, rect.width, rect.height - 34f);
             Rect content = new Rect(rect.x, rect.y + 34f, rect.width - 16f,
                 Text.CalcHeight(text, rect.width - 24f) + 16f);
-            Widgets.BeginScrollView(new Rect(rect.x, rect.y + 34f, rect.width, rect.height - 34f),
+            scope?.Record(detailOuter, "ScrollView:DetailOuter");
+            scope?.Record(content, "ScrollView:DetailContent");
+            Widgets.BeginScrollView(detailOuter,
                 ref _detailScroll, content);
             Widgets.Label(new Rect(content.x, content.y, content.width, content.height), text);
             Widgets.EndScrollView();

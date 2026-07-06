@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_ToolCallDebug : Window
+    public class Window_ToolCallDebug : RimMindWindowBase
     {
         private Vector2 _scrollPos = Vector2.zero;
         private Vector2 _detailScrollPos = Vector2.zero;
@@ -37,7 +38,7 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -45,6 +46,7 @@ namespace RimMind.Infrastructure.UI
             float headerH = 30f;
 
             Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, headerH);
+            scope.Record(headerRect, "Header:Title");
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;
             Widgets.Label(headerRect, "RimMind.UI.ToolCallDebug.Title".Translate());
@@ -53,6 +55,7 @@ namespace RimMind.Infrastructure.UI
 
             Rect bodyRect = new Rect(inRect.x, inRect.y + headerH + Padding,
                 inRect.width, inRect.height - headerH - Padding);
+            scope.Record(bodyRect, "Body");
 
             var registry = RimMindAPI.Tools;
             if (registry == null)
@@ -73,9 +76,11 @@ namespace RimMind.Infrastructure.UI
 
             Rect leftRect = new Rect(bodyRect.x, bodyRect.y, leftW, bodyRect.height);
             Rect rightRect = new Rect(bodyRect.x + leftW + Padding, bodyRect.y, rightW, bodyRect.height);
+            scope.Record(leftRect, "List:Tools");
+            scope.Record(rightRect, "Detail:SelectedTool");
 
-            DrawToolList(leftRect, defs);
-            DrawToolDetail(rightRect, defs);
+            DrawToolList(leftRect, defs, scope);
+            DrawToolDetail(rightRect, defs, scope);
         }
 
         private void DrawEmptyState(Rect rect)
@@ -98,7 +103,7 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
         }
 
-        private void DrawToolList(Rect rect, IReadOnlyList<ToolDefinition> defs)
+        private void DrawToolList(Rect rect, IReadOnlyList<ToolDefinition> defs, RimMindLayoutScope scope)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.12f, 0.5f));
 
@@ -114,6 +119,8 @@ namespace RimMind.Infrastructure.UI
 
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
+            scope.Record(rect, "ScrollView:ToolListOuter");
+            scope.Record(viewRect, "ScrollView:ToolListContent");
 
             float y = viewRect.y;
             foreach (var group in grouped)
@@ -128,6 +135,7 @@ namespace RimMind.Infrastructure.UI
                 foreach (var def in group)
                 {
                     Rect entryRect = new Rect(viewRect.x, y, viewRect.width, EntryH);
+                    scope.Record(entryRect, $"ToolEntry:{def.Id}");
                     bool selected = _selectedToolId == def.Id;
                     if (selected)
                         Widgets.DrawBoxSolid(entryRect, new Color(0.25f, 0.35f, 0.55f, 0.6f));
@@ -146,7 +154,7 @@ namespace RimMind.Infrastructure.UI
             Widgets.EndScrollView();
         }
 
-        private void DrawToolDetail(Rect rect, IReadOnlyList<ToolDefinition> defs)
+        private void DrawToolDetail(Rect rect, IReadOnlyList<ToolDefinition> defs, RimMindLayoutScope scope)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.12f, 0.3f));
 
@@ -211,6 +219,7 @@ namespace RimMind.Infrastructure.UI
 
             float inputH = 60f;
             Rect inputRect = new Rect(rect.x + Padding, y, rect.width - Padding * 2, inputH);
+            scope.Record(inputRect, "Input:Json");
             _jsonInput = Widgets.TextArea(inputRect, _jsonInput);
             y += inputH + Padding;
 
@@ -218,6 +227,7 @@ namespace RimMind.Infrastructure.UI
             float btnW = 120f;
             float btnH = 28f;
             Rect btnRect = new Rect(rect.x + Padding, y, btnW, btnH);
+            scope.Record(btnRect, "Button:Execute");
             if (_isExecuting)
             {
                 GUI.color = Color.grey;

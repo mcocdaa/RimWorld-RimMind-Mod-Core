@@ -4,13 +4,14 @@ using RimMind.Application.Common.Extensions;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_ContextKeyDebug : Window
+    public class Window_ContextKeyDebug : RimMindWindowBase
     {
         private Vector2 _scrollPos = Vector2.zero;
         private const float Padding = 6f;
@@ -36,7 +37,7 @@ namespace RimMind.Infrastructure.UI
             doCloseX = true;
         }
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -47,16 +48,20 @@ namespace RimMind.Infrastructure.UI
             Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, headerH);
             Rect filterRect = new Rect(inRect.x, inRect.y + headerH + Padding, inRect.width, filterH);
 
+            scope.Record(headerRect, "Header:Title");
+            scope.Record(filterRect, "Filter:Bar");
+
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;
             Widgets.Label(headerRect, "RimMind.UI.ContextKeyDebug.Title".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            DrawFilters(filterRect);
+            DrawFilters(filterRect, scope);
 
             Rect bodyRect = new Rect(inRect.x, filterRect.yMax + Padding,
                 inRect.width, inRect.yMax - filterRect.yMax - Padding);
+            scope.Record(bodyRect, "Body");
 
             var registry = RimMindAPI.Context.ContextKeys;
             if (registry == null)
@@ -85,10 +90,13 @@ namespace RimMind.Infrastructure.UI
             Rect leftRect = new Rect(bodyRect.x, bodyRect.y, leftW, bodyRect.height - BtnHeight - Padding);
             Rect rightRect = new Rect(bodyRect.x + leftW + Padding, bodyRect.y, rightW, bodyRect.height - BtnHeight - Padding);
             Rect btnRect = new Rect(bodyRect.x, bodyRect.y + bodyRect.height - BtnHeight, bodyRect.width, BtnHeight);
+            scope.Record(leftRect, "List:Keys");
+            scope.Record(rightRect, "Detail:SelectedKey");
+            scope.Record(btnRect, "Bottom:TestButton");
 
-            DrawKeyList(leftRect, filtered);
-            DrawKeyDetail(rightRect, filtered);
-            DrawTestButton(btnRect);
+            DrawKeyList(leftRect, filtered, scope);
+            DrawKeyDetail(rightRect, filtered, scope);
+            DrawTestButton(btnRect, scope);
         }
 
         private List<KeyMeta> ApplyFilters(IReadOnlyList<KeyMeta> keys)
@@ -101,12 +109,13 @@ namespace RimMind.Infrastructure.UI
             return result.ToList();
         }
 
-        private void DrawFilters(Rect rect)
+        private void DrawFilters(Rect rect, RimMindLayoutScope scope)
         {
             float btnW = 140f;
             float gap = 8f;
 
             Rect layerBtnRect = new Rect(rect.x, rect.y, btnW, BtnHeight);
+            scope.Record(layerBtnRect, "Button:LayerFilter");
             string layerLabel = _layerFilter.HasValue
                 ? "RimMind.UI.ContextKeyDebug.Layer".Translate(_layerFilter.Value.ToString())
                 : "RimMind.UI.ContextKeyDebug.FilterLayer".Translate();
@@ -114,6 +123,7 @@ namespace RimMind.Infrastructure.UI
                 CycleLayerFilter();
 
             Rect ownerBtnRect = new Rect(rect.x + btnW + gap, rect.y, btnW, BtnHeight);
+            scope.Record(ownerBtnRect, "Button:OwnerFilter");
             string ownerLabel = !_ownerFilter.NullOrEmpty()
                 ? "RimMind.UI.ContextKeyDebug.OwnerMod".Translate(_ownerFilter)
                 : "RimMind.UI.ContextKeyDebug.FilterOwner".Translate();
@@ -191,7 +201,7 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
         }
 
-        private void DrawKeyList(Rect rect, IReadOnlyList<KeyMeta> keys)
+        private void DrawKeyList(Rect rect, IReadOnlyList<KeyMeta> keys, RimMindLayoutScope scope)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.12f, 0.5f));
 
@@ -207,6 +217,8 @@ namespace RimMind.Infrastructure.UI
 
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
+            scope.Record(rect, "ScrollView:KeyListOuter");
+            scope.Record(viewRect, "ScrollView:KeyListContent");
 
             float y = viewRect.y;
             foreach (var group in grouped)
@@ -221,6 +233,7 @@ namespace RimMind.Infrastructure.UI
                 foreach (var key in group)
                 {
                     Rect entryRect = new Rect(viewRect.x, y, viewRect.width, LineH);
+                    scope.Record(entryRect, $"KeyEntry:{key.Key}");
                     bool selected = _selectedKeyDetail == key.Key;
                     if (selected)
                         Widgets.DrawBoxSolid(entryRect, new Color(0.25f, 0.35f, 0.55f, 0.6f));
@@ -240,7 +253,7 @@ namespace RimMind.Infrastructure.UI
             Widgets.EndScrollView();
         }
 
-        private void DrawKeyDetail(Rect rect, IReadOnlyList<KeyMeta> keys)
+        private void DrawKeyDetail(Rect rect, IReadOnlyList<KeyMeta> keys, RimMindLayoutScope scope)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.08f, 0.08f, 0.12f, 0.3f));
 
@@ -364,10 +377,11 @@ namespace RimMind.Infrastructure.UI
             }
         }
 
-        private void DrawTestButton(Rect rect)
+        private void DrawTestButton(Rect rect, RimMindLayoutScope scope)
         {
             float btnW = 160f;
             Rect testBtn = new Rect(rect.x, rect.y, btnW, BtnHeight);
+            scope.Record(testBtn, "Button:TestDuplicates");
             if (Widgets.ButtonText(testBtn, "RimMind.UI.ContextKeyDebug.TestDuplicates".Translate()))
             {
                 var registry = RimMindAPI.Context.ContextKeys;
