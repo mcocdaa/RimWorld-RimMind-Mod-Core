@@ -71,5 +71,31 @@ namespace RimMind.Tests.Presentation.UI
             Assert.True(viewModel.CanChat);
             Assert.True(viewModel.ShowEmptyActivity);
         }
+
+        [Fact]
+        public void TraceRow_Summary_PrefersToolCall_WhenPresent()
+        {
+            var row = new AgentRequestTraceRow(
+                AgentRequestTraceStatus.Success,
+                "toolcall: move_to_cell",
+                "ignored content",
+                error: null);
+
+            Assert.Equal("toolcall: move_to_cell", row.Summary);
+            Assert.False(row.HasError);
+        }
+
+        [Fact]
+        public void TraceRow_Error_ExposesErrorState()
+        {
+            var row = new AgentRequestTraceRow(
+                AgentRequestTraceStatus.Error,
+                toolCallSummary: "",
+                contentSummary: "request failed",
+                error: "timeout");
+
+            Assert.True(row.HasError);
+            Assert.Equal("timeout", row.Error);
+        }
     }
 }

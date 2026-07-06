@@ -637,6 +637,9 @@
   <RimMind.UI.AgentsPage.State>状态</RimMind.UI.AgentsPage.State>
   <RimMind.UI.AgentsPage.Activity>活动</RimMind.UI.AgentsPage.Activity>
   <RimMind.UI.AgentsPage.Activity.Empty>此 Agent 还没有请求流条目。</RimMind.UI.AgentsPage.Activity.Empty>
+  <RimMind.UI.AgentsPage.Trace.Pending>等待回复</RimMind.UI.AgentsPage.Trace.Pending>
+  <RimMind.UI.AgentsPage.Trace.Success>成功</RimMind.UI.AgentsPage.Trace.Success>
+  <RimMind.UI.AgentsPage.Trace.Error>出错</RimMind.UI.AgentsPage.Trace.Error>
   <RimMind.UI.AgentsPage.CreateFailed>创建智能体失败，请检查服务是否可用。</RimMind.UI.AgentsPage.CreateFailed>
   <RimMind.UI.AgentsPage.MessageUnavailable>智能体聊天输入尚未接入，已保留当前草稿。</RimMind.UI.AgentsPage.MessageUnavailable>
   <!-- AIRequestsPageDrawer.cs -->
