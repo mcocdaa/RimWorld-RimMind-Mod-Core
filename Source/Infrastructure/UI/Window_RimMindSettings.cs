@@ -23,6 +23,7 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            scope.Record(inRect, "Settings:Body");
             RimMindCoreSettingsUI.Draw(inRect, _settingsProvider, scope);
         }
 
