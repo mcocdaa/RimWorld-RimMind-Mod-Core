@@ -65,6 +65,16 @@ namespace RimWorld
         public static MessageTypeDef RejectInput = new();
         public static MessageTypeDef PositiveEvent = new();
     }
+
+    /// <summary>Stub for RimWorld.ITab used in UI base class tests.</summary>
+    public abstract class ITab
+    {
+        public UnityEngine.Vector2 size = new UnityEngine.Vector2(100f, 100f);
+        protected abstract void FillTab();
+    }
+
+    /// <summary>Stub for RimWorld.MainTabWindow used in UI base class tests.</summary>
+    public class MainTabWindow : Verse.Window { }
 }
 
 namespace Verse
@@ -191,8 +201,30 @@ namespace Verse
         public void Add(Window window) { }
     }
 
-    /// <summary>Stub for Verse.Window used in Gizmo tests.</summary>
-    public class Window { }
+    /// <summary>Stub for Verse.Window used in Gizmo/UI tests.</summary>
+    public class Window
+    {
+        public virtual UnityEngine.Vector2 InitialSize => new UnityEngine.Vector2(400f, 300f);
+        public virtual void DoWindowContents(UnityEngine.Rect inRect) { }
+    }
+
+    /// <summary>Stub for Verse.GameFont used in UI base class tests.</summary>
+    public enum GameFont { Tiny, Small, Medium, MediumBig }
+
+    /// <summary>Stub for Verse.TextAnchor used in UI base class tests.</summary>
+    public enum TextAnchor
+    {
+        UpperLeft, UpperCenter, UpperRight,
+        MiddleLeft, MiddleCenter, MiddleRight,
+        LowerLeft, LowerCenter, LowerRight
+    }
+
+    /// <summary>Stub for Verse.Text used in UI base class tests.</summary>
+    public static class Text
+    {
+        public static GameFont Font { get; set; } = GameFont.Small;
+        public static TextAnchor Anchor { get; set; } = TextAnchor.UpperLeft;
+    }
 
     /// <summary>Stub for Verse.Translate extension method.</summary>
     public static class TranslateStub
