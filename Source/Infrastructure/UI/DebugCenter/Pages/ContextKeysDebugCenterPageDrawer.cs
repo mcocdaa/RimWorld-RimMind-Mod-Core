@@ -17,6 +17,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         {
             DebugCenterToolGrid.Draw(
                 rect,
+                scope,
                 ("RimMind.UI.Hub.ContextKeys", () => Find.WindowStack.Add(new Window_ContextKeyDebug())));
         }
     }
