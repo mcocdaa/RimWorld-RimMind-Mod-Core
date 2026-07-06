@@ -28,6 +28,9 @@ namespace UnityEngine
         public float yMin => y;
         public float xMax => x + width;
         public float yMax => y + height;
+
+        public bool Contains(Vector2 point)
+            => point.x >= xMin && point.x < xMax && point.y >= yMin && point.y < yMax;
     }
 
     public static class Mathf

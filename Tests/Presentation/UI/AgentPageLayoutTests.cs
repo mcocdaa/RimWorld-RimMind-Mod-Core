@@ -27,5 +27,21 @@ namespace RimMind.Tests.Presentation.UI
             Assert.True(layout.Detail.width >= 360f);
             Assert.True(layout.Activity.height >= 120f);
         }
+
+        [Theory]
+        [InlineData(620f, 420f)]
+        [InlineData(740f, 480f)]
+        [InlineData(980f, 620f)]
+        public void Calculate_SupportedViewports_AllMajorRectsStayInsideWindow(float width, float height)
+        {
+            var root = new Rect(0f, 0f, width, height);
+            var layout = AgentPageLayout.Calculate(root);
+
+            Assert.True(root.Contains(new Vector2(layout.List.xMin, layout.List.yMin)));
+            Assert.True(root.Contains(new Vector2(layout.List.xMax - 1f, layout.List.yMax - 1f)));
+            Assert.True(root.Contains(new Vector2(layout.Detail.xMin, layout.Detail.yMin)));
+            Assert.True(root.Contains(new Vector2(layout.Detail.xMax - 1f, layout.Detail.yMax - 1f)));
+            Assert.True(root.Contains(new Vector2(layout.Chat.xMax - 1f, layout.Chat.yMax - 1f)));
+        }
     }
 }

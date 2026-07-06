@@ -1,5 +1,6 @@
 using UnityEngine;
 using Xunit;
+using RimMind.Infrastructure.UI.AgentsPage;
 using RimMind.Infrastructure.UI.Layout;
 
 namespace RimMind.Tests.Infrastructure.UI.Layout
@@ -55,6 +56,22 @@ namespace RimMind.Tests.Infrastructure.UI.Layout
             }
             Assert.True(LayoutConflictStore.TryGet("WinNoLabel", out var report));
             Assert.False(report!.HasConflicts);
+        }
+
+        [Fact]
+        public void LayoutTraceRecorder_DetectsAgentPageSectionOverlap()
+        {
+            var layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 740f, 480f));
+            var recorder = new LayoutTraceRecorder(new Rect(0f, 0f, 740f, 480f));
+
+            recorder.Record(layout.List, "list", "test");
+            recorder.Record(layout.Detail, "detail", "test");
+            recorder.Record(layout.Status, "status", "test");
+            recorder.Record(layout.Actions, "actions", "test");
+            recorder.Record(layout.Activity, "activity", "test");
+            recorder.Record(layout.Chat, "chat", "test");
+
+            Assert.DoesNotContain(recorder.DetectConflicts(), conflict => conflict.Kind == ConflictKind.Overlap);
         }
     }
 }
