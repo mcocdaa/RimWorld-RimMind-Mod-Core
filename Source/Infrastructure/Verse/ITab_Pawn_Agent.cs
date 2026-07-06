@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI;
+using RimMind.Infrastructure.UI.Layout;
 using RimMind.Presentation.Agent;
 using RimWorld;
 using UnityEngine;
@@ -11,7 +12,7 @@ using Verse;
 
 namespace RimMind.Infrastructure.Verse
 {
-    public class ITab_Pawn_Agent : ITab
+    public class ITab_Pawn_Agent : RimMindITabBase
     {
         private static readonly Vector2 WinSize = new Vector2(440f, 520f);
 
@@ -25,7 +26,7 @@ namespace RimMind.Infrastructure.Verse
 
         private Pawn SelectedPawn => SelThing as Pawn;
 
-        protected override void FillTab()
+        protected override void FillTabContents(Rect inRect, RimMindLayoutScope scope)
         {
             var pawn = SelectedPawn;
             if (pawn == null) return;
@@ -34,10 +35,11 @@ namespace RimMind.Infrastructure.Verse
             var agent = comp?.Agent;
 
             var rect = new Rect(RimMindUI.Padding, RimMindUI.Padding, WinSize.x - RimMindUI.Padding * 2, WinSize.y - RimMindUI.Padding * 2);
+            scope.Record(rect, "Body");
 
             if (agent == null)
             {
-                DrawNoAgentState(rect, pawn, comp);
+                DrawNoAgentState(rect, pawn, comp, scope);
                 return;
             }
 
@@ -45,6 +47,8 @@ namespace RimMind.Infrastructure.Verse
             var contentRect = new Rect(0f, 0f, rect.width - 16f, contentH);
 
             Widgets.BeginScrollView(rect, ref _scrollPosition, contentRect);
+            scope.Record(rect, "ScrollView:Outer");
+            scope.Record(contentRect, "ScrollView:Content");
 
             float curY = 0f;
 
@@ -129,15 +133,17 @@ namespace RimMind.Infrastructure.Verse
             Widgets.EndScrollView();
         }
 
-        private void DrawNoAgentState(Rect rect, Pawn pawn, CompPawnAgent? comp)
+        private void DrawNoAgentState(Rect rect, Pawn pawn, CompPawnAgent? comp, RimMindLayoutScope scope)
         {
             float y = rect.y;
 
+            scope.Record(rect, "EmptyState:NoAgent");
             RimMindUI.DrawEmptyState(rect, "RimMind.Agent.ITab.NoAgent".Translate(),
                 "RimMind.Agent.ITab.NoAgentHint".Translate());
 
             y = rect.y + rect.height - 40f;
             Rect createBtn = new Rect(rect.x, y, 160f, 28f);
+            scope.Record(createBtn, "Button:CreateAgent");
             if (Widgets.ButtonText(createBtn, "RimMind.Agent.ITab.CreateAgent".Translate()))
             {
                 var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();

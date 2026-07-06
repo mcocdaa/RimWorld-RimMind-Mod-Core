@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Debug;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
@@ -18,7 +19,7 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 
         private sealed record DetailSection(string Title, string Body);
 
-        public void Draw(Rect rect)
+        public void Draw(Rect rect, RimMindLayoutScope? scope = null)
         {
             var log = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
             if (log == null)
@@ -38,6 +39,8 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
             float listWidth = Mathf.Min(300f, rect.width * 0.4f);
             Rect list = new(rect.x, rect.y, listWidth, rect.height);
             Rect detail = new(list.xMax + 8f, rect.y, rect.width - listWidth - 8f, rect.height);
+            scope?.Record(list, "AIRequests:List");
+            scope?.Record(detail, "AIRequests:Detail");
             DrawList(list, entries);
             DrawDetail(detail, entries[Mathf.Clamp(_selectedIndex, 0, entries.Count - 1)]);
         }

@@ -4,6 +4,7 @@ using RimMind.Domain.Enums;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI;
 using RimMind.Infrastructure.UI.DebugCenter;
+using RimMind.Infrastructure.UI.Layout;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -19,9 +20,11 @@ namespace RimMind.Infrastructure.UI.AgentsPage
         private readonly List<AgentListItem> _agents = new();
         private readonly Dictionary<string, Pawn> _pawnById = new();
 
-        public void Draw(Rect rect, Pawn? hubSelectedPawn)
+        public void Draw(Rect rect, Pawn? hubSelectedPawn, RimMindLayoutScope? scope = null)
         {
             AgentPageLayoutRects layout = DebugCenterLayout.CalculateAgentPage(rect);
+            scope?.Record(layout.List, "Agents:List");
+            scope?.Record(layout.Detail, "Agents:Detail");
 
             DrawList(layout.List, hubSelectedPawn);
 

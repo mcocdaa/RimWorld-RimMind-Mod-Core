@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Infrastructure.UI.DebugCenter;
+using RimMind.Infrastructure.UI.Layout;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI
 {
-    public class Window_RimMindHub : Window
+    public class Window_RimMindHub : RimMindWindowBase
     {
         private string _pageId;
         private readonly Pawn? _selectedPawn;
@@ -38,17 +39,20 @@ namespace RimMind.Infrastructure.UI
         public static Window_RimMindHub OpenAIRequests()
             => new Window_RimMindHub("ai_requests", selectedPawn: null);
 
-        public override void DoWindowContents(Rect inRect)
+        protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             HubLayoutRects layout = DebugCenterLayout.CalculateHub(inRect);
+            scope.Record(layout.Body, "Header");
+            scope.Record(layout.Tabs, "Tabs");
+            scope.Record(layout.Content, "Content");
 
             RimMindUI.DrawWindowHeader(layout.Body, "RimMind.UI.Hub.Title".Translate());
-            DrawTabs(layout.Tabs);
+            DrawTabs(layout.Tabs, scope);
             IDebugCenterPageDrawer? selectedPage = ResolveSelectedPage();
             selectedPage?.Draw(layout.Content, _context);
         }
 
-        private void DrawTabs(Rect rect)
+        private void DrawTabs(Rect rect, RimMindLayoutScope scope)
         {
             if (_pages.Count == 0)
                 return;
@@ -58,6 +62,7 @@ namespace RimMind.Infrastructure.UI
             {
                 var page = _pages[i];
                 Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
+                scope.Record(tabBtn, $"Tab:{page.Descriptor.Id}");
                 bool selected = _pageId == page.Descriptor.Id;
                 if (RimMindUI.DrawTabButton(tabBtn, page.Descriptor.LabelKey.Translate(), selected))
                     _pageId = page.Descriptor.Id;
