@@ -65,6 +65,7 @@
     <Compile Include="Presentation\Agent\*.cs" />
     <Compile Include="Presentation\UI\*.cs" />
     <Compile Include="Presentation\UI\Framework\*.cs" />
+    <Compile Include="Presentation\UI\Snapshots\*.cs" />
     <Compile Include="Infrastructure\Verse\*.cs" />
     <Compile Include="Infrastructure\OpenAI\*.cs" />
     <Compile Include="Infrastructure\Clients\Shared\*.cs" />
