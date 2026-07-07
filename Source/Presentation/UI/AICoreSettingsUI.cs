@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
@@ -12,32 +13,25 @@ namespace RimMind.Presentation.UI
 {
     public static class RimMindCoreSettingsUI
     {
-        private const float TabBarHeight = 32f;
-        private const float TabBarGap = 6f;
-        private const float TabMinWidth = 120f;
-        private const float TabGap = 4f;
-
         private static IExtensionRegistry<ISettingsTab>? _cachedSettingsTabRegistry;
 
         private static IExtensionRegistry<ISettingsTab>? GetSettingsTabRegistry()
             => _cachedSettingsTabRegistry ??= RimMindRuntime.Instance.GetService<IExtensionRegistry<ISettingsTab>>();
 
         private static string _curTab = "api";
-        private static float _cachedTabBarHeight = TabBarHeight;
 
         public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
         {
             var tabs = CollectTabs();
-            _cachedTabBarHeight = CalcTabBarHeight(inRect.width, tabs.Count);
+            var layout = TabbedPageLayout.Calculate(inRect, tabs);
+            scope?.Record(layout.TabBar, "Settings:TabBar");
+            scope?.Record(layout.Content, "Settings:Content");
+            DrawTabBar(layout, tabs, scope);
+            DrawCurrentSettingsPage(layout.Content, settings, scope);
+        }
 
-            Rect tabBarRect = new Rect(inRect.x, inRect.y, inRect.width, _cachedTabBarHeight);
-            scope?.Record(tabBarRect, "Settings:TabBar");
-            DrawTabBar(tabBarRect, tabs);
-
-            Rect content = new Rect(inRect.x, inRect.y + _cachedTabBarHeight + TabBarGap,
-                                    inRect.width, inRect.height - _cachedTabBarHeight - TabBarGap);
-            scope?.Record(content, "Settings:Content");
-
+        private static void DrawCurrentSettingsPage(Rect content, ISettingsProvider settings, RimMindLayoutScope? scope)
+        {
             switch (_curTab)
             {
                 case "api": ApiTabDrawer.Draw(content, settings, scope); break;
@@ -53,62 +47,39 @@ namespace RimMind.Presentation.UI
             }
         }
 
-        private static List<(string id, string label)> CollectTabs()
+        private static List<TabbedPageTabModel> CollectTabs()
         {
-            var tabs = new List<(string id, string label)>
+            var tabs = new List<TabbedPageTabModel>
             {
-                ("api",     "RimMind.Settings.Tab.Api".Translate()),
-                ("queue",   "RimMind.Settings.Tab.Queue".Translate()),
-                ("prompts", "RimMind.Settings.Tab.Prompts".Translate()),
-                ("context", "RimMind.Settings.Tab.Context".Translate()),
+                CreateTab("api", "RimMind.Settings.Tab.Api"),
+                CreateTab("queue", "RimMind.Settings.Tab.Queue"),
+                CreateTab("prompts", "RimMind.Settings.Tab.Prompts"),
+                CreateTab("context", "RimMind.Settings.Tab.Context"),
             };
             var settingsTabRegistry = GetSettingsTabRegistry();
             if (settingsTabRegistry != null)
                 foreach (var tab in settingsTabRegistry.All)
-                    tabs.Add((tab.Id, tab.Label));
+                    tabs.Add(new TabbedPageTabModel(tab.Id, tab.Label, tab.Id, _curTab == tab.Id, true, null));
             return tabs;
         }
 
-        private static int CalcMaxPerRow(float availableWidth, int tabCount)
+        private static TabbedPageTabModel CreateTab(string id, string labelKey)
+            => new(id, labelKey.Translate(), labelKey, _curTab == id, true, null);
+
+        private static void DrawTabBar(TabbedPageLayoutResult layout, IReadOnlyList<TabbedPageTabModel> tabs, RimMindLayoutScope? scope)
         {
-            if (tabCount <= 0) return 1;
-            int perRow = Mathf.FloorToInt((availableWidth + TabGap) / (TabMinWidth + TabGap));
-            return Mathf.Clamp(perRow, 1, tabCount);
-        }
+            if (tabs.Count == 0)
+                return;
 
-        private static float CalcTabBarHeight(float availableWidth, int tabCount)
-        {
-            if (tabCount <= 0) return TabBarHeight;
-            int perRow = CalcMaxPerRow(availableWidth, tabCount);
-            int rows = Mathf.CeilToInt((float)tabCount / perRow);
-            return rows * TabBarHeight + (rows - 1) * TabGap;
-        }
-
-        private static void DrawTabBar(Rect r, List<(string id, string label)> tabs)
-        {
-            int count = tabs.Count;
-            if (count == 0) return;
-
-            int perRow = CalcMaxPerRow(r.width, count);
-            int rows = Mathf.CeilToInt((float)count / perRow);
-
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < layout.TabRects.Count; i++)
             {
-                int row = i / perRow;
-                int col = i % perRow;
-                int colsInRow = (row == rows - 1) ? (count - row * perRow) : perRow;
+                var tabRect = layout.TabRects[i];
+                var tab = tabs[i];
+                scope?.Record(tabRect.Rect, "Settings:Tab:" + tab.Id);
 
-                float w = (r.width - TabGap * (colsInRow - 1)) / colsInRow;
-                float x = r.x + col * (w + TabGap);
-                float y = r.y + row * (TabBarHeight + TabGap);
-
-                var (id, label) = tabs[i];
-                Rect btn = new Rect(x, y, w, TabBarHeight);
-                bool selected = _curTab == id;
-
-                GUI.color = selected ? Color.white : Color.gray;
-                if (Widgets.ButtonText(btn, label))
-                    _curTab = id;
+                GUI.color = tabRect.Selected ? Color.white : Color.gray;
+                if (Widgets.ButtonText(tabRect.Rect, tab.Label) && tab.Enabled)
+                    _curTab = tab.Id;
             }
             GUI.color = Color.white;
         }

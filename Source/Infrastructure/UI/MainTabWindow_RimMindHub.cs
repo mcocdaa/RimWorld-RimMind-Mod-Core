@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Infrastructure.UI.DebugCenter;
+using RimMind.Infrastructure.UI.Framework;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
@@ -13,6 +15,7 @@ namespace RimMind.Infrastructure.UI
         private readonly Pawn? _selectedPawn;
         private readonly DebugCenterPageContext _context;
         private readonly IReadOnlyList<IDebugCenterPageDrawer> _pages;
+        private readonly RimMindTabbedPageHostDrawer _tabDrawer = new();
 
         public override Vector2 InitialSize => new Vector2(780f, 580f);
 
@@ -41,33 +44,33 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
-            HubLayoutRects layout = DebugCenterLayout.CalculateHub(inRect);
-            scope.Record(layout.Body, "Header");
-            scope.Record(layout.Tabs, "Tabs");
-            scope.Record(layout.Content, "Content");
+            Rect body = inRect.InsetSafe(RimMindUiMetrics.WindowInset);
+            Rect header = new Rect(body.x, body.y, body.width, RimMindUiMetrics.HeaderHeight);
+            Rect tabRoot = new Rect(
+                body.x,
+                header.yMax + RimMindUiMetrics.Padding,
+                body.width,
+                Mathf.Max(1f, body.yMax - header.yMax - RimMindUiMetrics.Padding));
+            var tabs = BuildTabModels();
+            var tabLayout = TabbedPageLayout.Calculate(tabRoot, tabs);
 
-            RimMindUI.DrawWindowHeader(layout.Body, "RimMind.UI.Hub.Title".Translate());
-            DrawTabs(layout.Tabs, scope);
+            scope.Record(header, "Hub:Header");
+            RimMindUI.DrawWindowHeader(header, "RimMind.UI.Hub.Title".Translate());
+            _pageId = _tabDrawer.DrawTabs(tabRoot, tabs, _pageId, scope);
             IDebugCenterPageDrawer? selectedPage = ResolveSelectedPage();
-            selectedPage?.Draw(layout.Content, _context, scope);
+            selectedPage?.Draw(tabLayout.Content, _context, scope);
         }
 
-        private void DrawTabs(Rect rect, RimMindLayoutScope scope)
-        {
-            if (_pages.Count == 0)
-                return;
-
-            float tabW = rect.width / _pages.Count;
-            for (int i = 0; i < _pages.Count; i++)
-            {
-                var page = _pages[i];
-                Rect tabBtn = new Rect(rect.x + i * tabW, rect.y, tabW - 2f, rect.height);
-                scope.Record(tabBtn, $"Tab:{page.Descriptor.Id}");
-                bool selected = _pageId == page.Descriptor.Id;
-                if (RimMindUI.DrawTabButton(tabBtn, page.Descriptor.LabelKey.Translate(), selected))
-                    _pageId = page.Descriptor.Id;
-            }
-        }
+        private IReadOnlyList<TabbedPageTabModel> BuildTabModels()
+            => _pages
+                .Select(page => new TabbedPageTabModel(
+                    page.Descriptor.Id,
+                    page.Descriptor.LabelKey.Translate(),
+                    page.Descriptor.LabelKey,
+                    _pageId == page.Descriptor.Id,
+                    enabled: true,
+                    tooltipKey: null))
+                .ToList();
 
         private IDebugCenterPageDrawer? ResolveSelectedPage()
         {
