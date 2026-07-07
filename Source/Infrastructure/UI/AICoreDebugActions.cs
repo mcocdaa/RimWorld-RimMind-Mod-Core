@@ -17,7 +17,7 @@ using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using LudeonTK;
 using RimWorld;
 using UnityEngine;

@@ -4,7 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Agent;
 using RimWorld;
 using UnityEngine;

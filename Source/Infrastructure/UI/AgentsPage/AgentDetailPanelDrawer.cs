@@ -2,7 +2,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI.DebugCenter;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using RimWorld;
 using UnityEngine;

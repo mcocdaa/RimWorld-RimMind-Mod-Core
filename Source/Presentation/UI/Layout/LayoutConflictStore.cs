@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RimMind.Infrastructure.UI.Layout
+namespace RimMind.Presentation.UI.Layout
 {
     /// <summary>
     /// Immutable snapshot of one window's layout conflicts for one frame.

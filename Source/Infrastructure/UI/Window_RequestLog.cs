@@ -3,7 +3,7 @@ using System.Text;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
 using Verse;

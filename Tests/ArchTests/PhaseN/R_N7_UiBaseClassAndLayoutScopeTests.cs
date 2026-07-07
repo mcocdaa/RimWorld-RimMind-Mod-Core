@@ -85,7 +85,7 @@ namespace RimMind.Tests.ArchTests.PhaseN
             var path = Path.Combine(SourceDir, "Infrastructure", "UI", "DebugCenter", "IDebugCenterPageDrawer.cs");
             string text = File.ReadAllText(path);
 
-            Assert.Contains("using RimMind.Infrastructure.UI.Layout;", text);
+            Assert.Contains("using RimMind.Presentation.UI.Layout;", text);
             Assert.Contains("void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope);", text);
         }
 
@@ -105,7 +105,7 @@ namespace RimMind.Tests.ArchTests.PhaseN
         [Trait("Phase", "N")]
         public void R_N7_LayoutTraceRecorder_Exists_With_Expected_Methods()
         {
-            var path = Path.Combine(SourceDir, "Infrastructure", "UI", "Layout", "LayoutTraceRecorder.cs");
+            var path = Path.Combine(SourceDir, "Presentation", "UI", "Layout", "LayoutTraceRecorder.cs");
             Assert.True(File.Exists(path), "LayoutTraceRecorder must exist");
             var text = File.ReadAllText(path);
             Assert.Contains("public void Record(", text);
@@ -116,7 +116,7 @@ namespace RimMind.Tests.ArchTests.PhaseN
         [Trait("Phase", "N")]
         public void R_N7_LayoutConflictStore_Exists_With_Expected_Methods()
         {
-            var path = Path.Combine(SourceDir, "Infrastructure", "UI", "Layout", "LayoutConflictStore.cs");
+            var path = Path.Combine(SourceDir, "Presentation", "UI", "Layout", "LayoutConflictStore.cs");
             Assert.True(File.Exists(path), "LayoutConflictStore must exist");
             var text = File.ReadAllText(path);
             Assert.Contains("public static void Publish(", text);
@@ -128,7 +128,7 @@ namespace RimMind.Tests.ArchTests.PhaseN
         [Trait("Phase", "N")]
         public void R_N7_RimMindLayoutScope_Exists_With_Begin_And_Dispose()
         {
-            var path = Path.Combine(SourceDir, "Infrastructure", "UI", "Layout", "RimMindLayoutScope.cs");
+            var path = Path.Combine(SourceDir, "Presentation", "UI", "Layout", "RimMindLayoutScope.cs");
             Assert.True(File.Exists(path), "RimMindLayoutScope must exist");
             var text = File.ReadAllText(path);
             Assert.Contains("public static RimMindLayoutScope Begin(", text);

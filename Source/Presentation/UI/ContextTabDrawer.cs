@@ -2,7 +2,7 @@ using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;

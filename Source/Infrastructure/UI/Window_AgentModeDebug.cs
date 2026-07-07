@@ -11,7 +11,7 @@ using RimMind.Domain.Events;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Api;
 using RimMind.Infrastructure.UI;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
 

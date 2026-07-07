@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Domain.Enums;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
 using Verse;

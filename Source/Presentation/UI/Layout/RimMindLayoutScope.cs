@@ -1,7 +1,7 @@
 using UnityEngine;
 using Verse;
 
-namespace RimMind.Infrastructure.UI.Layout
+namespace RimMind.Presentation.UI.Layout
 {
     /// <summary>
     /// Disposable frame scope wrapping a LayoutTraceRecorder.

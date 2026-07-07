@@ -2,7 +2,7 @@ using UnityEngine;
 using Xunit;
 using Verse;
 using RimMind.Infrastructure.UI;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Tests.Infrastructure.UI.Layout;
 
 namespace RimMind.Tests.Infrastructure.UI

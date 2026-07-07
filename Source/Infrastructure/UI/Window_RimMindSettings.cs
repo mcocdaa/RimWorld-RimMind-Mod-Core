@@ -1,5 +1,5 @@
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.UI;
 using UnityEngine;
 using Verse;

@@ -89,10 +89,10 @@
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentRequestTraceRowBuilder.cs" Link="Infrastructure\UI\AgentsPage\AgentRequestTraceRowBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/DebugCenter/DebugCenterLayout.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
-    <Compile Include="../Source/Infrastructure/UI/Layout/LayoutConflict.cs" />
-    <Compile Include="../Source/Infrastructure/UI/Layout/LayoutTraceRecorder.cs" />
-    <Compile Include="../Source/Infrastructure/UI/Layout/LayoutConflictStore.cs" />
-    <Compile Include="../Source/Infrastructure/UI/Layout/RimMindLayoutScope.cs" />
+    <Compile Include="../Source/Presentation/UI/Layout/LayoutConflict.cs" />
+    <Compile Include="../Source/Presentation/UI/Layout/LayoutTraceRecorder.cs" />
+    <Compile Include="../Source/Presentation/UI/Layout/LayoutConflictStore.cs" />
+    <Compile Include="../Source/Presentation/UI/Layout/RimMindLayoutScope.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindWindowBase.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindITabBase.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindMainTabWindowBase.cs" />

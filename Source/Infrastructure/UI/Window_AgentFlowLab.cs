@@ -21,7 +21,7 @@ using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Api;
 using UnityEngine;

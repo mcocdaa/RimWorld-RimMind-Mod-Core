@@ -4,7 +4,7 @@ using RimMind.Application.Common.Extensions;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Domain.ValueObjects;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
 using Verse;

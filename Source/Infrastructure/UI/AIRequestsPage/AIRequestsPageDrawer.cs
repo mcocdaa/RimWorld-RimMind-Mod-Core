@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Debug;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
 

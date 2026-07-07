@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Domain.ValueObjects;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
 using Verse;

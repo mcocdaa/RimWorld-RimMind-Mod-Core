@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace RimMind.Infrastructure.UI.Layout
+namespace RimMind.Presentation.UI.Layout
 {
     /// <summary>
     /// Accumulates LayoutTraceEntry records for one draw frame and detects

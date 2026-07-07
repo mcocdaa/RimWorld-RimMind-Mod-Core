@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Infrastructure.UI.DebugCenter;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
 

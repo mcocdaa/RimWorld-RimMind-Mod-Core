@@ -7,7 +7,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
 using UnityEngine;

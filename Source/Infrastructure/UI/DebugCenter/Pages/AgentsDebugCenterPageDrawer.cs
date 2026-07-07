@@ -1,6 +1,6 @@
 using RimMind.Application.Common.Models.UI;
 using RimMind.Infrastructure.UI.AgentsPage;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages

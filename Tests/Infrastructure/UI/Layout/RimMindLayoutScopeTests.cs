@@ -1,7 +1,7 @@
 using UnityEngine;
 using Xunit;
 using RimMind.Infrastructure.UI.AgentsPage;
-using RimMind.Infrastructure.UI.Layout;
+using RimMind.Presentation.UI.Layout;
 
 namespace RimMind.Tests.Infrastructure.UI.Layout
 {

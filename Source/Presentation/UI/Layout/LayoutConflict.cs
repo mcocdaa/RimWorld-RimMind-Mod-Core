@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace RimMind.Infrastructure.UI.Layout
+namespace RimMind.Presentation.UI.Layout
 {
     public enum ConflictKind
     {
