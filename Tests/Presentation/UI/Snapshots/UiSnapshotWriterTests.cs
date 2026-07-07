@@ -52,6 +52,28 @@ public sealed class UiSnapshotWriterTests
     }
 
     [Fact]
+    public void TableHeaderFactory_DefaultsSelectedToFalse()
+    {
+        var header = RimMindUiElement.TableHeader("request_header", new Rect(1f, 2f, 120f, 24f), "Status");
+
+        Assert.Equal(RimMindUiElementKind.TableHeader, header.Kind);
+        Assert.Equal("request_header", header.Name);
+        Assert.Equal("Status", header.Text);
+        Assert.False(header.Selected);
+    }
+
+    [Fact]
+    public void StatusStripFactory_DefaultsSelectedToFalse()
+    {
+        var strip = RimMindUiElement.StatusStrip("request_status", new Rect(1f, 2f, 120f, 24f), "Idle");
+
+        Assert.Equal(RimMindUiElementKind.StatusStrip, strip.Kind);
+        Assert.Equal("request_status", strip.Name);
+        Assert.Equal("Idle", strip.Text);
+        Assert.False(strip.Selected);
+    }
+
+    [Fact]
     public void Writers_EscapeTextAndNames()
     {
         var document = new RimMindUiDocument(

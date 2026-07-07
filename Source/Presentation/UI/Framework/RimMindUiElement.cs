@@ -50,10 +50,16 @@ namespace RimMind.Presentation.UI.Framework
         public static RimMindUiElement ListRow(string name, Rect rect, string text, bool selected)
             => new(RimMindUiElementKind.ListRow, name, rect, text, selected);
 
+        public static RimMindUiElement TableHeader(string name, Rect rect, string text)
+            => new(RimMindUiElementKind.TableHeader, name, rect, text, selected: false);
+
         public static RimMindUiElement TableRow(string name, Rect rect, string text)
             => new(RimMindUiElementKind.TableRow, name, rect, text, selected: false);
 
         public static RimMindUiElement TableRow(string name, Rect rect, string text, bool selected)
             => new(RimMindUiElementKind.TableRow, name, rect, text, selected);
+
+        public static RimMindUiElement StatusStrip(string name, Rect rect, string text)
+            => new(RimMindUiElementKind.StatusStrip, name, rect, text, selected: false);
     }
 }
