@@ -39,20 +39,23 @@ namespace RimMind.Presentation.UI.Framework
 
         public static HeaderBodySplit SplitHeaderBody(this Rect rect, float headerHeight, float gap)
         {
-            float h = Mathf.Min(headerHeight, rect.height);
+            float h = Mathf.Min(Mathf.Max(0f, headerHeight), rect.height);
+            float effectiveGap = Mathf.Min(Mathf.Max(0f, gap), rect.height - h);
+            float bodyY = rect.y + h + effectiveGap;
             Rect header = new Rect(rect.x, rect.y, rect.width, h);
             Rect body = new Rect(
                 rect.x,
-                rect.y + h + gap,
+                bodyY,
                 rect.width,
-                Mathf.Max(1f, rect.height - h - gap));
+                Mathf.Max(0f, rect.yMax - bodyY));
             return new HeaderBodySplit(header, body);
         }
 
         public static BodyBottomSplit TakeBottom(this Rect rect, float height, float gap)
         {
-            float h = Mathf.Min(height, rect.height);
-            Rect body = new Rect(rect.x, rect.y, rect.width, Mathf.Max(1f, rect.height - h - gap));
+            float h = Mathf.Min(Mathf.Max(0f, height), rect.height);
+            float effectiveGap = Mathf.Min(Mathf.Max(0f, gap), rect.height - h);
+            Rect body = new Rect(rect.x, rect.y, rect.width, Mathf.Max(0f, rect.height - h - effectiveGap));
             Rect bottom = new Rect(rect.x, rect.yMax - h, rect.width, h);
             return new BodyBottomSplit(body, bottom);
         }
