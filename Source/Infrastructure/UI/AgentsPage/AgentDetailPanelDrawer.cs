@@ -2,6 +2,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI.DebugCenter;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using RimWorld;
@@ -37,9 +38,10 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                     RequestOverlay.Pending.Count,
                     traceRows);
 
-                if (Widgets.ButtonText(
-                    new Rect(layout.Actions.x, layout.Actions.y, 160f, RimMindUI.BtnHeight),
-                    "RimMind.UI.AgentsPage.CreateStart".Translate()))
+                Rect createRect = layout.ActionBar.Buttons.Count > 0
+                    ? layout.ActionBar.Buttons[0].Rect
+                    : new Rect(layout.Actions.x, layout.Actions.y, 160f, RimMindUI.BtnHeight);
+                if (Widgets.ButtonText(createRect, "RimMind.UI.AgentsPage.CreateStart".Translate()))
                 {
                     if (comp != null && comp.EnsureAgentCreated())
                         SafeTransitionTo(comp.Agent, AgentState.Active);
@@ -64,7 +66,7 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                 RequestOverlay.Pending.Count,
                 requestRows: 0,
                 traceRows);
-            DrawActions(layout.Actions, agent);
+            DrawActions(layout.ActionBar, agent);
             _activityDrawer.Draw(
                 layout.Activity,
                 agentModel.State,
@@ -101,50 +103,49 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                 "RimMind.UI.AgentsPage.State".Translate() + ": " + stateLabel, textColor, bgColor);
         }
 
-        private static void DrawActions(Rect rect, IAgentControl agent)
+        private static void DrawActions(ActionBarLayoutResult actionBar, IAgentControl agent)
         {
-            float buttonW = Mathf.Min(130f, (rect.width - RimMindUI.Padding * 2f) / 3f);
-            float x = rect.x;
+            foreach (var button in actionBar.Buttons)
+            {
+                switch (button.Id)
+                {
+                    case "primary":
+                        DrawPrimaryStateButton(button.Rect, agent);
+                        break;
+                    case "force_think":
+                        if ((agent.State == AgentState.Active || agent.State == AgentState.Paused)
+                            && Widgets.ButtonText(button.Rect, "RimMind.UI.AgentsPage.ForceThink".Translate()))
+                            agent.ForceThink();
+                        break;
+                    case "open_requests":
+                        if ((agent.State == AgentState.Active || agent.State == AgentState.Paused)
+                            && Widgets.ButtonText(button.Rect, "RimMind.UI.AgentsPage.OpenRequests".Translate()))
+                            Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
+                        break;
+                }
+            }
+        }
 
+        private static void DrawPrimaryStateButton(Rect rect, IAgentControl agent)
+        {
             switch (agent.State)
             {
                 case AgentState.Active:
-                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.Pause".Translate()))
+                    if (Widgets.ButtonText(rect, "RimMind.UI.AgentsPage.Pause".Translate()))
                         SafeTransitionTo(agent, AgentState.Paused);
                     break;
                 case AgentState.Paused:
-                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.Resume".Translate()))
+                    if (Widgets.ButtonText(rect, "RimMind.UI.AgentsPage.Resume".Translate()))
                         SafeTransitionTo(agent, AgentState.Active);
                     break;
                 case AgentState.Dormant:
-                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.Activate".Translate()))
+                    if (Widgets.ButtonText(rect, "RimMind.UI.AgentsPage.Activate".Translate()))
                         SafeTransitionTo(agent, AgentState.Active);
                     break;
                 case AgentState.Terminated:
-                    if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
-                        "RimMind.UI.AgentsPage.Restart".Translate()))
+                    if (Widgets.ButtonText(rect, "RimMind.UI.AgentsPage.Restart".Translate()))
                         SafeTransitionTo(agent, AgentState.Active);
                     break;
-            }
-
-            x += buttonW + RimMindUI.Padding;
-            if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
-            {
-                if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
-                    "RimMind.UI.AgentsPage.ForceThink".Translate()))
-                {
-                    agent.ForceThink();
-                }
-
-                x += buttonW + RimMindUI.Padding;
-                if (Widgets.ButtonText(new Rect(x, rect.y, buttonW, RimMindUI.BtnHeight),
-                    "RimMind.UI.AgentsPage.OpenRequests".Translate()))
-                {
-                    Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
-                }
             }
         }
 
