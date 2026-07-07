@@ -41,6 +41,17 @@ public sealed class UiSnapshotWriterTests
     }
 
     [Fact]
+    public void TableRowFactory_DefaultsSelectedToFalse()
+    {
+        var row = RimMindUiElement.TableRow("request", new Rect(1f, 2f, 120f, 24f), "Pending");
+
+        Assert.Equal(RimMindUiElementKind.TableRow, row.Kind);
+        Assert.Equal("request", row.Name);
+        Assert.Equal("Pending", row.Text);
+        Assert.False(row.Selected);
+    }
+
+    [Fact]
     public void Writers_EscapeTextAndNames()
     {
         var document = new RimMindUiDocument(
