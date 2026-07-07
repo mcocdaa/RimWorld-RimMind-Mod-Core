@@ -47,8 +47,57 @@ public sealed class TabbedPageLayoutTests
         Assert.True(layout.Body.ContainsRect(layout.TabBar));
     }
 
-    private static IReadOnlyList<TabbedPageTabModel> MakeTabs(int count, string selected = "tab0")
+    [Fact]
+    public void Calculate_TinyRect_KeepsAllAreasContainedAndNonNegative()
+    {
+        var tabs = MakeTabs(2);
+        var layout = TabbedPageLayout.Calculate(new Rect(0f, 0f, 10f, 10f), tabs);
+
+        AssertLayoutContainedAndNonNegative(layout);
+    }
+
+    [Fact]
+    public void Calculate_ManyTabsInShortRect_KeepsAllAreasContainedAndNonNegative()
+    {
+        var tabs = MakeTabs(30);
+        var layout = TabbedPageLayout.Calculate(new Rect(0f, 0f, 320f, 80f), tabs);
+
+        AssertLayoutContainedAndNonNegative(layout);
+    }
+
+    [Fact]
+    public void Calculate_DisabledTabIsPreserved()
+    {
+        var tabs = MakeTabs(4, disabled: "tab2");
+        var layout = TabbedPageLayout.Calculate(new Rect(0f, 0f, 640f, 400f), tabs);
+
+        Assert.False(layout.TabRects.Single(t => t.Id == "tab2").Enabled);
+    }
+
+    private static IReadOnlyList<TabbedPageTabModel> MakeTabs(int count, string selected = "tab0", string? disabled = null)
         => Enumerable.Range(0, count)
-            .Select(i => new TabbedPageTabModel($"tab{i}", $"Label {i}", $"Label.Key.{i}", selected == $"tab{i}", true, null))
+            .Select(i => new TabbedPageTabModel($"tab{i}", $"Label {i}", $"Label.Key.{i}", selected == $"tab{i}", disabled != $"tab{i}", null))
             .ToList();
+
+    private static void AssertLayoutContainedAndNonNegative(TabbedPageLayoutResult layout)
+    {
+        AssertNonNegative(layout.Body);
+        AssertNonNegative(layout.TabBar);
+        AssertNonNegative(layout.Content);
+        Assert.True(layout.Body.ContainsRect(layout.TabBar));
+        Assert.True(layout.Body.ContainsRect(layout.Content));
+
+        Assert.All(layout.TabRects, tab =>
+        {
+            AssertNonNegative(tab.Rect);
+            Assert.True(layout.Body.ContainsRect(tab.Rect));
+            Assert.True(layout.TabBar.ContainsRect(tab.Rect));
+        });
+    }
+
+    private static void AssertNonNegative(Rect rect)
+    {
+        Assert.True(rect.width >= 0f);
+        Assert.True(rect.height >= 0f);
+    }
 }
