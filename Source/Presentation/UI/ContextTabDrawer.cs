@@ -2,6 +2,7 @@ using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Enums;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Settings;
 using UnityEngine;
@@ -18,8 +19,15 @@ namespace RimMind.Presentation.UI
         {
             var ctx = s.Context;
 
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 980f);
+            FormPageLayoutResult formLayout = FormPageLayout.Calculate(inRect, sectionCount: 4, rowsPerSection: 12);
+            Rect viewRect = new Rect(
+                0f,
+                0f,
+                formLayout.Viewport.width - RimMindUiMetrics.ScrollBarWidth,
+                Mathf.Max(980f, formLayout.ContentHeight));
             Widgets.BeginScrollView(inRect, ref _contextScroll, viewRect);
+            scope?.Record(formLayout.Viewport, "Settings:Context:Viewport");
+            scope?.Record(viewRect, "Settings:Context:Content");
 
             var listing = new Listing_Standard();
             listing.Begin(viewRect);

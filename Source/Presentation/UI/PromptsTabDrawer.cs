@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
@@ -12,8 +13,15 @@ namespace RimMind.Presentation.UI
 
         public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, 460f);
+            FormPageLayoutResult formLayout = FormPageLayout.Calculate(inRect, sectionCount: 2, rowsPerSection: 3);
+            Rect viewRect = new Rect(
+                0f,
+                0f,
+                formLayout.Viewport.width - RimMindUiMetrics.ScrollBarWidth,
+                Mathf.Max(460f, formLayout.ContentHeight));
             Widgets.BeginScrollView(inRect, ref _promptsScroll, viewRect);
+            scope?.Record(formLayout.Viewport, "Settings:Prompts:Viewport");
+            scope?.Record(viewRect, "Settings:Prompts:Content");
 
             var listing = new Listing_Standard();
             listing.Begin(viewRect);

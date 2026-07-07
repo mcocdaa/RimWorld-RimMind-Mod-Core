@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Settings;
@@ -37,11 +38,12 @@ namespace RimMind.Presentation.UI
 
         public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
-            float contentH = EstimateApiHeight();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentH);
+            FormPageLayoutResult formLayout = FormPageLayout.Calculate(inRect, sectionCount: 5, rowsPerSection: 4);
+            float contentH = Mathf.Max(EstimateApiHeight(), formLayout.ContentHeight);
+            Rect viewRect = new Rect(0f, 0f, formLayout.Viewport.width - RimMindUiMetrics.ScrollBarWidth, contentH);
             Widgets.BeginScrollView(inRect, ref _apiScroll, viewRect);
-            scope?.Record(inRect, "ScrollView:ApiOuter");
-            scope?.Record(viewRect, "ScrollView:ApiContent");
+            scope?.Record(formLayout.Viewport, "Settings:Api:Viewport");
+            scope?.Record(viewRect, "Settings:Api:Content");
 
             var listing = new Listing_Standard();
             listing.Begin(viewRect);

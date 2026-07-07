@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
 using UnityEngine;
@@ -40,11 +41,15 @@ namespace RimMind.Presentation.UI
             int modCount = allModIds.Count;
             int activeCount = queue.ActiveRequestCount;
             int queuedCount = queue.TotalQueuedCount;
+            FormPageLayoutResult formLayout = FormPageLayout.Calculate(inRect, sectionCount: 5, rowsPerSection: 4);
             float contentH = 60f + 28f + modCount * 26f + 28f + activeCount * 24f + 28f + queuedCount * 24f + 80f;
+            contentH = Mathf.Max(contentH, formLayout.ContentHeight);
             contentH = Mathf.Max(contentH, inRect.height + 10f);
 
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentH);
+            Rect viewRect = new Rect(0f, 0f, formLayout.Viewport.width - RimMindUiMetrics.ScrollBarWidth, contentH);
             Widgets.BeginScrollView(inRect, ref _queueScroll, viewRect);
+            scope?.Record(formLayout.Viewport, "Settings:Queue:Viewport");
+            scope?.Record(viewRect, "Settings:Queue:Content");
 
             var listing = new Listing_Standard();
             listing.Begin(viewRect);
