@@ -1,3 +1,4 @@
+using RimMind.Presentation.UI.Framework;
 using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter
@@ -46,48 +47,40 @@ namespace RimMind.Infrastructure.UI.DebugCenter
         public const float DetailHeaderHeight = 58f;
         public const float DetailActionHeight = 30f;
 
+        private static readonly TabbedPageTabModel[] LegacyTabs =
+        {
+            new("legacy", "Legacy", "RimMind.UI.Hub.Tab.Legacy", true, true, null)
+        };
+
         public static HubLayoutRects CalculateHub(Rect inRect)
         {
-            Rect body = Inset(inRect, WindowInset);
-            Rect header = new Rect(body.x, body.y, body.width, RimMindUITheme.HeaderHeight);
-            Rect tabs = new Rect(body.x, header.yMax + RimMindUITheme.Padding, body.width, RimMindUITheme.TabHeight);
-            Rect content = new Rect(
+            Rect body = inRect.InsetSafe(WindowInset);
+            Rect header = new Rect(body.x, body.y, body.width, RimMindUiMetrics.HeaderHeight);
+            Rect tabHost = new Rect(
                 body.x,
-                tabs.yMax + RimMindUITheme.SectionGap,
+                header.yMax + RimMindUiMetrics.Padding,
                 body.width,
-                Mathf.Max(1f, body.yMax - tabs.yMax - RimMindUITheme.SectionGap));
+                Mathf.Max(1f, body.yMax - header.yMax - RimMindUiMetrics.Padding));
+            TabbedPageLayoutResult tabs = TabbedPageLayout.Calculate(tabHost, LegacyTabs);
 
-            return new HubLayoutRects(body, header, tabs, content);
+            return new HubLayoutRects(body, header, tabs.TabBar, tabs.Content);
         }
 
         public static AgentPageLayoutRects CalculateAgentPage(Rect rect)
         {
-            float listWidth = Mathf.Clamp(rect.width * 0.28f, 220f, 280f);
-            if (rect.width - listWidth - ColumnGap < 360f)
-                listWidth = Mathf.Max(180f, rect.width - 360f - ColumnGap);
-
-            Rect list = new Rect(rect.x, rect.y, listWidth, rect.height);
-            Rect detail = new Rect(list.xMax + ColumnGap, rect.y, rect.width - listWidth - ColumnGap, rect.height);
-
+            SplitPageLayoutResult split = SplitPageLayout.Calculate(rect, 0.28f, 220f, 280f, 360f);
+            Rect list = split.List;
+            Rect detail = split.Detail;
             Rect header = new Rect(detail.x, detail.y, detail.width, DetailHeaderHeight);
-            Rect actions = new Rect(detail.x, header.yMax + RimMindUITheme.Padding, detail.width, DetailActionHeight);
+            Rect actions = new Rect(detail.x, header.yMax + RimMindUiMetrics.Padding, detail.width, DetailActionHeight);
             Rect chat = new Rect(detail.x, detail.yMax - ChatHeight, detail.width, ChatHeight);
             Rect activity = new Rect(
                 detail.x,
-                actions.yMax + RimMindUITheme.SectionGap,
+                actions.yMax + RimMindUiMetrics.SectionGap,
                 detail.width,
-                Mathf.Max(1f, chat.y - actions.yMax - RimMindUITheme.SectionGap * 2f));
+                Mathf.Max(1f, chat.y - actions.yMax - RimMindUiMetrics.SectionGap * 2f));
 
             return new AgentPageLayoutRects(list, detail, header, actions, activity, chat);
-        }
-
-        private static Rect Inset(Rect rect, float inset)
-        {
-            return new Rect(
-                rect.x + inset,
-                rect.y + inset,
-                Mathf.Max(1f, rect.width - inset * 2f),
-                Mathf.Max(1f, rect.height - inset * 2f));
         }
     }
 }
