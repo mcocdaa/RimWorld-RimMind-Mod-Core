@@ -3,6 +3,7 @@ using System.Text;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
@@ -38,15 +39,13 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            float headerH = 30f;
-            float bottomH = 36f;
-
-            Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, headerH);
-            Rect contentRect = new Rect(inRect.x, inRect.y + headerH + Padding,
-                inRect.width, inRect.height - headerH - bottomH - Padding * 2);
-            Rect bottomRect = new Rect(inRect.x, inRect.yMax - bottomH, inRect.width, bottomH);
+            TablePageLayoutResult table = TablePageLayout.Calculate(inRect, RequestOverlay.Pending.Count, 2);
+            Rect headerRect = table.Toolbar;
+            Rect contentRect = table.Body;
+            Rect bottomRect = table.BottomBar;
 
             scope?.Record(headerRect, "Header:Title");
+            scope?.Record(table.Header, "Header:Table");
             scope?.Record(contentRect, "Content:List");
             scope?.Record(bottomRect, "Bottom:Bar");
 

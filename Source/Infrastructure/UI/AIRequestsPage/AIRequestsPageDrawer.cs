@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Debug;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
@@ -36,13 +37,16 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
                 return;
             }
 
-            float listWidth = Mathf.Min(300f, rect.width * 0.4f);
-            Rect list = new(rect.x, rect.y, listWidth, rect.height);
-            Rect detail = new(list.xMax + 8f, rect.y, rect.width - listWidth - 8f, rect.height);
-            scope?.Record(list, "AIRequests:List");
-            scope?.Record(detail, "AIRequests:Detail");
-            DrawList(list, entries);
-            DrawDetail(detail, entries[Mathf.Clamp(_selectedIndex, 0, entries.Count - 1)]);
+            SplitPageLayoutResult split = SplitPageLayout.Calculate(rect, 0.4f, 240f, 300f, 320f);
+            TablePageLayoutResult table = TablePageLayout.Calculate(split.List, entries.Count, 2);
+            scope?.Record(table.Toolbar, "AIRequests:ListToolbar");
+            scope?.Record(table.Header, "AIRequests:ListHeader");
+            scope?.Record(table.Body, "AIRequests:ListBody");
+            scope?.Record(table.BottomBar, "AIRequests:ListBottom");
+            scope?.Record(split.Detail, "AIRequests:Detail");
+
+            DrawList(table.Body, entries);
+            DrawDetail(split.Detail, entries[Mathf.Clamp(_selectedIndex, 0, entries.Count - 1)]);
         }
 
         private void DrawList(Rect rect, IReadOnlyList<AIRequestTraceEntry> entries)

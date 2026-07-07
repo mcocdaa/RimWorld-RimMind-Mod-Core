@@ -4,6 +4,7 @@ using RimMind.Application.Common.Extensions;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
@@ -42,11 +43,9 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            float headerH = 30f;
-            float filterH = BtnHeight + Padding;
-
-            Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, headerH);
-            Rect filterRect = new Rect(inRect.x, inRect.y + headerH + Padding, inRect.width, filterH);
+            TablePageLayoutResult table = TablePageLayout.Calculate(inRect, rowCount: 24, columnCount: 4);
+            Rect headerRect = table.Toolbar;
+            Rect filterRect = table.Header;
 
             scope.Record(headerRect, "Header:Title");
             scope.Record(filterRect, "Filter:Bar");
@@ -59,8 +58,7 @@ namespace RimMind.Infrastructure.UI
 
             DrawFilters(filterRect, scope);
 
-            Rect bodyRect = new Rect(inRect.x, filterRect.yMax + Padding,
-                inRect.width, inRect.yMax - filterRect.yMax - Padding);
+            Rect bodyRect = table.Body;
             scope.Record(bodyRect, "Body");
 
             var registry = RimMindAPI.Context.ContextKeys;

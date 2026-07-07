@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Common.Models.Tools;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
@@ -71,11 +72,12 @@ namespace RimMind.Infrastructure.UI
                 return;
             }
 
-            float leftW = bodyRect.width * LeftRatio;
-            float rightW = bodyRect.width - leftW - Padding;
-
-            Rect leftRect = new Rect(bodyRect.x, bodyRect.y, leftW, bodyRect.height);
-            Rect rightRect = new Rect(bodyRect.x + leftW + Padding, bodyRect.y, rightW, bodyRect.height);
+            TablePageLayoutResult table = TablePageLayout.Calculate(bodyRect, defs.Count, 2);
+            SplitPageLayoutResult split = SplitPageLayout.Calculate(table.Body, LeftRatio, 180f, 260f, 300f);
+            Rect leftRect = split.List;
+            Rect rightRect = split.Detail;
+            scope.Record(table.Header, "ToolCall:TableHeader");
+            scope.Record(table.BottomBar, "ToolCall:BottomBar");
             scope.Record(leftRect, "List:Tools");
             scope.Record(rightRect, "Detail:SelectedTool");
 

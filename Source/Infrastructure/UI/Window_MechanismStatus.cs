@@ -3,6 +3,7 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Domain.Enums;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
 using UnityEngine;
@@ -40,17 +41,15 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            float headerH = 30f;
-            float filterH = BtnHeight + Padding;
-
-            Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, headerH);
-            Rect filterRect = new Rect(inRect.x, inRect.y + headerH + Padding, inRect.width, filterH);
-            Rect contentRect = new Rect(inRect.x, inRect.y + headerH + filterH + Padding * 2,
-                inRect.width, inRect.height - headerH - filterH - Padding * 3);
+            TablePageLayoutResult table = TablePageLayout.Calculate(inRect, rowCount: 16, columnCount: 4);
+            Rect headerRect = table.Toolbar;
+            Rect filterRect = table.Header;
+            Rect contentRect = table.Body;
 
             scope.Record(headerRect, "Header:Title");
             scope.Record(filterRect, "Filter:Bar");
             scope.Record(contentRect, "Content:List");
+            scope.Record(table.BottomBar, "Bottom:TableBar");
 
             GUI.color = new Color(0.7f, 0.8f, 1f);
             Text.Font = GameFont.Medium;

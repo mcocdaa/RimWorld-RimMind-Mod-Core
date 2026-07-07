@@ -1,5 +1,6 @@
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
@@ -79,12 +80,14 @@ namespace RimMind.Infrastructure.UI
 
             _selectedIndex = Mathf.Clamp(_selectedIndex, 0, entries.Count - 1);
 
-            Rect listRect = new Rect(body.x, body.y, 250f, body.height);
-            Rect detailRect = new Rect(listRect.xMax + 8f, body.y, body.width - listRect.width - 8f, body.height);
-            scope?.Record(listRect, "List:Entries");
-            scope?.Record(detailRect, "Detail:Selected");
-            DrawList(listRect, entries, scope);
-            DrawDetail(detailRect, entries[_selectedIndex], scope);
+            TablePageLayoutResult table = TablePageLayout.Calculate(body, entries.Count, 2);
+            SplitPageLayoutResult split = SplitPageLayout.Calculate(table.Body, 0.33f, 220f, 260f, 320f);
+            scope?.Record(table.Header, "DebugLog:TableHeader");
+            scope?.Record(table.BottomBar, "DebugLog:BottomBar");
+            scope?.Record(split.List, "List:Entries");
+            scope?.Record(split.Detail, "Detail:Selected");
+            DrawList(split.List, entries, scope);
+            DrawDetail(split.Detail, entries[_selectedIndex], scope);
         }
 
         private void DrawList(Rect rect, System.Collections.Generic.List<AIDebugEntry> entries, RimMindLayoutScope? scope = null)
