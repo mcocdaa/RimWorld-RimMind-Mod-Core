@@ -39,6 +39,7 @@
     <Compile Include="Presentation\**\*.cs" />
     <Compile Include="Mechanisms\**\*.cs" />
     <Compile Include="Pipeline\**\*.cs" />
+    <Compile Include="Events\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

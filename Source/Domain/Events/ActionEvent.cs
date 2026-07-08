@@ -15,7 +15,7 @@ namespace RimMind.Domain.Events
             Success = success;
             ResultReason = resultReason;
             EventId = eventId;
-            EventType = AgentBusEventType.Action;
+            BusEventType = AgentBusEventType.Action;
         }
     }
 }

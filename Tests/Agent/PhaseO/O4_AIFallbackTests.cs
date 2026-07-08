@@ -64,7 +64,7 @@ namespace RimMind.Tests.Agent.PhaseO
             Assert.Equal(42, evt.PawnId);
             Assert.Equal("dialogue.free", evt.ActionIntent);
             Assert.Equal("mechanism not found", evt.Reason);
-            Assert.Equal(AgentBusEventType.DecisionFailed, evt.EventType);
+            Assert.Equal(AgentBusEventType.DecisionFailed, evt.BusEventType);
         }
 
         [Fact]

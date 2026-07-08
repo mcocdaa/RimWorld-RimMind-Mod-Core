@@ -5,7 +5,7 @@ namespace RimMind.Domain.Events;
 public class SocialEventProposedEvent : AgentBusEvent
 {
     public string EventId = "";
-    public new SocialEventType EventType;
+    public SocialEventType EventType;
     public string OrganizerNpcId = "";
     public string Description = "";
     public int ScheduledTick;

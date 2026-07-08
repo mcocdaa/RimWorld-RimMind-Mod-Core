@@ -105,7 +105,7 @@ namespace RimMind.Tests.Presentation.Agent
             Assert.Equal(42, evt.PawnId);
             Assert.Equal("reactive", evt.OldMode);
             Assert.Equal("proactive", evt.NewMode);
-            Assert.Equal(AgentBusEventType.ModeChange, evt.EventType);
+            Assert.Equal(AgentBusEventType.ModeChange, evt.BusEventType);
         }
 
         [Fact]

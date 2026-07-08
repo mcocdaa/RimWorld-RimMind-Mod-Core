@@ -11,7 +11,7 @@ namespace RimMind.Domain.Events
             PawnId = pawnId;
             PreviousState = previousState;
             NewState = newState;
-            EventType = AgentBusEventType.Lifecycle;
+            BusEventType = AgentBusEventType.Lifecycle;
         }
     }
 }

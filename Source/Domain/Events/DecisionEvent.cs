@@ -13,7 +13,7 @@ namespace RimMind.Domain.Events
             DecisionType = decisionType;
             Reason = reason;
             Action = action;
-            EventType = AgentBusEventType.Decision;
+            BusEventType = AgentBusEventType.Decision;
         }
     }
 }

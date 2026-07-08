@@ -11,7 +11,7 @@ namespace RimMind.Domain.Events
             PawnId = pawnId;
             ActionIntent = actionIntent;
             Reason = reason;
-            EventType = AgentBusEventType.DecisionFailed;
+            BusEventType = AgentBusEventType.DecisionFailed;
         }
     }
 }

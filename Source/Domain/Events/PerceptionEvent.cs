@@ -14,7 +14,7 @@ namespace RimMind.Domain.Events
             Content = content;
             Importance = importance;
             Timestamp = timestamp;
-            EventType = AgentBusEventType.Perception;
+            BusEventType = AgentBusEventType.Perception;
         }
     }
 }

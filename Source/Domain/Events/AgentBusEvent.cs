@@ -26,16 +26,16 @@ namespace RimMind.Domain.Events
     {
         public string NpcId = "";
         public int PawnId;
-        public AgentBusEventType EventType;
+        public AgentBusEventType BusEventType;
         public int Timestamp;
 
         public AgentBusEvent() { }
 
-        public AgentBusEvent(string npcId, int pawnId, AgentBusEventType eventType, int timestamp = 0)
+        public AgentBusEvent(string npcId, int pawnId, AgentBusEventType busEventType, int timestamp = 0)
         {
             NpcId = npcId;
             PawnId = pawnId;
-            EventType = eventType;
+            BusEventType = busEventType;
             Timestamp = timestamp;
         }
     }

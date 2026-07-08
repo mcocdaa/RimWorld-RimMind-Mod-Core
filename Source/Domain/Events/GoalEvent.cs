@@ -13,7 +13,7 @@ namespace RimMind.Domain.Events
             GoalDescription = goalDescription;
             Status = status;
             Category = category;
-            EventType = AgentBusEventType.Goal;
+            BusEventType = AgentBusEventType.Goal;
         }
     }
 }
