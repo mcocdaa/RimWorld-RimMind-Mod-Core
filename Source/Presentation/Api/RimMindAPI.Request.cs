@@ -33,6 +33,10 @@ namespace RimMind.Presentation.Api
 
             public static void ClearModCooldown(string modId) => RimMindRuntime.Instance.Queue?.ClearCooldown(modId);
 
+            /// <summary>Remaining cooldown ticks for a mod (0 when ready or when queue is unavailable).</summary>
+            public static int GetModCooldownTicksLeft(string modId)
+                => RimMindRuntime.Instance.Queue?.GetCooldownTicksLeft(modId) ?? 0;
+
             /// <summary>Unified async request entry (callback style)</summary>
             public static void Send(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> onComplete)
             {

@@ -57,6 +57,7 @@ namespace RimMind.Presentation.Api
         public static IReadOnlyList<ClientTrackedRequest> GetAllQueuedRequests() => Request.GetAllQueuedRequests();
         public static int TotalQueuedCount => Request.TotalQueuedCount;
         public static void ClearModCooldown(string modId) => Request.ClearModCooldown(modId);
+        public static int GetModCooldownTicksLeft(string modId) => Request.GetModCooldownTicksLeft(modId);
 
         [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static string BuildMapContext(Map map, bool brief = false) => ChatFlow.BuildMapContext(map, brief);
