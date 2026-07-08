@@ -280,10 +280,6 @@ namespace RimMind.Application.Common.Models
             public const int ClientInvoke = 500;
             public const int ToolCallDispatch = 600;
             public const int Dispatch = 200;
-            public const int LayerBuild = 300;
-            public const int Retry = 800;
-            public const int NpcChatRetry = 800;
-            public const int CacheStore = 900;
         }
     }
 }
