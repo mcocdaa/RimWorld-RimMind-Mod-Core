@@ -27,6 +27,7 @@
     <Compile Include="ThreadSafetyTests.cs" />
     <Compile Include="Pipeline\Unified\*.cs" />
     <Compile Include="Context\Diff\*.cs" />
+    <Compile Include="Context\ContextCacheManagerTests.cs" />
     <Compile Include="Context\ContextKeyRegistryImplTests.cs" />
     <Compile Include="Context\RelevanceTableImplTests.cs" />
     <Compile Include="Context\ContextProviderDefTests.cs" />

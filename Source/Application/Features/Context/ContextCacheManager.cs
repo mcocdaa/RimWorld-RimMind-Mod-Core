@@ -14,6 +14,11 @@ namespace RimMind.Application.Features.Context
             = new ConcurrentDictionary<string, ChatMessage>();
         private readonly ConcurrentDictionary<string, Dictionary<string, string>> _l1BlockCache
             = new ConcurrentDictionary<string, Dictionary<string, string>>();
+        // Protects replacement of inner Dictionary<string,string> in _l1BlockCache.
+        // Mirrors the lock(versions) pattern used by _l1KeyVersions in InvalidateKey,
+        // so that Set/TryGet are mutually exclusive and TryGet returns a snapshot
+        // instead of a direct reference to the internal mutable Dictionary.
+        private readonly object _l1BlockCacheLock = new object();
         private readonly ConcurrentDictionary<string, int> _l1Version
             = new ConcurrentDictionary<string, int>();
         private readonly ConcurrentDictionary<string, Dictionary<string, int>> _l1KeyVersions
@@ -77,8 +82,28 @@ namespace RimMind.Application.Features.Context
         public bool TryGetL0CacheItem(string key, out ChatMessage msg) => _l0Cache.TryGetValue(key, out msg!);
         public void SetL0CacheItem(string key, ChatMessage msg) => _l0Cache[key] = msg;
         public bool RemoveL0CacheItem(string key) => _l0Cache.TryRemove(key, out _);
-        public bool TryGetL1BlockCache(string npcId, out Dictionary<string, string> blocks) => _l1BlockCache.TryGetValue(npcId, out blocks!);
-        public void SetL1BlockCache(string npcId, Dictionary<string, string> blocks) => _l1BlockCache[npcId] = blocks;
+        public bool TryGetL1BlockCache(string npcId, out Dictionary<string, string> blocks)
+        {
+            lock (_l1BlockCacheLock)
+            {
+                if (_l1BlockCache.TryGetValue(npcId, out var inner))
+                {
+                    // Return a snapshot so callers cannot mutate the internal Dictionary.
+                    // Callers that need to update must use SetL1BlockCache to write back.
+                    blocks = new Dictionary<string, string>(inner);
+                    return true;
+                }
+                blocks = null!;
+                return false;
+            }
+        }
+        public void SetL1BlockCache(string npcId, Dictionary<string, string> blocks)
+        {
+            lock (_l1BlockCacheLock)
+            {
+                _l1BlockCache[npcId] = blocks;
+            }
+        }
         public bool TryGetL1Version(string npcId, out int version) => _l1Version.TryGetValue(npcId, out version);
         public void SetL1Version(string npcId, int version) => _l1Version[npcId] = version;
         public bool TryGetL1KeyVersions(string npcId, out Dictionary<string, int> versions) => _l1KeyVersions.TryGetValue(npcId, out versions!);
