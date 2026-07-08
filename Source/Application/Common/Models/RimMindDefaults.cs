@@ -280,6 +280,7 @@ namespace RimMind.Application.Common.Models
             public const int ClientInvoke = 500;
             public const int ToolCallDispatch = 600;
             public const int Dispatch = 200;
+            public const int OutputGuardrail = 650;
         }
     }
 }

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Pipeline;
+using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.ValueObjects;
 using RimMind.Domain.Llm;
@@ -12,9 +14,9 @@ namespace RimMind.Application.Features.Pipeline.Unified
     internal sealed class OutputGuardrailMiddleware : IMiddleware<LlmRequestContext>
     {
         public string Name => "output_guardrail";
-        public int Order => 650;
+        public int Order => RimMindDefaults.MiddlewareOrder.OutputGuardrail;
         public string Id => "core.output_guardrail";
-        public string OwnerModId => "Core";
+        public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private const int MaxRepetitiveCount = 3;
 
