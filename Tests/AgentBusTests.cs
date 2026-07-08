@@ -35,10 +35,10 @@ namespace RimMind.Presentation.Tests
             var bus = new AgentBusImpl();
             int count = 0;
             Action<DecisionEvent> handler = e => count++;
-            bus.Subscribe(handler);
+            var key = bus.Subscribe(handler);
             bus.Publish(new DecisionEvent("n1", 0, "t", "r", "a"));
             Assert.Equal(1, count);
-            bus.Unsubscribe(handler);
+            bus.Unsubscribe<DecisionEvent>(key);
             bus.Publish(new DecisionEvent("n2", 0, "t", "r", "a"));
             Assert.Equal(1, count);
         }

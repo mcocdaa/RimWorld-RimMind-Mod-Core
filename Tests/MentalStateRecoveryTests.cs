@@ -22,6 +22,7 @@ namespace RimMind.Presentation.Tests
         private readonly List<AgentLifecycleEvent> _capturedEvents = new();
         private readonly NpcManager _npcManager;
         private readonly IAgentBus _agentBus;
+        private readonly string _capturedEventsSubscriptionKey;
 
         public MentalStateRecoveryTests()
         {
@@ -44,14 +45,13 @@ namespace RimMind.Presentation.Tests
             _agent = new PawnAgent(_pawn, _agentBus);
             _agent.TransitionTo(AgentState.Active);
 
-            _agentBus.Subscribe<AgentLifecycleEvent>(
+            _capturedEventsSubscriptionKey = _agentBus.Subscribe<AgentLifecycleEvent>(
                 evt => _capturedEvents.Add(evt));
         }
 
         public void Dispose()
         {
-            _agentBus.Unsubscribe<AgentLifecycleEvent>(
-                evt => _capturedEvents.Add(evt));
+            _agentBus.Unsubscribe<AgentLifecycleEvent>(_capturedEventsSubscriptionKey);
             if (_agent.State != AgentState.Terminated)
                 _agent.TransitionTo(AgentState.Terminated);
             RimMindCoreMod.Settings = null;
@@ -114,12 +114,12 @@ namespace RimMind.Presentation.Tests
         {
             var received = new List<AgentLifecycleEvent>();
             Action<AgentLifecycleEvent> handler = evt => received.Add(evt);
-            _agentBus.Subscribe(handler);
+            var key = _agentBus.Subscribe(handler);
 
             _agentBus.Publish(new AgentLifecycleEvent("NPC-77", 77, "Active", "Paused"));
             Assert.Single(received);
 
-            _agentBus.Unsubscribe(handler);
+            _agentBus.Unsubscribe<AgentLifecycleEvent>(key);
             _agentBus.Publish(new AgentLifecycleEvent("NPC-77", 77, "Paused", "Active"));
             Assert.Single(received);
         }

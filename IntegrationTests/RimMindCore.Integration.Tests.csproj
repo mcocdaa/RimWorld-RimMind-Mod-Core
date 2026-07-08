@@ -35,6 +35,7 @@
     <Compile Include="TestBase.cs" />
     <Compile Include="TestWorld.cs" />
     <Compile Include="TestWorldFixture.cs" />
+    <Compile Include="AgentBus\**\*.cs" />
     <Compile Include="Infrastructure\**\*.cs" />
     <Compile Include="Presentation\**\*.cs" />
     <Compile Include="Mechanisms\**\*.cs" />

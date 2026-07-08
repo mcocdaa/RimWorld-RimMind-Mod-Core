@@ -128,15 +128,16 @@ namespace RimMind.Application.Features.AgentBus
             }
         }
 
+        /// <summary>
+        /// Obsolete: action-based unsubscribe is unreliable because subscriptions wrap the original handler in a lambda.
+        /// Use <see cref="Unsubscribe{T}(string)"/> with the key returned from <see cref="Subscribe{T}(Action{T})"/>.
+        /// </summary>
+        [Obsolete("Use Unsubscribe<T>(string key) instead. Action-based unsubscribe is unreliable due to lambda wrapping.")]
         public void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent
         {
-            if (_handlers.TryGetValue(typeof(T), out var list))
-            {
-                lock (list)
-                {
-                    list.RemoveAll(e => e.Action.Target == handler.Target && e.Action.Method == handler.Method);
-                }
-            }
+            throw new NotSupportedException(
+                "Unsubscribe by Action is unreliable due to lambda wrapping. " +
+                "Use Unsubscribe<T>(string key) with the key returned from Subscribe<T>(Action<T>).");
         }
 
         [ThreadAffinity(ThreadAffinityKind.MainOnly)]
