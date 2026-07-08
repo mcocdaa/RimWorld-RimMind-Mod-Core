@@ -85,12 +85,12 @@ namespace RimMind.Tests.Application.Stubs
             }
         }
 
+        [Obsolete("Use Unsubscribe<T>(string key) instead. Action-based unsubscribe is unreliable due to lambda wrapping.")]
         public void Unsubscribe<T>(Action<T> handler) where T : AgentBusEvent
         {
-            if (_handlers.TryGetValue(typeof(T), out var list))
-            {
-                list.Remove(handler);
-            }
+            throw new NotSupportedException(
+                "Unsubscribe by Action is unreliable due to lambda wrapping. " +
+                "Use Unsubscribe<T>(string key) with the key returned from Subscribe<T>(Action<T>).");
         }
 
         public string SubscribeByName(string eventTypeName, Action<AgentBusEvent> handler)
