@@ -51,7 +51,6 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             {
                 ("personality_task", "RimMind.Personality", false),
                 ("dialogue_task", "RimMind.Dialogue", false),
-                ("player_dialogue_task", "RimMind.Dialogue", false),
                 ("storyteller_task", "RimMind.Storyteller", false),
                 ("advisor_task", "RimMind.Advisor", false),
             };

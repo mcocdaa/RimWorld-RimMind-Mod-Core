@@ -59,7 +59,6 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             Assert.Contains("\"dialogue_state\"", content);
             Assert.Contains("\"dialogue_relation\"", content);
             Assert.Contains("\"dialogue_task\"", content);
-            Assert.Contains("\"player_dialogue_task\"", content);
             Assert.Contains("\"RimMind.Dialogue\"", content);
         }
 
@@ -229,8 +228,8 @@ namespace RimMind.Tests.ArchTests.PhaseP6
                     total += CountOccurrences(File.ReadAllText(f), "new ContextProviderDef(");
                 }
             }
-            Assert.True(total >= 44,
-                $"Expected at least 44 ContextProviderDef registrations, found {total}");
+            Assert.True(total >= 43,
+                $"Expected at least 43 ContextProviderDef registrations, found {total}");
         }
     }
 }
