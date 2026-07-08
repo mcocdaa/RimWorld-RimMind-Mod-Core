@@ -78,19 +78,19 @@ namespace RimMind.Presentation.Runtime.Composition
         public static void RegisterDefaultExtensionRegistries()
         {
             var modCooldownRegistry = new ExtensionRegistry<IModCooldown>();
-            modCooldownRegistry.Register(new NullModCooldown());
+            modCooldownRegistry.Register(NullModCooldown.Instance);
             RimMindServiceLocator.Register<IExtensionRegistry<IModCooldown>>(modCooldownRegistry);
 
             var dialogueTriggerRegistry = new ExtensionRegistry<IDialogueTrigger>();
-            dialogueTriggerRegistry.Register(new NullDialogueTrigger());
+            dialogueTriggerRegistry.Register(NullDialogueTrigger.Instance);
             RimMindServiceLocator.Register<IExtensionRegistry<IDialogueTrigger>>(dialogueTriggerRegistry);
 
             var incidentListenerRegistry = new ExtensionRegistry<IIncidentExecutedListener>();
-            incidentListenerRegistry.Register(new NullIncidentExecutedListener());
+            incidentListenerRegistry.Register(NullIncidentExecutedListener.Instance);
             RimMindServiceLocator.Register<IExtensionRegistry<IIncidentExecutedListener>>(incidentListenerRegistry);
 
             var skipCheckRegistry = new ExtensionRegistry<ISkipCheck>();
-            skipCheckRegistry.Register(new NullSkipCheck());
+            skipCheckRegistry.Register(NullSkipCheck.Instance);
             RimMindServiceLocator.Register<IExtensionRegistry<ISkipCheck>>(skipCheckRegistry);
         }
     }
