@@ -6,14 +6,12 @@ namespace RimMind.Domain.Events
         public string Status = "";
         public string Category = "";
 
-        public GoalEvent(string npcId, int pawnId, string goalDescription, string status, string category)
+        public GoalEvent(string npcId, int pawnId, string goalDescription, string status, string category, int timestamp = 0)
+            : base(npcId, pawnId, AgentBusEventType.Goal, timestamp)
         {
-            NpcId = npcId;
-            PawnId = pawnId;
             GoalDescription = goalDescription;
             Status = status;
             Category = category;
-            BusEventType = AgentBusEventType.Goal;
         }
     }
 }

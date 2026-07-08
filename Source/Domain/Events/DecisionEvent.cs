@@ -6,14 +6,12 @@ namespace RimMind.Domain.Events
         public string Reason = "";
         public string Action = "";
 
-        public DecisionEvent(string npcId, int pawnId, string decisionType, string reason, string action)
+        public DecisionEvent(string npcId, int pawnId, string decisionType, string reason, string action, int timestamp = 0)
+            : base(npcId, pawnId, AgentBusEventType.Decision, timestamp)
         {
-            NpcId = npcId;
-            PawnId = pawnId;
             DecisionType = decisionType;
             Reason = reason;
             Action = action;
-            BusEventType = AgentBusEventType.Decision;
         }
     }
 }

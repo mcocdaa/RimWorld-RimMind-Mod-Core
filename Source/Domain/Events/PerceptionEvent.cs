@@ -7,14 +7,11 @@ namespace RimMind.Domain.Events
         public float Importance;
 
         public PerceptionEvent(string npcId, int pawnId, string perceptionType, string content, float importance = 0f, int timestamp = 0)
+            : base(npcId, pawnId, AgentBusEventType.Perception, timestamp)
         {
-            NpcId = npcId;
-            PawnId = pawnId;
             PerceptionType = perceptionType;
             Content = content;
             Importance = importance;
-            Timestamp = timestamp;
-            BusEventType = AgentBusEventType.Perception;
         }
     }
 }

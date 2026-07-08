@@ -5,13 +5,11 @@ namespace RimMind.Domain.Events
         public string PreviousState = "";
         public string NewState = "";
 
-        public AgentLifecycleEvent(string npcId, int pawnId, string previousState, string newState)
+        public AgentLifecycleEvent(string npcId, int pawnId, string previousState, string newState, int timestamp = 0)
+            : base(npcId, pawnId, AgentBusEventType.Lifecycle, timestamp)
         {
-            NpcId = npcId;
-            PawnId = pawnId;
             PreviousState = previousState;
             NewState = newState;
-            BusEventType = AgentBusEventType.Lifecycle;
         }
     }
 }
