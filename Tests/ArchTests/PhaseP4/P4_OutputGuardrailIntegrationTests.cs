@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using RimMind.Application.Features.Pipeline.Unified;
 using Xunit;
 
 namespace RimMind.Tests.ArchTests.PhaseP4
@@ -23,12 +24,8 @@ namespace RimMind.Tests.ArchTests.PhaseP4
         [Fact]
         public void OutputGuardrail_Order_Is650()
         {
-            var middlewareFile = Directory.GetFiles(ProjectRoot, "OutputGuardrailMiddleware.cs", SearchOption.AllDirectories)
-                .FirstOrDefault(f => f.Contains("Pipeline") && f.Contains("Unified"))
-                ?? throw new FileNotFoundException("OutputGuardrailMiddleware.cs not found");
-
-            var content = File.ReadAllText(middlewareFile);
-            Assert.Contains("Order => 650", content);
+            var middleware = new OutputGuardrailMiddleware();
+            Assert.Equal(650, middleware.Order);
         }
 
         [Fact]

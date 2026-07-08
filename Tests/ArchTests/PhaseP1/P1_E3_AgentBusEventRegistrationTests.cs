@@ -50,7 +50,7 @@ namespace RimMind.Tests.ArchTests.PhaseP1
         public void AgentBusImpl_RegisterEventType_Updates_EventTypeMap()
         {
             var source = File.ReadAllText(AgentBusImplPath);
-            Assert.Contains("EventTypeMap[name]", source);
+            Assert.Contains("EventTypeMap.AddOrUpdate", source);
         }
 
         [Fact]

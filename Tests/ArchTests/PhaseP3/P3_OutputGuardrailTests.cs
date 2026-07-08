@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using RimMind.Application.Features.Pipeline.Unified;
 using Xunit;
 
 namespace RimMind.Tests.ArchTests.PhaseP3
@@ -36,8 +37,8 @@ namespace RimMind.Tests.ArchTests.PhaseP3
         [Fact]
         public void OutputGuardrailMiddleware_HasOrderBetweenToolCallAndClientInvoke()
         {
-            var code = File.ReadAllText(Path.Combine(PipelineDir, "OutputGuardrailMiddleware.cs"));
-            Assert.Matches(@"Order\s*=>\s*(6\d\d|7\d\d)", code);
+            var middleware = new OutputGuardrailMiddleware();
+            Assert.InRange(middleware.Order, 600, 799);
         }
 
         [Fact]
