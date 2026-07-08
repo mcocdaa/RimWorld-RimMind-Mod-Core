@@ -1,7 +1,11 @@
 using System.Collections.Generic;
 using RimMind.Domain.Interfaces;
+using RimMind.Domain.ValueObjects;
 
-namespace RimMind.Domain.ValueObjects
+// Migrated from Domain/ValueObjects to Infrastructure/Cache.
+// EmbedCache is a stateful cache with locks and LRU eviction - an Infrastructure concern,
+// not a Domain ValueObject. The IEmbedCache interface remains in Domain/Interfaces.
+namespace RimMind.Infrastructure.Cache
 {
     public class EmbedCache : IEmbedCache
     {
@@ -137,7 +141,7 @@ namespace RimMind.Domain.ValueObjects
             }
         }
 
-        // IEmbedCache explicit implementations — simplified key-based access for BudgetScheduler.
+        // IEmbedCache explicit implementations - simplified key-based access for BudgetScheduler.
         // Uses internal npcId namespaces "$query" and "$entry" to avoid collision with npcId-keyed data.
 
         float[]? IEmbedCache.GetOrComputeQueryEmbedding(string query)

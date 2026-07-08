@@ -182,7 +182,7 @@ namespace RimMind.Tests.Pipeline.Context
                 = new Dictionary<string, Dictionary<string, int>>();
             public IReadOnlyDictionary<string, bool> PendingCacheEvents { get; }
                 = new Dictionary<string, bool>();
-            public EmbedCache EmbedCache { get; }
+            public IEmbedCache EmbedCache { get; }
                 = new EmbedCache();
 
             public void TouchCache(string cacheKey) { }

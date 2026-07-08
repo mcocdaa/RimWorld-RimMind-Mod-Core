@@ -1,7 +1,9 @@
 global using RimMind.Domain.Enums;
 global using RimMind.Domain.Common;
 global using RimMind.Domain.Events;
+global using RimMind.Domain.Interfaces;
 global using RimMind.Domain.ValueObjects;
+global using RimMind.Infrastructure.Cache;
 global using RimMind.Domain.Llm;
 global using RimMind.Application.Common.Interfaces;
 global using RimMind.Application.Common.Interfaces.Client;

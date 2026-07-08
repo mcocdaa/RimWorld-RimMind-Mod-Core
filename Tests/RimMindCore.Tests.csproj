@@ -80,6 +80,7 @@
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs;../Source/Application/Common/IsExternalInit.cs" />
     <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
     <Compile Include="../Source/Infrastructure/Verse/AIRequestTraceLog.cs" />
+    <Compile Include="../Source/Infrastructure/Cache/EmbedCache.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgent.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgentFactory.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgentManager.cs" />

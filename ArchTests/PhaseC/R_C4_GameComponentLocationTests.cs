@@ -74,6 +74,24 @@ namespace RimMind.Core.ArchTests.PhaseC
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 
+        [Fact]
+        [Trait("Phase", "C")]
+        public void EmbedCache_Should_Be_In_Infrastructure_Folder()
+        {
+            var sourceDir = FindSourceDirectory();
+            sourceDir.Should().NotBeNull("Source directory must exist for analysis");
+
+            var infrastructurePath = Path.Combine(sourceDir, "Infrastructure", "Cache", "EmbedCache.cs");
+            var domainPath = Path.Combine(sourceDir, "Domain", "ValueObjects", "EmbedCache.cs");
+
+            File.Exists(infrastructurePath).Should().BeTrue(
+                "EmbedCache is a stateful cache with locks and LRU eviction - an Infrastructure concern, not a Domain ValueObject. " +
+                "It should reside in Source/Infrastructure/Cache/.");
+
+            File.Exists(domainPath).Should().BeFalse(
+                "EmbedCache should no longer be in Source/Domain/ValueObjects/.");
+        }
+
         private static string FindSourceDirectory()
         {
             var dir = Path.GetDirectoryName(typeof(GameComponentLocationTests).Assembly.Location);

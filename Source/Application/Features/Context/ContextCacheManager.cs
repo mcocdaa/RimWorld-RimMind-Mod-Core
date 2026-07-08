@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Domain.Interfaces;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
@@ -19,17 +20,21 @@ namespace RimMind.Application.Features.Context
             = new ConcurrentDictionary<string, Dictionary<string, int>>();
         private readonly ConcurrentDictionary<string, bool> _pendingCacheEvents
             = new ConcurrentDictionary<string, bool>();
-        private readonly EmbedCache _embedCache = new EmbedCache();
+        private readonly IEmbedCache _embedCache;
         private readonly ILogSink? _log;
 
-        public ContextCacheManager(ILogSink? log = null) { _log = log; }
+        public ContextCacheManager(ILogSink? log = null, IEmbedCache? embedCache = null)
+        {
+            _log = log;
+            _embedCache = embedCache!;
+        }
 
         public IReadOnlyDictionary<string, ChatMessage> L0Cache => _l0Cache;
         public IReadOnlyDictionary<string, Dictionary<string, string>> L1BlockCache => _l1BlockCache;
         public IReadOnlyDictionary<string, int> L1Version => _l1Version;
         public IReadOnlyDictionary<string, Dictionary<string, int>> L1KeyVersions => _l1KeyVersions;
         public IReadOnlyDictionary<string, bool> PendingCacheEvents => _pendingCacheEvents;
-        public EmbedCache EmbedCache => _embedCache;
+        public IEmbedCache EmbedCache => _embedCache;
 
         public void TouchCache(string cacheKey) { /* Intentionally empty: reserved for future LRU cache eviction */ }
         public void RemoveL0CacheForNpc(string npcId)

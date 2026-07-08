@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Domain.Interfaces;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
@@ -11,7 +12,7 @@ namespace RimMind.Application.Common.Interfaces.Context
         IReadOnlyDictionary<string, int> L1Version { get; }
         IReadOnlyDictionary<string, Dictionary<string, int>> L1KeyVersions { get; }
         IReadOnlyDictionary<string, bool> PendingCacheEvents { get; }
-        EmbedCache EmbedCache { get; }
+        IEmbedCache EmbedCache { get; }
 
         void TouchCache(string cacheKey);
         void RemoveL0CacheForNpc(string npcId);

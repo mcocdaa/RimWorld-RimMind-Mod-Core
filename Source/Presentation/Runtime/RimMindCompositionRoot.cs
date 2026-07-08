@@ -18,6 +18,7 @@ using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Infrastructure;
+using RimMind.Infrastructure.Cache;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Settings;
 using RimMind.Presentation.Runtime.Composition;
@@ -117,7 +118,8 @@ namespace RimMind.Presentation.Runtime
                 logSink,
                 npcManager,
                 translationService,
-                flywheelParameterStore);
+                flywheelParameterStore,
+                new EmbedCache());
 
             var busPublishPipeline = BusPublishPipelineFactory.Build(
                 evt => agentBus.DispatchAction?.Invoke(evt),

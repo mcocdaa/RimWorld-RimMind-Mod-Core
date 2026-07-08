@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Features.Agent.InnerVoice;
 using RimMind.Application.Features.Context;
+using RimMind.Domain.Interfaces;
 using RimMind.Presentation.Context;
 
 namespace RimMind.Presentation.Runtime.Composition
@@ -36,7 +37,8 @@ namespace RimMind.Presentation.Runtime.Composition
             ILogSink logSink,
             INpcManager? npcManager,
             ITranslationService translationService,
-            IFlywheelParameterStore flywheelParameterStore)
+            IFlywheelParameterStore flywheelParameterStore,
+            IEmbedCache embedCache)
         {
             var providerRegistry = new ProviderRegistry();
             RimMindServiceLocator.Register<IProviderRegistry>(providerRegistry);
@@ -48,7 +50,7 @@ namespace RimMind.Presentation.Runtime.Composition
             innerVoiceHandler.StartListening();
             RimMindServiceLocator.Register(innerVoiceHandler);
 
-            var cacheManager = new ContextCacheManager(logSink);
+            var cacheManager = new ContextCacheManager(logSink, embedCache);
             var diffTracker = new ContextDiffTracker(logSink);
             var keyProvider = new DefaultContextKeyProvider();
             var layerBuilder = new ContextLayerBuilder(keyProvider, logSink);
