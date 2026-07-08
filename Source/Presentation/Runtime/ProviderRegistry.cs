@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
@@ -8,9 +9,9 @@ namespace RimMind.Presentation.Runtime
 {
     public class ProviderRegistry : IProviderRegistry
     {
-        private readonly Dictionary<string, Func<object, string?>> _pawnProviders = new Dictionary<string, Func<object, string?>>();
-        private readonly Dictionary<string, Func<string?>> _staticProviders = new Dictionary<string, Func<string?>>();
-        private readonly Dictionary<Type, object> _typedProviders = new Dictionary<Type, object>();
+        private readonly ConcurrentDictionary<string, Func<object, string?>> _pawnProviders = new ConcurrentDictionary<string, Func<object, string?>>();
+        private readonly ConcurrentDictionary<string, Func<string?>> _staticProviders = new ConcurrentDictionary<string, Func<string?>>();
+        private readonly ConcurrentDictionary<Type, object> _typedProviders = new ConcurrentDictionary<Type, object>();
 
         public T? GetProvider<T>() where T : class
         {
@@ -33,8 +34,10 @@ namespace RimMind.Presentation.Runtime
         public void RegisterPawnProvider(string category, string modId, Func<object, string?> provider, int priority, bool overrideExisting)
         {
             if (string.IsNullOrEmpty(category) || provider == null) return;
-            if (overrideExisting || !_pawnProviders.ContainsKey(category))
+            if (overrideExisting)
                 _pawnProviders[category] = provider;
+            else
+                _pawnProviders.TryAdd(category, provider);
         }
 
         public void RegisterStaticProvider(string category, string modId, Func<string?> provider, int priority)
