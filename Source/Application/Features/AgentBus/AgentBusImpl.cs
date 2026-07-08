@@ -28,27 +28,33 @@ namespace RimMind.Application.Features.AgentBus
         /// <summary>
         /// Maps AgentBusEventType enum names to concrete event Types for SubscribeByName resolution.
         /// Mutable to support RegisterEventType for custom event types from sub-mods.
+        /// Thread-safe: RegisterEventType (write) and SubscribeByName (read) may be invoked
+        /// concurrently from sub-mod init and game threads, so ConcurrentDictionary is required
+        /// to avoid InvalidOperationException ("Collection was modified") and silent data corruption.
         /// </summary>
-        private static readonly Dictionary<string, Type> EventTypeMap = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
+        private static readonly ConcurrentDictionary<string, Type> EventTypeMap = new ConcurrentDictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
         {
-            { nameof(AgentBusEventType.Perception), typeof(PerceptionEvent) },
-            { nameof(AgentBusEventType.Decision), typeof(DecisionEvent) },
-            { nameof(AgentBusEventType.Goal), typeof(GoalEvent) },
-            { nameof(AgentBusEventType.Action), typeof(ActionEvent) },
-            { nameof(AgentBusEventType.Lifecycle), typeof(AgentLifecycleEvent) },
-            { nameof(AgentBusEventType.ModeChange), typeof(AgentModeChangedEvent) },
-            { nameof(AgentBusEventType.InnerVoice), typeof(InnerVoiceEvent) },
-            { nameof(AgentBusEventType.Reflection), typeof(DecisionEvent) },
-            { nameof(AgentBusEventType.ScheduleUpdate), typeof(DecisionEvent) },
-            { nameof(AgentBusEventType.MoodThreshold), typeof(MoodThresholdCrossedEvent) },
-            { nameof(AgentBusEventType.NeedCritical), typeof(NeedCriticalEvent) },
-            { nameof(AgentBusEventType.MentalStateWarning), typeof(MentalStateWarningEvent) },
-            { nameof(AgentBusEventType.InformationDiffusion), typeof(InformationDiffusionEvent) },
-            { nameof(AgentBusEventType.SocialEventProposed), typeof(SocialEventProposedEvent) },
-            { nameof(AgentBusEventType.TraitEvolution), typeof(TraitEvolutionEvent) },
-            { nameof(AgentBusEventType.Dream), typeof(DreamEvent) },
-            { nameof(AgentBusEventType.DecisionFailed), typeof(DecisionFailedEvent) },
-            { nameof(AgentBusEventType.WorkflowPhaseChange), typeof(AgentBusEvent) },
+            // ConcurrentDictionary has no public Add(TKey,TValue) method, so a collection
+            // initializer { key, value } would fail to compile. Use the indexer initializer
+            // syntax (C# 6+) which invokes the public Item set (add-or-update semantics).
+            [nameof(AgentBusEventType.Perception)] = typeof(PerceptionEvent),
+            [nameof(AgentBusEventType.Decision)] = typeof(DecisionEvent),
+            [nameof(AgentBusEventType.Goal)] = typeof(GoalEvent),
+            [nameof(AgentBusEventType.Action)] = typeof(ActionEvent),
+            [nameof(AgentBusEventType.Lifecycle)] = typeof(AgentLifecycleEvent),
+            [nameof(AgentBusEventType.ModeChange)] = typeof(AgentModeChangedEvent),
+            [nameof(AgentBusEventType.InnerVoice)] = typeof(InnerVoiceEvent),
+            [nameof(AgentBusEventType.Reflection)] = typeof(DecisionEvent),
+            [nameof(AgentBusEventType.ScheduleUpdate)] = typeof(DecisionEvent),
+            [nameof(AgentBusEventType.MoodThreshold)] = typeof(MoodThresholdCrossedEvent),
+            [nameof(AgentBusEventType.NeedCritical)] = typeof(NeedCriticalEvent),
+            [nameof(AgentBusEventType.MentalStateWarning)] = typeof(MentalStateWarningEvent),
+            [nameof(AgentBusEventType.InformationDiffusion)] = typeof(InformationDiffusionEvent),
+            [nameof(AgentBusEventType.SocialEventProposed)] = typeof(SocialEventProposedEvent),
+            [nameof(AgentBusEventType.TraitEvolution)] = typeof(TraitEvolutionEvent),
+            [nameof(AgentBusEventType.Dream)] = typeof(DreamEvent),
+            [nameof(AgentBusEventType.DecisionFailed)] = typeof(DecisionFailedEvent),
+            [nameof(AgentBusEventType.WorkflowPhaseChange)] = typeof(AgentBusEvent),
         };
 
         public AgentBusImpl(ILogSink? log = null, IThreadChecker? threadChecker = null)
@@ -206,7 +212,9 @@ namespace RimMind.Application.Features.AgentBus
             if (!typeof(AgentBusEvent).IsAssignableFrom(eventType))
                 throw new ArgumentException($"Event type must inherit from AgentBusEvent, got {eventType.FullName}", nameof(eventType));
 
-            EventTypeMap[name] = eventType;
+            // AddOrUpdate preserves the original Dictionary overwrite semantics:
+            // a duplicate RegisterEventType call replaces the previously registered Type.
+            EventTypeMap.AddOrUpdate(name, eventType, (_, __) => eventType);
             _log?.Message($"[RimMind.AgentBus] action=RegisterEventType name={name} type={eventType.Name}");
         }
 
