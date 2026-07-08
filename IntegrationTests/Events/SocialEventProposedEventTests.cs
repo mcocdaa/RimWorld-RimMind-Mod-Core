@@ -8,13 +8,14 @@ namespace RimMind.IntegrationTests.Events
         [Fact]
         public void AccessedAsBase_ShouldExposeCorrectBusEventType()
         {
+            var socialEventType = SocialEventType.Party;
             var evt = new SocialEventProposedEvent(
                 "npc1",
                 1,
                 "evt1",
-                SocialEventType.Party,
+                socialEventType,
                 "npc1",
-                "A colony gathering",
+                "A colony party",
                 12345,
                 678);
 
@@ -26,17 +27,18 @@ namespace RimMind.IntegrationTests.Events
         [Fact]
         public void DerivedEventType_ShouldRemainSocialEventType()
         {
+            var socialEventType = SocialEventType.Party;
             var evt = new SocialEventProposedEvent(
                 "npc1",
                 1,
                 "evt1",
-                SocialEventType.Party,
+                socialEventType,
                 "npc1",
-                "A colony gathering",
+                "A colony party",
                 12345,
                 678);
 
-            evt.EventType.Should().Be(SocialEventType.Party);
+            evt.EventType.Should().Be(socialEventType);
         }
 
         [Fact]
