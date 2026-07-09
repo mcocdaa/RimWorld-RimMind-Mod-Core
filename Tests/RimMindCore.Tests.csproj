@@ -65,6 +65,7 @@
     <Compile Include="Application\Features\Agent\InnerVoice\*.cs" />
     <Compile Include="Presentation\Agent\*.cs" />
     <Compile Include="Presentation\UI\*.cs" />
+    <Compile Include="Presentation\UI\DebugTables\*.cs" />
     <Compile Include="Presentation\UI\Framework\*.cs" />
     <Compile Include="Presentation\UI\Snapshots\*.cs" />
     <Compile Include="Infrastructure\Verse\*.cs" />
@@ -95,6 +96,7 @@
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentRequestTraceRowBuilder.cs" Link="Infrastructure\UI\AgentsPage\AgentRequestTraceRowBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/DebugCenter/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/DebugCenter/Overview/*.cs" />
+    <Compile Include="../Source/Infrastructure/UI/DebugTables/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Presentation/UI/Framework/*.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/LayoutConflict.cs" />
