@@ -13,10 +13,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class AIRequestsDebugCenterPageDrawer : IDebugCenterPageDrawer
     {
-        private const int DebugTableColumnCount = 8;
         private const int RowPreviewChars = 160;
         private readonly RimMindTableDrawer _tableDrawer = new();
-        private int _selectedIndex;
+        private string? _selectedRequestId;
         private Vector2 _tableScrollPosition;
         private Vector2 _detailScrollPosition;
 
@@ -40,13 +39,11 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             }
 
             SplitPageLayoutResult split = SplitPageLayout.Calculate(rect, 0.4f, 240f, 300f, 320f);
-            TablePageLayoutResult tableLayout = TablePageLayout.Calculate(split.List, model.Rows.Count, columnCount: DebugTableColumnCount);
-            _tableDrawer.Draw(split.List, model, ref _tableScrollPosition, scope);
-            DrawSelectionOverlay(tableLayout, entries.Count);
+            _selectedRequestId = _tableDrawer.DrawSelectable(split.List, model, _selectedRequestId, ref _tableScrollPosition, scope);
+            AIRequestTraceEntry selectedEntry = ResolveSelectedEntry(entries);
 
-            _selectedIndex = Mathf.Clamp(_selectedIndex, 0, entries.Count - 1);
             scope.Record(split.Detail, "AIRequests:Detail");
-            DrawDetail(split.Detail, entries[_selectedIndex]);
+            DrawDetail(split.Detail, selectedEntry);
         }
 
         private void DrawEmptyTable(Rect rect, string title, RimMindLayoutScope scope)
@@ -83,19 +80,15 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
                 duration);
         }
 
-        private void DrawSelectionOverlay(TablePageLayoutResult layout, int rowCount)
+        private AIRequestTraceEntry ResolveSelectedEntry(IReadOnlyList<AIRequestTraceEntry> entries)
         {
-            Widgets.BeginScrollView(layout.Body, ref _tableScrollPosition, layout.ViewRect);
-            for (int i = 0; i < rowCount; i++)
-            {
-                Rect rowRect = new Rect(0f, i * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
-                if (i == _selectedIndex)
-                    Widgets.DrawHighlight(rowRect);
-                if (Widgets.ButtonInvisible(rowRect))
-                    _selectedIndex = i;
-            }
+            AIRequestTraceEntry? selectedEntry = entries.FirstOrDefault(e => e.RequestId == _selectedRequestId);
+            if (selectedEntry != null)
+                return selectedEntry;
 
-            Widgets.EndScrollView();
+            selectedEntry = entries[0];
+            _selectedRequestId = selectedEntry.RequestId;
+            return selectedEntry;
         }
 
         private void DrawDetail(Rect rect, AIRequestTraceEntry entry)

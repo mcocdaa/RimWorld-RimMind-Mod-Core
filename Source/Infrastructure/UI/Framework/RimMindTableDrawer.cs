@@ -38,6 +38,19 @@ namespace RimMind.Infrastructure.UI.Framework
             DrawDebugRows(layout, model.Rows, ref scroll);
         }
 
+        public string? DrawSelectable(Rect rect, DebugTableModel model, string? selectedId, ref Vector2 scroll, RimMindLayoutScope scope)
+        {
+            TablePageLayoutResult layout = TablePageLayout.Calculate(rect, model.Rows.Count, columnCount: DebugTableColumnCount);
+            scope.Record(layout.Toolbar, "Table:Toolbar");
+            scope.Record(layout.Header, "Table:Header");
+            scope.Record(layout.Body, "Table:Body");
+            scope.Record(layout.BottomBar, "Table:BottomBar");
+
+            DrawToolbar(layout.Toolbar, model.Title);
+            DrawDebugHeaders(layout);
+            return DrawSelectableDebugRows(layout, model.Rows, selectedId, ref scroll);
+        }
+
         public void Draw(
             TablePageLayoutResult layout,
             IReadOnlyList<string> headers,
@@ -108,6 +121,36 @@ namespace RimMind.Infrastructure.UI.Framework
             }
 
             Widgets.EndScrollView();
+        }
+
+        private static string? DrawSelectableDebugRows(
+            TablePageLayoutResult layout,
+            IReadOnlyList<DebugTableRow> rows,
+            string? selectedId,
+            ref Vector2 scroll)
+        {
+            string? selectedRowId = selectedId;
+            float colWidth = layout.ViewRect.width / DebugTableColumnCount;
+            Widgets.BeginScrollView(layout.Body, ref scroll, layout.ViewRect);
+            for (int r = 0; r < rows.Count; r++)
+            {
+                DebugTableRow row = rows[r];
+                Rect rowRect = new Rect(0f, r * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
+                if (r % 2 == 0)
+                    Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorSectionBg);
+
+                if (row.Id == selectedRowId)
+                    Widgets.DrawHighlight(rowRect);
+
+                Widgets.DrawBoxSolid(new Rect(rowRect.x, rowRect.y, StatusStripWidth, rowRect.height), ColorFor(row.StatusColorName));
+                DrawDebugCells(rowRect, colWidth, row);
+
+                if (Widgets.ButtonInvisible(rowRect))
+                    selectedRowId = row.Id;
+            }
+
+            Widgets.EndScrollView();
+            return selectedRowId;
         }
 
         private static void DrawDebugCells(Rect rowRect, float colWidth, DebugTableRow row)
