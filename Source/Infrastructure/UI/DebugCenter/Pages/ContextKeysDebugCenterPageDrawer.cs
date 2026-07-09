@@ -1,4 +1,8 @@
+using System;
 using RimMind.Application.Common.Models.UI;
+using RimMind.Infrastructure.UI.DebugTables;
+using RimMind.Infrastructure.UI.Framework;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using UnityEngine;
 using Verse;
@@ -7,6 +11,10 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class ContextKeysDebugCenterPageDrawer : IDebugCenterPageDrawer
     {
+        private const int DebugTableColumnCount = 8;
+        private readonly RimMindTableDrawer _tableDrawer = new();
+        private Vector2 _scrollPosition;
+
         public DebugCenterPageDescriptor Descriptor { get; } = new(
             "context_keys",
             "RimMind.UI.Hub.Tab.ContextKeys",
@@ -15,10 +23,11 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
-            DebugCenterToolGrid.Draw(
-                rect,
-                scope,
-                ("RimMind.UI.Hub.ContextKeys", () => Find.WindowStack.Add(new Window_ContextKeyDebug())));
+            DebugTableModel model = new DebugTableModel(
+                "RimMind.UI.Hub.Tab.ContextKeys".Translate(),
+                Array.Empty<DebugTableRow>());
+            _ = TablePageLayout.Calculate(rect, model.Rows.Count, columnCount: DebugTableColumnCount);
+            _tableDrawer.Draw(rect, model, ref _scrollPosition, scope);
         }
     }
 }

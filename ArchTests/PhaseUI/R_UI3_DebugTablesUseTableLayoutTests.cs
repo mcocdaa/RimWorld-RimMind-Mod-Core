@@ -15,22 +15,21 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
     {
         var files = new[]
         {
-            "Infrastructure/UI/AIRequestsPage/AIRequestsPageDrawer.cs",
-            "Infrastructure/UI/Window_RequestLog.cs",
-            "Infrastructure/UI/Window_AIDebugLog.cs",
-            "Infrastructure/UI/Window_ToolCallDebug.cs",
-            "Infrastructure/UI/Window_MechanismStatus.cs",
-            "Infrastructure/UI/Window_ContextKeyDebug.cs"
+            "Infrastructure/UI/DebugCenter/Pages/AIRequestsDebugCenterPageDrawer.cs",
+            "Infrastructure/UI/DebugCenter/Pages/ToolCallsDebugCenterPageDrawer.cs",
+            "Infrastructure/UI/DebugCenter/Pages/MechanismsDebugCenterPageDrawer.cs",
+            "Infrastructure/UI/DebugCenter/Pages/ContextKeysDebugCenterPageDrawer.cs"
         };
 
         var violations = new List<string>();
         foreach (string rel in files)
         {
             string text = File.ReadAllText(Path.Combine(SourceDir, rel.Replace('/', Path.DirectorySeparatorChar)));
-            if (!text.Contains("TablePageLayout.Calculate", StringComparison.Ordinal))
+            if (!text.Contains("TablePageLayout", StringComparison.Ordinal)
+                || !text.Contains("DebugTableModel", StringComparison.Ordinal))
                 violations.Add(rel);
         }
 
-        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug table/log pages must use TablePageLayout.");
+        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug center table pages must use TablePageLayout and DebugTableModel.");
     }
 }

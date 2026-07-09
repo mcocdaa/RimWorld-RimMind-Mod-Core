@@ -493,6 +493,20 @@
   <RimMind.UI.Hub.SettingsEntryDescription>调试中心只提供设置入口，完整配置仍在 RimMind 设置窗口中维护。</RimMind.UI.Hub.SettingsEntryDescription>
   <RimMind.UI.Hub.OpenSettings>打开设置</RimMind.UI.Hub.OpenSettings>
   <RimMind.UI.Hub.SelectPawnState>刷新选择</RimMind.UI.Hub.SelectPawnState>
+  <!-- Debug table shared headers -->
+  <RimMind.UI.DebugTable.Header.Id>ID</RimMind.UI.DebugTable.Header.Id>
+  <RimMind.UI.DebugTable.Header.Status>状态</RimMind.UI.DebugTable.Header.Status>
+  <RimMind.UI.DebugTable.Header.Time>时间</RimMind.UI.DebugTable.Header.Time>
+  <RimMind.UI.DebugTable.Header.Scope>作用域</RimMind.UI.DebugTable.Header.Scope>
+  <RimMind.UI.DebugTable.Header.Actor>角色</RimMind.UI.DebugTable.Header.Actor>
+  <RimMind.UI.DebugTable.Header.Channel>通道</RimMind.UI.DebugTable.Header.Channel>
+  <RimMind.UI.DebugTable.Header.Model>模型</RimMind.UI.DebugTable.Header.Model>
+  <RimMind.UI.DebugTable.Header.Summary>摘要</RimMind.UI.DebugTable.Header.Summary>
+  <RimMind.UI.DebugTable.Status.Waiting>等待中</RimMind.UI.DebugTable.Status.Waiting>
+  <RimMind.UI.DebugTable.Status.Streaming>流式返回中</RimMind.UI.DebugTable.Status.Streaming>
+  <RimMind.UI.DebugTable.Status.Completed>已完成</RimMind.UI.DebugTable.Status.Completed>
+  <RimMind.UI.DebugTable.Status.Failed>已失败</RimMind.UI.DebugTable.Status.Failed>
+  <RimMind.UI.DebugTable.Status.Cancelled>已取消</RimMind.UI.DebugTable.Status.Cancelled>
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent 状态调试</RimMind.UI.AgentStateDebug.Title>
   <RimMind.UI.AgentStateDebug.NoPawn>未选择小人</RimMind.UI.AgentStateDebug.NoPawn>
