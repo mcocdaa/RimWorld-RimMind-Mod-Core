@@ -86,10 +86,10 @@ RimMindAPI.RegisterPendingRequest(entry)
 2. LocalStorageDriver.KvStore 非线程安全（Dictionary，可从后台线程访问）
 3. AICoreAPI.Chat 后台线程调用 RimWorld/Unity API（违反线程规则）
 4. OpenAI 路径 Task.Run 无 try-catch（请求可能静默丢失）
-5. RegisterIncidentExecutedCallback/Unregister key 生成不稳定（lambda 不可靠）
+5. ✅ RegisterIncidentExecutedCallback/Unregister key 生成不稳定 — 已重构为 IExtensionRegistry<IIncidentExecutedListener>,无 lambda key 问题
 6. 单实例替换型 API 无覆盖警告（_dialogueTriggerFn 等 6 个字段）
 7. ScenarioRegistry 硬编码中文（违反 UI 文本本地化规则）
-8. PawnAgent/AgentGoalStack/NpcManager/PerceptionBridge 直接调用静态 AgentBus 绕过 IEventBus
+8. ✅ PawnAgent/AgentGoalStack/NpcManager/PerceptionBridge 直接调用静态 AgentBus — 已改为实例注入 AgentBusImpl
 9. HistoryManager 无持久化集成（存档/读档后对话历史丢失）
 10. LocalStorageDriver.SupportsStreaming 返回 true 但实际假流式
 
@@ -119,14 +119,22 @@ RimMindAPI.RegisterPendingRequest(entry)
 - 3 个子 mod 直接访问 RimMind.Core.Internal 命名空间
 - Memory mod 复用其他 mod 的 ScenarioId
 
-### 死代码（27 项）
+### 死代码（r6 → r10 清理记录）
 
-- IStreamingResponseHandler 整套机制（接口+3个API+后端字段）
-- IAgentModeProvider 整套机制（接口+3个API+后端字段）
-- 15 个 RimMindAPI 方法/属性无调用者
-- MemoryEvent 从未被实例化
-- RequestOverlay.GetWindowRect/SetWindowRect 无调用者
-- using System.Text 未使用
+r6 审查列出的 27 项死代码已在 r7-r9 期间清理:
+- ✅ IStreamingResponseHandler 整套机制 — 已移除
+- ✅ IAgentModeProvider 整套机制 — 已移除
+- ✅ MemoryEvent 类型 — 已移除(注: RimMind-Memory 中 "MemoryEvent" 字符串键仍在使用,作为缓存失效触发器,与类型无关)
+- ✅ RequestOverlay.GetWindowRect/SetWindowRect — 已移除
+- ✅ using System.Text 未使用 — 已清理
+- ✅ 15 个 RimMindAPI 无调用者方法/属性 — 已移除
+
+r10 审查(2026-07-08)新增清理:
+- ✅ Source/backup/ 14个旧文件 — 已归档至 Refs/backup/
+- ✅ RimMindDefaults.MiddlewareOrder 死常量(LayerBuild/Retry/NpcChatRetry/CacheStore) — 已移除
+- ✅ code_quality_report.json — 已移出 Source
+- ✅ ToolRiskLevel 枚举 — 已合并入 RiskLevel(跨模组 RimMind-Actions.Tests.csproj 同步)
+- ✅ Null* 类使用方式统一(全部用 .Instance,消除 new/Instance 混用)
 
 ### 历史修复（r5-r9）
 
@@ -137,6 +145,16 @@ RimMindAPI.RegisterPendingRequest(entry)
 - ✅ 双路径注册、Unicode 截断、ExposeData 快照 → 修复
 - ✅ BudgetW1/W2 UI、autoApplyMode LogOnly → 修复
 - ✅ ContextDiff lifetime、AIDebugLog O(1)、HistoryManager/SensorManager 线程安全 → 修复
+
+### r10 审查修复（2026-07-08）
+
+- ✅ EmbedCache 从 Domain/ValueObjects 迁移到 Infrastructure/Cache(分层违规修复)
+- ✅ AgentBusImpl.EventTypeMap → ConcurrentDictionary(线程安全)
+- ✅ ProviderRegistry → ConcurrentDictionary(线程安全)
+- ✅ OutputGuardrailMiddleware 硬编码 Order/OwnerModId → 改用常量
+- ✅ MiddlewareBase<TContext> 抽象基类(消除 18 个 Middleware 重复属性样板)
+- ✅ ConcurrentRegistryBase<TKey,TValue> 泛型基类(消除 4 个 Registry CRUD 样板)
+- ✅ Result<TValue,TError> 实现 IEquatable + == / != 操作符
 
 ## 操作边界
 
