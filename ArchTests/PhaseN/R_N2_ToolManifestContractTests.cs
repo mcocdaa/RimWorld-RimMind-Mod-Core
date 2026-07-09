@@ -39,7 +39,7 @@ namespace RimMind.Core.ArchTests.PhaseN
             Assert.Contains("public sealed record ToolManifest", content);
             Assert.Contains("string OwnerModId", content);
             Assert.Contains("IReadOnlyList<AgentScopeKind> AllowedScopes", content);
-            Assert.Contains("ToolRiskLevel RiskLevel", content);
+            Assert.Contains("RiskLevel RiskLevel", content);
             Assert.Contains("bool RequiresApproval", content);
             Assert.Contains("string SchemaVersion", content);
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Models.Agent;
+using RimMind.Domain.Enums;
 
 namespace RimMind.Application.Common.Models.Tools
 {
@@ -9,7 +10,7 @@ namespace RimMind.Application.Common.Models.Tools
         public string OwnerModId { get; init; } = "RimMind.Core";
         public IReadOnlyList<AgentScopeKind> AllowedScopes { get; init; } =
             Array.AsReadOnly((AgentScopeKind[])Enum.GetValues(typeof(AgentScopeKind)));
-        public ToolRiskLevel RiskLevel { get; init; } = ToolRiskLevel.Medium;
+        public RiskLevel RiskLevel { get; init; } = RiskLevel.Medium;
         public bool RequiresApproval { get; init; }
         public string SchemaVersion { get; init; } = "1";
 
