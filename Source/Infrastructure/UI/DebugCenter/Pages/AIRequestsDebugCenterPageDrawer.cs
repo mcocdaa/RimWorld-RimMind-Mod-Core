@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Debug;
-using RimMind.Application.Common.Models.UI;
 using RimMind.Infrastructure.UI.DebugTables;
 using RimMind.Infrastructure.UI.Framework;
 using RimMind.Presentation.UI.Framework;
@@ -22,12 +21,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         private Vector2 _detailScrollPosition;
 
         private sealed record DetailSection(string Title, string Body);
-
-        public DebugCenterPageDescriptor Descriptor { get; } = new(
-            "ai_requests",
-            "RimMind.UI.Hub.Tab.AIRequests",
-            20,
-            IsDefault: true);
 
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {

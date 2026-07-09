@@ -14,7 +14,8 @@ namespace RimMind.Infrastructure.UI
         private string _pageId;
         private readonly Pawn? _selectedPawn;
         private readonly DebugCenterPageContext _context;
-        private readonly IReadOnlyList<IDebugCenterPageDrawer> _pages;
+        private readonly IReadOnlyList<DebugCenterPageRegistration> _pages;
+        private readonly Dictionary<string, IDebugCenterPageDrawer> _drawerCache = new();
         private readonly RimMindTabbedPageHostDrawer _tabDrawer = new();
 
         public override Vector2 InitialSize => new Vector2(780f, 580f);
@@ -26,7 +27,7 @@ namespace RimMind.Infrastructure.UI
 
         private Window_RimMindHub(string initialPageId, Pawn? selectedPawn)
         {
-            _pages = DebugCenterPageRegistry.CreateAll();
+            _pages = DebugCenterPageRegistry.CreateAllRegistrations();
             _pageId = ResolvePageId(initialPageId);
             _selectedPawn = selectedPawn;
             _context = new DebugCenterPageContext(selectedPawn);
@@ -57,8 +58,11 @@ namespace RimMind.Infrastructure.UI
             scope.Record(header, "Hub:Header");
             RimMindUI.DrawWindowHeader(header, "RimMind.UI.Hub.Title".Translate());
             _pageId = _tabDrawer.DrawTabs(tabRoot, tabs, _pageId, scope);
-            IDebugCenterPageDrawer? selectedPage = ResolveSelectedPage();
-            selectedPage?.Draw(tabLayout.Content, _context, scope);
+            DebugCenterPageRegistration? selectedPage = ResolveSelectedPage();
+            if (selectedPage != null)
+            {
+                GetDrawer(selectedPage).Draw(tabLayout.Content, _context, scope);
+            }
         }
 
         private IReadOnlyList<TabbedPageTabModel> BuildTabModels()
@@ -72,7 +76,7 @@ namespace RimMind.Infrastructure.UI
                     tooltipKey: null))
                 .ToList();
 
-        private IDebugCenterPageDrawer? ResolveSelectedPage()
+        private DebugCenterPageRegistration? ResolveSelectedPage()
         {
             var selectedPage = _pages.FirstOrDefault(page => page.Descriptor.Id == _pageId)
                 ?? _pages.FirstOrDefault(page => page.Descriptor.IsDefault)
@@ -82,6 +86,17 @@ namespace RimMind.Infrastructure.UI
                 _pageId = selectedPage.Descriptor.Id;
 
             return selectedPage;
+        }
+
+        private IDebugCenterPageDrawer GetDrawer(DebugCenterPageRegistration registration)
+        {
+            if (!_drawerCache.TryGetValue(registration.Descriptor.Id, out IDebugCenterPageDrawer drawer))
+            {
+                drawer = registration.CreateDrawer();
+                _drawerCache[registration.Descriptor.Id] = drawer;
+            }
+
+            return drawer;
         }
 
         private static string ResolvePageId(string pageId)

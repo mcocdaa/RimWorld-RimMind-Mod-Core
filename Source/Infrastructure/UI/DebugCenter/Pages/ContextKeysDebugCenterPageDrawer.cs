@@ -1,5 +1,4 @@
 using System;
-using RimMind.Application.Common.Models.UI;
 using RimMind.Infrastructure.UI.DebugTables;
 using RimMind.Infrastructure.UI.Framework;
 using RimMind.Presentation.UI.Framework;
@@ -14,12 +13,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         private const int DebugTableColumnCount = 8;
         private readonly RimMindTableDrawer _tableDrawer = new();
         private Vector2 _scrollPosition;
-
-        public DebugCenterPageDescriptor Descriptor { get; } = new(
-            "context_keys",
-            "RimMind.UI.Hub.Tab.ContextKeys",
-            50,
-            IsDefault: false);
 
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {

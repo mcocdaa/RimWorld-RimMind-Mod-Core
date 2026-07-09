@@ -1,5 +1,4 @@
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Models.UI;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
@@ -9,12 +8,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class SettingsEntryDebugCenterPageDrawer : IDebugCenterPageDrawer
     {
-        public DebugCenterPageDescriptor Descriptor { get; } = new(
-            "settings",
-            "RimMind.UI.Hub.Tab.Settings",
-            60,
-            IsDefault: false);
-
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
             scope.Record(rect, "Hub:SettingsEntry");

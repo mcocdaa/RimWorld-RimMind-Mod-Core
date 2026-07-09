@@ -8,11 +8,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter
 {
     public static class DebugCenterPageRegistry
     {
-        private sealed record PageRegistration(
-            DebugCenterPageDescriptor Descriptor,
-            Func<IDebugCenterPageDrawer> Factory);
-
-        private static readonly List<PageRegistration> Pages = new();
+        private static readonly List<DebugCenterPageRegistration> Pages = new();
 
         static DebugCenterPageRegistry()
         {
@@ -72,7 +68,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter
                 throw new ArgumentNullException(nameof(factory));
 
             Pages.RemoveAll(existing => existing.Descriptor.Id == descriptor.Id);
-            Pages.Add(new PageRegistration(descriptor, factory));
+            Pages.Add(new DebugCenterPageRegistration(descriptor, factory));
         }
 
         public static DebugCenterPageDescriptor? Find(string id)
@@ -86,17 +82,19 @@ namespace RimMind.Infrastructure.UI.DebugCenter
                 .ToList();
 
         public static IDebugCenterPageDrawer? Create(string id)
-            => Pages
-                .OrderBy(page => page.Descriptor.Order)
-                .ThenBy(page => page.Descriptor.Id, StringComparer.Ordinal)
+            => CreateAllRegistrations()
                 .FirstOrDefault(page => page.Descriptor.Id == id)
-                ?.Factory();
+                ?.CreateDrawer();
 
         public static IReadOnlyList<IDebugCenterPageDrawer> CreateAll()
+            => CreateAllRegistrations()
+                .Select(page => page.CreateDrawer())
+                .ToList();
+
+        public static IReadOnlyList<DebugCenterPageRegistration> CreateAllRegistrations()
             => Pages
                 .OrderBy(page => page.Descriptor.Order)
                 .ThenBy(page => page.Descriptor.Id, StringComparer.Ordinal)
-                .Select(page => page.Factory())
                 .ToList();
     }
 }

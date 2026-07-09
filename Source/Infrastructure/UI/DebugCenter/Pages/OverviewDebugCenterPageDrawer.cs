@@ -1,5 +1,4 @@
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Models.UI;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI.DebugCenter.Overview;
 using RimMind.Presentation.UI.Layout;
@@ -11,12 +10,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class OverviewDebugCenterPageDrawer : IDebugCenterPageDrawer
     {
-        public DebugCenterPageDescriptor Descriptor { get; } = new(
-            "overview",
-            "RimMind.UI.Hub.Tab.Overview",
-            0,
-            IsDefault: false);
-
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
             Pawn? selectedPawn = context.SelectedPawn ?? Find.Selector.SingleSelectedThing as Pawn;
