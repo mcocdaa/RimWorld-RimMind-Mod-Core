@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 
 namespace RimMind.Domain.ValueObjects
 {
-    public readonly struct Result<TValue, TError>
+    public readonly struct Result<TValue, TError> : IEquatable<Result<TValue, TError>>
     {
         private readonly TValue? _value;
         private readonly TError? _error;
@@ -37,5 +38,25 @@ namespace RimMind.Domain.ValueObjects
             error = _error;
             return IsErr;
         }
+
+        public bool Equals(Result<TValue, TError> other)
+        {
+            if (IsOk != other.IsOk) return false;
+            if (IsOk)
+                return EqualityComparer<TValue>.Default.Equals(_value!, other._value!);
+            return EqualityComparer<TError>.Default.Equals(_error!, other._error!);
+        }
+
+        public override bool Equals(object? obj) => obj is Result<TValue, TError> other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            if (IsOk)
+                return _value == null ? 0 : _value.GetHashCode();
+            return _error == null ? 1 : _error.GetHashCode();
+        }
+
+        public static bool operator ==(Result<TValue, TError> left, Result<TValue, TError> right) => left.Equals(right);
+        public static bool operator !=(Result<TValue, TError> left, Result<TValue, TError> right) => !left.Equals(right);
     }
 }
