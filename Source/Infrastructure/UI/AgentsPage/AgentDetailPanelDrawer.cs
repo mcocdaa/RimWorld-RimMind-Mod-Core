@@ -13,10 +13,30 @@ namespace RimMind.Infrastructure.UI.AgentsPage
 {
     public sealed class AgentDetailPanelDrawer
     {
-        private readonly AgentActivityStreamDrawer _activityDrawer = new();
-        private readonly AgentChatPanelDrawer _chatDrawer = new();
+        public AgentPageViewModel? BuildViewModel(Pawn? selectedPawn)
+        {
+            if (selectedPawn == null)
+                return null;
 
-        public void Draw(AgentPageRects layout, Pawn? selectedPawn, ref string chatDraft, RimMindLayoutScope scope)
+            var comp = CompPawnAgent.GetComp(selectedPawn);
+            var traceRows = BuildTraceRows();
+            if (comp?.Agent == null)
+            {
+                return AgentPageViewModel.PendingCreation(
+                    selectedPawn.LabelShortCap,
+                    RequestOverlay.Pending.Count,
+                    traceRows);
+            }
+
+            return AgentPageViewModel.FromState(
+                selectedPawn.LabelShortCap,
+                comp.Agent.State,
+                RequestOverlay.Pending.Count,
+                requestRows: 0,
+                traceRows);
+        }
+
+        public void Draw(AgentPageRects layout, Pawn? selectedPawn, RimMindLayoutScope scope)
         {
             scope.Record(layout.Detail, "Agents:DetailPanel");
             Widgets.DrawBoxSolid(layout.Detail, RimMindUI.ColorCardBg);
@@ -28,16 +48,10 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             }
 
             var comp = CompPawnAgent.GetComp(selectedPawn);
-            var traceRows = BuildTraceRows();
             DrawDetailHeader(layout.Status, selectedPawn, comp?.Agent);
 
             if (comp?.Agent == null)
             {
-                var model = AgentPageViewModel.PendingCreation(
-                    selectedPawn.LabelShortCap,
-                    RequestOverlay.Pending.Count,
-                    traceRows);
-
                 Rect createRect = layout.ActionBar.Buttons.Count > 0
                     ? layout.ActionBar.Buttons[0].Rect
                     : new Rect(layout.Actions.x, layout.Actions.y, 160f, RimMindUI.BtnHeight);
@@ -49,33 +63,11 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                         Messages.Message("RimMind.UI.AgentsPage.CreateFailed".Translate(),
                             MessageTypeDefOf.RejectInput, false);
                 }
-
-                _activityDrawer.Draw(
-                    layout.Activity,
-                    "RimMind.UI.AgentsPage.Pending".Translate(),
-                    model.PendingRequests,
-                    model.TraceRows,
-                    scope);
                 return;
             }
 
             var agent = comp.Agent;
-            var agentModel = AgentPageViewModel.FromState(
-                selectedPawn.LabelShortCap,
-                agent.State,
-                RequestOverlay.Pending.Count,
-                requestRows: 0,
-                traceRows);
             DrawActions(layout.ActionBar, agent);
-            _activityDrawer.Draw(
-                layout.Activity,
-                agentModel.State,
-                agentModel.PendingRequests,
-                agentModel.TraceRows,
-                scope);
-
-            if (agent.State == AgentState.Active || agent.State == AgentState.Paused)
-                _chatDrawer.Draw(layout.Chat, selectedPawn, ref chatDraft, scope);
         }
 
         private static void DrawDetailHeader(Rect rect, Pawn pawn, IAgentControl? agent)

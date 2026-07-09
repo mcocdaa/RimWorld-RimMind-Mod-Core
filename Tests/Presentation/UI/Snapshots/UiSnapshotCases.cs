@@ -16,6 +16,8 @@ public static class UiSnapshotCases
             DebugOverview(),
             AgentActive(),
             AgentPending(),
+            AgentPaused(),
+            AgentError(),
             RequestsTable()
         };
     }
@@ -111,6 +113,36 @@ public static class UiSnapshotCases
             RimMindUiElement.Label("status", layout.Status, "Cashton - Pending"),
             RimMindUiElement.Button("create_start", layout.ActionBar.Buttons[0].Rect, "Start"),
             RimMindUiElement.Panel("activity", layout.Activity)
+        });
+    }
+
+    private static RimMindUiDocument AgentPaused()
+    {
+        var root = new Rect(0f, 0f, 900f, 560f);
+        AgentPageRects layout = AgentPageLayout.Calculate(root);
+        return new RimMindUiDocument("agent_paused", root, new[]
+        {
+            RimMindUiElement.Panel("list", layout.List),
+            RimMindUiElement.Panel("activity", layout.Activity),
+            RimMindUiElement.Panel("detail", layout.Detail),
+            RimMindUiElement.Label("status", layout.Status, "Nickie - Paused"),
+            RimMindUiElement.Button("resume", layout.ActionBar.Buttons[0].Rect, "Resume"),
+            RimMindUiElement.Input("chat", layout.Chat, string.Empty)
+        });
+    }
+
+    private static RimMindUiDocument AgentError()
+    {
+        var root = new Rect(0f, 0f, 900f, 560f);
+        AgentPageRects layout = AgentPageLayout.Calculate(root);
+        return new RimMindUiDocument("agent_error", root, new[]
+        {
+            RimMindUiElement.Panel("list", layout.List),
+            RimMindUiElement.Panel("activity", layout.Activity),
+            RimMindUiElement.Panel("detail", layout.Detail),
+            RimMindUiElement.Label("status", layout.Status, "Cashton - Error"),
+            RimMindUiElement.Button("open_requests", layout.ActionBar.Buttons[2].Rect, "Open Requests"),
+            RimMindUiElement.Input("chat", layout.Chat, string.Empty)
         });
     }
 

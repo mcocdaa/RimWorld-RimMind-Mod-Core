@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using RimMind.Infrastructure.UI.AgentsPage;
+using RimMind.Presentation.UI.Framework;
 using UnityEngine;
 using Xunit;
 
@@ -20,9 +21,10 @@ namespace RimMind.Tests.Presentation.UI
 
             Assert.True(layout.Status.y >= layout.Detail.y);
             Assert.True(layout.Actions.y > layout.Status.yMax);
-            Assert.True(layout.Activity.y > layout.Actions.yMax);
+            Assert.True(layout.Actions.yMax <= layout.Detail.yMax);
+            Assert.True(layout.Activity.xMax < layout.Detail.x);
             Assert.True(layout.Chat.y > layout.Activity.yMax);
-            Assert.Equal(layout.Detail.yMax, layout.Chat.yMax);
+            Assert.Equal(layout.Chat.y, layout.Detail.yMax + RimMindUiMetrics.SectionGap);
         }
 
         [Fact]
@@ -31,8 +33,31 @@ namespace RimMind.Tests.Presentation.UI
             var layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 620f, 420f));
 
             Assert.True(layout.List.width >= 180f);
-            Assert.True(layout.Detail.width >= 360f);
+            Assert.True(layout.Detail.width >= 180f);
             Assert.True(layout.Activity.height >= 120f);
+        }
+
+        [Fact]
+        public void Calculate_ReservesFixedChatBelowScrollableContent()
+        {
+            AgentPageRects layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 900f, 560f));
+
+            Assert.True(layout.Chat.y > layout.Activity.yMax);
+            Assert.True(layout.Chat.height >= 28f);
+            Assert.True(layout.List.yMax <= layout.Activity.yMax);
+            Assert.True(layout.Detail.yMax <= layout.Activity.yMax);
+        }
+
+        [Fact]
+        public void Calculate_SeparatesEventStreamFromDetailPanel()
+        {
+            AgentPageRects layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 900f, 560f));
+
+            Assert.True(layout.Activity.x > layout.List.xMax);
+            Assert.True(layout.Detail.x > layout.Activity.xMax);
+            Assert.True(layout.List.width >= 180f);
+            Assert.True(layout.Activity.width >= 260f);
+            Assert.True(layout.Detail.width >= 220f);
         }
 
         [Theory]
