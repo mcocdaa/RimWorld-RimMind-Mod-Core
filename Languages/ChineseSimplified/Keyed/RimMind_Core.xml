@@ -469,6 +469,7 @@
   <RimMind.UI.Hub.Tab.ToolCalls>ToolCall</RimMind.UI.Hub.Tab.ToolCalls>
   <RimMind.UI.Hub.Tab.Mechanisms>机制</RimMind.UI.Hub.Tab.Mechanisms>
   <RimMind.UI.Hub.Tab.ContextKeys>上下文键</RimMind.UI.Hub.Tab.ContextKeys>
+  <RimMind.UI.Hub.Tab.Settings>设置</RimMind.UI.Hub.Tab.Settings>
   <RimMind.UI.Hub.SelectedPawn>已选择小人</RimMind.UI.Hub.SelectedPawn>
   <RimMind.UI.Hub.NoPawn>未选择小人</RimMind.UI.Hub.NoPawn>
   <RimMind.UI.Hub.AgentSummary>当前地图 Agent</RimMind.UI.Hub.AgentSummary>
@@ -488,6 +489,9 @@
   <RimMind.UI.Hub.QueueState>队列状态</RimMind.UI.Hub.QueueState>
   <RimMind.UI.Hub.QuickActions>快捷操作</RimMind.UI.Hub.QuickActions>
   <RimMind.UI.Hub.Settings>设置</RimMind.UI.Hub.Settings>
+  <RimMind.UI.Hub.SettingsEntryTitle>设置</RimMind.UI.Hub.SettingsEntryTitle>
+  <RimMind.UI.Hub.SettingsEntryDescription>调试中心只提供设置入口，完整配置仍在 RimMind 设置窗口中维护。</RimMind.UI.Hub.SettingsEntryDescription>
+  <RimMind.UI.Hub.OpenSettings>打开设置</RimMind.UI.Hub.OpenSettings>
   <RimMind.UI.Hub.SelectPawnState>刷新选择</RimMind.UI.Hub.SelectPawnState>
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent 状态调试</RimMind.UI.AgentStateDebug.Title>

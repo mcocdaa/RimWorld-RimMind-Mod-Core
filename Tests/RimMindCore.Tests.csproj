@@ -71,6 +71,7 @@
     <Compile Include="Infrastructure\OpenAI\*.cs" />
     <Compile Include="Infrastructure\Clients\Shared\*.cs" />
     <Compile Include="Infrastructure\UI\Layout\*.cs" />
+    <Compile Include="Infrastructure\UI\DebugCenter\*.cs" />
     <Compile Include="Infrastructure\UI\*.cs" />
     <Compile Include="Constants\*.cs" />
     <Compile Include="Registry\*.cs" />
@@ -91,7 +92,7 @@
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageLayout.cs" Link="Infrastructure\UI\AgentsPage\AgentPageLayout.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" Link="Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentRequestTraceRowBuilder.cs" Link="Infrastructure\UI\AgentsPage\AgentRequestTraceRowBuilder.cs" />
-    <Compile Include="../Source/Infrastructure/UI/DebugCenter/DebugCenterLayout.cs" />
+    <Compile Include="../Source/Infrastructure/UI/DebugCenter/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Presentation/UI/Framework/*.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/LayoutConflict.cs" />

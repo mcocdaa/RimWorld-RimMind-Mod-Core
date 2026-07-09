@@ -20,7 +20,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter
                 "overview",
                 "RimMind.UI.Hub.Tab.Overview",
                 0,
-                IsDefault: false), () => new OverviewDebugCenterPageDrawer());
+                IsDefault: true), () => new OverviewDebugCenterPageDrawer());
 
             Register(new DebugCenterPageDescriptor(
                 "agents",
@@ -32,7 +32,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter
                 "ai_requests",
                 "RimMind.UI.Hub.Tab.AIRequests",
                 20,
-                IsDefault: true), () => new AIRequestsDebugCenterPageDrawer());
+                IsDefault: false), () => new AIRequestsDebugCenterPageDrawer());
 
             Register(new DebugCenterPageDescriptor(
                 "tool_calls",
@@ -51,6 +51,12 @@ namespace RimMind.Infrastructure.UI.DebugCenter
                 "RimMind.UI.Hub.Tab.ContextKeys",
                 50,
                 IsDefault: false), () => new ContextKeysDebugCenterPageDrawer());
+
+            Register(new DebugCenterPageDescriptor(
+                "settings",
+                "RimMind.UI.Hub.Tab.Settings",
+                60,
+                IsDefault: false), () => new SettingsEntryDebugCenterPageDrawer());
         }
 
         public static string DefaultPageId

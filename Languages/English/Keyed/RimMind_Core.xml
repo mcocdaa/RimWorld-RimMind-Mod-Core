@@ -469,6 +469,7 @@
   <RimMind.UI.Hub.Tab.ToolCalls>ToolCalls</RimMind.UI.Hub.Tab.ToolCalls>
   <RimMind.UI.Hub.Tab.Mechanisms>Mechanisms</RimMind.UI.Hub.Tab.Mechanisms>
   <RimMind.UI.Hub.Tab.ContextKeys>Context Keys</RimMind.UI.Hub.Tab.ContextKeys>
+  <RimMind.UI.Hub.Tab.Settings>Settings</RimMind.UI.Hub.Tab.Settings>
   <RimMind.UI.Hub.SelectedPawn>Selected pawn</RimMind.UI.Hub.SelectedPawn>
   <RimMind.UI.Hub.NoPawn>No pawn selected</RimMind.UI.Hub.NoPawn>
   <RimMind.UI.Hub.AgentSummary>Agents on map</RimMind.UI.Hub.AgentSummary>
@@ -488,6 +489,9 @@
   <RimMind.UI.Hub.QueueState>Queue State</RimMind.UI.Hub.QueueState>
   <RimMind.UI.Hub.QuickActions>Quick Actions</RimMind.UI.Hub.QuickActions>
   <RimMind.UI.Hub.Settings>Settings</RimMind.UI.Hub.Settings>
+  <RimMind.UI.Hub.SettingsEntryTitle>Settings</RimMind.UI.Hub.SettingsEntryTitle>
+  <RimMind.UI.Hub.SettingsEntryDescription>The Debug Center provides an entry point only. Full configuration stays in the RimMind Settings window.</RimMind.UI.Hub.SettingsEntryDescription>
+  <RimMind.UI.Hub.OpenSettings>Open Settings</RimMind.UI.Hub.OpenSettings>
   <RimMind.UI.Hub.SelectPawnState>Refresh Selection</RimMind.UI.Hub.SelectPawnState>
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent State Debug</RimMind.UI.AgentStateDebug.Title>
