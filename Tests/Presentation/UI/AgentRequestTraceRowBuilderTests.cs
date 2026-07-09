@@ -76,7 +76,7 @@ namespace RimMind.Tests.Presentation.UI
                 Entry("failed", AIRequestTraceState.Failed, error: "request failed")
             });
 
-            Assert.Equal("request failed", rows[0].Error);
+            Assert.Equal("request failed", rows[0].ErrorMessage);
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace RimMind.Tests.Presentation.UI
 
             var rows = AgentRequestTraceRowBuilder.BuildRecent(new[] { entry });
 
-            Assert.Equal("tool failed", rows[0].Error);
+            Assert.Equal("tool failed", rows[0].ErrorMessage);
             Assert.True(rows[0].HasError);
         }
 

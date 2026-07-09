@@ -47,7 +47,7 @@ namespace RimMind.Infrastructure.UI.AgentsPage
                     return AgentRequestTraceStatus.Error;
                 case AIRequestTraceState.Running:
                 default:
-                    return AgentRequestTraceStatus.Pending;
+                    return AgentRequestTraceStatus.Waiting;
             }
         }
 

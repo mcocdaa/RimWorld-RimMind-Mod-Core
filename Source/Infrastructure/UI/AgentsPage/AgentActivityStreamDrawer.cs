@@ -125,10 +125,10 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             string summary = row.Summary;
             string label = TraceStatusLabel(row.Status);
             if (string.IsNullOrWhiteSpace(summary))
-                return label + ": " + (row.Error ?? string.Empty);
+                return label + ": " + (row.ErrorMessage ?? string.Empty);
 
-            return row.HasError && !string.IsNullOrWhiteSpace(row.Error)
-                ? label + ": " + summary + " - " + row.Error
+            return row.HasError && !string.IsNullOrWhiteSpace(row.ErrorMessage)
+                ? label + ": " + summary + " - " + row.ErrorMessage
                 : label + ": " + summary;
         }
 
@@ -137,8 +137,10 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             return status switch
             {
                 AgentRequestTraceStatus.Pending => "RimMind.UI.AgentsPage.Trace.Pending".Translate(),
+                AgentRequestTraceStatus.Streaming => "RimMind.UI.AgentsPage.Trace.Pending".Translate(),
                 AgentRequestTraceStatus.Success => "RimMind.UI.AgentsPage.Trace.Success".Translate(),
                 AgentRequestTraceStatus.Error => "RimMind.UI.AgentsPage.Trace.Error".Translate(),
+                AgentRequestTraceStatus.System => "RimMind.UI.AgentsPage.Trace.Pending".Translate(),
                 _ => "RimMind.UI.AgentsPage.Trace.Pending".Translate()
             };
         }
@@ -148,8 +150,10 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             return status switch
             {
                 AgentRequestTraceStatus.Pending => new Color(0.95f, 0.58f, 0.18f, 0.9f),
+                AgentRequestTraceStatus.Streaming => new Color(0.35f, 0.62f, 0.95f, 0.9f),
                 AgentRequestTraceStatus.Success => new Color(0.25f, 0.78f, 0.42f, 0.9f),
                 AgentRequestTraceStatus.Error => new Color(0.9f, 0.22f, 0.18f, 0.9f),
+                AgentRequestTraceStatus.System => RimMindUI.ColorMuted,
                 _ => RimMindUI.ColorMuted
             };
         }

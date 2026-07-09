@@ -149,7 +149,7 @@ namespace RimMind.Tests.Presentation.UI
                 error: "timeout");
 
             Assert.True(row.HasError);
-            Assert.Equal("timeout", row.Error);
+            Assert.Equal("timeout", row.ErrorMessage);
         }
     }
 }
