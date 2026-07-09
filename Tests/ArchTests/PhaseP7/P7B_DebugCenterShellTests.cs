@@ -32,16 +32,18 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
-        public void DebugCenter_Default_Constructor_Opens_AIRequests()
+        public void DebugCenter_Default_Constructor_Uses_Registry_Default()
         {
             string hub = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
-            string aiRequestsPage = ReadSource("Infrastructure/UI/DebugCenter/Pages/AIRequestsDebugCenterPageDrawer.cs");
+            string registry = ReadSource("Infrastructure/UI/DebugCenter/DebugCenterPageRegistry.cs");
 
             Assert.Contains("public Window_RimMindHub()", hub);
             Assert.Contains("DebugCenterPageRegistry.DefaultPageId", hub);
-            Assert.Contains("DebugCenterPageRegistry.CreateAll()", hub);
-            Assert.Contains("\"ai_requests\"", aiRequestsPage);
-            Assert.Contains("IsDefault: true", aiRequestsPage);
+            Assert.Contains("DebugCenterPageRegistry.CreateAllRegistrations()", hub);
+            Assert.Contains("\"ai_requests\"", registry);
+            Assert.Contains("IsDefault: false), () => new AIRequestsDebugCenterPageDrawer", registry);
+            Assert.Contains("\"overview\"", registry);
+            Assert.Contains("IsDefault: true), () => new OverviewDebugCenterPageDrawer", registry);
         }
 
         [Fact]
