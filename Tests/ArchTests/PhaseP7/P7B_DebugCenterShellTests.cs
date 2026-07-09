@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using RimMind.Infrastructure.UI.DebugCenter;
 using Xunit;
 
 namespace RimMind.Tests.ArchTests.PhaseP7
@@ -35,15 +37,13 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         public void DebugCenter_Default_Constructor_Uses_Registry_Default()
         {
             string hub = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
-            string registry = ReadSource("Infrastructure/UI/DebugCenter/DebugCenterPageRegistry.cs");
+            var pages = DebugCenterPageRegistry.GetAll();
 
             Assert.Contains("public Window_RimMindHub()", hub);
             Assert.Contains("DebugCenterPageRegistry.DefaultPageId", hub);
             Assert.Contains("DebugCenterPageRegistry.CreateAllRegistrations()", hub);
-            Assert.Contains("\"ai_requests\"", registry);
-            Assert.Contains("IsDefault: false), () => new AIRequestsDebugCenterPageDrawer", registry);
-            Assert.Contains("\"overview\"", registry);
-            Assert.Contains("IsDefault: true), () => new OverviewDebugCenterPageDrawer", registry);
+            Assert.False(pages.Single(page => page.Id == "ai_requests").IsDefault);
+            Assert.True(pages.Single(page => page.Id == "overview").IsDefault);
         }
 
         [Fact]

@@ -30,7 +30,7 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             string content = ReadSource("Infrastructure/UI/MainTabWindow_RimMindHub.cs");
             string page = ReadSource("Infrastructure/UI/DebugCenter/Pages/AgentsDebugCenterPageDrawer.cs");
 
-            Assert.Contains("DebugCenterPageRegistry.CreateAll()", content);
+            Assert.Contains("DebugCenterPageRegistry.CreateAllRegistrations()", content);
             Assert.Contains("AgentsPageDrawer", page);
             Assert.Contains("_drawer.Draw", page);
             Assert.Contains("context.SelectedPawn", page);
