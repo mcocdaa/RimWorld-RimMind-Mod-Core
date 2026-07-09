@@ -12,6 +12,15 @@ public sealed class DebugCenterOptimizationSnapshotTests
         Assert.Contains(UiSnapshotCases.All(), document => document.Id == "debug_overview");
     }
 
+    [Theory]
+    [InlineData("requests_mixed_status")]
+    [InlineData("toolcalls_mixed_status")]
+    [InlineData("context_keys_dense")]
+    public void SnapshotCases_IncludeRequiredDebugTableSnapshots(string id)
+    {
+        Assert.Contains(UiSnapshotCases.All(), document => document.Id == id);
+    }
+
     [Fact]
     public void DebugOverviewSnapshot_ContainsFourSummaryCards()
     {

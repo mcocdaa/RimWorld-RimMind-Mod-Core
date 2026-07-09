@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    .viewport { position: relative; box-sizing: border-box; }
+    .element { position: absolute; box-sizing: border-box; border: 1px solid #777; padding: 2px 4px; font: 12px sans-serif; overflow: hidden; }
+    .panel { background: #f4f4f4; }
+    .selected { outline: 2px solid #2f6fed; }
+  </style>
+</head>
+<body>
+  <div class="viewport" data-id="requests_mixed_status" style="left:0px;top:0px;width:1180px;height:500px;">
+    <div class="element panel" data-name="toolbar" style="left:0px;top:0px;width:1180px;height:30px;"></div>
+    <div class="element label" data-name="title" style="left:0px;top:0px;width:1180px;height:30px;">AI Requests</div>
+    <div class="element tableheader" data-name="header" style="left:0px;top:36px;width:1180px;height:26px;">Status | Time | Scope | Actor | Channel | Model | Summary | Duration</div>
+    <div class="element panel" data-name="body" style="left:0px;top:62px;width:1180px;height:386px;"></div>
+    <div class="element panel" data-name="bottom" style="left:0px;top:460px;width:1180px;height:40px;"></div>
+    <div class="element tablerow" data-name="row_req-001" style="left:0px;top:62px;width:1164px;height:26px;">Waiting | 10:00 | Pawn | Nickie | chat | deepseek-chat | Queued for context build | 0ms</div>
+    <div class="element tablerow" data-name="row_req-002" style="left:0px;top:88px;width:1164px;height:26px;">Streaming | 10:01 | Pawn | Tynan | advisor | gpt-4.1-mini | Streaming 3 chunks | 1.2s</div>
+    <div class="element tablerow" data-name="row_req-003" style="left:0px;top:114px;width:1164px;height:26px;">Completed | 10:02 | Colony | Workbench | memory | deepseek-chat | Completed ToolCall summary: choose_repair_target | 2.4s</div>
+    <div class="element tablerow" data-name="row_req-004" style="left:0px;top:140px;width:1164px;height:26px;">Failed | 10:03 | Pawn | Maya | chat | deepseek-chat | HTTP timeout after retry | 5s</div>
+  </div>
+</body>
+</html>

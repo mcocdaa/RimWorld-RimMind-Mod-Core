@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimMind.Infrastructure.UI.DebugTables;
 using RimMind.Infrastructure.UI.AgentsPage;
 using RimMind.Presentation.UI.Framework;
 using UnityEngine;
@@ -18,7 +19,10 @@ public static class UiSnapshotCases
             AgentPending(),
             AgentPaused(),
             AgentError(),
-            RequestsTable()
+            RequestsTable(),
+            DebugTableSnapshot("requests_mixed_status", DebugTableFixtures.MixedRequests()),
+            DebugTableSnapshot("toolcalls_mixed_status", DebugTableFixtures.MixedToolCalls()),
+            DebugTableSnapshot("context_keys_dense", DebugTableFixtures.DenseContextKeys())
         };
     }
 
@@ -156,5 +160,44 @@ public static class UiSnapshotCases
             RimMindUiElement.Panel("body", layout.Body),
             RimMindUiElement.Panel("bottom", layout.BottomBar)
         });
+    }
+
+    private static RimMindUiDocument DebugTableSnapshot(string id, DebugTableModel model)
+    {
+        var root = new Rect(0f, 0f, 1180f, 500f);
+        TablePageLayoutResult layout = TablePageLayout.Calculate(root, model.Rows.Count, columnCount: 8);
+        var elements = new List<RimMindUiElement>
+        {
+            RimMindUiElement.Panel("toolbar", layout.Toolbar),
+            RimMindUiElement.Label("title", layout.Toolbar, model.Title),
+            RimMindUiElement.TableHeader("header", layout.Header, "Status | Time | Scope | Actor | Channel | Model | Summary | Duration"),
+            RimMindUiElement.Panel("body", layout.Body),
+            RimMindUiElement.Panel("bottom", layout.BottomBar)
+        };
+
+        for (int index = 0; index < model.Rows.Count; index++)
+        {
+            DebugTableRow row = model.Rows[index];
+            var rowRect = new Rect(
+                layout.Body.x,
+                layout.Body.y + index * RimMindUiMetrics.DebugRowHeight,
+                layout.ViewRect.width,
+                RimMindUiMetrics.DebugRowHeight);
+            elements.Add(RimMindUiElement.TableRow("row_" + row.Id, rowRect, FormatDebugTableRow(row)));
+        }
+
+        return new RimMindUiDocument(id, root, elements);
+    }
+
+    private static string FormatDebugTableRow(DebugTableRow row)
+    {
+        return row.Status
+            + " | " + row.Time
+            + " | " + row.Scope
+            + " | " + row.Actor
+            + " | " + row.Channel
+            + " | " + row.Model
+            + " | " + row.Summary
+            + " | " + row.Duration;
     }
 }
