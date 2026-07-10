@@ -20,7 +20,7 @@ public static class UiSnapshotCases
             AgentPaused(),
             AgentError(),
             RequestsTable(),
-            DebugTableSnapshot("requests_mixed_status", DebugTableFixtures.MixedRequests()),
+            RequestsDebugCenterSnapshot(),
             DebugTableSnapshot("toolcalls_mixed_status", DebugTableFixtures.MixedToolCalls()),
             DebugTableSnapshot("context_keys_dense", DebugTableFixtures.DenseContextKeys())
         };
@@ -187,6 +187,55 @@ public static class UiSnapshotCases
         }
 
         return new RimMindUiDocument(id, root, elements);
+    }
+
+    private static RimMindUiDocument RequestsDebugCenterSnapshot()
+    {
+        var root = new Rect(0f, 0f, 780f, 500f);
+        SplitPageLayoutResult split = SplitPageLayout.Calculate(root, 0.4f, 240f, 300f, 320f);
+        DebugTableModel model = DebugTableFixtures.MixedRequests();
+        TablePageLayoutResult table = TablePageLayout.Calculate(
+            split.List,
+            model.Rows.Count,
+            columnCount: 2);
+        var elements = new List<RimMindUiElement>
+        {
+            RimMindUiElement.Panel("request_list", split.List),
+            RimMindUiElement.TableHeader("request_header", table.Header, "Request | Summary"),
+            RimMindUiElement.Panel("request_body", table.Body),
+            RimMindUiElement.Panel("request_detail", split.Detail),
+            RimMindUiElement.Label(
+                "request_detail_title",
+                new Rect(split.Detail.x + 8f, split.Detail.y + 8f, split.Detail.width - 16f, 26f),
+                "Request Detail")
+        };
+
+        int visibleRows = System.Math.Min(model.Rows.Count, 4);
+        for (int index = 0; index < visibleRows; index++)
+        {
+            DebugTableRow row = model.Rows[index];
+            var rowRect = new Rect(
+                table.Body.x,
+                table.Body.y + index * RimMindUiMetrics.DebugRowHeight,
+                table.Body.width,
+                RimMindUiMetrics.DebugRowHeight);
+            elements.Add(RimMindUiElement.TableRow(
+                "request_row_" + row.Id,
+                rowRect,
+                string.Empty,
+                selected: index == 0));
+            float cellWidth = rowRect.width / 2f;
+            elements.Add(RimMindUiElement.Label(
+                "request_id_" + row.Id,
+                new Rect(rowRect.x + 6f, rowRect.y, cellWidth - 8f, rowRect.height),
+                DebugTableText.Preview(row.Id, 15)));
+            elements.Add(RimMindUiElement.Label(
+                "request_summary_" + row.Id,
+                new Rect(rowRect.x + cellWidth + 6f, rowRect.y, cellWidth - 8f, rowRect.height),
+                DebugTableText.Preview(row.Summary, 15)));
+        }
+
+        return new RimMindUiDocument("requests_mixed_status", root, elements);
     }
 
     private static string FormatDebugTableRow(DebugTableRow row)

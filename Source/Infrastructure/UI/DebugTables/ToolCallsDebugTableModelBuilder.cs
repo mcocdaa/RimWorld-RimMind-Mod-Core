@@ -9,6 +9,8 @@ namespace RimMind.Infrastructure.UI.DebugTables
     public sealed class ToolCallsDebugTableModelBuilder : IDebugTableModelBuilder
     {
         private readonly IAIRequestTraceLog? _log;
+        private long _cachedRevision = long.MinValue;
+        private DebugTableModel? _cachedModel;
 
         public ToolCallsDebugTableModelBuilder(IAIRequestTraceLog? log)
         {
@@ -16,7 +18,18 @@ namespace RimMind.Infrastructure.UI.DebugTables
         }
 
         public DebugTableModel Build()
-            => Build(_log?.Entries ?? System.Array.Empty<AIRequestTraceEntry>());
+        {
+            if (_log == null)
+                return _cachedModel ??= Build(System.Array.Empty<AIRequestTraceEntry>());
+
+            long revision = _log.Revision;
+            if (_cachedModel != null && revision == _cachedRevision)
+                return _cachedModel;
+
+            _cachedModel = Build(_log.Entries);
+            _cachedRevision = revision;
+            return _cachedModel;
+        }
 
         public static DebugTableModel Build(IReadOnlyList<AIRequestTraceEntry> entries)
         {
@@ -41,9 +54,9 @@ namespace RimMind.Infrastructure.UI.DebugTables
                 string.Empty,
                 entry.Source,
                 string.Empty,
-                toolCall.ToolName,
+                DebugTableText.Preview(toolCall.ToolName),
                 entry.Model,
-                summary,
+                DebugTableText.Preview(summary),
                 duration);
         }
     }

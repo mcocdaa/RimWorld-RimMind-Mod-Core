@@ -27,17 +27,17 @@ namespace RimMind.Infrastructure.UI.DebugTables
         private static DebugTableRow ToRow(IGameMechanism mechanism)
         {
             string operations = mechanism.SupportedOperations.Count > 0
-                ? string.Join(", ", mechanism.SupportedOperations.Select(op => op.ToString()))
+                ? string.Join(", ", mechanism.SupportedOperations.Select(DebugTableEnumLabels.For))
                 : "RimMind.UI.DebugTable.Mechanisms.NoOperations".Translate().ToString();
 
             return DebugTableRow.Create(
                 mechanism.MechanismId,
                 DebugTableStatus.Completed,
                 string.Empty,
-                mechanism.Scope.ToString(),
+                DebugTableEnumLabels.For(mechanism.Scope),
                 mechanism.OwnerModId ?? string.Empty,
                 operations,
-                mechanism.Risk.ToString(),
+                DebugTableEnumLabels.For(mechanism.Risk),
                 mechanism.Docs.Summary,
                 "RimMind.UI.DebugTable.Mechanisms.OperationCount".Translate(mechanism.SupportedOperations.Count).ToString());
         }

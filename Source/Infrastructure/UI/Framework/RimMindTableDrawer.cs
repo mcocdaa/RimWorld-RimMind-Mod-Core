@@ -10,6 +10,7 @@ namespace RimMind.Infrastructure.UI.Framework
     public sealed class RimMindTableDrawer
     {
         private const int DebugTableColumnCount = 8;
+        private const int CompactListColumnCount = 2;
         private const float StatusStripWidth = 4f;
         private const float CellPadding = 6f;
 
@@ -25,6 +26,12 @@ namespace RimMind.Infrastructure.UI.Framework
             "RimMind.UI.DebugTable.Header.Summary"
         };
 
+        private static readonly string[] CompactListHeaderKeys =
+        {
+            "RimMind.UI.DebugTable.Header.Request",
+            "RimMind.UI.DebugTable.Header.Summary"
+        };
+
         public void Draw(Rect rect, DebugTableModel model, ref Vector2 scroll, RimMindLayoutScope scope)
         {
             TablePageLayoutResult layout = TablePageLayout.Calculate(rect, model.Rows.Count, columnCount: DebugTableColumnCount);
@@ -34,8 +41,8 @@ namespace RimMind.Infrastructure.UI.Framework
             scope.Record(layout.BottomBar, "Table:BottomBar");
 
             DrawToolbar(layout.Toolbar, model.Title);
-            DrawDebugHeaders(layout);
             DrawDebugRows(layout, model.Rows, ref scroll);
+            DrawDebugHeaders(layout, scroll.x);
         }
 
         public string? DrawSelectable(Rect rect, DebugTableModel model, string? selectedId, ref Vector2 scroll, RimMindLayoutScope scope)
@@ -47,8 +54,35 @@ namespace RimMind.Infrastructure.UI.Framework
             scope.Record(layout.BottomBar, "Table:BottomBar");
 
             DrawToolbar(layout.Toolbar, model.Title);
-            DrawDebugHeaders(layout);
-            return DrawSelectableDebugRows(layout, model.Rows, selectedId, ref scroll);
+            string? nextSelectedId = DrawSelectableDebugRows(layout, model.Rows, selectedId, ref scroll);
+            DrawDebugHeaders(layout, scroll.x);
+            return nextSelectedId;
+        }
+
+        public string? DrawSelectableCompact(
+            Rect rect,
+            DebugTableModel model,
+            string? selectedId,
+            ref Vector2 scroll,
+            RimMindLayoutScope scope)
+        {
+            TablePageLayoutResult layout = TablePageLayout.Calculate(
+                rect,
+                model.Rows.Count,
+                columnCount: CompactListColumnCount);
+            scope.Record(layout.Toolbar, "Table:Toolbar");
+            scope.Record(layout.Header, "Table:Header");
+            scope.Record(layout.Body, "Table:Body");
+            scope.Record(layout.BottomBar, "Table:BottomBar");
+
+            DrawToolbar(layout.Toolbar, model.Title);
+            string? nextSelectedId = DrawSelectableCompactRows(
+                layout,
+                model.Rows,
+                selectedId,
+                ref scroll);
+            DrawHeaders(layout, CompactListHeaderKeys, scroll.x);
+            return nextSelectedId;
         }
 
         public void Draw(
@@ -63,15 +97,11 @@ namespace RimMind.Infrastructure.UI.Framework
             scope.Record(layout.Body, "Table:Body");
             scope.Record(layout.BottomBar, "Table:BottomBar");
 
-            float colWidth = layout.ViewRect.width / Mathf.Max(1, headers.Count);
-            for (int c = 0; c < headers.Count; c++)
-            {
-                Rect headerRect = new Rect(layout.Header.x + c * colWidth, layout.Header.y, colWidth, layout.Header.height);
-                Widgets.Label(headerRect, headers[c]);
-            }
-
             Widgets.BeginScrollView(layout.Body, ref scroll, layout.ViewRect);
-            for (int r = 0; r < rows.Count; r++)
+            TableVisibleRowRange range = TablePageLayout.CalculateVisibleRowRange(
+                rows.Count, scroll.y, layout.Body.height, RimMindUiMetrics.DebugRowHeight);
+            float colWidth = layout.ViewRect.width / Mathf.Max(1, headers.Count);
+            for (int r = range.FirstIndex; r < range.LastExclusive; r++)
             {
                 Rect rowRect = new Rect(0f, r * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
                 if (r % 2 == 0)
@@ -83,6 +113,15 @@ namespace RimMind.Infrastructure.UI.Framework
             }
 
             Widgets.EndScrollView();
+
+            GUI.BeginGroup(layout.Header);
+            for (int c = 0; c < headers.Count; c++)
+            {
+                Rect headerRect = TablePageLayout.CalculateColumnRect(
+                    layout.ViewRect.width, c, headers.Count, 0f, layout.Header.height, scroll.x, CellPadding);
+                Widgets.Label(headerRect, headers[c]);
+            }
+            GUI.EndGroup();
         }
 
         private static void DrawToolbar(Rect rect, string title)
@@ -93,17 +132,49 @@ namespace RimMind.Infrastructure.UI.Framework
             GUI.color = oldColor;
         }
 
-        private static void DrawDebugHeaders(TablePageLayoutResult layout)
+        private static void DrawDebugHeaders(TablePageLayoutResult layout, float horizontalScroll)
         {
-            float colWidth = layout.Header.width / DebugTableColumnCount;
             Color oldColor = GUI.color;
             GUI.color = RimMindUI.ColorKey;
+            GUI.BeginGroup(layout.Header);
             for (int c = 0; c < DebugTableHeaderKeys.Length; c++)
             {
-                Rect headerRect = new Rect(layout.Header.x + c * colWidth + CellPadding, layout.Header.y, colWidth - CellPadding, layout.Header.height);
+                Rect headerRect = TablePageLayout.CalculateColumnRect(
+                    layout.ViewRect.width,
+                    c,
+                    DebugTableColumnCount,
+                    0f,
+                    layout.Header.height,
+                    horizontalScroll,
+                    CellPadding);
                 Widgets.Label(headerRect, DebugTableHeaderKeys[c].Translate());
             }
+            GUI.EndGroup();
 
+            GUI.color = oldColor;
+        }
+
+        private static void DrawHeaders(
+            TablePageLayoutResult layout,
+            IReadOnlyList<string> headerKeys,
+            float horizontalScroll)
+        {
+            Color oldColor = GUI.color;
+            GUI.color = RimMindUI.ColorKey;
+            GUI.BeginGroup(layout.Header);
+            for (int c = 0; c < headerKeys.Count; c++)
+            {
+                Rect headerRect = TablePageLayout.CalculateColumnRect(
+                    layout.ViewRect.width,
+                    c,
+                    headerKeys.Count,
+                    0f,
+                    layout.Header.height,
+                    horizontalScroll,
+                    CellPadding);
+                Widgets.Label(headerRect, headerKeys[c].Translate());
+            }
+            GUI.EndGroup();
             GUI.color = oldColor;
         }
 
@@ -111,7 +182,9 @@ namespace RimMind.Infrastructure.UI.Framework
         {
             float colWidth = layout.ViewRect.width / DebugTableColumnCount;
             Widgets.BeginScrollView(layout.Body, ref scroll, layout.ViewRect);
-            for (int r = 0; r < rows.Count; r++)
+            TableVisibleRowRange range = TablePageLayout.CalculateVisibleRowRange(
+                rows.Count, scroll.y, layout.Body.height, RimMindUiMetrics.DebugRowHeight);
+            for (int r = range.FirstIndex; r < range.LastExclusive; r++)
             {
                 DebugTableRow row = rows[r];
                 Rect rowRect = new Rect(0f, r * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
@@ -130,11 +203,57 @@ namespace RimMind.Infrastructure.UI.Framework
             string? selectedRowId = ResolveSelectedRowId(rows, selectedId);
             float colWidth = layout.ViewRect.width / DebugTableColumnCount;
             Widgets.BeginScrollView(layout.Body, ref scroll, layout.ViewRect);
-            for (int r = 0; r < rows.Count; r++)
+            TableVisibleRowRange range = TablePageLayout.CalculateVisibleRowRange(
+                rows.Count, scroll.y, layout.Body.height, RimMindUiMetrics.DebugRowHeight);
+            for (int r = range.FirstIndex; r < range.LastExclusive; r++)
             {
                 DebugTableRow row = rows[r];
                 Rect rowRect = new Rect(0f, r * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
                 DrawDebugRow(rowRect, colWidth, row, row.Id == selectedRowId, r % 2 == 0);
+
+                if (Widgets.ButtonInvisible(rowRect))
+                    selectedRowId = row.Id;
+            }
+
+            Widgets.EndScrollView();
+            return selectedRowId;
+        }
+
+        private static string? DrawSelectableCompactRows(
+            TablePageLayoutResult layout,
+            IReadOnlyList<DebugTableRow> rows,
+            string? selectedId,
+            ref Vector2 scroll)
+        {
+            string? selectedRowId = ResolveSelectedRowId(rows, selectedId);
+            Widgets.BeginScrollView(layout.Body, ref scroll, layout.ViewRect);
+            TableVisibleRowRange range = TablePageLayout.CalculateVisibleRowRange(
+                rows.Count, scroll.y, layout.Body.height, RimMindUiMetrics.DebugRowHeight);
+            for (int r = range.FirstIndex; r < range.LastExclusive; r++)
+            {
+                DebugTableRow row = rows[r];
+                Rect rowRect = new Rect(
+                    0f,
+                    r * RimMindUiMetrics.DebugRowHeight,
+                    layout.ViewRect.width,
+                    RimMindUiMetrics.DebugRowHeight);
+                if (r % 2 == 0)
+                    Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorSectionBg);
+                if (row.Id == selectedRowId)
+                    Widgets.DrawHighlight(rowRect);
+
+                Widgets.DrawBoxSolid(
+                    new Rect(rowRect.x, rowRect.y, StatusStripWidth, rowRect.height),
+                    ColorFor(row.StatusColorName));
+
+                Rect requestCell = TablePageLayout.CalculateColumnRect(
+                    layout.ViewRect.width, 0, CompactListColumnCount, rowRect.y, rowRect.height, 0f, CellPadding);
+                requestCell.x += StatusStripWidth;
+                requestCell.width = Mathf.Max(0f, requestCell.width - StatusStripWidth);
+                Rect summaryCell = TablePageLayout.CalculateColumnRect(
+                    layout.ViewRect.width, 1, CompactListColumnCount, rowRect.y, rowRect.height, 0f, CellPadding);
+                Widgets.Label(requestCell, DebugTableText.Preview(row.Id, 15));
+                Widgets.Label(summaryCell, DebugTableText.Preview(row.Summary, 15));
 
                 if (Widgets.ButtonInvisible(rowRect))
                     selectedRowId = row.Id;
@@ -196,10 +315,19 @@ namespace RimMind.Infrastructure.UI.Framework
             GUI.color = RimMindUI.ColorValue;
             for (int c = 0; c < cells.Length; c++)
             {
-                float x = c * colWidth + CellPadding;
+                Rect cell = TablePageLayout.CalculateColumnRect(
+                    colWidth * DebugTableColumnCount,
+                    c,
+                    DebugTableColumnCount,
+                    rowRect.y,
+                    rowRect.height,
+                    0f,
+                    CellPadding);
                 if (c == 0)
-                    x += StatusStripWidth;
-                Rect cell = new Rect(x, rowRect.y, colWidth - CellPadding, rowRect.height);
+                {
+                    cell.x += StatusStripWidth;
+                    cell.width = Mathf.Max(0f, cell.width - StatusStripWidth);
+                }
                 Widgets.Label(cell, cells[c] ?? string.Empty);
             }
 

@@ -14,23 +14,32 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
     public sealed class AIRequestsDebugCenterPageDrawer : IDebugCenterPageDrawer
     {
         private readonly RimMindTableDrawer _tableDrawer = new();
+        private readonly IAIRequestTraceLog? _log;
         private string? _selectedRequestId;
+        private long _cachedRevision = long.MinValue;
+        private IReadOnlyList<AIRequestTraceEntry> _cachedEntries = System.Array.Empty<AIRequestTraceEntry>();
+        private DebugTableModel? _cachedModel;
         private Vector2 _tableScrollPosition;
         private Vector2 _detailScrollPosition;
 
         private sealed record DetailSection(string Title, string Body);
 
+        public AIRequestsDebugCenterPageDrawer(IAIRequestTraceLog? log)
+        {
+            _log = log;
+        }
+
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
-            var log = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
-            if (log == null)
+            if (_log == null)
             {
                 DrawEmptyTable(rect, "RimMind.UI.AIRequestsPage.TraceUnavailable".Translate(), scope);
                 return;
             }
 
-            IReadOnlyList<AIRequestTraceEntry> entries = log.Entries;
-            DebugTableModel model = AIRequestsDebugTableModelBuilder.Build(entries);
+            RefreshSnapshot();
+            IReadOnlyList<AIRequestTraceEntry> entries = _cachedEntries;
+            DebugTableModel model = _cachedModel!;
             if (entries.Count == 0)
             {
                 _tableDrawer.Draw(rect, model, ref _tableScrollPosition, scope);
@@ -39,11 +48,30 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
             SplitPageLayoutResult split = SplitPageLayout.Calculate(rect, 0.4f, 240f, 300f, 320f);
             AIRequestTraceEntry selectedEntry = ResolveSelectedEntry(entries);
-            _selectedRequestId = _tableDrawer.DrawSelectable(split.List, model, _selectedRequestId, ref _tableScrollPosition, scope);
+            _selectedRequestId = _tableDrawer.DrawSelectableCompact(
+                split.List,
+                model,
+                _selectedRequestId,
+                ref _tableScrollPosition,
+                scope);
             selectedEntry = ResolveSelectedEntry(entries);
 
             scope.Record(split.Detail, "AIRequests:Detail");
             DrawDetail(split.Detail, selectedEntry);
+        }
+
+        private void RefreshSnapshot()
+        {
+            if (_log == null)
+                return;
+
+            long revision = _log.Revision;
+            if (_cachedModel != null && revision == _cachedRevision)
+                return;
+
+            _cachedEntries = _log.Entries;
+            _cachedModel = AIRequestsDebugTableModelBuilder.Build(_cachedEntries);
+            _cachedRevision = revision;
         }
 
         private void DrawEmptyTable(Rect rect, string title, RimMindLayoutScope scope)

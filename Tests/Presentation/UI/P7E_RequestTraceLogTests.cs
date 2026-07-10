@@ -90,6 +90,23 @@ namespace RimMind.Tests.Presentation.UI
         }
 
         [Fact]
+        public void AIRequestTraceLog_Revision_ChangesOnlyWhenTraceChanges()
+        {
+            var log = new AIRequestTraceLog();
+            long initial = log.Revision;
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
+            long started = log.Revision;
+            _ = log.Entries;
+            long readOnly = log.Revision;
+            log.AddToolCall("req-1", "tool-1", "pawn.job.set", succeeded: true, error: null);
+            long changed = log.Revision;
+
+            Assert.True(started > initial);
+            Assert.Equal(started, readOnly);
+            Assert.True(changed > started);
+        }
+
+        [Fact]
         public void Clear_Removes_All_Entries()
         {
             var log = new AIRequestTraceLog();

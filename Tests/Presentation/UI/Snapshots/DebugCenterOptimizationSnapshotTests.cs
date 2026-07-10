@@ -22,6 +22,18 @@ public sealed class DebugCenterOptimizationSnapshotTests
     }
 
     [Fact]
+    public void RequestsSnapshot_UsesRuntimeWindowAndSplitListGeometry()
+    {
+        var document = UiSnapshotCases.All().Single(item => item.Id == "requests_mixed_status");
+        var list = document.Elements.Single(element => element.Name == "request_list");
+        var detail = document.Elements.Single(element => element.Name == "request_detail");
+
+        Assert.Equal(780f, document.Viewport.width);
+        Assert.InRange(list.Rect.width, 240f, 300f);
+        Assert.True(list.Rect.xMax < detail.Rect.x);
+    }
+
+    [Fact]
     public void DebugOverviewSnapshot_ContainsFourSummaryCards()
     {
         var document = UiSnapshotCases.All().Single(item => item.Id == "debug_overview");

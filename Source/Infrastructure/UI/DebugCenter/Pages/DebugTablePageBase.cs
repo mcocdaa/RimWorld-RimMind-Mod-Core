@@ -5,17 +5,21 @@ using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
-    public abstract class DebugTablePageBase : DebugCenterPageBase
+    public abstract class DebugTablePageBase : IDebugCenterPageDrawer
     {
         private readonly RimMindTableDrawer _tableDrawer = new();
+        private readonly IDebugTableModelBuilder _modelBuilder;
         private Vector2 _scrollPosition;
 
-        public sealed override void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
+        protected DebugTablePageBase(IDebugTableModelBuilder modelBuilder)
         {
-            DebugTableModel model = BuildModel(context);
-            _tableDrawer.Draw(rect, model, ref _scrollPosition, scope);
+            _modelBuilder = modelBuilder ?? throw new System.ArgumentNullException(nameof(modelBuilder));
         }
 
-        protected abstract DebugTableModel BuildModel(DebugCenterPageContext context);
+        public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
+        {
+            DebugTableModel model = _modelBuilder.Build();
+            _tableDrawer.Draw(rect, model, ref _scrollPosition, scope);
+        }
     }
 }

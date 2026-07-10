@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Models.Debug;
 using RimMind.Application.Common.Models.Mechanisms;
@@ -107,6 +108,42 @@ public sealed class DebugTableModelBuilderTests
     }
 
     [Fact]
+    public void ToolCallsBuilder_BoundsUntrustedRowText()
+    {
+        var entry = new AIRequestTraceEntry { RequestId = "req-001" };
+        entry.ToolCalls.Add(new AIRequestToolCallTrace(
+            "tool-1",
+            "<b>" + new string('x', 220) + "</b>\nmarkup",
+            false,
+            "<color=red>" + new string('e', 220) + "</color>\nerror"));
+
+        DebugTableRow row = ToolCallsDebugTableModelBuilder.Build(new[] { entry }).Rows.Single();
+
+        Assert.DoesNotContain('\n', row.Channel);
+        Assert.DoesNotContain('\n', row.Summary);
+        Assert.DoesNotContain('<', row.Channel);
+        Assert.DoesNotContain('<', row.Summary);
+        Assert.InRange(row.Channel.Length, 1, 163);
+        Assert.InRange(row.Summary.Length, 1, 163);
+    }
+
+    [Fact]
+    public void ToolCallsBuilder_ReusesModelUntilTraceRevisionChanges()
+    {
+        var log = new CountingTraceLog();
+        var builder = new ToolCallsDebugTableModelBuilder(log);
+
+        DebugTableModel first = builder.Build();
+        DebugTableModel unchanged = builder.Build();
+        log.Revision++;
+        DebugTableModel changed = builder.Build();
+
+        Assert.Same(first, unchanged);
+        Assert.NotSame(first, changed);
+        Assert.Equal(2, log.EntryReads);
+    }
+
+    [Fact]
     public void MechanismsBuilder_MapsRegisteredMechanisms()
     {
         var registry = new GameMechanismRegistry();
@@ -121,8 +158,9 @@ public sealed class DebugTableModelBuilderTests
 
         DebugTableRow row = model.Rows.Single();
         Assert.Equal(mechanism.MechanismId, row.Id);
-        Assert.Equal(mechanism.Scope.ToString(), row.Scope);
-        Assert.Contains(mechanism.Risk.ToString(), row.Model);
+        Assert.Equal("RimMind.UI.Enum.MechanismScope.Pawn", row.Scope);
+        Assert.Equal("RimMind.UI.Enum.MechanismRisk.Moderate", row.Model);
+        Assert.Equal("RimMind.UI.Enum.MechanismOperation.Query", row.Channel);
         Assert.Equal(mechanism.Docs.Summary, row.Summary);
     }
 
@@ -164,9 +202,9 @@ public sealed class DebugTableModelBuilderTests
 
         DebugTableRow row = model.Rows.Single();
         Assert.Equal(key.Key, row.Id);
-        Assert.Equal(key.Layer.ToString(), row.Scope);
+        Assert.Equal("RimMind.UI.Enum.ContextLayer.L1_Baseline", row.Scope);
         Assert.Equal(key.OwnerMod, row.Actor);
-        Assert.Equal(key.CacheScope.ToString(), row.Channel);
+        Assert.Equal("RimMind.UI.Enum.CacheScope.Pawn", row.Channel);
         Assert.Contains(key.Priority.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture), row.Summary);
         Assert.Contains(key.UpdateCount.ToString(), row.Summary);
     }
@@ -217,5 +255,28 @@ public sealed class DebugTableModelBuilderTests
 
         private Task<Result<bool, RimMindError>> UnsupportedWrite(string operation)
             => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, operation)));
+    }
+
+    private sealed class CountingTraceLog : IAIRequestTraceLog
+    {
+        private readonly List<AIRequestTraceEntry> _entries = new();
+
+        public int EntryReads { get; private set; }
+        public long Revision { get; set; }
+
+        public IReadOnlyList<AIRequestTraceEntry> Entries
+        {
+            get
+            {
+                EntryReads++;
+                return _entries;
+            }
+        }
+
+        public void StartRequest(string requestId, string source, string model, string systemPrompt, string userPrompt, string assistantPrompt) { }
+        public void CompleteRequest(string requestId, string response, int tokensUsed, int elapsedMs) { }
+        public void FailRequest(string requestId, string error) { }
+        public void AddToolCall(string requestId, string toolCallId, string toolName, bool succeeded, string? error) { }
+        public void Clear() { }
     }
 }

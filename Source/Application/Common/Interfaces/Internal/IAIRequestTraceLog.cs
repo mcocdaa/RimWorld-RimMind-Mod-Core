@@ -5,6 +5,7 @@ namespace RimMind.Application.Common.Interfaces.Internal
 {
     public interface IAIRequestTraceLog
     {
+        long Revision { get; }
         IReadOnlyList<AIRequestTraceEntry> Entries { get; }
         void StartRequest(string requestId, string source, string model, string systemPrompt, string userPrompt, string assistantPrompt);
         void CompleteRequest(string requestId, string response, int tokensUsed, int elapsedMs);

@@ -8,7 +8,6 @@ namespace RimMind.Infrastructure.UI.DebugTables
 {
     public sealed class AIRequestsDebugTableModelBuilder : IDebugTableModelBuilder
     {
-        private const int RowPreviewChars = 160;
         private readonly IAIRequestTraceLog? _log;
 
         public AIRequestsDebugTableModelBuilder(IAIRequestTraceLog? log)
@@ -43,19 +42,8 @@ namespace RimMind.Infrastructure.UI.DebugTables
                 string.Empty,
                 entry.ToolCalls.Count > 0 ? entry.ToolCalls[0].ToolName : string.Empty,
                 entry.Model,
-                TruncateForRow(summary),
+                DebugTableText.Preview(summary),
                 duration);
-        }
-
-        private static string TruncateForRow(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return string.Empty;
-
-            string oneLine = value.Replace("\r", " ").Replace("\n", " ");
-            return oneLine.Length <= RowPreviewChars
-                ? oneLine
-                : oneLine.Substring(0, RowPreviewChars) + "...";
         }
 
         private static DebugTableStatus StatusFor(AIRequestTraceState state)

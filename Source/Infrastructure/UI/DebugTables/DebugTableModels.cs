@@ -97,6 +97,28 @@ namespace RimMind.Infrastructure.UI.DebugTables
         public ReadOnlyCollection<DebugTableRow> Rows { get; }
     }
 
+    public static class DebugTableText
+    {
+        public const int PreviewChars = 160;
+
+        public static string Preview(string? value, int maxChars = PreviewChars)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            int safeMaxChars = System.Math.Max(1, maxChars);
+
+            string oneLine = value
+                .Replace("\r", " ")
+                .Replace("\n", " ")
+                .Replace("<", "[")
+                .Replace(">", "]");
+            return oneLine.Length <= safeMaxChars
+                ? oneLine
+                : oneLine.Substring(0, safeMaxChars) + "...";
+        }
+    }
+
     public static class DebugTableFixtures
     {
         public static DebugTableModel MixedRequests()

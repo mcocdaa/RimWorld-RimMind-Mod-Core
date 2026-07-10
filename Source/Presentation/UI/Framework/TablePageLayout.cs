@@ -2,6 +2,18 @@ using UnityEngine;
 
 namespace RimMind.Presentation.UI.Framework
 {
+    public readonly struct TableVisibleRowRange
+    {
+        public TableVisibleRowRange(int firstIndex, int lastExclusive)
+        {
+            FirstIndex = firstIndex;
+            LastExclusive = lastExclusive;
+        }
+
+        public int FirstIndex { get; }
+        public int LastExclusive { get; }
+    }
+
     public sealed class TablePageLayoutResult
     {
         public TablePageLayoutResult(Rect toolbar, Rect header, Rect body, Rect bottomBar, Rect viewRect)
@@ -44,6 +56,46 @@ namespace RimMind.Presentation.UI.Framework
                 Mathf.Max(0f, Mathf.Max(rect.width - RimMindUiMetrics.ScrollBarWidth, columnCount * 120f)),
                 Mathf.Max(0f, rowCount * RimMindUiMetrics.DebugRowHeight));
             return new TablePageLayoutResult(toolbar, header, body, bottom, view);
+        }
+
+        public static Rect CalculateColumnRect(
+            float contentWidth,
+            int columnIndex,
+            int columnCount,
+            float y,
+            float height,
+            float horizontalScroll,
+            float padding)
+        {
+            int safeColumnCount = System.Math.Max(1, columnCount);
+            float columnWidth = Mathf.Max(0f, contentWidth) / safeColumnCount;
+            return new Rect(
+                columnIndex * columnWidth - Mathf.Max(0f, horizontalScroll) + padding,
+                y,
+                Mathf.Max(0f, columnWidth - padding),
+                Mathf.Max(0f, height));
+        }
+
+        public static TableVisibleRowRange CalculateVisibleRowRange(
+            int rowCount,
+            float scrollY,
+            float viewportHeight,
+            float rowHeight)
+        {
+            if (rowCount <= 0 || rowHeight <= 0f || viewportHeight <= 0f)
+                return new TableVisibleRowRange(0, 0);
+
+            int first = System.Math.Max(
+                0,
+                System.Math.Min(
+                    (int)System.Math.Floor(System.Math.Max(0f, scrollY) / rowHeight),
+                    rowCount));
+            int last = System.Math.Max(
+                first,
+                System.Math.Min(
+                    (int)System.Math.Ceiling((System.Math.Max(0f, scrollY) + viewportHeight) / rowHeight),
+                    rowCount));
+            return new TableVisibleRowRange(first, last);
         }
     }
 }

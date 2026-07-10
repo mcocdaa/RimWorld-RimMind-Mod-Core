@@ -29,6 +29,64 @@ public sealed class TablePageLayoutTests
         AssertContained(root, layout.BottomBar);
     }
 
+    [Fact]
+    public void CalculateColumnRect_UsesSharedContentWidthForHeaderAndBody()
+    {
+        TablePageLayoutResult layout = TablePageLayout.Calculate(
+            new Rect(0f, 0f, 300f, 400f),
+            rowCount: 20,
+            columnCount: 8);
+
+        Rect headerCell = TablePageLayout.CalculateColumnRect(
+            layout.ViewRect.width,
+            columnIndex: 1,
+            columnCount: 8,
+            y: 0f,
+            height: layout.Header.height,
+            horizontalScroll: 0f,
+            padding: 6f);
+        Rect bodyCell = TablePageLayout.CalculateColumnRect(
+            layout.ViewRect.width,
+            columnIndex: 1,
+            columnCount: 8,
+            y: 0f,
+            height: RimMindUiMetrics.DebugRowHeight,
+            horizontalScroll: 0f,
+            padding: 6f);
+
+        Assert.Equal(headerCell.x, bodyCell.x);
+        Assert.Equal(headerCell.width, bodyCell.width);
+        Assert.Equal(126f, headerCell.x);
+    }
+
+    [Fact]
+    public void CalculateColumnRect_OffsetsHeaderByHorizontalScroll()
+    {
+        Rect cell = TablePageLayout.CalculateColumnRect(
+            contentWidth: 960f,
+            columnIndex: 2,
+            columnCount: 8,
+            y: 0f,
+            height: 26f,
+            horizontalScroll: 120f,
+            padding: 6f);
+
+        Assert.Equal(126f, cell.x);
+    }
+
+    [Fact]
+    public void CalculateVisibleRowRange_OnlyIncludesViewportRows()
+    {
+        TableVisibleRowRange range = TablePageLayout.CalculateVisibleRowRange(
+            rowCount: 200,
+            scrollY: 260f,
+            viewportHeight: 104f,
+            rowHeight: 26f);
+
+        Assert.Equal(10, range.FirstIndex);
+        Assert.Equal(14, range.LastExclusive);
+    }
+
     private static void AssertContained(Rect root, Rect rect)
     {
         Assert.True(rect.width >= 0f);

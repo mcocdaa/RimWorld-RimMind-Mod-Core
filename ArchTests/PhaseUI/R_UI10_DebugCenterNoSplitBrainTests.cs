@@ -99,6 +99,39 @@ public sealed class R_UI10_DebugCenterNoSplitBrainTests
     }
 
     [Fact]
+    public void R_UI10_TablePageBase_Should_Consume_ModelBuilder_And_Pages_Should_Not_Locate_Services()
+    {
+        string baseText = File.ReadAllText(Path.Combine(
+            SourceDir, "Infrastructure", "UI", "DebugCenter", "Pages", "DebugTablePageBase.cs"));
+        baseText.Should().Contain("IDebugTableModelBuilder");
+        baseText.Should().NotContain(": DebugCenterPageBase");
+
+        var files = new[]
+        {
+            "ToolCallsDebugCenterPageDrawer.cs",
+            "MechanismsDebugCenterPageDrawer.cs",
+            "ContextKeysDebugCenterPageDrawer.cs"
+        };
+
+        foreach (string file in files)
+        {
+            string text = File.ReadAllText(Path.Combine(
+                SourceDir, "Infrastructure", "UI", "DebugCenter", "Pages", file));
+            text.Should().NotContain("RimMindServiceLocator");
+        }
+    }
+
+    [Fact]
+    public void R_UI10_Unused_DebugCenterPageBase_Should_Not_Exist()
+    {
+        string path = Path.Combine(
+            SourceDir, "Infrastructure", "UI", "DebugCenter", "Pages", "DebugCenterPageBase.cs");
+
+        File.Exists(path).Should().BeFalse(
+            "CLEAN_UI_ERROR R-UI10: do not keep an inheritance layer whose only helper has no callers.");
+    }
+
+    [Fact]
     public void R_UI10_Overview_Should_Navigate_Internal_Pages_Instead_Of_Opening_Old_Debug_Windows()
     {
         string path = Path.Combine(SourceDir, "Infrastructure", "UI", "DebugCenter", "Pages", "OverviewDebugCenterPageDrawer.cs");

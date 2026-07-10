@@ -38,9 +38,9 @@ namespace RimMind.Infrastructure.UI.DebugTables
                 key.Key,
                 DebugTableStatus.Completed,
                 string.Empty,
-                key.Layer.ToString(),
+                DebugTableEnumLabels.For(key.Layer),
                 key.OwnerMod ?? string.Empty,
-                key.CacheScope.ToString(),
+                DebugTableEnumLabels.For(key.CacheScope),
                 "RimMind.UI.DebugTable.ContextKeys.Model".Translate().ToString(),
                 summary,
                 "RimMind.UI.DebugTable.ContextKeys.Score"

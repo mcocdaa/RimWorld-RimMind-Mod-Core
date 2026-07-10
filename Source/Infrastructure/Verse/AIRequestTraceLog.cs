@@ -12,6 +12,18 @@ namespace RimMind.Infrastructure.Verse
         private const int MaxEntries = RimMindDefaults.DebugMaxEntries;
         private readonly object _lock = new();
         private readonly List<AIRequestTraceEntry> _entries = new();
+        private long _revision;
+
+        public long Revision
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _revision;
+                }
+            }
+        }
 
         public IReadOnlyList<AIRequestTraceEntry> Entries
         {
@@ -42,6 +54,7 @@ namespace RimMind.Infrastructure.Verse
                     existing.ElapsedMs = 0;
                     existing.State = AIRequestTraceState.Running;
                     existing.ToolCalls.Clear();
+                    _revision++;
                     return;
                 }
 
@@ -56,6 +69,7 @@ namespace RimMind.Infrastructure.Verse
                     AssistantPrompt = assistantPrompt,
                     State = AIRequestTraceState.Running
                 });
+                _revision++;
             }
         }
 
@@ -68,6 +82,7 @@ namespace RimMind.Infrastructure.Verse
                 entry.TokensUsed = tokensUsed;
                 entry.ElapsedMs = elapsedMs;
                 entry.State = AIRequestTraceState.Completed;
+                _revision++;
             }
         }
 
@@ -78,6 +93,7 @@ namespace RimMind.Infrastructure.Verse
                 var entry = FindOrCreate(requestId);
                 entry.Error = error;
                 entry.State = AIRequestTraceState.Failed;
+                _revision++;
             }
         }
 
@@ -88,6 +104,7 @@ namespace RimMind.Infrastructure.Verse
                 var entry = FindOrCreate(requestId);
                 entry.ToolCalls.Add(new AIRequestToolCallTrace(
                     toolCallId, toolName, succeeded, error));
+                _revision++;
             }
         }
 
@@ -96,6 +113,7 @@ namespace RimMind.Infrastructure.Verse
             lock (_lock)
             {
                 _entries.Clear();
+                _revision++;
             }
         }
 
