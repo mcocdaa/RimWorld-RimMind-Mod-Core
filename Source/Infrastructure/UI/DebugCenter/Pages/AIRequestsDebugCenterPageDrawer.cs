@@ -13,7 +13,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class AIRequestsDebugCenterPageDrawer : IDebugCenterPageDrawer
     {
-        private const int RowPreviewChars = 160;
         private readonly RimMindTableDrawer _tableDrawer = new();
         private string? _selectedRequestId;
         private Vector2 _tableScrollPosition;
@@ -31,7 +30,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             }
 
             IReadOnlyList<AIRequestTraceEntry> entries = log.Entries;
-            DebugTableModel model = BuildModel(entries);
+            DebugTableModel model = AIRequestsDebugTableModelBuilder.Build(entries);
             if (entries.Count == 0)
             {
                 _tableDrawer.Draw(rect, model, ref _tableScrollPosition, scope);
@@ -51,34 +50,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         {
             DebugTableModel model = new DebugTableModel(title, System.Array.Empty<DebugTableRow>());
             _tableDrawer.Draw(rect, model, ref _tableScrollPosition, scope);
-        }
-
-        private static DebugTableModel BuildModel(IReadOnlyList<AIRequestTraceEntry> entries)
-        {
-            return new DebugTableModel(
-                "RimMind.UI.Hub.Tab.AIRequests".Translate(),
-                entries.Select(ToRow));
-        }
-
-        private static DebugTableRow ToRow(AIRequestTraceEntry entry)
-        {
-            string summary = entry.State == AIRequestTraceState.Failed && !string.IsNullOrWhiteSpace(entry.Error)
-                ? entry.Error!
-                : !string.IsNullOrWhiteSpace(entry.Response)
-                    ? entry.Response
-                    : entry.UserPrompt;
-
-            string duration = entry.ElapsedMs > 0 ? entry.ElapsedMs + " ms" : string.Empty;
-            return DebugTableRow.Create(
-                entry.RequestId,
-                StatusFor(entry.State),
-                string.Empty,
-                entry.Source,
-                string.Empty,
-                entry.ToolCalls.Count > 0 ? entry.ToolCalls[0].ToolName : string.Empty,
-                entry.Model,
-                TruncateForRow(summary),
-                duration);
         }
 
         private AIRequestTraceEntry ResolveSelectedEntry(IReadOnlyList<AIRequestTraceEntry> entries)
@@ -161,26 +132,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             return string.Join("\n", entry.ToolCalls.Select(t =>
                 $"{t.ToolName} [{(t.Succeeded ? "ok" : "error")}] {t.Error ?? string.Empty}"));
         }
-
-        private static string TruncateForRow(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return string.Empty;
-
-            string oneLine = value.Replace("\r", " ").Replace("\n", " ");
-            return oneLine.Length <= RowPreviewChars
-                ? oneLine
-                : oneLine.Substring(0, RowPreviewChars) + "...";
-        }
-
-        private static DebugTableStatus StatusFor(AIRequestTraceState state)
-            => state switch
-            {
-                AIRequestTraceState.Running => DebugTableStatus.Streaming,
-                AIRequestTraceState.Completed => DebugTableStatus.Completed,
-                AIRequestTraceState.Failed => DebugTableStatus.Failed,
-                _ => DebugTableStatus.Waiting
-            };
 
         private static string StateLabelFor(AIRequestTraceState state)
             => state switch
