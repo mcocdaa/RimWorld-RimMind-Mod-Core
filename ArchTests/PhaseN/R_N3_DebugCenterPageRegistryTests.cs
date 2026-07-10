@@ -49,8 +49,9 @@ namespace RimMind.Core.ArchTests.PhaseN
             string content = File.ReadAllText(HubPath);
 
             Assert.Contains("DebugCenterPageRegistry", content);
-            Assert.Contains("CreateAll()", content);
-            Assert.Contains("private readonly IReadOnlyList<IDebugCenterPageDrawer> _pages", content);
+            Assert.Contains("CreateAllRegistrations()", content);
+            Assert.Contains("private readonly IReadOnlyList<DebugCenterPageRegistration> _pages", content);
+            Assert.Contains("private readonly Dictionary<string, IDebugCenterPageDrawer> _drawerCache", content);
             Assert.DoesNotContain("DebugCenterPageRegistry.GetAll()", content);
         }
 

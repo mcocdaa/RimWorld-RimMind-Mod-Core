@@ -12,8 +12,8 @@ namespace RimMind.Infrastructure.UI
     public class Window_RimMindHub : RimMindWindowBase
     {
         private string _pageId;
-        private readonly Pawn? _selectedPawn;
         private readonly DebugCenterPageContext _context;
+        private readonly DebugCenterNavigation _navigation = new();
         private readonly IReadOnlyList<DebugCenterPageRegistration> _pages;
         private readonly Dictionary<string, IDebugCenterPageDrawer> _drawerCache = new();
         private readonly RimMindTabbedPageHostDrawer _tabDrawer = new();
@@ -29,8 +29,7 @@ namespace RimMind.Infrastructure.UI
         {
             _pages = DebugCenterPageRegistry.CreateAllRegistrations();
             _pageId = ResolvePageId(initialPageId);
-            _selectedPawn = selectedPawn;
-            _context = new DebugCenterPageContext(selectedPawn);
+            _context = new DebugCenterPageContext(selectedPawn, _navigation);
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -63,6 +62,10 @@ namespace RimMind.Infrastructure.UI
             {
                 GetDrawer(selectedPage).Draw(tabLayout.Content, _context, scope);
             }
+
+            string? requestedPageId = _navigation.ConsumeRequestedPageId();
+            if (!string.IsNullOrEmpty(requestedPageId))
+                _pageId = ResolvePageId(requestedPageId);
         }
 
         private IReadOnlyList<TabbedPageTabModel> BuildTabModels()

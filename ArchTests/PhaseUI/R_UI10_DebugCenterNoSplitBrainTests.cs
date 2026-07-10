@@ -97,4 +97,20 @@ public sealed class R_UI10_DebugCenterNoSplitBrainTests
 
         violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI10: simple debug table pages must inherit DebugTablePageBase so shared table drawing stays centralized without hiding page dependencies.");
     }
+
+    [Fact]
+    public void R_UI10_Overview_Should_Navigate_Internal_Pages_Instead_Of_Opening_Old_Debug_Windows()
+    {
+        string path = Path.Combine(SourceDir, "Infrastructure", "UI", "DebugCenter", "Pages", "OverviewDebugCenterPageDrawer.cs");
+        string text = File.ReadAllText(path);
+
+        text.Should().NotContain("new Window_AgentFlowLab",
+            "CLEAN_UI_ERROR R-UI10: overview quick actions must switch Debug Center pages instead of opening legacy windows.");
+        text.Should().NotContain("new Window_AgentStateDebug",
+            "CLEAN_UI_ERROR R-UI10: overview quick actions must switch Debug Center pages instead of opening legacy windows.");
+        text.Should().NotContain("new Window_AgentModeDebug",
+            "CLEAN_UI_ERROR R-UI10: overview quick actions must switch Debug Center pages instead of opening legacy windows.");
+        text.Should().Contain("context.Navigation.GoTo",
+            "CLEAN_UI_ERROR R-UI10: overview quick actions must use DebugCenterNavigation for internal page changes.");
+    }
 }
