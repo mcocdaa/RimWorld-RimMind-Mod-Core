@@ -39,4 +39,33 @@ public sealed class R_UI10_DebugCenterNoSplitBrainTests
         text.Should().Contain("_tableDrawer.DrawSelectable",
             "CLEAN_UI_ERROR R-UI10: AI Requests must delegate selectable row rendering to RimMindTableDrawer.");
     }
+
+    [Fact]
+    public void R_UI10_DebugTablePages_Should_Not_Use_Empty_Row_Placeholders()
+    {
+        var files = new[]
+        {
+            "ToolCallsDebugCenterPageDrawer.cs",
+            "MechanismsDebugCenterPageDrawer.cs",
+            "ContextKeysDebugCenterPageDrawer.cs"
+        };
+
+        var violations = new List<string>();
+        foreach (string file in files)
+        {
+            string path = Path.Combine(
+                SourceDir,
+                "Infrastructure",
+                "UI",
+                "DebugCenter",
+                "Pages",
+                file);
+
+            string text = File.ReadAllText(path);
+            if (text.Contains("Array.Empty<DebugTableRow>()", System.StringComparison.Ordinal))
+                violations.Add(file);
+        }
+
+        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI10: debug table pages must show runtime rows from table model builders, not empty placeholders.");
+    }
 }

@@ -11,7 +11,7 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
     private static string SourceDir => ArchTestExtensions.FindSourceDirectory();
 
     [Fact]
-    public void R_UI3_DebugTablePages_ShouldUseTablePageLayout()
+    public void R_UI3_DebugTablePages_ShouldUseSharedDebugTableDrawer()
     {
         var files = new[]
         {
@@ -23,12 +23,13 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
         foreach (string rel in files)
         {
             string text = ReadSource(rel);
-            if (!text.Contains("TablePageLayout", StringComparison.Ordinal)
-                || !text.Contains("DebugTableModel", StringComparison.Ordinal))
+            if (!text.Contains("DebugTableModel", StringComparison.Ordinal)
+                || !text.Contains("_tableDrawer.Draw", StringComparison.Ordinal)
+                || text.Contains("TablePageLayout.Calculate", StringComparison.Ordinal))
                 violations.Add(rel);
         }
 
-        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug center table pages must use TablePageLayout and DebugTableModel.");
+        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug center table pages must build DebugTableModel and delegate layout to RimMindTableDrawer.");
     }
 
     [Fact]

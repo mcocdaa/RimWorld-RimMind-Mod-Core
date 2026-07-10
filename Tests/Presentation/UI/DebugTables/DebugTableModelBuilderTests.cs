@@ -1,6 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using RimMind.Application.Common.Interfaces.Extension;
+using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Models.Debug;
+using RimMind.Application.Common.Models.Mechanisms;
+using RimMind.Application.Features.Context;
+using RimMind.Domain.Common;
+using RimMind.Domain.Enums;
+using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.Mechanisms;
 using RimMind.Infrastructure.UI.DebugTables;
 using Xunit;
 
@@ -94,5 +104,102 @@ public sealed class DebugTableModelBuilderTests
 
         Assert.Equal("req-001:tool:0", model.Rows[0].Id);
         Assert.Equal("req-001:tool:1", model.Rows[1].Id);
+    }
+
+    [Fact]
+    public void MechanismsBuilder_MapsRegisteredMechanisms()
+    {
+        var registry = new GameMechanismRegistry();
+        var mechanism = new StubMechanism(
+            "pawn.need",
+            MechanismScope.Pawn,
+            MechanismRisk.Moderate,
+            "Reads and adjusts pawn needs.");
+        registry.Register(mechanism);
+
+        DebugTableModel model = new MechanismsDebugTableModelBuilder(registry).Build();
+
+        DebugTableRow row = model.Rows.Single();
+        Assert.Equal(mechanism.MechanismId, row.Id);
+        Assert.Equal(mechanism.Scope.ToString(), row.Scope);
+        Assert.Contains(mechanism.Risk.ToString(), row.Model);
+        Assert.Equal(mechanism.Docs.Summary, row.Summary);
+    }
+
+    [Fact]
+    public void ContextKeysBuilder_MapsRegisteredKeyMeta()
+    {
+        var registry = new ContextKeyRegistryImpl();
+        var key = new KeyMeta(
+            "pawn.identity",
+            ContextLayer.L1_Baseline,
+            0.75f,
+            _ => new List<ContextEntry>(),
+            "RimMind-Core",
+            cacheScope: CacheScope.Pawn)
+        {
+            UpdateCount = 7
+        };
+        registry.Register(key);
+
+        DebugTableModel model = new ContextKeysDebugTableModelBuilder(registry).Build();
+
+        DebugTableRow row = model.Rows.Single();
+        Assert.Equal(key.Key, row.Id);
+        Assert.Equal(key.Layer.ToString(), row.Scope);
+        Assert.Equal(key.OwnerMod, row.Actor);
+        Assert.Equal(key.CacheScope.ToString(), row.Channel);
+        Assert.Contains("Priority", row.Summary);
+        Assert.Contains("UpdateCount", row.Summary);
+        Assert.Contains(key.Priority.ToString("0.###"), row.Summary);
+        Assert.Contains(key.UpdateCount.ToString(), row.Summary);
+    }
+
+    private sealed class StubMechanism : IGameMechanism
+    {
+        public StubMechanism(string mechanismId, MechanismScope scope, MechanismRisk risk, string summary)
+        {
+            MechanismId = mechanismId;
+            Scope = scope;
+            Risk = risk;
+            Docs = new MechanismDocs { Summary = summary };
+        }
+
+        string IExtension.Id => MechanismId;
+        string IExtension.OwnerModId => "Test";
+        public string MechanismId { get; }
+        public MechanismScope Scope { get; }
+        public MechanismRisk Risk { get; }
+        public IReadOnlyList<MechanismOperationType> SupportedOperations { get; } = new[] { MechanismOperationType.Query };
+        public MechanismDocs Docs { get; }
+        public IReadOnlyList<MechanismActionInfo>? GetWriteActions() => null;
+        public MechanismRisk GetRiskForOperation(MechanismOperationType operation) => Risk;
+
+        public Task<Result<string, RimMindError>> ExecuteQueryAsync(MechanismReadArgs args, CancellationToken ct)
+            => Task.FromResult(Result<string, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "query")));
+
+        public Task<Result<IReadOnlyList<MechanismEnumResult>, RimMindError>> ExecuteListAsync(int? pawnId, CancellationToken ct)
+            => Task.FromResult(Result<IReadOnlyList<MechanismEnumResult>, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, "list")));
+
+        public Task<Result<bool, RimMindError>> ExecuteSetAsync(MechanismWriteArgs args, CancellationToken ct)
+            => UnsupportedWrite("set");
+
+        public Task<Result<bool, RimMindError>> ExecuteAddAsync(MechanismWriteArgs args, CancellationToken ct)
+            => UnsupportedWrite("add");
+
+        public Task<Result<bool, RimMindError>> ExecuteRemoveAsync(MechanismWriteArgs args, CancellationToken ct)
+            => UnsupportedWrite("remove");
+
+        public Task<Result<bool, RimMindError>> ExecuteToggleAsync(MechanismWriteArgs args, CancellationToken ct)
+            => UnsupportedWrite("toggle");
+
+        public Task<Result<bool, RimMindError>> ExecuteTriggerAsync(MechanismWriteArgs args, CancellationToken ct)
+            => UnsupportedWrite("trigger");
+
+        public Task<Result<bool, RimMindError>> ExecuteWatchAsync(MechanismWriteArgs args, CancellationToken ct)
+            => UnsupportedWrite("watch");
+
+        private Task<Result<bool, RimMindError>> UnsupportedWrite(string operation)
+            => Task.FromResult(Result<bool, RimMindError>.Err(RimMindErrors.MechanismOperationNotSupported(MechanismId, operation)));
     }
 }
