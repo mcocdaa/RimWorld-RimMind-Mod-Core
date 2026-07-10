@@ -15,7 +15,6 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
     {
         var files = new[]
         {
-            "Infrastructure/UI/DebugCenter/Pages/ToolCallsDebugCenterPageDrawer.cs",
             "Infrastructure/UI/DebugCenter/Pages/MechanismsDebugCenterPageDrawer.cs",
             "Infrastructure/UI/DebugCenter/Pages/ContextKeysDebugCenterPageDrawer.cs"
         };
@@ -30,6 +29,16 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
         }
 
         violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug center table pages must use TablePageLayout and DebugTableModel.");
+    }
+
+    [Fact]
+    public void R_UI3_ToolCalls_ShouldUseSharedDebugTableDrawer()
+    {
+        string text = ReadSource("Infrastructure/UI/DebugCenter/Pages/ToolCallsDebugCenterPageDrawer.cs");
+
+        text.Should().Contain("DebugTableModel", "CLEAN_UI_ERROR R-UI3: ToolCalls must still build a DebugTableModel.");
+        text.Should().Contain("_tableDrawer.Draw", "CLEAN_UI_ERROR R-UI3: ToolCalls rendering must be delegated to RimMindTableDrawer.");
+        text.Should().NotContain("TablePageLayout.Calculate", "CLEAN_UI_ERROR R-UI3: migrated debug table pages must not keep discarded TablePageLayout calls.");
     }
 
     [Fact]
