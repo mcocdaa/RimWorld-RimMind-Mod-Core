@@ -87,14 +87,16 @@ namespace RimMind.Infrastructure.UI.Framework
 
         private static void DrawToolbar(Rect rect, string title)
         {
+            Color oldColor = GUI.color;
             GUI.color = RimMindUI.ColorHeader;
             Widgets.Label(rect, title);
-            GUI.color = Color.white;
+            GUI.color = oldColor;
         }
 
         private static void DrawDebugHeaders(TablePageLayoutResult layout)
         {
             float colWidth = layout.Header.width / DebugTableColumnCount;
+            Color oldColor = GUI.color;
             GUI.color = RimMindUI.ColorKey;
             for (int c = 0; c < DebugTableHeaderKeys.Length; c++)
             {
@@ -102,7 +104,7 @@ namespace RimMind.Infrastructure.UI.Framework
                 Widgets.Label(headerRect, DebugTableHeaderKeys[c].Translate());
             }
 
-            GUI.color = Color.white;
+            GUI.color = oldColor;
         }
 
         private static void DrawDebugRows(TablePageLayoutResult layout, IReadOnlyList<DebugTableRow> rows, ref Vector2 scroll)
@@ -113,11 +115,7 @@ namespace RimMind.Infrastructure.UI.Framework
             {
                 DebugTableRow row = rows[r];
                 Rect rowRect = new Rect(0f, r * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
-                if (r % 2 == 0)
-                    Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorSectionBg);
-
-                Widgets.DrawBoxSolid(new Rect(rowRect.x, rowRect.y, StatusStripWidth, rowRect.height), ColorFor(row.StatusColorName));
-                DrawDebugCells(rowRect, colWidth, row);
+                DrawDebugRow(rowRect, colWidth, row, selected: false, alternateBackground: r % 2 == 0);
             }
 
             Widgets.EndScrollView();
@@ -129,21 +127,14 @@ namespace RimMind.Infrastructure.UI.Framework
             string? selectedId,
             ref Vector2 scroll)
         {
-            string? selectedRowId = selectedId;
+            string? selectedRowId = ResolveSelectedRowId(rows, selectedId);
             float colWidth = layout.ViewRect.width / DebugTableColumnCount;
             Widgets.BeginScrollView(layout.Body, ref scroll, layout.ViewRect);
             for (int r = 0; r < rows.Count; r++)
             {
                 DebugTableRow row = rows[r];
                 Rect rowRect = new Rect(0f, r * RimMindUiMetrics.DebugRowHeight, layout.ViewRect.width, RimMindUiMetrics.DebugRowHeight);
-                if (r % 2 == 0)
-                    Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorSectionBg);
-
-                if (row.Id == selectedRowId)
-                    Widgets.DrawHighlight(rowRect);
-
-                Widgets.DrawBoxSolid(new Rect(rowRect.x, rowRect.y, StatusStripWidth, rowRect.height), ColorFor(row.StatusColorName));
-                DrawDebugCells(rowRect, colWidth, row);
+                DrawDebugRow(rowRect, colWidth, row, row.Id == selectedRowId, r % 2 == 0);
 
                 if (Widgets.ButtonInvisible(rowRect))
                     selectedRowId = row.Id;
@@ -151,6 +142,40 @@ namespace RimMind.Infrastructure.UI.Framework
 
             Widgets.EndScrollView();
             return selectedRowId;
+        }
+
+        private static string? ResolveSelectedRowId(IReadOnlyList<DebugTableRow> rows, string? selectedId)
+        {
+            if (rows.Count == 0)
+                return null;
+
+            if (!string.IsNullOrEmpty(selectedId))
+            {
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    if (rows[i].Id == selectedId)
+                        return selectedId;
+                }
+            }
+
+            return rows[0].Id;
+        }
+
+        private static void DrawDebugRow(
+            Rect rowRect,
+            float colWidth,
+            DebugTableRow row,
+            bool selected,
+            bool alternateBackground)
+        {
+            if (alternateBackground)
+                Widgets.DrawBoxSolid(rowRect, RimMindUI.ColorSectionBg);
+
+            if (selected)
+                Widgets.DrawHighlight(rowRect);
+
+            Widgets.DrawBoxSolid(new Rect(rowRect.x, rowRect.y, StatusStripWidth, rowRect.height), ColorFor(row.StatusColorName));
+            DrawDebugCells(rowRect, colWidth, row);
         }
 
         private static void DrawDebugCells(Rect rowRect, float colWidth, DebugTableRow row)
@@ -167,6 +192,7 @@ namespace RimMind.Infrastructure.UI.Framework
                 string.IsNullOrWhiteSpace(row.Duration) ? row.Summary : row.Summary + " / " + row.Duration
             };
 
+            Color oldColor = GUI.color;
             GUI.color = RimMindUI.ColorValue;
             for (int c = 0; c < cells.Length; c++)
             {
@@ -177,7 +203,7 @@ namespace RimMind.Infrastructure.UI.Framework
                 Widgets.Label(cell, cells[c] ?? string.Empty);
             }
 
-            GUI.color = Color.white;
+            GUI.color = oldColor;
         }
 
         private static string StatusLabelFor(DebugTableStatus status)

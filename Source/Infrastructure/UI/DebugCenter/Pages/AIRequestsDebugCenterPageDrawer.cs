@@ -39,8 +39,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             }
 
             SplitPageLayoutResult split = SplitPageLayout.Calculate(rect, 0.4f, 240f, 300f, 320f);
-            _selectedRequestId = _tableDrawer.DrawSelectable(split.List, model, _selectedRequestId, ref _tableScrollPosition, scope);
             AIRequestTraceEntry selectedEntry = ResolveSelectedEntry(entries);
+            _selectedRequestId = _tableDrawer.DrawSelectable(split.List, model, _selectedRequestId, ref _tableScrollPosition, scope);
+            selectedEntry = ResolveSelectedEntry(entries);
 
             scope.Record(split.Detail, "AIRequests:Detail");
             DrawDetail(split.Detail, selectedEntry);

@@ -29,6 +29,14 @@ public sealed class R_UI10_DebugCenterNoSplitBrainTests
         if (text.Contains("Widgets.ButtonInvisible(rowRect)", System.StringComparison.Ordinal))
             violations.Add("Widgets.ButtonInvisible(rowRect)");
 
+        if (text.Contains("Widgets.ButtonInvisible(", System.StringComparison.Ordinal))
+            violations.Add("Widgets.ButtonInvisible");
+
+        if (text.Contains("TablePageLayout.Calculate", System.StringComparison.Ordinal))
+            violations.Add("TablePageLayout.Calculate");
+
         violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI10: AI Requests row selection must be drawn by RimMindTableDrawer inside the table row scroll view.");
+        text.Should().Contain("_tableDrawer.DrawSelectable",
+            "CLEAN_UI_ERROR R-UI10: AI Requests must delegate selectable row rendering to RimMindTableDrawer.");
     }
 }
