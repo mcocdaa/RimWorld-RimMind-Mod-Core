@@ -16,26 +16,5 @@ namespace RimMind.Tests.Presentation.UI
             Assert.True(layout.Content.y > layout.Tabs.yMax);
             Assert.True(layout.Content.height > 400f);
         }
-
-        [Fact]
-        public void CalculateAgentPage_Keeps_List_And_Detail_From_Overlapping()
-        {
-            var layout = DebugCenterLayout.CalculateAgentPage(new Rect(0f, 0f, 740f, 480f));
-
-            Assert.True(layout.List.width >= 220f);
-            Assert.True(layout.Detail.x > layout.List.xMax);
-            Assert.True(layout.Detail.width >= 360f);
-        }
-
-        [Fact]
-        public void CalculateAgentPage_Keeps_Chat_At_Bottom_Below_Activity()
-        {
-            var layout = DebugCenterLayout.CalculateAgentPage(new Rect(0f, 0f, 740f, 480f));
-
-            Assert.True(layout.Actions.y > layout.Header.yMax);
-            Assert.True(layout.Activity.y > layout.Actions.yMax);
-            Assert.True(layout.Chat.y > layout.Activity.yMax);
-            Assert.Equal(layout.Detail.yMax, layout.Chat.yMax);
-        }
     }
 }

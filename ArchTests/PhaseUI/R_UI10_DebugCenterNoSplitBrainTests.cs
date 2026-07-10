@@ -113,4 +113,22 @@ public sealed class R_UI10_DebugCenterNoSplitBrainTests
         text.Should().Contain("context.Navigation.GoTo",
             "CLEAN_UI_ERROR R-UI10: overview quick actions must use DebugCenterNavigation for internal page changes.");
     }
+
+    [Fact]
+    public void R_UI10_DebugCenterLayout_Should_Not_Contain_Unused_AgentPage_Layout()
+    {
+        string path = Path.Combine(SourceDir, "Infrastructure", "UI", "DebugCenter", "DebugCenterLayout.cs");
+        string text = File.ReadAllText(path);
+
+        text.Should().NotContain("CalculateAgentPage",
+            "CLEAN_UI_ERROR R-UI10: Agent page layout must be owned by AgentsPage/AgentPageLayout.cs only.");
+        text.Should().NotContain("AgentPageLayoutRects",
+            "CLEAN_UI_ERROR R-UI10: remove dead layout result structs that are not used by runtime pages.");
+        text.Should().NotContain("ChatHeight",
+            "CLEAN_UI_ERROR R-UI10: remove DebugCenter agent-layout constants after migrating runtime layout to AgentPageLayout.");
+        text.Should().NotContain("DetailHeaderHeight",
+            "CLEAN_UI_ERROR R-UI10: remove DebugCenter agent-layout constants after migrating runtime layout to AgentPageLayout.");
+        text.Should().NotContain("DetailActionHeight",
+            "CLEAN_UI_ERROR R-UI10: remove DebugCenter agent-layout constants after migrating runtime layout to AgentPageLayout.");
+    }
 }

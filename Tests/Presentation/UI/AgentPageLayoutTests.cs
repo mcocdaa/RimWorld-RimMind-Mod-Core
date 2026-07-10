@@ -49,6 +49,28 @@ namespace RimMind.Tests.Presentation.UI
         }
 
         [Fact]
+        public void Calculate_Keeps_List_Activity_Detail_And_Chat_From_Overlapping()
+        {
+            AgentPageRects layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 740f, 480f));
+
+            Assert.True(layout.List.xMax <= layout.Activity.x);
+            Assert.True(layout.Activity.xMax <= layout.Detail.x);
+            Assert.True(layout.Activity.yMax <= layout.Chat.y);
+            Assert.True(layout.Detail.yMax <= layout.Chat.y);
+        }
+
+        [Fact]
+        public void Calculate_Keeps_Chat_At_Bottom()
+        {
+            Rect root = new Rect(0f, 0f, 740f, 480f);
+            AgentPageRects layout = AgentPageLayout.Calculate(root);
+
+            Assert.True(layout.Chat.yMax <= root.yMax);
+            Assert.True(layout.Chat.y >= layout.Activity.yMax);
+            Assert.True(layout.Chat.y >= layout.Detail.yMax);
+        }
+
+        [Fact]
         public void Calculate_SeparatesEventStreamFromDetailPanel()
         {
             AgentPageRects layout = AgentPageLayout.Calculate(new Rect(0f, 0f, 900f, 560f));
