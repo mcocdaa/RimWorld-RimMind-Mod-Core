@@ -72,6 +72,24 @@ namespace RimMind.Tests.Presentation.UI
         }
 
         [Fact]
+        public void AIRequestTraceLog_Entries_Returns_Deep_Snapshot_Of_ToolCalls()
+        {
+            var log = new AIRequestTraceLog();
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
+            log.AddToolCall("req-1", "tool-1", "pawn.job.set", succeeded: true, error: null);
+
+            var snapshot = log.Entries;
+
+            log.AddToolCall("req-1", "tool-2", "pawn.job.wait", succeeded: true, error: null);
+            Assert.Single(snapshot[0].ToolCalls);
+
+            snapshot[0].ToolCalls.Add(new AIRequestToolCallTrace("tool-mutated", "snapshot.only", true, null));
+            var freshEntry = Assert.Single(log.Entries);
+            Assert.Equal(2, freshEntry.ToolCalls.Count);
+            Assert.DoesNotContain(freshEntry.ToolCalls, tool => tool.ToolCallId == "tool-mutated");
+        }
+
+        [Fact]
         public void Clear_Removes_All_Entries()
         {
             var log = new AIRequestTraceLog();

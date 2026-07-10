@@ -19,7 +19,7 @@ namespace RimMind.Infrastructure.Verse
             {
                 lock (_lock)
                 {
-                    return _entries.ToList();
+                    return _entries.Select(CloneEntry).ToList();
                 }
             }
         }
@@ -116,6 +116,32 @@ namespace RimMind.Infrastructure.Verse
             if (_entries.Count < MaxEntries) return;
             int excess = _entries.Count - MaxEntries + 1;
             _entries.RemoveRange(0, excess);
+        }
+
+        private static AIRequestTraceEntry CloneEntry(AIRequestTraceEntry entry)
+        {
+            var snapshot = new AIRequestTraceEntry
+            {
+                RequestId = entry.RequestId,
+                Source = entry.Source,
+                Model = entry.Model,
+                SystemPrompt = entry.SystemPrompt,
+                UserPrompt = entry.UserPrompt,
+                AssistantPrompt = entry.AssistantPrompt,
+                Response = entry.Response,
+                Error = entry.Error,
+                TokensUsed = entry.TokensUsed,
+                ElapsedMs = entry.ElapsedMs,
+                State = entry.State
+            };
+
+            snapshot.ToolCalls.AddRange(entry.ToolCalls.Select(toolCall => new AIRequestToolCallTrace(
+                toolCall.ToolCallId,
+                toolCall.ToolName,
+                toolCall.Succeeded,
+                toolCall.Error)));
+
+            return snapshot;
         }
     }
 }

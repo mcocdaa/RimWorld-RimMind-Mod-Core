@@ -77,4 +77,22 @@ public sealed class DebugTableModelBuilderTests
         Assert.Equal("Target reservation denied", failed.Summary);
         Assert.Equal("Dialogue", failed.Scope);
     }
+
+    [Fact]
+    public void ToolCallsBuilder_GeneratesStableFallbackIdForEmptyToolCallId()
+    {
+        var entry = new AIRequestTraceEntry
+        {
+            RequestId = "req-001",
+            Source = "Advisor",
+            Model = "model-a"
+        };
+        entry.ToolCalls.Add(new AIRequestToolCallTrace(string.Empty, "move_to", true, null));
+        entry.ToolCalls.Add(new AIRequestToolCallTrace("   ", "reserve_target", false, "denied"));
+
+        DebugTableModel model = ToolCallsDebugTableModelBuilder.Build(new[] { entry });
+
+        Assert.Equal("req-001:tool:0", model.Rows[0].Id);
+        Assert.Equal("req-001:tool:1", model.Rows[1].Id);
+    }
 }

@@ -22,18 +22,21 @@ namespace RimMind.Infrastructure.UI.DebugTables
         {
             return new DebugTableModel(
                 "RimMind.UI.Hub.Tab.ToolCalls".Translate(),
-                entries.SelectMany(entry => entry.ToolCalls.Select(toolCall => ToRow(entry, toolCall))));
+                entries.SelectMany(entry => entry.ToolCalls.Select((toolCall, index) => ToRow(entry, toolCall, index))));
         }
 
-        private static DebugTableRow ToRow(AIRequestTraceEntry entry, AIRequestToolCallTrace toolCall)
+        private static DebugTableRow ToRow(AIRequestTraceEntry entry, AIRequestToolCallTrace toolCall, int index)
         {
             string duration = entry.ElapsedMs > 0 ? entry.ElapsedMs + " ms" : string.Empty;
             string summary = toolCall.Succeeded
                 ? string.Empty
                 : toolCall.Error ?? string.Empty;
+            string id = string.IsNullOrWhiteSpace(toolCall.ToolCallId)
+                ? entry.RequestId + ":tool:" + index
+                : toolCall.ToolCallId;
 
             return DebugTableRow.Create(
-                toolCall.ToolCallId,
+                id,
                 toolCall.Succeeded ? DebugTableStatus.Completed : DebugTableStatus.Failed,
                 string.Empty,
                 entry.Source,
