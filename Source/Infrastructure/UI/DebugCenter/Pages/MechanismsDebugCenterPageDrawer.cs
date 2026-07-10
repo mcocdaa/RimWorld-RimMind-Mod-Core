@@ -2,22 +2,15 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Infrastructure.UI.DebugTables;
 using RimMind.Infrastructure.UI.Framework;
-using RimMind.Presentation.UI.Framework;
-using RimMind.Presentation.UI.Layout;
-using UnityEngine;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
-    public sealed class MechanismsDebugCenterPageDrawer : IDebugCenterPageDrawer
+    public sealed class MechanismsDebugCenterPageDrawer : DebugTablePageBase
     {
-        private readonly RimMindTableDrawer _tableDrawer = new();
-        private Vector2 _scrollPosition;
-
-        public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
+        protected override DebugTableModel BuildModel(DebugCenterPageContext context)
         {
             var registry = RimMindServiceLocator.TryGet<IGameMechanismRegistry>();
-            DebugTableModel model = new MechanismsDebugTableModelBuilder(registry).Build();
-            _tableDrawer.Draw(rect, model, ref _scrollPosition, scope);
+            return new MechanismsDebugTableModelBuilder(registry).Build();
         }
     }
 }

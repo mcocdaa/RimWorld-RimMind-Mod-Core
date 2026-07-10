@@ -68,4 +68,33 @@ public sealed class R_UI10_DebugCenterNoSplitBrainTests
 
         violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI10: debug table pages must show runtime rows from table model builders, not empty placeholders.");
     }
+
+    [Fact]
+    public void R_UI10_DebugTablePages_Should_Inherit_Shared_Table_Page_Base()
+    {
+        var files = new[]
+        {
+            "ToolCallsDebugCenterPageDrawer.cs",
+            "MechanismsDebugCenterPageDrawer.cs",
+            "ContextKeysDebugCenterPageDrawer.cs"
+        };
+
+        var violations = new List<string>();
+        foreach (string file in files)
+        {
+            string path = Path.Combine(
+                SourceDir,
+                "Infrastructure",
+                "UI",
+                "DebugCenter",
+                "Pages",
+                file);
+
+            string text = File.ReadAllText(path);
+            if (!text.Contains(": DebugTablePageBase", System.StringComparison.Ordinal))
+                violations.Add(file);
+        }
+
+        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI10: simple debug table pages must inherit DebugTablePageBase so shared table drawing stays centralized without hiding page dependencies.");
+    }
 }

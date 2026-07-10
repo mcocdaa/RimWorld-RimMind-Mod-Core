@@ -15,6 +15,7 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
     {
         var files = new[]
         {
+            "Infrastructure/UI/DebugCenter/Pages/ToolCallsDebugCenterPageDrawer.cs",
             "Infrastructure/UI/DebugCenter/Pages/MechanismsDebugCenterPageDrawer.cs",
             "Infrastructure/UI/DebugCenter/Pages/ContextKeysDebugCenterPageDrawer.cs"
         };
@@ -24,21 +25,21 @@ public sealed class R_UI3_DebugTablesUseTableLayoutTests
         {
             string text = ReadSource(rel);
             if (!text.Contains("DebugTableModel", StringComparison.Ordinal)
-                || !text.Contains("_tableDrawer.Draw", StringComparison.Ordinal)
+                || !text.Contains(": DebugTablePageBase", StringComparison.Ordinal)
                 || text.Contains("TablePageLayout.Calculate", StringComparison.Ordinal))
                 violations.Add(rel);
         }
 
-        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug center table pages must build DebugTableModel and delegate layout to RimMindTableDrawer.");
+        violations.Should().BeEmpty("CLEAN_UI_ERROR R-UI3: debug center table pages must build DebugTableModel through DebugTablePageBase and keep layout out of concrete pages.");
     }
 
     [Fact]
-    public void R_UI3_ToolCalls_ShouldUseSharedDebugTableDrawer()
+    public void R_UI3_DebugTablePageBase_ShouldUseSharedDebugTableDrawer()
     {
-        string text = ReadSource("Infrastructure/UI/DebugCenter/Pages/ToolCallsDebugCenterPageDrawer.cs");
+        string text = ReadSource("Infrastructure/UI/DebugCenter/Pages/DebugTablePageBase.cs");
 
-        text.Should().Contain("DebugTableModel", "CLEAN_UI_ERROR R-UI3: ToolCalls must still build a DebugTableModel.");
-        text.Should().Contain("_tableDrawer.Draw", "CLEAN_UI_ERROR R-UI3: ToolCalls rendering must be delegated to RimMindTableDrawer.");
+        text.Should().Contain("DebugTableModel", "CLEAN_UI_ERROR R-UI3: DebugTablePageBase must build and draw DebugTableModel instances.");
+        text.Should().Contain("_tableDrawer.Draw", "CLEAN_UI_ERROR R-UI3: debug table rendering must be delegated to RimMindTableDrawer.");
         text.Should().NotContain("TablePageLayout.Calculate", "CLEAN_UI_ERROR R-UI3: migrated debug table pages must not keep discarded TablePageLayout calls.");
     }
 
