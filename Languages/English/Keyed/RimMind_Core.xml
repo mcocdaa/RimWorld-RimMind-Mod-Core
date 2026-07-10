@@ -507,6 +507,13 @@
   <RimMind.UI.DebugTable.Status.Completed>Completed</RimMind.UI.DebugTable.Status.Completed>
   <RimMind.UI.DebugTable.Status.Failed>Failed</RimMind.UI.DebugTable.Status.Failed>
   <RimMind.UI.DebugTable.Status.Cancelled>Cancelled</RimMind.UI.DebugTable.Status.Cancelled>
+  <RimMind.UI.DebugTable.Mechanisms.NoOperations>No operations</RimMind.UI.DebugTable.Mechanisms.NoOperations>
+  <RimMind.UI.DebugTable.Mechanisms.OperationCount>{0} ops</RimMind.UI.DebugTable.Mechanisms.OperationCount>
+  <RimMind.UI.DebugTable.ContextKeys.Priority>Priority {0}</RimMind.UI.DebugTable.ContextKeys.Priority>
+  <RimMind.UI.DebugTable.ContextKeys.Effective>Effective {0}</RimMind.UI.DebugTable.ContextKeys.Effective>
+  <RimMind.UI.DebugTable.ContextKeys.UpdateCount>UpdateCount {0}</RimMind.UI.DebugTable.ContextKeys.UpdateCount>
+  <RimMind.UI.DebugTable.ContextKeys.Model>context</RimMind.UI.DebugTable.ContextKeys.Model>
+  <RimMind.UI.DebugTable.ContextKeys.Score>score {0}</RimMind.UI.DebugTable.ContextKeys.Score>
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent State Debug</RimMind.UI.AgentStateDebug.Title>
   <RimMind.UI.AgentStateDebug.NoPawn>No pawn selected</RimMind.UI.AgentStateDebug.NoPawn>

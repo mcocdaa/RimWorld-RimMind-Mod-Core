@@ -127,6 +127,24 @@ public sealed class DebugTableModelBuilderTests
     }
 
     [Fact]
+    public void MechanismsBuilder_DoesNotRenderRiskAsFailureStatus()
+    {
+        var mechanisms = new[]
+        {
+            new StubMechanism("pawn.safe", MechanismScope.Pawn, MechanismRisk.Safe, "Safe mechanism."),
+            new StubMechanism("pawn.moderate", MechanismScope.Pawn, MechanismRisk.Moderate, "Moderate mechanism."),
+            new StubMechanism("pawn.dangerous", MechanismScope.Pawn, MechanismRisk.Dangerous, "Dangerous mechanism.")
+        };
+
+        DebugTableModel model = MechanismsDebugTableModelBuilder.Build(mechanisms);
+
+        Assert.All(model.Rows, row => Assert.Equal(DebugTableStatus.Completed, row.Status));
+        Assert.Contains(model.Rows, row => row.Model.Contains(MechanismRisk.Safe.ToString()));
+        Assert.Contains(model.Rows, row => row.Model.Contains(MechanismRisk.Moderate.ToString()));
+        Assert.Contains(model.Rows, row => row.Model.Contains(MechanismRisk.Dangerous.ToString()));
+    }
+
+    [Fact]
     public void ContextKeysBuilder_MapsRegisteredKeyMeta()
     {
         var registry = new ContextKeyRegistryImpl();
@@ -149,9 +167,7 @@ public sealed class DebugTableModelBuilderTests
         Assert.Equal(key.Layer.ToString(), row.Scope);
         Assert.Equal(key.OwnerMod, row.Actor);
         Assert.Equal(key.CacheScope.ToString(), row.Channel);
-        Assert.Contains("Priority", row.Summary);
-        Assert.Contains("UpdateCount", row.Summary);
-        Assert.Contains(key.Priority.ToString("0.###"), row.Summary);
+        Assert.Contains(key.Priority.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture), row.Summary);
         Assert.Contains(key.UpdateCount.ToString(), row.Summary);
     }
 

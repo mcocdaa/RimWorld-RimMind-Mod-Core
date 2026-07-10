@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Mechanisms;
-using RimMind.Domain.Enums;
 using Verse;
 
 namespace RimMind.Infrastructure.UI.DebugTables
@@ -29,27 +28,18 @@ namespace RimMind.Infrastructure.UI.DebugTables
         {
             string operations = mechanism.SupportedOperations.Count > 0
                 ? string.Join(", ", mechanism.SupportedOperations.Select(op => op.ToString()))
-                : "No operations";
+                : "RimMind.UI.DebugTable.Mechanisms.NoOperations".Translate().ToString();
 
             return DebugTableRow.Create(
                 mechanism.MechanismId,
-                StatusForRisk(mechanism.Risk),
+                DebugTableStatus.Completed,
                 string.Empty,
                 mechanism.Scope.ToString(),
                 mechanism.OwnerModId ?? string.Empty,
                 operations,
                 mechanism.Risk.ToString(),
                 mechanism.Docs.Summary,
-                mechanism.SupportedOperations.Count + " ops");
+                "RimMind.UI.DebugTable.Mechanisms.OperationCount".Translate(mechanism.SupportedOperations.Count).ToString());
         }
-
-        private static DebugTableStatus StatusForRisk(MechanismRisk risk)
-            => risk switch
-            {
-                MechanismRisk.Safe => DebugTableStatus.Completed,
-                MechanismRisk.Moderate => DebugTableStatus.Waiting,
-                MechanismRisk.Dangerous => DebugTableStatus.Failed,
-                _ => DebugTableStatus.Waiting
-            };
     }
 }

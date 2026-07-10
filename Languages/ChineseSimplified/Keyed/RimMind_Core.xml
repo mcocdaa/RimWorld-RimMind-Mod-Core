@@ -507,6 +507,13 @@
   <RimMind.UI.DebugTable.Status.Completed>已完成</RimMind.UI.DebugTable.Status.Completed>
   <RimMind.UI.DebugTable.Status.Failed>已失败</RimMind.UI.DebugTable.Status.Failed>
   <RimMind.UI.DebugTable.Status.Cancelled>已取消</RimMind.UI.DebugTable.Status.Cancelled>
+  <RimMind.UI.DebugTable.Mechanisms.NoOperations>无操作</RimMind.UI.DebugTable.Mechanisms.NoOperations>
+  <RimMind.UI.DebugTable.Mechanisms.OperationCount>{0} 个操作</RimMind.UI.DebugTable.Mechanisms.OperationCount>
+  <RimMind.UI.DebugTable.ContextKeys.Priority>优先级 {0}</RimMind.UI.DebugTable.ContextKeys.Priority>
+  <RimMind.UI.DebugTable.ContextKeys.Effective>有效优先级 {0}</RimMind.UI.DebugTable.ContextKeys.Effective>
+  <RimMind.UI.DebugTable.ContextKeys.UpdateCount>更新次数 {0}</RimMind.UI.DebugTable.ContextKeys.UpdateCount>
+  <RimMind.UI.DebugTable.ContextKeys.Model>上下文</RimMind.UI.DebugTable.ContextKeys.Model>
+  <RimMind.UI.DebugTable.ContextKeys.Score>分数 {0}</RimMind.UI.DebugTable.ContextKeys.Score>
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent 状态调试</RimMind.UI.AgentStateDebug.Title>
   <RimMind.UI.AgentStateDebug.NoPawn>未选择小人</RimMind.UI.AgentStateDebug.NoPawn>

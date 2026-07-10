@@ -30,9 +30,9 @@ namespace RimMind.Infrastructure.UI.DebugTables
         {
             string priority = key.Priority.ToString("0.###", CultureInfo.InvariantCulture);
             string effectivePriority = key.GetEffectivePriority().ToString("0.###", CultureInfo.InvariantCulture);
-            string summary = "Priority " + priority
-                + " | Effective " + effectivePriority
-                + " | UpdateCount " + key.UpdateCount;
+            string summary = "RimMind.UI.DebugTable.ContextKeys.Priority".Translate(priority).ToString()
+                + " | " + "RimMind.UI.DebugTable.ContextKeys.Effective".Translate(effectivePriority).ToString()
+                + " | " + "RimMind.UI.DebugTable.ContextKeys.UpdateCount".Translate(key.UpdateCount).ToString();
 
             return DebugTableRow.Create(
                 key.Key,
@@ -41,9 +41,11 @@ namespace RimMind.Infrastructure.UI.DebugTables
                 key.Layer.ToString(),
                 key.OwnerMod ?? string.Empty,
                 key.CacheScope.ToString(),
-                "context",
+                "RimMind.UI.DebugTable.ContextKeys.Model".Translate().ToString(),
                 summary,
-                "score " + key.CurrentScore.ToString("0.###", CultureInfo.InvariantCulture));
+                "RimMind.UI.DebugTable.ContextKeys.Score"
+                    .Translate(key.CurrentScore.ToString("0.###", CultureInfo.InvariantCulture))
+                    .ToString());
         }
     }
 }
