@@ -141,11 +141,13 @@ namespace RimMind.Tests.ArchTests.PhaseP5
         }
 
         [Fact]
-        public void ProgressFloat_Entry_In_Core_Menu()
+        public void ProgressFloat_Is_Not_A_DebugCenter_Overview_Shortcut()
         {
             var content = ReadSourceFile(OverviewPageRelative);
-            Assert.Contains("RimMind.UI.Hub.AgentProgress", content);
-            Assert.Contains("Window_AgentProgressFloat", content);
+
+            Assert.DoesNotContain("RimMind.UI.Hub.AgentProgress", content);
+            Assert.DoesNotContain("Window_AgentProgressFloat", content);
+            Assert.Contains("context.Navigation.GoTo", content);
         }
 
         [Fact]

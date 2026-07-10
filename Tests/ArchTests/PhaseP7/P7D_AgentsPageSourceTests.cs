@@ -35,7 +35,7 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("_drawer.Draw", page);
             Assert.Contains("context.SelectedPawn", page);
             Assert.DoesNotContain("DebugCenterPageRegistry.SelectedPawn", page);
-            Assert.Contains("_selectedPawn", content);
+            Assert.Contains("new DebugCenterPageContext(selectedPawn, _navigation)", content);
         }
 
         [Fact]
