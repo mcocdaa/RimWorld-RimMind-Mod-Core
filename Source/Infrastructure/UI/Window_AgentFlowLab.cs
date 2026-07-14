@@ -69,6 +69,7 @@ namespace RimMind.Infrastructure.UI
         private IAgentControl? _agent;
         private IScopedAgent? _scopedAgent;
         private ContextSnapshot? _lastSnapshot;
+        private Task<ContextSnapshot?>? _contextBuildTask;
         private string _requestStatus = "";
         private string _lastError = "";
         private string _lastDecisionInfo = "";
@@ -487,6 +488,7 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawContextBuilding(ref float y, float w)
         {
+            CompleteContextBuild();
             DrawStepHeader(ref y, w, "RimMind.UI.AgentFlowLab.ContextBuilding", FlowLabStep.BuildContext);
 
             if (DrawNonPawnScope(ref y, w))
@@ -504,8 +506,9 @@ namespace RimMind.Infrastructure.UI
                         if (contextEngine != null)
                         {
                             string npcId = $"NPC-{_selectedPawn.thingIDNumber}";
-                            _lastSnapshot = contextEngine.BuildSnapshotFromEnvelope(npcId, "[AgentFlowLab] Build context");
-                            SetStepStatus(FlowLabStep.BuildContext, _lastSnapshot != null ? StepStatus.Completed : StepStatus.Failed);
+                            _lastSnapshot = null;
+                            _lastError = string.Empty;
+                            _contextBuildTask = contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[AgentFlowLab] Build context");
                         }
                         else
                         {
@@ -647,6 +650,31 @@ namespace RimMind.Infrastructure.UI
                 SetStepStatus(FlowLabStep.SendRequest, StepStatus.Completed);
                 SetStepStatus(FlowLabStep.ParseDecision, StepStatus.Failed);
             }
+        }
+
+        private void CompleteContextBuild()
+        {
+            if (_contextBuildTask == null || !_contextBuildTask.IsCompleted)
+                return;
+
+            var task = _contextBuildTask;
+            _contextBuildTask = null;
+            if (task.IsFaulted)
+            {
+                _lastError = $"BuildContext: {task.Exception?.GetBaseException().Message}";
+                SetStepStatus(FlowLabStep.BuildContext, StepStatus.Failed);
+                return;
+            }
+
+            _lastSnapshot = task.GetAwaiter().GetResult();
+            if (_lastSnapshot == null)
+            {
+                _lastError = "BuildContext: no snapshot returned";
+                SetStepStatus(FlowLabStep.BuildContext, StepStatus.Failed);
+                return;
+            }
+
+            SetStepStatus(FlowLabStep.BuildContext, StepStatus.Completed);
         }
 
         private void HandleLiveRequest()

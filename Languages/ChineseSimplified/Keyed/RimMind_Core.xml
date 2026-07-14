@@ -566,6 +566,7 @@
   <RimMind.UI.AgentStateDebug.QueueState>队列状态</RimMind.UI.AgentStateDebug.QueueState>
   <RimMind.UI.AgentStateDebug.ContextSnapshot>上下文快照</RimMind.UI.AgentStateDebug.ContextSnapshot>
   <RimMind.UI.AgentStateDebug.NoData>无数据</RimMind.UI.AgentStateDebug.NoData>
+  <RimMind.UI.ContextPreview.Loading>正在构建上下文…</RimMind.UI.ContextPreview.Loading>
   <RimMind.UI.AgentStateDebug.QueuePaused>队列状态：已暂停</RimMind.UI.AgentStateDebug.QueuePaused>
   <RimMind.UI.AgentStateDebug.QueueRunning>队列状态：运行中（活跃: {0}，排队: {1}）</RimMind.UI.AgentStateDebug.QueueRunning>
   <RimMind.UI.AgentStateDebug.ScopedAgentTitle>作用域代理：{0}</RimMind.UI.AgentStateDebug.ScopedAgentTitle>

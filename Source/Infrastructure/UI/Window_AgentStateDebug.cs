@@ -3,11 +3,13 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
+using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
 
@@ -18,6 +20,7 @@ namespace RimMind.Infrastructure.UI
         private Vector2 _scrollPos = Vector2.zero;
 
         private string _contextSnapshotSummary = "";
+        private Task<ContextSnapshot?>? _contextSnapshotTask;
         private Pawn? _targetPawn;
         private IAgentControl? _targetAgent;
 
@@ -280,6 +283,7 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawPawnDetail(Rect rect, Pawn pawn, RimMindLayoutScope scope)
         {
+            CompleteContextSnapshotBuild();
             float contentH = CalculatePawnContentHeight(pawn, rect.width);
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
@@ -456,19 +460,8 @@ namespace RimMind.Infrastructure.UI
                 var contextEngine = RimMindServiceLocator.Get<IContextBuilder>();
                 if (contextEngine != null)
                 {
-                    var snapshot = contextEngine.BuildSnapshotFromEnvelope(npcId, "[Debug] AgentStateDebug");
-                    if (snapshot != null)
-                    {
-                        var sb = new StringBuilder();
-                        sb.AppendLine($"Tokens: {snapshot.EstimatedTokens}");
-                        sb.AppendLine($"L0={snapshot.Meta.L0Tokens} L1={snapshot.Meta.L1Tokens} L2={snapshot.Meta.L2Tokens} L3={snapshot.Meta.L3Tokens} L4={snapshot.Meta.L4Tokens}");
-                        sb.AppendLine($"Messages: {snapshot.Messages.Count}");
-                        _contextSnapshotSummary = sb.ToString();
-                    }
-                    else
-                    {
-                        _contextSnapshotSummary = "RimMind.UI.AgentStateDebug.NoData".Translate();
-                    }
+                    _contextSnapshotSummary = "RimMind.UI.ContextPreview.Loading".Translate();
+                    _contextSnapshotTask = contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[Debug] AgentStateDebug");
                 }
                 else
                 {
@@ -510,6 +503,33 @@ namespace RimMind.Infrastructure.UI
             y += RimMindUI.BtnHeight + RimMindUI.Padding;
 
             return y;
+        }
+
+        private void CompleteContextSnapshotBuild()
+        {
+            if (_contextSnapshotTask == null || !_contextSnapshotTask.IsCompleted)
+                return;
+
+            var task = _contextSnapshotTask;
+            _contextSnapshotTask = null;
+            if (task.IsFaulted)
+            {
+                _contextSnapshotSummary = "RimMind.UI.AgentStateDebug.NoData".Translate();
+                return;
+            }
+
+            var snapshot = task.GetAwaiter().GetResult();
+            if (snapshot == null)
+            {
+                _contextSnapshotSummary = "RimMind.UI.AgentStateDebug.NoData".Translate();
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Tokens: {snapshot.EstimatedTokens}");
+            sb.AppendLine($"L0={snapshot.Meta.L0Tokens} L1={snapshot.Meta.L1Tokens} L2={snapshot.Meta.L2Tokens} L3={snapshot.Meta.L3Tokens} L4={snapshot.Meta.L4Tokens}");
+            sb.AppendLine($"Messages: {snapshot.Messages.Count}");
+            _contextSnapshotSummary = sb.ToString();
         }
 
         #endregion

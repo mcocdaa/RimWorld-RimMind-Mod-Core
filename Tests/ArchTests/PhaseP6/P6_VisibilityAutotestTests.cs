@@ -27,5 +27,34 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             Assert.Contains("ReportAutotest(\"P.VisibilityEntrypoints\", pass, fail)", content);
             Assert.Contains("[RIMTEST][Core][{caseId}][{outcome}]", content);
         }
+
+        [Fact]
+        public void LegacyDebugLogWindow_UsesUnifiedRequestTraceView()
+        {
+            var path = Path.Combine(ProjectRoot, "Source", "Infrastructure", "UI", "Window_AIDebugLog.cs");
+            var content = File.ReadAllText(path);
+
+            Assert.Contains("AIRequestsPageDrawer", content);
+            Assert.Contains("_traceDrawer.Draw(inRect, scope)", content);
+            Assert.DoesNotContain("TryGet<IAIDebugLog>", content);
+        }
+
+        [Fact]
+        public void ContextPreviews_UseAsyncBuilderPath()
+        {
+            var sourceFiles = new[]
+            {
+                "Infrastructure/UI/AICoreDebugActions.cs",
+                "Infrastructure/UI/Window_AgentStateDebug.cs",
+                "Infrastructure/UI/Window_AgentFlowLab.cs"
+            };
+
+            foreach (string relativePath in sourceFiles)
+            {
+                string content = File.ReadAllText(Path.Combine(ProjectRoot, "Source", relativePath.Replace('/', Path.DirectorySeparatorChar)));
+                Assert.Contains("BuildSnapshotFromEnvelopeAsync", content);
+                Assert.DoesNotContain(".BuildSnapshotFromEnvelope(", content);
+            }
+        }
     }
 }

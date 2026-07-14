@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
@@ -10,6 +11,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Interfaces.Tools;
+using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Common;
@@ -120,24 +122,25 @@ namespace RimMind.Infrastructure.UI
         [DebugAction("RimMind", "Show Last Prompt", actionType = DebugActionType.Action)]
         public static void ShowLastPrompt()
         {
-            var entries = _debugLog?.Entries;
+            var entries = RimMindServiceLocator.TryGet<IAIRequestTraceLog>()?.Entries;
             if (entries == null || entries.Count == 0)
             {
-                Log.Message("[RimMind-Core] No request records.");
+                Log.Message("[RimMind-Core] No request trace records.");
                 return;
             }
             var last = entries[entries.Count - 1];
-            Log.Message($"[RimMind-Core] Last request ({last.Source}):\n" +
-                        $"=== System Prompt ===\n{last.FullSystemPrompt}\n" +
-                        $"=== User Prompt ===\n{last.FullUserPrompt}\n" +
-                        $"=== Response ===\n{last.FullResponse}");
+            Log.Message($"[RimMind-Core] Last request trace ({last.Source}):\n" +
+                        $"=== System Prompt ===\n{last.SystemPrompt}\n" +
+                        $"=== User Prompt ===\n{last.UserPrompt}\n" +
+                        $"=== Response ===\n{last.Response}\n" +
+                        $"=== Error ===\n{last.Error ?? string.Empty}");
         }
 
         [DebugAction("RimMind", "Clear Debug Log", actionType = DebugActionType.Action)]
         public static void ClearLog()
         {
-            _debugLog?.Clear();
-            Log.Message("[RimMind-Core] Debug log cleared.");
+            RimMindServiceLocator.TryGet<IAIRequestTraceLog>()?.Clear();
+            Log.Message("[RimMind-Core] Request trace log cleared.");
         }
 
         [DebugAction("RimMind", "Clear All Cooldowns", actionType = DebugActionType.Action)]
@@ -166,8 +169,33 @@ namespace RimMind.Infrastructure.UI
             var pawn = Find.Selector.SingleSelectedThing as Pawn;
             if (pawn == null) { RimMindErrors.Warn("[RimMind-Core] Select a pawn first."); return; }
             var npcId = $"NPC-{pawn.thingIDNumber}";
-            var snapshot = _contextEngine?.BuildSnapshotFromEnvelope(npcId, "[Debug] Show context");
-            if (snapshot == null) { RimMindErrors.Warn("[RimMind-Core] ContextEngine not available."); return; }
+            var contextEngine = _contextEngine;
+            if (contextEngine == null) { RimMindErrors.Warn("[RimMind-Core] ContextEngine not available."); return; }
+            _ = LogPawnContextAsync(contextEngine, pawn, npcId);
+            Log.Message("[RimMind-Core] Building selected pawn context asynchronously.");
+        }
+
+        private static async Task LogPawnContextAsync(IContextBuilder contextEngine, Pawn pawn, string npcId)
+        {
+            try
+            {
+                var snapshot = await contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[Debug] Show context");
+                LongEventHandler.ExecuteWhenFinished(() => LogContextSnapshot(pawn, npcId, snapshot));
+            }
+            catch (Exception ex)
+            {
+                LongEventHandler.ExecuteWhenFinished(() =>
+                    RimMindErrors.Warn($"[RimMind-Core] Context preview failed: {ex.Message}"));
+            }
+        }
+
+        private static void LogContextSnapshot(Pawn pawn, string npcId, ContextSnapshot? snapshot)
+        {
+            if (snapshot == null)
+            {
+                RimMindErrors.Warn("[RimMind-Core] Context preview returned no snapshot.");
+                return;
+            }
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"[RimMind-Core] Context Snapshot for {pawn.Name?.ToStringShort} (NpcId={npcId}):");
             sb.AppendLine($"Estimated tokens: {snapshot.EstimatedTokens}");

@@ -566,6 +566,7 @@
   <RimMind.UI.AgentStateDebug.QueueState>Queue State</RimMind.UI.AgentStateDebug.QueueState>
   <RimMind.UI.AgentStateDebug.ContextSnapshot>Context Snapshot</RimMind.UI.AgentStateDebug.ContextSnapshot>
   <RimMind.UI.AgentStateDebug.NoData>No Data</RimMind.UI.AgentStateDebug.NoData>
+  <RimMind.UI.ContextPreview.Loading>Building context…</RimMind.UI.ContextPreview.Loading>
   <RimMind.UI.AgentStateDebug.QueuePaused>Queue: Paused</RimMind.UI.AgentStateDebug.QueuePaused>
   <RimMind.UI.AgentStateDebug.QueueRunning>Queue: Running (Active: {0}, Queued: {1})</RimMind.UI.AgentStateDebug.QueueRunning>
   <RimMind.UI.AgentStateDebug.ScopedAgentTitle>Scoped Agent: {0}</RimMind.UI.AgentStateDebug.ScopedAgentTitle>
