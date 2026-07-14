@@ -109,6 +109,7 @@
     <Compile Include="../Source/Presentation/UI/Layout/LayoutTraceRecorder.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/LayoutConflictStore.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/RimMindLayoutScope.cs" />
+    <Compile Include="../Source/Infrastructure/UI/Layout/LayoutAutotestEvaluator.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindWindowBase.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindITabBase.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindMainTabWindowBase.cs" />
