@@ -15,14 +15,10 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             var content = File.ReadAllText(path);
 
             Assert.Contains("[DebugAction(\"Autotests\", \"Test P Visibility Entrypoints\"", content);
-            Assert.Contains("Window_RequestLog", content);
-            Assert.Contains("Window_ToolCallDebug", content);
-            Assert.Contains("Window_MechanismStatus", content);
-            Assert.Contains("Window_ContextKeyDebug", content);
-            Assert.Contains("Window_AgentStateDebug", content);
-            Assert.Contains("Window_AgentModeDebug", content);
-            Assert.Contains("Window_AgentFlowLab", content);
-            Assert.Contains("Window_AgentProgressFloat", content);
+            Assert.Contains("DebugCenterPageRegistry.Find(pageId)", content);
+            Assert.Contains("DebugCenterPageRegistry.Create(pageId)", content);
+            Assert.Contains("\"ai_requests\"", content);
+            Assert.Contains("\"context_keys\"", content);
             Assert.Contains("ContentFinder<Texture2D>.Get(\"UI/RimMind/Icon\", false)", content);
             Assert.Contains("ReportAutotest(\"P.VisibilityEntrypoints\", pass, fail)", content);
             Assert.Contains("[RIMTEST][Core][{caseId}][{outcome}]", content);

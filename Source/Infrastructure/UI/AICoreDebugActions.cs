@@ -20,6 +20,7 @@ using RimMind.Domain.Llm;
 using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Infrastructure.UI.DebugCenter;
 using LudeonTK;
 using RimWorld;
 using UnityEngine;
@@ -603,14 +604,15 @@ namespace RimMind.Infrastructure.UI
             }
 
             Check("Core icon asset", () => ContentFinder<Texture2D>.Get("UI/RimMind/Icon", false) != null);
-            Check("Request log window", () => new Window_RequestLog() != null);
-            Check("ToolCall debug window", () => new Window_ToolCallDebug() != null);
-            Check("Mechanism status window", () => new Window_MechanismStatus() != null);
-            Check("Context key window", () => new Window_ContextKeyDebug() != null);
-            Check("Agent state window", () => new Window_AgentStateDebug(pawn: null) != null);
-            Check("Agent mode window", () => new Window_AgentModeDebug(null) != null);
-            Check("Agent flow lab", () => new Window_AgentFlowLab(null) != null);
-            Check("Agent progress float", () => new Window_AgentProgressFloat() != null);
+            foreach (string pageId in new[]
+            {
+                "overview", "agents", "ai_requests", "tool_calls", "mechanisms", "context_keys", "settings"
+            })
+            {
+                Check($"Debug center page: {pageId}", () =>
+                    DebugCenterPageRegistry.Find(pageId) != null
+                    && DebugCenterPageRegistry.Create(pageId) != null);
+            }
 
             sb.AppendLine($"Summary: {pass} passed, {fail} failed");
             if (fail > 0) Log.Error(sb.ToString());
