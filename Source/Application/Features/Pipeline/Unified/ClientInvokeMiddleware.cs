@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Pipeline;
@@ -20,10 +21,12 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
         private readonly ILogSink? _log;
+        private readonly IAIRequestTraceLog? _traceLog;
 
-        public ClientInvokeMiddleware(ILogSink? log = null)
+        public ClientInvokeMiddleware(ILogSink? log = null, IAIRequestTraceLog? traceLog = null)
         {
             _log = log;
+            _traceLog = traceLog;
         }
 
         public async Task InvokeAsync(LlmRequestContext context, MiddlewareDelegate<LlmRequestContext> next)
@@ -52,6 +55,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
         private async Task InvokeNonStreamingAsync(LlmRequestContext context, IAIClient client)
         {
+            RecordFinalPrompts(context.Envelope);
             var result = await client.SendAsync(context.Envelope);
             if (result.IsOk)
             {
@@ -66,6 +70,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
 
         private async Task InvokeStreamingAsync(LlmRequestContext context, IAIClient client)
         {
+            RecordFinalPrompts(context.Envelope);
             // Streaming: use SendStreamAsync with callback; the Result now carries the final LlmResponse
             var aggregator = new ChunkAggregator(context.Envelope.RequestId);
             var result = await client.SendStreamAsync(context.Envelope, chunk =>
@@ -104,6 +109,40 @@ namespace RimMind.Application.Features.Pipeline.Unified
             };
 
             context.Result = Result<LlmResponse, RimMindError>.Ok(enriched);
+        }
+
+        private void RecordFinalPrompts(LlmRequestEnvelope envelope)
+        {
+            if (_traceLog == null)
+                return;
+
+            _traceLog.UpdateRequestPrompts(
+                envelope.RequestId,
+                BuildPrompt(envelope, "system"),
+                BuildPrompt(envelope, "user"),
+                BuildPrompt(envelope, "assistant"));
+        }
+
+        private static string BuildPrompt(LlmRequestEnvelope envelope, string role)
+        {
+            var messages = envelope.Messages;
+            if (messages == null || messages.Count == 0)
+                return string.Empty;
+
+            var text = new System.Text.StringBuilder();
+            foreach (var message in messages)
+            {
+                if (!string.Equals(message.Role, role, StringComparison.OrdinalIgnoreCase)
+                    || string.IsNullOrWhiteSpace(message.Content))
+                    continue;
+
+                if (text.Length > 0)
+                    text.AppendLine().AppendLine();
+                if (!string.IsNullOrWhiteSpace(message.LayerTag))
+                    text.Append('[').Append(message.LayerTag).Append("] ");
+                text.Append(message.Content);
+            }
+            return text.ToString();
         }
     }
 }

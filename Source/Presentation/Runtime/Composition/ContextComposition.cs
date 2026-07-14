@@ -54,11 +54,11 @@ namespace RimMind.Presentation.Runtime.Composition
             var diffTracker = new ContextDiffTracker(logSink);
             var keyProvider = new DefaultContextKeyProvider();
             var layerBuilder = new ContextLayerBuilder(keyProvider, logSink);
-            var keyRegistryImpl = new ContextKeyRegistryImpl(logSink);
+            var providerCache = new ProviderCache(agentBus, logSink, tickProvider);
+            var keyRegistryImpl = new ContextKeyRegistryImpl(logSink, providerCache);
             var relevanceTableImpl = new RelevanceTableImpl();
             var relevanceLearner = new RelevanceLearner(tickProvider);
             var budgetScheduler = new BudgetScheduler(relevanceTableImpl, relevanceLearner, tickProvider, cacheManager.EmbedCache);
-            var providerCache = new ProviderCache(agentBus, logSink, tickProvider);
             var schemaRegistry = new SchemaRegistry(logSink);
             var buildServices = new ContextBuildServices(cacheManager, diffTracker, layerBuilder, budgetScheduler);
 

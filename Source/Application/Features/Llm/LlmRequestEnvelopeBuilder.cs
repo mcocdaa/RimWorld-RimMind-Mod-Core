@@ -17,6 +17,7 @@ namespace RimMind.Application.Features.Llm
         private ToolCallDispatchMode _toolDispatchMode = ToolCallDispatchMode.Auto;
         private List<ChatMessage>? _examples;
         private List<ChatMessage>? _messages;
+        private List<PromptAugmentation>? _systemAugmentations;
         private AIRequestPriority _priority = AIRequestPriority.Normal;
         private bool _isStreaming;
         private Action<LlmChunk>? _onStreamChunk;
@@ -77,15 +78,15 @@ namespace RimMind.Application.Features.Llm
             return this;
         }
 
-        public LlmRequestEnvelopeBuilder WithSchema(string jsonSchema)
+        public LlmRequestEnvelopeBuilder WithSchema(string? jsonSchema)
         {
             _jsonSchema = jsonSchema;
             return this;
         }
 
-        public LlmRequestEnvelopeBuilder WithTools(IEnumerable<StructuredTool> tools)
+        public LlmRequestEnvelopeBuilder WithTools(IEnumerable<StructuredTool>? tools)
         {
-            _tools = new List<StructuredTool>(tools);
+            _tools = tools?.ToList();
             return this;
         }
 
@@ -104,6 +105,12 @@ namespace RimMind.Application.Features.Llm
         public LlmRequestEnvelopeBuilder WithMessages(IEnumerable<ChatMessage> messages)
         {
             _messages = new List<ChatMessage>(messages);
+            return this;
+        }
+
+        public LlmRequestEnvelopeBuilder WithSystemAugmentations(IEnumerable<PromptAugmentation>? augmentations)
+        {
+            _systemAugmentations = augmentations?.ToList();
             return this;
         }
 
@@ -161,6 +168,9 @@ namespace RimMind.Application.Features.Llm
                 ScenarioId = _scenarioId!,
                 ModId = _modId ?? _scenarioId!,
                 Messages = _messages ?? new List<ChatMessage>(),
+                SystemAugmentations = _systemAugmentations != null
+                    ? new List<PromptAugmentation>(_systemAugmentations)
+                    : null,
                 JsonSchema = _jsonSchema,
                 Tools = _tools,
                 ToolDispatchMode = _toolDispatchMode,

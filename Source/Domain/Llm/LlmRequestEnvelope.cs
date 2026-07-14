@@ -14,6 +14,7 @@ namespace RimMind.Domain.Llm
 
         // === Content ===
         public List<ChatMessage> Messages { get; init; } = new();
+        public List<PromptAugmentation>? SystemAugmentations { get; set; }
         public string? JsonSchema { get; init; }
         public List<StructuredTool>? Tools { get; init; }
         public ToolCallDispatchMode ToolDispatchMode { get; init; } = ToolCallDispatchMode.Auto;

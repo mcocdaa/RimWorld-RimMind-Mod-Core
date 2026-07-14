@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Domain.ValueObjects;
 
 namespace RimMind.Application.Features.Context
 {
     /// <summary>
     /// Staleness cache for async context providers. Caches provider results keyed by
-    /// (provider key, npcId, pawnId) and respects staleness ticks and invalidation triggers.
+    /// provider key plus the provider's declared cache scope identity, and respects
+    /// staleness ticks and invalidation triggers.
     /// </summary>
     public sealed class ProviderCache
     {
@@ -19,10 +21,13 @@ namespace RimMind.Application.Features.Context
         private readonly IAgentBus? _bus;
         private readonly ILogSink? _log;
         private readonly ITickProvider? _tickProvider;
+        private readonly ConcurrentDictionary<InvalidationSubscriptionKey, byte> _invalidationSubscriptions = new();
 
-        private readonly record struct CacheKey(string Key, string NpcId, int PawnId);
+        private readonly record struct CacheKey(string Key, CacheScope Scope, string ScopeIdentity);
 
-        private readonly record struct CacheEntry(string? Value, int ComputedAtTicks);
+        private readonly record struct CacheEntry(string? Value, int ComputedAtTicks, string NpcId, CacheScope Scope);
+
+        private readonly record struct InvalidationSubscriptionKey(string ProviderKey, string EventName);
 
         public ProviderCache(IAgentBus? bus = null, ILogSink? log = null, ITickProvider? tickProvider = null)
         {
@@ -40,7 +45,13 @@ namespace RimMind.Application.Features.Context
             if (_bus == null || def.InvalidationTriggers == null) return;
             foreach (var eventName in def.InvalidationTriggers)
             {
-                _bus.SubscribeByName(eventName, _ => InvalidateKey(def.Key));
+                if (string.IsNullOrWhiteSpace(eventName)) continue;
+
+                var subscriptionKey = new InvalidationSubscriptionKey(def.Key, eventName);
+                if (_invalidationSubscriptions.TryAdd(subscriptionKey, 0))
+                {
+                    _bus.SubscribeByName(eventName, _ => InvalidateKey(def.Key));
+                }
             }
         }
 
@@ -56,7 +67,7 @@ namespace RimMind.Application.Features.Context
         {
             ct.ThrowIfCancellationRequested();
 
-            var cacheKey = new CacheKey(def.Key, ctx.NpcId ?? "", ctx.PawnId);
+            var cacheKey = new CacheKey(def.Key, def.CacheScope, GetScopeIdentity(def.CacheScope, ctx));
             var currentTicks = _tickProvider?.TicksGame ?? 0;
 
             // StalenessTicks == 0 means "no caching" — always call the provider.
@@ -76,7 +87,7 @@ namespace RimMind.Application.Features.Context
                 // Only cache if StalenessTicks > 0 (caching enabled)
                 if (def.StalenessTicks > 0)
                 {
-                    _entries[cacheKey] = new CacheEntry(value, currentTicks);
+                    _entries[cacheKey] = new CacheEntry(value, currentTicks, ctx.NpcId ?? string.Empty, def.CacheScope);
                 }
 
                 return value;
@@ -112,7 +123,7 @@ namespace RimMind.Application.Features.Context
             var keysToRemove = new List<CacheKey>();
             foreach (var kvp in _entries)
             {
-                if (kvp.Key.NpcId == npcId)
+                if (kvp.Value.Scope == CacheScope.Pawn && kvp.Value.NpcId == npcId)
                     keysToRemove.Add(kvp.Key);
             }
             foreach (var k in keysToRemove)
@@ -122,5 +133,20 @@ namespace RimMind.Application.Features.Context
         public void Clear() => _entries.Clear();
 
         public int Count => _entries.Count;
+
+        private static string GetScopeIdentity(CacheScope scope, ProviderContext ctx)
+        {
+            return scope switch
+            {
+                CacheScope.Static => "static",
+                CacheScope.Pawn => ctx.PawnId != 0
+                    ? "pawn:" + ctx.PawnId
+                    : "pawn:npc:" + (ctx.NpcId ?? "trace:" + ctx.TraceId),
+                CacheScope.Map => "map:" + (ctx.MapId?.ToString() ?? "none"),
+                CacheScope.Storyteller => "storyteller",
+                CacheScope.Scenario => "scenario:" + ctx.Scenario,
+                _ => "scenario:" + ctx.Scenario
+            };
+        }
     }
 }

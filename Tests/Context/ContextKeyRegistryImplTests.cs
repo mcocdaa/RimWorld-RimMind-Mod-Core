@@ -1,7 +1,14 @@
+using System.Threading;
+using System.Threading.Tasks;
+using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Features.AgentBus;
 using System.Collections.Generic;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.ValueObjects;
+using RimMind.Domain.Events;
 using Xunit;
 
 namespace RimMind.Tests.Context
@@ -139,6 +146,87 @@ namespace RimMind.Tests.Context
 
             var all = _registry.GetAll();
             Assert.Equal(3, all.Count);
+        }
+
+        [Fact]
+        public async Task Register_ProviderWithInvalidationTrigger_RecomputesAfterBusPublish()
+        {
+            var ticks = new RegistryTickProvider { TicksGame = 100 };
+            var bus = new AgentBusImpl();
+            bus.RegisterEventType("ProviderChanged", typeof(AgentBusEvent));
+            var cache = new ProviderCache(bus, tickProvider: ticks);
+            var registry = new ContextKeyRegistryImpl(providerCache: cache);
+            int calls = 0;
+            var def = new ContextProviderDef(
+                key: "invalidated_provider",
+                layer: ContextLayer.L2_Environment,
+                priority: 1.0f,
+                provider: (_, _) => Task.FromResult<string?>("value_" + ++calls),
+                stalenessTicks: 600,
+                invalidationTriggers: new[] { "ProviderChanged" });
+            var context = new ProviderContext("dialogue", "trace");
+
+            registry.Register(def);
+            var first = await cache.GetOrComputeAsync(def, context, CancellationToken.None);
+            bus.Publish(new AgentBusEvent());
+            var second = await cache.GetOrComputeAsync(def, context, CancellationToken.None);
+
+            Assert.Equal("value_1", first);
+            Assert.Equal("value_2", second);
+            Assert.Equal(2, calls);
+        }
+
+        [Fact]
+        public async Task Register_SameProviderInvalidationTriggerTwice_SubscribesOnlyOnce()
+        {
+            var ticks = new RegistryTickProvider { TicksGame = 100 };
+            var bus = new CountingAgentBus();
+            var cache = new ProviderCache(bus, tickProvider: ticks);
+            var registry = new ContextKeyRegistryImpl(providerCache: cache);
+            var def = new ContextProviderDef(
+                key: "deduplicated_provider",
+                layer: ContextLayer.L2_Environment,
+                priority: 1.0f,
+                provider: (_, _) => Task.FromResult<string?>("value"),
+                invalidationTriggers: new[] { "ProviderChanged" });
+
+            registry.Register(def);
+            registry.Register(def);
+
+            Assert.Equal(1, bus.SubscribeByNameCalls);
+            await Task.CompletedTask;
+        }
+
+        private sealed class RegistryTickProvider : ITickProvider
+        {
+            public int TicksGame { get; set; }
+        }
+
+        private sealed class CountingAgentBus : IAgentBus
+        {
+            public int SubscribeByNameCalls { get; private set; }
+
+            public event System.Action? SubscribersCleared;
+
+            public void Publish<T>(T evt) where T : AgentBusEvent { }
+            public void PublishFromBackground<T>(T evt) where T : AgentBusEvent { }
+            public string Subscribe<T>(System.Action<T> handler) where T : AgentBusEvent => "unused";
+            public void Subscribe<T>(string key, System.Action<T> handler) where T : AgentBusEvent { }
+            public void Unsubscribe<T>(string key) where T : AgentBusEvent { }
+            [System.Obsolete]
+            public void Unsubscribe<T>(System.Action<T> handler) where T : AgentBusEvent { }
+            public string SubscribeByName(string eventTypeName, System.Action<AgentBusEvent> handler)
+            {
+                SubscribeByNameCalls++;
+                return "subscription_" + SubscribeByNameCalls;
+            }
+            public void SetPipeline(RimMind.Application.Common.Interfaces.Pipeline.IPipeline<RimMind.Application.Common.Models.Pipeline.BusPublishContext> pipeline) { }
+            public void FlushBackgroundQueue() { }
+            public void ClearAllSubscribers() => SubscribersCleared?.Invoke();
+            public int GetHandlerCount() => 0;
+            public int GetBackgroundQueueCount() => 0;
+            public System.Action<AgentBusEvent>? DispatchAction => null;
+            public void RegisterEventType(string name, System.Type eventType) { }
         }
     }
 }

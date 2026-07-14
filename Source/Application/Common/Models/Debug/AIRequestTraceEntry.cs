@@ -27,6 +27,8 @@ namespace RimMind.Application.Common.Models.Debug
         public string? Error { get; set; }
         public int TokensUsed { get; set; }
         public int ElapsedMs { get; set; }
+        public System.DateTime StartedAtUtc { get; set; }
+        public System.DateTime? FinishedAtUtc { get; set; }
         public AIRequestTraceState State { get; set; } = AIRequestTraceState.Running;
         public List<AIRequestToolCallTrace> ToolCalls { get; } = new();
     }

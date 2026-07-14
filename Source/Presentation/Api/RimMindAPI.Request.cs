@@ -59,7 +59,6 @@ namespace RimMind.Presentation.Api
                     return;
                 }
 
-                var ctx = new LlmRequestContext { Envelope = envelope, Client = client };
                 var traceLog = RimMindRuntime.Instance.GetService<IAIRequestTraceLog>();
                 var elapsed = Stopwatch.StartNew();
                 traceLog?.StartRequest(
@@ -70,18 +69,10 @@ namespace RimMind.Presentation.Api
                     BuildTracePrompt(envelope, "user"),
                     BuildTracePrompt(envelope, "assistant"));
 
-                RimMindRuntime.Instance.UnifiedPipeline.ExecuteAsync(ctx).ContinueWith(task =>
+                var executor = new QueuedPipelineRequestExecutor(RimMindRuntime.Instance.UnifiedPipeline, client, envelope);
+                RimMindRuntime.Instance.Queue.Enqueue(envelope, result =>
                 {
                     elapsed.Stop();
-                    if (task.IsFaulted)
-                    {
-                        var message = task.Exception?.GetBaseException().Message ?? "Pipeline execution failed.";
-                        traceLog?.FailRequest(envelope.RequestId, message);
-                        onComplete?.Invoke(Result<LlmResponse, RimMindError>.Err(RimMindErrors.Internal(message)), ctx);
-                        return;
-                    }
-
-                    var result = ctx.Result ?? Result<LlmResponse, RimMindError>.Err(RimMindErrors.Internal("Pipeline produced no result."));
                     if (result.IsOk)
                     {
                         var response = result.Value;
@@ -89,11 +80,11 @@ namespace RimMind.Presentation.Api
                     }
                     else
                     {
-                        traceLog?.FailRequest(envelope.RequestId, result.Error.Message);
+                        traceLog?.FailRequest(envelope.RequestId, result.Error.Message, (int)elapsed.ElapsedMilliseconds);
                     }
 
-                    onComplete?.Invoke(result, ctx);
-                }, TaskContinuationOptions.ExecuteSynchronously);
+                    onComplete?.Invoke(result, executor.Context!);
+                }, ct => executor.ExecuteAsync(envelope, ct), client.IsLocalEndpoint);
             }
 
             /// <summary>Unified async request entry (Task style)</summary>
@@ -106,10 +97,11 @@ namespace RimMind.Presentation.Api
 
             private static string GetTraceSource(LlmRequestEnvelope envelope)
             {
-                if (!string.IsNullOrWhiteSpace(envelope.NpcId)) return $"npc:{envelope.NpcId}";
-                if (!string.IsNullOrWhiteSpace(envelope.ModId)) return envelope.ModId;
-                if (!string.IsNullOrWhiteSpace(envelope.ScenarioId)) return envelope.ScenarioId;
-                return "unknown";
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(envelope.ModId)) parts.Add($"mod:{envelope.ModId}");
+                if (!string.IsNullOrWhiteSpace(envelope.ScenarioId)) parts.Add($"scenario:{envelope.ScenarioId}");
+                if (!string.IsNullOrWhiteSpace(envelope.NpcId)) parts.Add($"npc:{envelope.NpcId}");
+                return parts.Count > 0 ? string.Join(" | ", parts) : "unknown";
             }
 
             private static string BuildTracePrompt(LlmRequestEnvelope envelope, string role)

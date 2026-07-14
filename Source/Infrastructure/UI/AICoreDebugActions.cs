@@ -542,6 +542,7 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  Result: {pass} passed, {fail} failed");
             Log.Message(sb.ToString());
+            ReportAutotest("H2", pass, fail);
         }
 
         [DebugAction("Autotests", "Test P Visibility Entrypoints", actionType = DebugActionType.Action)]
@@ -586,6 +587,7 @@ namespace RimMind.Infrastructure.UI
             sb.AppendLine($"Summary: {pass} passed, {fail} failed");
             if (fail > 0) Log.Error(sb.ToString());
             else Log.Message(sb.ToString());
+            ReportAutotest("P.VisibilityEntrypoints", pass, fail);
         }
 
         [DebugAction("Autotests", "Test K Unified Request", actionType = DebugActionType.Action)]
@@ -665,6 +667,7 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  Result: {pass} passed, {fail} failed");
             Log.Message(sb.ToString());
+            ReportAutotest("K.UnifiedRequest", pass, fail);
         }
 
         [DebugAction("Autotests", "Test L Context Evolution", actionType = DebugActionType.Action)]
@@ -774,6 +777,7 @@ namespace RimMind.Infrastructure.UI
 
             sb.AppendLine($"  Result: {pass} passed, {fail} failed");
             Log.Message(sb.ToString());
+            ReportAutotest("L.ContextEvolution", pass, fail);
         }
 
         [DebugAction("RimMind", "Dump UI Layout Conflicts", actionType = DebugActionType.Action)]
@@ -874,6 +878,8 @@ namespace RimMind.Infrastructure.UI
                     Log.Message("[Autotests] Some windows did not publish reports yet. Open them manually and run 'Dump UI Layout Conflicts'.");
                 }
 
+                ReportAutotest("UI.LayoutConflict", pass, fail, skip);
+
                 foreach (var w in windows)
                 {
                     if (w.IsOpen)
@@ -882,6 +888,12 @@ namespace RimMind.Infrastructure.UI
                     }
                 }
             });
+        }
+
+        private static void ReportAutotest(string caseId, int pass, int fail, int skip = 0)
+        {
+            string outcome = fail > 0 ? "FAIL" : "PASS";
+            Log.Message($"[RIMTEST][Core][{caseId}][{outcome}] pass={pass} fail={fail} skip={skip}");
         }
     }
 }

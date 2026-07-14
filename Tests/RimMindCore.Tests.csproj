@@ -25,6 +25,7 @@
     <Compile Include="Result\*.cs" />
     <Compile Include="ScenarioRegistryTests.cs" />
     <Compile Include="ThreadSafetyTests.cs" />
+    <Compile Include="Queue\*.cs" />
     <Compile Include="Pipeline\Unified\*.cs" />
     <Compile Include="Context\Diff\*.cs" />
     <Compile Include="Context\ContextCacheManagerTests.cs" />
@@ -40,6 +41,7 @@
     <Compile Include="Context\RelevanceLearnerTests.cs" />
     <Compile Include="Context\AIResponseAnalyzerTests.cs" />
     <Compile Include="Context\ContextLayerBuilderAsyncTests.cs" />
+    <Compile Include="Context\ContextOrchestratorSyncParityTests.cs" />
     <Compile Include="ArchTests\PhaseL\*.cs" />
     <Compile Include="ArchTests\PhaseN\*.cs" />
     <Compile Include="ArchTests\PhaseO\*.cs" />
@@ -56,6 +58,7 @@
     <Compile Include="Domain\ValueObjects\*.cs" />
     <Compile Include="Domain\Llm\*.cs" />
     <Compile Include="Application\Models\Pipeline\*.cs" />
+    <Compile Include="Application\MemoryBridgeTests.cs" />
     <Compile Include="Application\Stubs\*.cs" />
     <Compile Include="Application\Features\Agent\*.cs" />
     <Compile Include="Application\Features\Agent\Social\*.cs" />
@@ -99,6 +102,9 @@
     <Compile Include="../Source/Infrastructure/UI/DebugTables/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Presentation/UI/Framework/*.cs" />
+    <Compile Include="../Source/Presentation/Context/ContextBuildServices.cs" />
+    <Compile Include="../Source/Presentation/Context/ContextOrchestrator.cs" />
+    <Compile Include="../Source/Presentation/Api/RimMindAPI.Memory.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/LayoutConflict.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/LayoutTraceRecorder.cs" />
     <Compile Include="../Source/Presentation/UI/Layout/LayoutConflictStore.cs" />

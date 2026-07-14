@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Models.Debug;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
+using RimMind.Infrastructure.Verse;
 using Xunit;
 
 namespace RimMind.Tests.Pipeline.Unified
@@ -173,6 +175,25 @@ namespace RimMind.Tests.Pipeline.Unified
 
             Assert.NotNull(context.Result);
             Assert.True(context.Result!.Value.IsErr);
+        }
+
+        [Fact]
+        public async Task NonStreaming_UpdatesTraceWithFinalMessagesSentToClient()
+        {
+            var client = new StubNonStreamingClient(
+                Result<LlmResponse, RimMindError>.Ok(new LlmResponse { RequestId = "req-1", Content = "ok" }));
+            var traceLog = new AIRequestTraceLog();
+            traceLog.StartRequest("req-1", "raw", "model", "stale", "stale", "");
+            var middleware = new ClientInvokeMiddleware(traceLog: traceLog);
+            var context = CreateContext(client: client, isStreaming: false);
+            context.Envelope.Messages.Add(new ChatMessage { Role = "system", LayerTag = "L0", Content = "final system" });
+            context.Envelope.Messages.Add(new ChatMessage { Role = "user", Content = "final user" });
+
+            await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+
+            var entry = Assert.Single(traceLog.Entries);
+            Assert.Equal("[L0] final system", entry.SystemPrompt);
+            Assert.Equal("final user", entry.UserPrompt);
         }
     }
 }

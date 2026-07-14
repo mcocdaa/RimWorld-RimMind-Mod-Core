@@ -58,6 +58,20 @@ namespace RimMind.Tests.Presentation.UI
         }
 
         [Fact]
+        public void FailRequest_WithElapsedTime_RecordsTerminalTiming()
+        {
+            var log = new AIRequestTraceLog();
+            log.StartRequest("req-1", "pawn:42", "deepseek-chat", "", "hello", "");
+
+            log.FailRequest("req-1", "timeout", elapsedMs: 42);
+
+            var entry = Assert.Single(log.Entries);
+            Assert.Equal(42, entry.ElapsedMs);
+            Assert.NotNull(entry.FinishedAtUtc);
+            Assert.NotEqual(default, entry.StartedAtUtc);
+        }
+
+        [Fact]
         public void AddToolCall_Attaches_To_Request()
         {
             var log = new AIRequestTraceLog();

@@ -47,7 +47,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 new TelemetryMiddleware(telemetry, log),
                 new CircuitBreakerMiddleware(circuitBreakerSettings, log),
                 new RetryMiddleware(log: log),
-                new ClientInvokeMiddleware(log),
+                new ClientInvokeMiddleware(log, requestTraceLog),
                 new ToolCallDispatchMiddleware(toolRegistry, log, requestTraceLog),
                 new OutputGuardrailMiddleware()
             };

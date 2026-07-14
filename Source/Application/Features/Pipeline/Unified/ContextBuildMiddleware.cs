@@ -43,6 +43,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
             if (envelope.Messages != null && envelope.Messages.Count > 0)
             {
                 _log?.Message($"[UnifiedContextBuild] Messages already populated ({envelope.Messages.Count}), skipping context build");
+                ApplySystemAugmentations(envelope);
                 await next(context);
                 return;
             }
@@ -97,9 +98,20 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 messages.Add(msg);
             }
 
+            ApplySystemAugmentations(envelope);
+
             _log?.Message($"[UnifiedContextBuild] Built context for NPC {npcId}: {snapshot.Messages.Count} messages, {snapshot.EstimatedTokens} tokens");
 
             await next(context);
+        }
+
+        private static void ApplySystemAugmentations(LlmRequestEnvelope envelope)
+        {
+            if (envelope.SystemAugmentations == null)
+                return;
+
+            PromptAugmentation.InsertAfterLastSystem(envelope.Messages, envelope.SystemAugmentations);
+            envelope.SystemAugmentations = null;
         }
 
     }

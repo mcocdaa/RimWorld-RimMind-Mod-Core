@@ -274,8 +274,10 @@ public sealed class DebugTableModelBuilderTests
         }
 
         public void StartRequest(string requestId, string source, string model, string systemPrompt, string userPrompt, string assistantPrompt) { }
+        public void UpdateRequestPrompts(string requestId, string systemPrompt, string userPrompt, string assistantPrompt) { }
         public void CompleteRequest(string requestId, string response, int tokensUsed, int elapsedMs) { }
         public void FailRequest(string requestId, string error) { }
+        public void FailRequest(string requestId, string error, int elapsedMs) { }
         public void AddToolCall(string requestId, string toolCallId, string toolName, bool succeeded, string? error) { }
         public void Clear() { }
     }

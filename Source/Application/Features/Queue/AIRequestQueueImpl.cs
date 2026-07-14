@@ -7,15 +7,56 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models;
+using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using AIRequestState = RimMind.Domain.Llm.AIRequestState;
 
 namespace RimMind.Application.Features.Queue
 {
+    /// <summary>
+    /// Adapts a real unified-pipeline invocation to the queue's cancellable executor contract.
+    /// </summary>
+    public sealed class QueuedPipelineRequestExecutor
+    {
+        private readonly IPipeline<LlmRequestContext> _pipeline;
+        private readonly IAIClient _client;
+
+        public LlmRequestContext? Context { get; private set; }
+
+        public QueuedPipelineRequestExecutor(IPipeline<LlmRequestContext> pipeline, IAIClient client)
+        {
+            _pipeline = pipeline;
+            _client = client;
+        }
+
+        /// <summary>
+        /// Creates the callback context before queue execution begins.  A queued request can
+        /// be cancelled before the executor receives the queue-linked token, but callers of
+        /// the two-argument API must still receive a non-null context in that case.
+        /// </summary>
+        public QueuedPipelineRequestExecutor(
+            IPipeline<LlmRequestContext> pipeline,
+            IAIClient client,
+            LlmRequestEnvelope envelope)
+            : this(pipeline, client)
+        {
+            Context = new LlmRequestContext(envelope, ct: envelope.Ct) { Client = client };
+        }
+
+        public async Task<Result<LlmResponse, RimMindError>> ExecuteAsync(LlmRequestEnvelope envelope, CancellationToken ct)
+        {
+            Context = new LlmRequestContext(envelope, ct: ct) { Client = _client };
+            await _pipeline.ExecuteAsync(Context);
+            return Context.Result ?? Result<LlmResponse, RimMindError>.Err(
+                RimMindErrors.Internal("Pipeline produced no result."));
+        }
+    }
+
     public class AIRequestQueueImpl : IAIRequestQueueTickable
     {
         private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;
@@ -96,9 +137,38 @@ namespace RimMind.Application.Features.Queue
             _circuitBreaker.ClearAllCooldowns();
         }
 
-        public void CancelAllRequests() { _cts.Cancel(); _cts.Dispose(); _cts = new CancellationTokenSource(); }
+        public void CancelAllRequests()
+        {
+            lock (_queueLock)
+            {
+                var previous = _cts;
+                _cts = new CancellationTokenSource();
+                previous.Cancel();
+
+                var cancelled = Result<LlmResponse, RimMindError>.Err(
+                    new RimMindError(RimMindErrorCode.Cancelled, "Request cancelled"));
+                foreach (var tracked in _activeRequests.Values.ToList())
+                {
+                    tracked.CancellationSource?.Cancel();
+                    Complete(tracked, cancelled);
+                }
+                foreach (var queue in _modQueues.Values)
+                {
+                    foreach (var tracked in queue.ToList()) Complete(tracked, cancelled);
+                    queue.Clear();
+                }
+                previous.Dispose();
+            }
+        }
 
         public void Enqueue(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> callback, IAIClient client)
+            => Enqueue(envelope, callback, _ => client.SendAsync(envelope), client.IsLocalEndpoint);
+
+        public void Enqueue(
+            LlmRequestEnvelope envelope,
+            Action<Result<LlmResponse, RimMindError>> callback,
+            Func<CancellationToken, Task<Result<LlmResponse, RimMindError>>> executor,
+            bool isLocalEndpoint = false)
         {
             lock (_queueLock)
             {
@@ -107,8 +177,8 @@ namespace RimMind.Application.Features.Queue
                 int trackingId = _nextTrackingId++;
                 var tracked = new TrackedRequest
                 {
-                    TrackingId = trackingId, Envelope = envelope, Callback = callback, Client = client,
-                    IsLocalEndpointSnapshot = client.IsLocalEndpoint, State = AIRequestState.Queued,
+                    TrackingId = trackingId, Envelope = envelope, Callback = callback, Executor = executor,
+                    IsLocalEndpointSnapshot = isLocalEndpoint, State = AIRequestState.Queued,
                     EnqueuedAtTick = CurrentTick, AttemptCount = 1, MaxAttempts = 1,
                 };
                 int insertIdx = queue.FindIndex(t => t.Envelope.Priority > envelope.Priority);
@@ -132,7 +202,7 @@ namespace RimMind.Application.Features.Queue
                 int trackingId = _nextTrackingId++;
                 var tracked = new TrackedRequest
                 {
-                    TrackingId = trackingId, Envelope = envelope, Callback = callback, Client = client,
+                    TrackingId = trackingId, Envelope = envelope, Callback = callback, Executor = _ => client.SendAsync(envelope), Client = client,
                     IsLocalEndpointSnapshot = client.IsLocalEndpoint, State = AIRequestState.Processing,
                     EnqueuedAtTick = CurrentTick, StartedProcessingAtTick = CurrentTick, AttemptCount = 1, MaxAttempts = 1,
                 };
@@ -161,7 +231,14 @@ namespace RimMind.Application.Features.Queue
                     {
                         var t = queue[0];
                         if (t.Envelope.ExpireAtTicks.HasValue && t.Envelope.ExpireAtTicks.Value > 0 && now > t.Envelope.ExpireAtTicks.Value)
-                        { queue.RemoveAt(0); if (Settings.DebugLogging) EnqueueLog($"[RimMind-Core] Expired request {t.Envelope.RequestId} skipped"); continue; }
+                        {
+                            queue.RemoveAt(0);
+                            Complete(t, Result<LlmResponse, RimMindError>.Err(
+                                RimMindErrors.Timeout($"Request {t.Envelope.RequestId} expired in queue at tick {now}")));
+                            if (Settings.DebugLogging)
+                                EnqueueLog($"[RimMind-Core] Expired request {t.Envelope.RequestId} completed with timeout");
+                            continue;
+                        }
                         break;
                     }
                     if (queue.Count > 0) readyRequests.Add((modId, queue[0]));
@@ -196,14 +273,15 @@ namespace RimMind.Application.Features.Queue
 
         private void FireRequest(TrackedRequest tracked)
         {
-            var ct = _cts.Token;
+            tracked.CancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, tracked.Envelope.Ct);
+            var ct = tracked.CancellationSource.Token;
             Task.Run(async () =>
             {
                 Result<LlmResponse, RimMindError> result;
                 try
                 {
                     ct.ThrowIfCancellationRequested();
-                    result = await tracked.Client.SendAsync(tracked.Envelope);
+                    result = await tracked.Executor(ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -216,14 +294,21 @@ namespace RimMind.Application.Features.Queue
                     result = Result<LlmResponse, RimMindError>.Err(
                         new RimMindError(RimMindErrorCode.InternalError, ex.Message));
                 }
-                lock (_queueLock)
-                {
-                    _activeRequests.TryRemove(tracked.TrackingId, out _);
-                    _requestIdToActive.TryRemove(tracked.Envelope.RequestId, out _);
-                    if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
-                }
-                _results.Enqueue((result, tracked.Callback));
-            }, ct);
+                Complete(tracked, result);
+                tracked.CancellationSource?.Dispose();
+            });
+        }
+
+        private void Complete(TrackedRequest tracked, Result<LlmResponse, RimMindError> result)
+        {
+            if (Interlocked.Exchange(ref tracked.CompletionQueued, 1) != 0) return;
+            lock (_queueLock)
+            {
+                if (_activeRequests.TryRemove(tracked.TrackingId, out _) && tracked.IsLocalEndpointSnapshot)
+                    _isProcessingLocalRequest = false;
+                _requestIdToActive.TryRemove(tracked.Envelope.RequestId, out _);
+            }
+            _results.Enqueue((result, tracked.Callback));
         }
 
         private void CheckActiveRequestTimeouts()
@@ -236,11 +321,10 @@ namespace RimMind.Application.Features.Queue
                 foreach (var kvp in _activeRequests) { if (kvp.Value.StartedProcessingAtTick > 0 && now - kvp.Value.StartedProcessingAtTick > timeoutTicks) timedOut.Add(kvp.Value); }
                 foreach (var tracked in timedOut)
                 {
-                    _activeRequests.TryRemove(tracked.TrackingId, out _); _requestIdToActive.TryRemove(tracked.Envelope.RequestId, out _);
-                    if (tracked.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
+                    tracked.CancellationSource?.Cancel();
                     var errResult = Result<LlmResponse, RimMindError>.Err(
                         new RimMindError(RimMindErrorCode.Timeout, $"Request {tracked.Envelope.RequestId} timed out after {timeoutTicks} ticks"));
-                    _results.Enqueue((errResult, tracked.Callback));
+                    Complete(tracked, errResult);
                     if (Settings.DebugLogging) EnqueueLog($"[RimMind-Core] Request {tracked.Envelope.RequestId} timed out after {timeoutTicks} ticks");
                 }
             }
@@ -252,11 +336,10 @@ namespace RimMind.Application.Features.Queue
             {
                 if (_requestIdToActive.TryGetValue(requestId, out var active))
                 {
-                    active.State = AIRequestState.Cancelled; _activeRequests.TryRemove(active.TrackingId, out _); _requestIdToActive.TryRemove(requestId, out _);
-                    if (active.IsLocalEndpointSnapshot) _isProcessingLocalRequest = false;
+                    active.State = AIRequestState.Cancelled; active.CancellationSource?.Cancel();
                     var errResult = Result<LlmResponse, RimMindError>.Err(
                         new RimMindError(RimMindErrorCode.Cancelled, "Request cancelled"));
-                    _results.Enqueue((errResult, active.Callback)); return true;
+                    Complete(active, errResult); return true;
                 }
                 foreach (var kvp in _modQueues)
                 {
@@ -266,7 +349,7 @@ namespace RimMind.Application.Features.Queue
                         var tracked = kvp.Value[idx]; kvp.Value.RemoveAt(idx);
                         var errResult = Result<LlmResponse, RimMindError>.Err(
                             new RimMindError(RimMindErrorCode.Cancelled, "Request cancelled"));
-                        _results.Enqueue((errResult, tracked.Callback)); return true;
+                        Complete(tracked, errResult); return true;
                     }
                 }
                 return false;

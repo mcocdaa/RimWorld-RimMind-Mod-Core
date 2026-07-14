@@ -24,6 +24,8 @@ namespace RimMind.Tests.ArchTests.PhaseP6
             Assert.Contains("Window_AgentFlowLab", content);
             Assert.Contains("Window_AgentProgressFloat", content);
             Assert.Contains("ContentFinder<Texture2D>.Get(\"UI/RimMind/Icon\", false)", content);
+            Assert.Contains("ReportAutotest(\"P.VisibilityEntrypoints\", pass, fail)", content);
+            Assert.Contains("[RIMTEST][Core][{caseId}][{outcome}]", content);
         }
     }
 }

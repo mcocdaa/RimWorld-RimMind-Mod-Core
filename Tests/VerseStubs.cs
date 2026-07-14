@@ -94,6 +94,7 @@ namespace Verse
     {
         public int thingIDNumber;
         public bool Dead;
+        public Map? Map { get; set; }
         public Pawn_Name Name => new Pawn_Name();
         public string LabelShort => "TestPawn";
         public object jobs = new();
@@ -115,6 +116,12 @@ namespace Verse
     public class Pawn_Name
     {
         public string ToStringShort => "TestPawn";
+    }
+
+    /// <summary>Stub for Verse.Map used by context orchestration tests.</summary>
+    public class Map
+    {
+        public int uniqueID;
     }
 
     /// <summary>Stub for Verse.ThingWithComps base class.</summary>

@@ -45,7 +45,7 @@ namespace RimMind.Infrastructure.Patches
             }
             else if (control)
             {
-                Find.WindowStack.Add(new Window_RimMindHub());
+                Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
             }
             else
             {

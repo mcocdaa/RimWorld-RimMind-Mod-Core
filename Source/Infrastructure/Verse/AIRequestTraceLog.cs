@@ -52,6 +52,8 @@ namespace RimMind.Infrastructure.Verse
                     existing.Error = null;
                     existing.TokensUsed = 0;
                     existing.ElapsedMs = 0;
+                    existing.StartedAtUtc = System.DateTime.UtcNow;
+                    existing.FinishedAtUtc = null;
                     existing.State = AIRequestTraceState.Running;
                     existing.ToolCalls.Clear();
                     _revision++;
@@ -67,6 +69,7 @@ namespace RimMind.Infrastructure.Verse
                     SystemPrompt = systemPrompt,
                     UserPrompt = userPrompt,
                     AssistantPrompt = assistantPrompt,
+                    StartedAtUtc = System.DateTime.UtcNow,
                     State = AIRequestTraceState.Running
                 });
                 _revision++;
@@ -81,18 +84,36 @@ namespace RimMind.Infrastructure.Verse
                 entry.Response = response;
                 entry.TokensUsed = tokensUsed;
                 entry.ElapsedMs = elapsedMs;
+                entry.FinishedAtUtc = System.DateTime.UtcNow;
                 entry.State = AIRequestTraceState.Completed;
                 _revision++;
             }
         }
 
         public void FailRequest(string requestId, string error)
+            => FailRequest(requestId, error, elapsedMs: 0);
+
+        public void FailRequest(string requestId, string error, int elapsedMs)
         {
             lock (_lock)
             {
                 var entry = FindOrCreate(requestId);
                 entry.Error = error;
+                entry.ElapsedMs = elapsedMs;
+                entry.FinishedAtUtc = System.DateTime.UtcNow;
                 entry.State = AIRequestTraceState.Failed;
+                _revision++;
+            }
+        }
+
+        public void UpdateRequestPrompts(string requestId, string systemPrompt, string userPrompt, string assistantPrompt)
+        {
+            lock (_lock)
+            {
+                var entry = FindOrCreate(requestId);
+                entry.SystemPrompt = systemPrompt;
+                entry.UserPrompt = userPrompt;
+                entry.AssistantPrompt = assistantPrompt;
                 _revision++;
             }
         }
@@ -150,6 +171,8 @@ namespace RimMind.Infrastructure.Verse
                 Error = entry.Error,
                 TokensUsed = entry.TokensUsed,
                 ElapsedMs = entry.ElapsedMs,
+                StartedAtUtc = entry.StartedAtUtc,
+                FinishedAtUtc = entry.FinishedAtUtc,
                 State = entry.State
             };
 

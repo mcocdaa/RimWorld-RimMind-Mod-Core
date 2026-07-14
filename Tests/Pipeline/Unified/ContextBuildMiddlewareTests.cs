@@ -151,5 +151,60 @@ namespace RimMind.Tests.Pipeline.Unified
             Assert.Equal("user", context.Envelope.Messages[1].Role);
             Assert.Same(snapshot, context.Snapshot);
         }
+
+        [Fact]
+        public async Task SnapshotBuild_InsertsAugmentationsOnceAfterLastSystem()
+        {
+            var snapshot = new ContextSnapshot { NpcId = "npc-1" };
+            snapshot.AddMessage(new ChatMessage { Role = "system", Content = "system" });
+            snapshot.AddMessage(new ChatMessage { Role = "user", Content = "question" });
+            var context = new LlmRequestContext
+            {
+                Envelope = new LlmRequestEnvelope
+                {
+                    RequestId = "req-1",
+                    ScenarioId = "test",
+                    NpcId = "npc-1",
+                    SystemAugmentations = new List<PromptAugmentation>
+                    {
+                        new("later", "later", 20),
+                        new("first", "first", 10),
+                    },
+                },
+            };
+            var middleware = new ContextBuildMiddleware(new StubContextEngine { SnapshotResult = snapshot });
+
+            await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+            await middleware.InvokeAsync(context, _ => Task.CompletedTask);
+
+            Assert.Equal(new[] { "system", "first", "later", "question" }, context.Envelope.Messages.ConvertAll(message => message.Content));
+            Assert.Null(context.Envelope.SystemAugmentations);
+        }
+
+        [Fact]
+        public async Task PrepopulatedMessages_InsertsAugmentationsWithoutBuildingContext()
+        {
+            var engine = new StubContextEngine();
+            var context = new LlmRequestContext
+            {
+                Envelope = new LlmRequestEnvelope
+                {
+                    RequestId = "req-1",
+                    ScenarioId = "test",
+                    Messages = new List<ChatMessage>
+                    {
+                        new() { Role = "system", Content = "system" },
+                        new() { Role = "user", Content = "question" },
+                    },
+                    SystemAugmentations = new List<PromptAugmentation> { new("feedback", "addition", 1) },
+                },
+            };
+
+            await new ContextBuildMiddleware(engine).InvokeAsync(context, _ => Task.CompletedTask);
+
+            Assert.Equal(new[] { "system", "addition", "question" }, context.Envelope.Messages.ConvertAll(message => message.Content));
+            Assert.Null(context.Envelope.SystemAugmentations);
+            Assert.Null(context.Snapshot);
+        }
     }
 }

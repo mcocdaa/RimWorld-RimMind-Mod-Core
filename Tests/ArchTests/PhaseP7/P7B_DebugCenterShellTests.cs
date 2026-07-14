@@ -57,12 +57,12 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
-        public void CoreIcon_CtrlClick_Opens_Default_DebugCenter()
+        public void CoreIcon_CtrlClick_Opens_AIRequests_DebugCenter_Page()
         {
             string content = ReadSource("Infrastructure/Patches/RimMindPlaySettingsPatch.cs");
 
-            Assert.Contains("new Window_RimMindHub()", content);
-            Assert.DoesNotContain("new Window_RimMindHub(true", content);
+            Assert.Contains("Window_RimMindHub.OpenAIRequests()", content);
+            Assert.DoesNotContain("new Window_RimMindHub()", content);
         }
 
         [Fact]

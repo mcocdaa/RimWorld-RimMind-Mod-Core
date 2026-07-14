@@ -13,10 +13,12 @@ namespace RimMind.Application.Features.Context
     {
         private readonly ConcurrentDictionary<string, KeyMeta> _keys = new ConcurrentDictionary<string, KeyMeta>();
         private readonly ILogSink? _logSink;
+        private readonly ProviderCache? _providerCache;
 
-        public ContextKeyRegistryImpl(ILogSink? logSink = null)
+        public ContextKeyRegistryImpl(ILogSink? logSink = null, ProviderCache? providerCache = null)
         {
             _logSink = logSink;
+            _providerCache = providerCache;
         }
 
         public void Register(KeyMeta meta)
@@ -39,6 +41,7 @@ namespace RimMind.Application.Features.Context
                 Def = def
             };
             Register(meta);
+            _providerCache?.SubscribeInvalidation(def);
         }
 
         public bool Unregister(string key)
