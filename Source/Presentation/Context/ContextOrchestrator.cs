@@ -225,28 +225,26 @@ namespace RimMind.Presentation.Context
                 MapId = (pawn as Verse.Pawn)?.Map?.uniqueID,
             };
 
-            // Execute all layer builds in parallel via BuildLayerAsync
-            var l0Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L0Keys, pawn, providerCtx, _providerCache, ct)
-                .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
-            var l1Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L1Keys, pawn, providerCtx, _providerCache, ct)
-                .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
-            var l2Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L2Keys, pawn, providerCtx, _providerCache, ct)
-                .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
-            var l3Task = (skipLayers != null && skipLayers.Contains("L3"))
-                ? Task.FromResult(new List<ContextEntry>())
-                : _buildServices.LayerBuilder.BuildLayerAsync(schedule.L3Keys, pawn, providerCtx, _providerCache, ct)
-                    .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
-            var l5Task = _buildServices.LayerBuilder.BuildLayerAsync(schedule.L5Keys, pawn, providerCtx, _providerCache, ct)
-                .ContinueWith(t => t.IsFaulted ? new List<ContextEntry>() : t.Result, ct);
-
-            var layerResults = await Task.WhenAll(l0Task, l1Task, l2Task, l3Task, l5Task).ConfigureAwait(false);
+            var layerBatchBuilder = new AsyncContextLayerBatchBuilder(
+                _buildServices.LayerBuilder,
+                _providerCache,
+                _logSink);
+            var layerResults = await layerBatchBuilder
+                .BuildAsync(schedule, pawn, providerCtx, ctx.NpcId, scenario, skipLayers, ct)
+                .ConfigureAwait(false);
 
             // Convert entries to ChatMessages
-            var l0Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults[0], "L0");
-            var l1Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults[1], "L1");
-            var l2Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults[2], "L2");
-            var l3Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults[3], "L3");
-            var l5Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults[4], "L5");
+            var l0Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults.L0.Entries, "L0");
+            var l1Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults.L1.Entries, "L1");
+            var l2Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults.L2.Entries, "L2");
+            var l3Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults.L3.Entries, "L3");
+            var l5Msg = _buildServices.LayerBuilder.EntriesToLayerMessage(layerResults.L5.Entries, "L5");
+
+            snapshot.LatencyByLayerMs["L0"] = layerResults.L0.ElapsedMilliseconds;
+            snapshot.LatencyByLayerMs["L1"] = layerResults.L1.ElapsedMilliseconds;
+            snapshot.LatencyByLayerMs["L2"] = layerResults.L2.ElapsedMilliseconds;
+            snapshot.LatencyByLayerMs["L3"] = layerResults.L3.ElapsedMilliseconds;
+            snapshot.LatencyByLayerMs["L5"] = layerResults.L5.ElapsedMilliseconds;
 
             // Merge results into snapshot in layer order
             var messages = new List<ChatMessage>();

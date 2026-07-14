@@ -102,6 +102,7 @@
     <Compile Include="../Source/Infrastructure/UI/DebugTables/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/RimMindUITheme.cs" />
     <Compile Include="../Source/Presentation/UI/Framework/*.cs" />
+    <Compile Include="../Source/Presentation/Context/AsyncContextLayerBatchBuilder.cs" />
     <Compile Include="../Source/Presentation/Context/ContextBuildServices.cs" />
     <Compile Include="../Source/Presentation/Context/ContextOrchestrator.cs" />
     <Compile Include="../Source/Presentation/Api/RimMindAPI.Memory.cs" />
