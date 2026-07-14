@@ -71,30 +71,43 @@ namespace RimMind.Tests.Context
         public async Task BuildSnapshotFromEnvelopeAsync_PreservesHealthyLayerAndLogs_WhenCachedProviderFaults()
         {
             const string secretProviderContent = "cached provider failure detail must not be logged";
+            int healthyProviderCalls = 0;
             var registry = new ContextKeyRegistryImpl();
             registry.Register(new ContextProviderDef(
                 key: "faulted_cached_l2_provider",
                 layer: ContextLayer.L2_Environment,
                 priority: 1f,
-                provider: (_, _) => throw new InvalidOperationException(secretProviderContent)));
+                provider: (_, _) => throw new InvalidOperationException(secretProviderContent),
+                stalenessTicks: 600));
             registry.Register(new ContextProviderDef(
                 key: "healthy_cached_l3_provider",
                 layer: ContextLayer.L3_State,
                 priority: 1f,
-                provider: (_, _) => Task.FromResult<string?>("healthy cached L3 context")));
+                provider: (_, _) =>
+                {
+                    healthyProviderCalls++;
+                    return Task.FromResult<string?>("healthy cached L3 context");
+                },
+                stalenessTicks: 600));
 
             var logSink = new CapturingLogSink();
             var orchestrator = CreateOrchestrator(registry, logSink, new ProviderCache(log: logSink));
 
             var snapshot = await orchestrator.BuildSnapshotFromEnvelopeAsync("npc-cache-fault-test", "hello", scenarioId: "scenario-cache-fault-test");
+            var secondSnapshot = await orchestrator.BuildSnapshotFromEnvelopeAsync("npc-cache-fault-test", "hello", scenarioId: "scenario-cache-fault-test");
 
             Assert.NotNull(snapshot);
+            Assert.NotNull(secondSnapshot);
             Assert.Contains(snapshot!.Messages, message => message.Content.Contains("healthy cached L3 context"));
-            string diagnostic = Assert.Single(logSink.BackgroundWarnings);
+            Assert.Contains(secondSnapshot!.Messages, message => message.Content.Contains("healthy cached L3 context"));
+            Assert.Equal(1, healthyProviderCalls);
+            Assert.Equal(2, logSink.BackgroundWarnings.Count);
+            string diagnostic = logSink.BackgroundWarnings[0];
             Assert.Contains("layer=L0", diagnostic);
             Assert.Contains("npc=npc-cache-fault-test", diagnostic);
             Assert.Contains("scenario=scenario-cache-fault-test", diagnostic);
             Assert.DoesNotContain(secretProviderContent, diagnostic);
+            Assert.All(logSink.BackgroundWarnings, warning => Assert.DoesNotContain(secretProviderContent, warning));
             Assert.DoesNotContain(logSink.WarningMessages, message => message.Contains(secretProviderContent));
         }
 
