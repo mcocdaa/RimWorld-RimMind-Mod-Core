@@ -32,9 +32,20 @@ namespace RimMind.Application.Features.Context
                 ct.ThrowIfCancellationRequested();
                 if (key.Def is ContextProviderDef def)
                 {
-                    string? value = cache != null
-                        ? await cache.GetOrComputeAsync(def, ctx, ct).ConfigureAwait(false)
-                        : await def.Provider(ctx, ct).ConfigureAwait(false);
+                    string? value;
+                    if (cache != null)
+                    {
+                        ProviderCache.ProviderCacheResult cachedResult = await cache
+                            .GetOrComputeWithOutcomeAsync(def, ctx, ct)
+                            .ConfigureAwait(false);
+                        if (cachedResult.ProviderFaulted)
+                            throw new ContextProviderFaultException(def.Key);
+                        value = cachedResult.Value;
+                    }
+                    else
+                    {
+                        value = await def.Provider(ctx, ct).ConfigureAwait(false);
+                    }
                     if (value != null)
                         entries.Add(new ContextEntry { SourceKey = key.Key, Content = value });
                 }
@@ -117,6 +128,14 @@ namespace RimMind.Application.Features.Context
             }
             sb.AppendLine($"</layer_diff_{layer}>");
             return new ChatMessage { Role = "system", Content = sb.ToString(), LayerTag = $"Diff-{layer}" };
+        }
+
+        internal sealed class ContextProviderFaultException : System.Exception
+        {
+            public ContextProviderFaultException(string providerKey)
+                : base($"Context provider failed: {providerKey}")
+            {
+            }
         }
     }
 }

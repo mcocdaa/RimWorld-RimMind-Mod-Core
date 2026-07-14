@@ -65,6 +65,21 @@ namespace RimMind.Application.Features.Context
             ProviderContext ctx,
             CancellationToken ct)
         {
+            ProviderCacheResult result = await GetOrComputeWithOutcomeAsync(def, ctx, ct).ConfigureAwait(false);
+            return result.Value;
+        }
+
+        /// <summary>
+        /// Gets a cached provider result while preserving whether a provider failed.
+        /// Callers that only need the historical null-on-failure behavior should use
+        /// <see cref="GetOrComputeAsync"/>; layer builders use this result to keep
+        /// provider failures observable without exposing exception details.
+        /// </summary>
+        internal async Task<ProviderCacheResult> GetOrComputeWithOutcomeAsync(
+            ContextProviderDef def,
+            ProviderContext ctx,
+            CancellationToken ct)
+        {
             ct.ThrowIfCancellationRequested();
 
             var cacheKey = new CacheKey(def.Key, def.CacheScope, GetScopeIdentity(def.CacheScope, ctx));
@@ -76,7 +91,7 @@ namespace RimMind.Application.Features.Context
             {
                 if (currentTicks - entry.ComputedAtTicks < def.StalenessTicks)
                 {
-                    return entry.Value;
+                    return ProviderCacheResult.Succeeded(entry.Value);
                 }
             }
 
@@ -90,13 +105,13 @@ namespace RimMind.Application.Features.Context
                     _entries[cacheKey] = new CacheEntry(value, currentTicks, ctx.NpcId ?? string.Empty, def.CacheScope);
                 }
 
-                return value;
+                return ProviderCacheResult.Succeeded(value);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                _log?.Warning($"[ProviderCache] Provider '{def.Key}' failed: {ex.Message}");
-                return null;
+                _log?.Warning($"[ProviderCache] Provider failed: key={def.Key}, exception={ex.GetType().Name}");
+                return ProviderCacheResult.Failed();
             }
         }
 
@@ -147,6 +162,12 @@ namespace RimMind.Application.Features.Context
                 CacheScope.Scenario => "scenario:" + ctx.Scenario,
                 _ => "scenario:" + ctx.Scenario
             };
+        }
+
+        internal readonly record struct ProviderCacheResult(string? Value, bool ProviderFaulted)
+        {
+            public static ProviderCacheResult Succeeded(string? value) => new(value, ProviderFaulted: false);
+            public static ProviderCacheResult Failed() => new(null, ProviderFaulted: true);
         }
     }
 }
