@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Domain.Common;
 using RimMind.Domain.ValueObjects;
@@ -31,13 +30,11 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
 
         private readonly IOpenAISettings _settings;
         private readonly ILogSink? _logSink;
-        private readonly IAIDebugLog? _aiDebugLog;
 
-        public OpenAIClient(IOpenAISettings settings, ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null)
+        public OpenAIClient(IOpenAISettings settings, ILogSink? logSink = null)
         {
             _settings = settings;
             _logSink = logSink;
-            _aiDebugLog = aiDebugLog;
         }
 
         public bool IsConfigured() => _settings.IsConfigured();

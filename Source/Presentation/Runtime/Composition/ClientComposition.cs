@@ -38,21 +38,18 @@ namespace RimMind.Presentation.Runtime.Composition
             };
         }
 
-        public static IAIDebugLog? RegisterBuiltinClientFactories(
+        public static void RegisterBuiltinClientFactories(
             IExtensionRegistry<IAIClientFactory> clientFactoryRegistry,
             ILogSink logSink,
             IOpenAISettings? openAISettings)
         {
-            var aiDebugLog = RimMindServiceLocator.TryGet<IAIDebugLog>();
             var resolvedOpenAISettings = openAISettings ?? RimMindServiceLocator.TryGet<IOpenAISettings>();
             Infrastructure.DependencyInjection.RegisterBuiltinClientFactories(
                 clientFactoryRegistry,
                 logSink,
-                aiDebugLog,
                 resolvedOpenAISettings);
             RimMindServiceLocator.Register(clientFactoryRegistry);
             AIProviderRegistry.DefaultRegistry = clientFactoryRegistry;
-            return aiDebugLog;
         }
 
         public static RemoteSyncCompositionServices RegisterRemoteSync(ILogSink logSink)

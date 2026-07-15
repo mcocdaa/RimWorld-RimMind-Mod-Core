@@ -92,10 +92,10 @@ namespace RimMind.Infrastructure
         }
 
         public static void RegisterBuiltinClientFactories(IExtensionRegistry<IAIClientFactory> registry,
-            ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null, IOpenAISettings? openAISettings = null)
+            ILogSink? logSink = null, IOpenAISettings? openAISettings = null)
         {
-            registry.Register(new OpenAIClientFactory(openAISettings, logSink, aiDebugLog));
-            registry.Register(new Player2ClientFactory(logSink, aiDebugLog));
+            registry.Register(new OpenAIClientFactory(openAISettings, logSink));
+            registry.Register(new Player2ClientFactory(logSink));
         }
     }
 }

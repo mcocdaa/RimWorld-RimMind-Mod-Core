@@ -32,7 +32,6 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private readonly bool _isLocalConnection;
         private readonly ISettingsProvider _settings;
         private readonly ILogSink? _logSink;
-        private readonly IAIDebugLog? _aiDebugLog;
 
         private string RemoteUrl => string.IsNullOrWhiteSpace(_settings.Player2RemoteUrl)
             ? "https://api.player2.game"
@@ -41,19 +40,18 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         private string CurrentApiUrl => _isLocalConnection ? LocalUrl : RemoteUrl;
 
         private Player2Client(string apiKey, bool isLocal, ISettingsProvider settings,
-            ILogSink? logSink, IAIDebugLog? aiDebugLog)
+            ILogSink? logSink)
         {
             _apiKey = apiKey;
             _isLocalConnection = isLocal;
             _settings = settings;
             _logSink = logSink;
-            _aiDebugLog = aiDebugLog;
 
             InitiateHealthCheckIfNeeded();
         }
 
         public static async Task<Player2Client> CreateAsync(ISettingsProvider settings,
-            ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null)
+            ILogSink? logSink = null)
         {
             try
             {
@@ -62,22 +60,22 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
                 {
                     logSink?.LogFromBackground("[RimMind-Core] Player2 local app detected.");
                     ShowNotification("RimMind.Infrastructure.Player2.LocalDetected");
-                    return new Player2Client(localKey!, isLocal: true, settings, logSink, aiDebugLog);
+                    return new Player2Client(localKey!, isLocal: true, settings, logSink);
                 }
 
                 if (!string.IsNullOrEmpty(settings.ApiKey))
                 {
                     logSink?.LogFromBackground("[RimMind-Core] Using manual Player2 API key.");
-                    return new Player2Client(settings.ApiKey, isLocal: false, settings, logSink, aiDebugLog);
+                    return new Player2Client(settings.ApiKey, isLocal: false, settings, logSink);
                 }
 
                 ShowNotification("RimMind.Infrastructure.Player2.LocalNotFound");
-                return new Player2Client(string.Empty, isLocal: false, settings, logSink, aiDebugLog);
+                return new Player2Client(string.Empty, isLocal: false, settings, logSink);
             }
             catch (Exception ex)
             {
                 logSink?.LogFromBackground($"[RimMind-Core] Failed to create Player2 client: {ex.Message}", isWarning: true);
-                return new Player2Client(string.Empty, isLocal: false, settings, logSink, aiDebugLog);
+                return new Player2Client(string.Empty, isLocal: false, settings, logSink);
             }
         }
 

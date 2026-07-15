@@ -160,10 +160,11 @@ namespace RimMind.Presentation.Runtime
 
             SettingsComposition.RegisterDefaultExtensionRegistries();
 
-            var aiDebugLog = ClientComposition.RegisterBuiltinClientFactories(
+            ClientComposition.RegisterBuiltinClientFactories(
                 clientServices.ClientFactoryRegistry,
                 logSink,
                 openAISettings);
+            var aiDebugLog = RimMindServiceLocator.TryGet<IAIDebugLog>();
             var remoteSync = ClientComposition.RegisterRemoteSync(logSink);
             UiComposition.RegisterRemoteSyncSettingsTab(remoteSync.Settings, remoteSync.Service);
 

@@ -9,12 +9,10 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
     public class Player2ClientFactory : IAIClientFactory
     {
         private readonly ILogSink? _logSink;
-        private readonly IAIDebugLog? _aiDebugLog;
 
-        public Player2ClientFactory(ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null)
+        public Player2ClientFactory(ILogSink? logSink = null)
         {
             _logSink = logSink;
-            _aiDebugLog = aiDebugLog;
         }
 
         public string Id => AIProviders.Player2;
@@ -26,7 +24,7 @@ namespace RimMind.Infrastructure.Services.Clients.Player2
         {
             try
             {
-                var client = Player2Client.CreateAsync(settings, _logSink, _aiDebugLog).GetAwaiter().GetResult();
+                var client = Player2Client.CreateAsync(settings, _logSink).GetAwaiter().GetResult();
                 return client;
             }
             catch (System.Exception)

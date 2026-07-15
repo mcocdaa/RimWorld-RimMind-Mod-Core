@@ -10,13 +10,11 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
     {
         private readonly IOpenAISettings? _openAISettings;
         private readonly ILogSink? _logSink;
-        private readonly IAIDebugLog? _aiDebugLog;
 
-        public OpenAIClientFactory(IOpenAISettings? openAISettings = null, ILogSink? logSink = null, IAIDebugLog? aiDebugLog = null)
+        public OpenAIClientFactory(IOpenAISettings? openAISettings = null, ILogSink? logSink = null)
         {
             _openAISettings = openAISettings;
             _logSink = logSink;
-            _aiDebugLog = aiDebugLog;
         }
 
         public string Id => AIProviders.OpenAI;
@@ -30,7 +28,7 @@ namespace RimMind.Infrastructure.Services.Clients.OpenAI
                 ? new OpenAISettingsAdapter(settings)
                 : _openAISettings;
             if (resolvedSettings == null) return null;
-            return new OpenAIClient(resolvedSettings, _logSink, _aiDebugLog);
+            return new OpenAIClient(resolvedSettings, _logSink);
         }
 
         private sealed class OpenAISettingsAdapter : IOpenAISettings

@@ -36,6 +36,37 @@ namespace RimMind.Tests.ArchTests.PhaseP6
         }
 
         [Fact]
+        public void ProductionClients_DoNotConsumeLegacyDebugLog()
+        {
+            var clientFiles = new[]
+            {
+                "Presentation/Runtime/Composition/ClientComposition.cs",
+                "Infrastructure/DependencyInjection.cs",
+                "Infrastructure/Services/Clients/OpenAI/OpenAIClientFactory.cs",
+                "Infrastructure/Services/Clients/OpenAI/OpenAIClient.cs",
+                "Infrastructure/Services/Clients/Player2/Player2ClientFactory.cs",
+                "Infrastructure/Services/Clients/Player2/Player2Client.cs"
+            };
+
+            foreach (string relativePath in clientFiles)
+            {
+                string content = File.ReadAllText(Path.Combine(ProjectRoot, "Source", relativePath.Replace('/', Path.DirectorySeparatorChar)));
+                Assert.DoesNotContain("IAIDebugLog", content);
+            }
+        }
+
+        [Fact]
+        public void RequestTracing_RemainsOnUnifiedPipelinePath()
+        {
+            string middleware = File.ReadAllText(Path.Combine(ProjectRoot, "Source", "Application", "Features", "Pipeline", "Unified", "ClientInvokeMiddleware.cs"));
+            string factory = File.ReadAllText(Path.Combine(ProjectRoot, "Source", "Application", "Features", "Pipeline", "Unified", "UnifiedRequestPipelineFactory.cs"));
+
+            Assert.Contains("IAIRequestTraceLog", middleware);
+            Assert.Contains("UpdateRequestPrompts", middleware);
+            Assert.Contains("new ClientInvokeMiddleware(log, requestTraceLog)", factory);
+        }
+
+        [Fact]
         public void ContextPreviews_UseAsyncBuilderPath()
         {
             var sourceFiles = new[]
