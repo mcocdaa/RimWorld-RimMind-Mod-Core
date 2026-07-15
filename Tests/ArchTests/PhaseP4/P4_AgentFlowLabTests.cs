@@ -15,6 +15,7 @@ namespace RimMind.Tests.ArchTests.PhaseP4
             => File.ReadAllText(Path.Combine(SourceDir, relativePath.Replace('/', Path.DirectorySeparatorChar)));
 
         private const string FlowLabRelative = "Infrastructure/UI/Window_AgentFlowLab.cs";
+        private const string AsyncCoordinatorRelative = "Infrastructure/UI/AgentFlow/AgentFlowAsyncCoordinator.cs";
 
         [Fact]
         public void FlowLab_Has_FlowLabStep_Enum()
@@ -339,6 +340,20 @@ namespace RimMind.Tests.ArchTests.PhaseP4
             string switchBlock = content.Substring(switchIdx - 50, 200);
             Assert.Contains("_scopedAgent = null", switchBlock);
             Assert.Contains("_agent = null", switchBlock);
+        }
+
+        [Fact]
+        public void FlowLab_Uses_Async_Coordinator_For_Context_And_Confirmed_Execution()
+        {
+            var flowLab = ReadSourceFile(FlowLabRelative);
+            var coordinator = ReadSourceFile(AsyncCoordinatorRelative);
+
+            Assert.Contains("AgentFlowAsyncCoordinator", flowLab);
+            Assert.Contains("BeginContextBuild", coordinator);
+            Assert.Contains("PollContextBuild", coordinator);
+            Assert.Contains("BeginMechanismExecution", coordinator);
+            Assert.Contains("PollMechanismExecution", coordinator);
+            Assert.DoesNotContain("ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType).Result", flowLab);
         }
 
     }

@@ -21,6 +21,7 @@ using RimMind.Application.Features.Llm;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
+using RimMind.Infrastructure.UI.AgentFlow;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Api;
@@ -69,7 +70,7 @@ namespace RimMind.Infrastructure.UI
         private IAgentControl? _agent;
         private IScopedAgent? _scopedAgent;
         private ContextSnapshot? _lastSnapshot;
-        private Task<ContextSnapshot?>? _contextBuildTask;
+        private readonly AgentFlowAsyncCoordinator _asyncCoordinator = new();
         private string _requestStatus = "";
         private string _lastError = "";
         private string _lastDecisionInfo = "";
@@ -140,6 +141,7 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            CompleteMechanismExecution();
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
@@ -284,6 +286,7 @@ namespace RimMind.Infrastructure.UI
                     _selectedScope = scope;
                     _scopedAgent = null;
                     _agent = null;
+                    _asyncCoordinator.ResetContextBuild();
                     ResetStepStatuses();
                 }
             }
@@ -386,6 +389,7 @@ namespace RimMind.Infrastructure.UI
                 _lastOperationType = MechanismOperationType.Set;
                 _parsedDecisionInfo = "";
                 _validationInfo = "";
+                _asyncCoordinator.ResetContextBuild();
                 ResetStepStatuses();
                 if (_selectedPawn != null)
                     SetStepStatus(FlowLabStep.SelectTarget, StepStatus.Completed);
@@ -508,7 +512,8 @@ namespace RimMind.Infrastructure.UI
                             string npcId = $"NPC-{_selectedPawn.thingIDNumber}";
                             _lastSnapshot = null;
                             _lastError = string.Empty;
-                            _contextBuildTask = contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[AgentFlowLab] Build context");
+                            _asyncCoordinator.BeginContextBuild(
+                                contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[AgentFlowLab] Build context"));
                         }
                         else
                         {
@@ -654,20 +659,18 @@ namespace RimMind.Infrastructure.UI
 
         private void CompleteContextBuild()
         {
-            if (_contextBuildTask == null || !_contextBuildTask.IsCompleted)
+            if (!_asyncCoordinator.PollContextBuild(out var snapshot, out var error))
                 return;
 
-            var task = _contextBuildTask;
-            _contextBuildTask = null;
-            if (task.IsFaulted)
+            if (!string.IsNullOrEmpty(error))
             {
-                _lastError = $"BuildContext: {task.Exception?.GetBaseException().Message}";
+                _lastError = $"BuildContext: {error}";
                 SetStepStatus(FlowLabStep.BuildContext, StepStatus.Failed);
                 return;
             }
 
-            _lastSnapshot = task.GetAwaiter().GetResult();
-            if (_lastSnapshot == null)
+            _lastSnapshot = snapshot;
+            if (snapshot == null)
             {
                 _lastError = "BuildContext: no snapshot returned";
                 SetStepStatus(FlowLabStep.BuildContext, StepStatus.Failed);
@@ -852,6 +855,8 @@ namespace RimMind.Infrastructure.UI
             {
                 Rect execBtn = new Rect(Padding, y, 220f, BtnHeight);
                 GUI.color = new Color(1f, 0.6f, 0.4f);
+                bool wasEnabled = GUI.enabled;
+                GUI.enabled = !_asyncCoordinator.HasPendingMechanismExecution;
                 if (Widgets.ButtonText(execBtn, "RimMind.UI.AgentFlowLab.ExecuteMechanism".Translate()))
                 {
                     Find.WindowStack.Add(new Dialog_MessageBox(
@@ -880,17 +885,8 @@ namespace RimMind.Infrastructure.UI
                                 var targetMech = mechanismRegistry.FindById(_lastWriteArgs.MechanismId);
                                 if (targetMech != null)
                                 {
-                                    var result = ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType).Result;
-                                    if (result.IsOk)
-                                    {
-                                        _lastError = $"Execute {_lastOperationType} ok: {result.Value}";
-                                        SetStepStatus(FlowLabStep.Execute, StepStatus.Completed);
-                                    }
-                                    else
-                                    {
-                                        _lastError = result.Error.Message;
-                                        SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
-                                    }
+                                    _asyncCoordinator.BeginMechanismExecution(
+                                        ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType));
                                 }
                                 else
                                 {
@@ -908,6 +904,7 @@ namespace RimMind.Infrastructure.UI
                         null,
                         "RimMind.UI.AgentFlowLab.ExecuteMechanism".Translate()));
                 }
+                GUI.enabled = wasEnabled;
                 GUI.color = Color.white;
             }
             y += BtnHeight + Padding;
@@ -1184,6 +1181,29 @@ namespace RimMind.Infrastructure.UI
                 MechanismOperationType.Watch => mechanism.ExecuteWatchAsync(args, default),
                 _ => mechanism.ExecuteSetAsync(args, default),
             };
+        }
+
+        private void CompleteMechanismExecution()
+        {
+            if (!_asyncCoordinator.PollMechanismExecution(out var result, out var error))
+                return;
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                _lastError = $"ExecuteMechanism: {error}";
+                SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
+                return;
+            }
+
+            if (result!.Value.IsOk)
+            {
+                _lastError = $"Execute {_lastOperationType} ok: {result.Value.Value}";
+                SetStepStatus(FlowLabStep.Execute, StepStatus.Completed);
+                return;
+            }
+
+            _lastError = result.Value.Error.Message;
+            SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
         }
 
         private void AutoDryRun()
