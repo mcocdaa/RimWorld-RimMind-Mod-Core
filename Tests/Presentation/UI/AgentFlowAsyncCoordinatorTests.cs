@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.UI.AgentFlow;
 using Xunit;
@@ -79,6 +80,31 @@ namespace RimMind.Tests.Presentation.UI
             Assert.False(coordinator.PollContextBuild(out _, out _));
             Assert.True(coordinator.PollMechanismExecution(out var result, out _));
             Assert.True(result!.Value.IsOk);
+        }
+
+        [Fact]
+        public void MechanismExecution_Preserves_Its_Scheduled_Target_Context_After_Scope_Switch()
+        {
+            var coordinator = new AgentFlowAsyncCoordinator();
+            var completion = new TaskCompletionSource<Result<bool, RimMindError>>();
+            var scheduledContext = new AgentFlowExecutionContext(
+                targetGeneration: 3,
+                scope: "Pawn",
+                targetId: "NPC-17",
+                mechanismId: "pawn.job.force_rest",
+                operation: MechanismOperationType.Set);
+
+            coordinator.BeginMechanismExecution(completion.Task, scheduledContext);
+
+            Assert.True(coordinator.HasPendingMechanismExecutionForGeneration(3));
+            Assert.False(coordinator.HasPendingMechanismExecutionForGeneration(4));
+
+            completion.SetResult(Result<bool, RimMindError>.Ok(true));
+
+            Assert.True(coordinator.PollMechanismExecution(out var executionCompletion));
+            Assert.NotNull(executionCompletion);
+            Assert.Same(scheduledContext, executionCompletion!.Context);
+            Assert.True(executionCompletion.Result!.Value.IsOk);
         }
     }
 }

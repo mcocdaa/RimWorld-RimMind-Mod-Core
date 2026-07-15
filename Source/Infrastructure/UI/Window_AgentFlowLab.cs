@@ -84,6 +84,7 @@ namespace RimMind.Infrastructure.UI
         private MechanismWriteArgs? _lastWriteArgs;
         private MechanismOperationType _lastOperationType;
         private AgentFlowScope _selectedScope = AgentFlowScope.Pawn;
+        private int _targetGeneration;
         private string _dryRunResult = "";
         private string _parsedDecisionInfo = "";
         private string _validationInfo = "";
@@ -286,7 +287,7 @@ namespace RimMind.Infrastructure.UI
                     _selectedScope = scope;
                     _scopedAgent = null;
                     _agent = null;
-                    _asyncCoordinator.ResetContextBuild();
+                    InvalidateCurrentTarget();
                     ResetStepStatuses();
                 }
             }
@@ -355,7 +356,10 @@ namespace RimMind.Infrastructure.UI
                 return;
 
             if (_selectedPawn != null && _selectedPawn.Destroyed)
+            {
                 _selectedPawn = null;
+                InvalidateCurrentTarget();
+            }
 
             if (_selectedPawn != null)
             {
@@ -389,7 +393,7 @@ namespace RimMind.Infrastructure.UI
                 _lastOperationType = MechanismOperationType.Set;
                 _parsedDecisionInfo = "";
                 _validationInfo = "";
-                _asyncCoordinator.ResetContextBuild();
+                InvalidateCurrentTarget();
                 ResetStepStatuses();
                 if (_selectedPawn != null)
                     SetStepStatus(FlowLabStep.SelectTarget, StepStatus.Completed);
@@ -856,7 +860,7 @@ namespace RimMind.Infrastructure.UI
                 Rect execBtn = new Rect(Padding, y, 220f, BtnHeight);
                 GUI.color = new Color(1f, 0.6f, 0.4f);
                 bool wasEnabled = GUI.enabled;
-                GUI.enabled = !_asyncCoordinator.HasPendingMechanismExecution;
+                GUI.enabled = !_asyncCoordinator.HasPendingMechanismExecutionForGeneration(_targetGeneration);
                 if (Widgets.ButtonText(execBtn, "RimMind.UI.AgentFlowLab.ExecuteMechanism".Translate()))
                 {
                     Find.WindowStack.Add(new Dialog_MessageBox(
@@ -886,7 +890,13 @@ namespace RimMind.Infrastructure.UI
                                 if (targetMech != null)
                                 {
                                     _asyncCoordinator.BeginMechanismExecution(
-                                        ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType));
+                                        ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType),
+                                        new AgentFlowExecutionContext(
+                                            _targetGeneration,
+                                            _selectedScope.ToString(),
+                                            GetCurrentTargetId(),
+                                            targetMech.MechanismId,
+                                            _lastOperationType));
                                 }
                                 else
                                 {
@@ -1185,25 +1195,49 @@ namespace RimMind.Infrastructure.UI
 
         private void CompleteMechanismExecution()
         {
-            if (!_asyncCoordinator.PollMechanismExecution(out var result, out var error))
+            if (!_asyncCoordinator.PollMechanismExecution(out var completion))
                 return;
 
-            if (!string.IsNullOrEmpty(error))
+            var execution = completion!;
+            if (execution.Context.TargetGeneration != _targetGeneration)
             {
-                _lastError = $"ExecuteMechanism: {error}";
+                _lastError = $"Execute {execution.Context.Operation} result ignored for stale " +
+                    $"{execution.Context.Scope}:{execution.Context.TargetId}; target changed.";
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(execution.Error))
+            {
+                _lastError = $"ExecuteMechanism: {execution.Error}";
                 SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
                 return;
             }
 
-            if (result!.Value.IsOk)
+            if (execution.Result!.Value.IsOk)
             {
-                _lastError = $"Execute {_lastOperationType} ok: {result.Value.Value}";
+                _lastError = $"Execute {execution.Context.Operation} ok: {execution.Result.Value.Value}";
                 SetStepStatus(FlowLabStep.Execute, StepStatus.Completed);
                 return;
             }
 
-            _lastError = result.Value.Error.Message;
+            _lastError = execution.Result.Value.Error.Message;
             SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
+        }
+
+        private void InvalidateCurrentTarget()
+        {
+            _targetGeneration++;
+            _asyncCoordinator.ResetContextBuild();
+        }
+
+        private string GetCurrentTargetId()
+        {
+            if (_selectedScope == AgentFlowScope.Pawn)
+                return _selectedPawn == null ? "no_pawn" : $"NPC-{_selectedPawn.thingIDNumber}";
+
+            return _scopedAgent == null
+                ? ResolveScopeId(_selectedScope)
+                : $"{_scopedAgent.ScopeType}:{_scopedAgent.ScopeId}";
         }
 
         private void AutoDryRun()

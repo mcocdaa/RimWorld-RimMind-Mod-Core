@@ -356,5 +356,18 @@ namespace RimMind.Tests.ArchTests.PhaseP4
             Assert.DoesNotContain("ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType).Result", flowLab);
         }
 
+        [Fact]
+        public void FlowLab_Discards_Execution_Completion_For_A_Stale_Target_Generation()
+        {
+            var content = ReadSourceFile(FlowLabRelative);
+
+            Assert.Contains("private int _targetGeneration;", content);
+            Assert.Contains("InvalidateCurrentTarget();", content);
+            Assert.Contains("new AgentFlowExecutionContext(", content);
+            Assert.Contains("HasPendingMechanismExecutionForGeneration(_targetGeneration)", content);
+            Assert.Contains("execution.Context.TargetGeneration != _targetGeneration", content);
+            Assert.Contains("result ignored for stale", content);
+        }
+
     }
 }
