@@ -9,9 +9,9 @@ using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
-using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
+using RimMind.Infrastructure.UI.AgentStatePreview;
 
 namespace RimMind.Infrastructure.UI
 {
@@ -19,8 +19,7 @@ namespace RimMind.Infrastructure.UI
     {
         private Vector2 _scrollPos = Vector2.zero;
 
-        private string _contextSnapshotSummary = "";
-        private Task<ContextSnapshot?>? _contextSnapshotTask;
+        private readonly AgentContextPreviewCoordinator _contextPreview = new AgentContextPreviewCoordinator();
         private Pawn? _targetPawn;
         private IAgentControl? _targetAgent;
 
@@ -366,9 +365,9 @@ namespace RimMind.Infrastructure.UI
             y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
             y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.ContextSnapshot".Translate()) + viewRect.y;
 
-            if (!_contextSnapshotSummary.NullOrEmpty())
+            if (!_contextPreview.Summary.NullOrEmpty())
             {
-                y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, _contextSnapshotSummary, RimMindUI.ColorMuted) + viewRect.y;
+                y = RimMindUI.DrawWrappedLabel(viewRect, y - viewRect.y, _contextPreview.Summary, RimMindUI.ColorMuted) + viewRect.y;
             }
             else
             {
@@ -414,9 +413,9 @@ namespace RimMind.Infrastructure.UI
 
             // Context snapshot section
             h += RimMindUI.SectionGap + RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f;
-            if (!_contextSnapshotSummary.NullOrEmpty())
+            if (!_contextPreview.Summary.NullOrEmpty())
             {
-                h += Text.CalcHeight(_contextSnapshotSummary, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
+                h += Text.CalcHeight(_contextPreview.Summary, width - RimMindUI.Padding * 4) + RimMindUI.Padding * 0.5f;
             }
             else
             {
@@ -460,12 +459,13 @@ namespace RimMind.Infrastructure.UI
                 var contextEngine = RimMindServiceLocator.Get<IContextBuilder>();
                 if (contextEngine != null)
                 {
-                    _contextSnapshotSummary = "RimMind.UI.ContextPreview.Loading".Translate();
-                    _contextSnapshotTask = contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[Debug] AgentStateDebug");
+                    _contextPreview.Begin(
+                        contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[Debug] AgentStateDebug"),
+                        "RimMind.UI.ContextPreview.Loading".Translate());
                 }
                 else
                 {
-                    _contextSnapshotSummary = "RimMind.UI.AgentStateDebug.NoData".Translate();
+                    _contextPreview.MarkUnavailable("RimMind.UI.AgentStateDebug.NoData".Translate());
                 }
             }
             y += RimMindUI.BtnHeight + RimMindUI.Padding;
@@ -507,29 +507,18 @@ namespace RimMind.Infrastructure.UI
 
         private void CompleteContextSnapshotBuild()
         {
-            if (_contextSnapshotTask == null || !_contextSnapshotTask.IsCompleted)
-                return;
+            _contextPreview.Poll(
+                "RimMind.UI.AgentStateDebug.NoData".Translate(),
+                FormatContextSnapshot);
+        }
 
-            var task = _contextSnapshotTask;
-            _contextSnapshotTask = null;
-            if (task.IsFaulted)
-            {
-                _contextSnapshotSummary = "RimMind.UI.AgentStateDebug.NoData".Translate();
-                return;
-            }
-
-            var snapshot = task.GetAwaiter().GetResult();
-            if (snapshot == null)
-            {
-                _contextSnapshotSummary = "RimMind.UI.AgentStateDebug.NoData".Translate();
-                return;
-            }
-
+        private static string FormatContextSnapshot(ContextSnapshot snapshot)
+        {
             var sb = new StringBuilder();
             sb.AppendLine($"Tokens: {snapshot.EstimatedTokens}");
             sb.AppendLine($"L0={snapshot.Meta.L0Tokens} L1={snapshot.Meta.L1Tokens} L2={snapshot.Meta.L2Tokens} L3={snapshot.Meta.L3Tokens} L4={snapshot.Meta.L4Tokens}");
             sb.AppendLine($"Messages: {snapshot.Messages.Count}");
-            _contextSnapshotSummary = sb.ToString();
+            return sb.ToString();
         }
 
         #endregion

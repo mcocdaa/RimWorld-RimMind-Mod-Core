@@ -52,5 +52,17 @@ namespace RimMind.Tests.ArchTests.PhaseP6
                 Assert.DoesNotContain(".BuildSnapshotFromEnvelope(", content);
             }
         }
+
+        [Fact]
+        public void AgentStatePreview_DelegatesTaskStateToCoordinator()
+        {
+            string window = File.ReadAllText(Path.Combine(ProjectRoot, "Source", "Infrastructure", "UI", "Window_AgentStateDebug.cs"));
+            string coordinator = File.ReadAllText(Path.Combine(ProjectRoot, "Source", "Infrastructure", "UI", "AgentState", "AgentContextPreviewCoordinator.cs"));
+
+            Assert.Contains("AgentContextPreviewCoordinator", window);
+            Assert.DoesNotContain("Task<ContextSnapshot?>?", window);
+            Assert.Contains("_contextPreview.Poll", window);
+            Assert.Contains("!_pendingTask.IsCompleted", coordinator);
+        }
     }
 }

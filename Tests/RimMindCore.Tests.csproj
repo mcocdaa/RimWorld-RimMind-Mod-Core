@@ -76,6 +76,7 @@
     <Compile Include="Infrastructure\Clients\Shared\*.cs" />
     <Compile Include="Infrastructure\UI\Layout\*.cs" />
     <Compile Include="Infrastructure\UI\DebugCenter\*.cs" />
+    <Compile Include="Infrastructure\UI\AgentState\*.cs" />
     <Compile Include="Infrastructure\UI\*.cs" />
     <Compile Include="Constants\*.cs" />
     <Compile Include="Registry\*.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
+    <Compile Include="../Source/Infrastructure/UI/AgentState/AgentContextPreviewCoordinator.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentLifecycleGroup.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageLayout.cs" Link="Infrastructure\UI\AgentsPage\AgentPageLayout.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" Link="Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" />
