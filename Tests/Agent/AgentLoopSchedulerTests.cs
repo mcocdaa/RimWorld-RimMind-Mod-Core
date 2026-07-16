@@ -439,6 +439,34 @@ namespace RimMind.Tests.Agent
             Assert.Equal(0, scheduler.GetSnapshot().LastTick);
         }
 
+        [Fact]
+        public void Clear_DuringFirstParticipantTick_StopsRemainingOldEpochParticipants()
+        {
+            var scheduler = new AgentLoopScheduler();
+            var staleParticipant = new StubAgentControl();
+            var replacement = new StubAgentControl();
+            var replacementKey = AgentLoopKeys.ForPawn(30);
+            var resetting = new StubAgentControl(onTick: () =>
+            {
+                scheduler.Clear();
+                scheduler.Register(replacementKey, AgentLoopKind.Pawn, replacement);
+            });
+            scheduler.Register(AgentLoopKeys.ForPawn(28), AgentLoopKind.Pawn, resetting);
+            scheduler.Register(AgentLoopKeys.ForPawn(29), AgentLoopKind.Pawn, staleParticipant);
+
+            scheduler.Tick(5000);
+            var resetSnapshot = scheduler.GetSnapshot();
+            scheduler.Tick(0);
+
+            Assert.Equal(1, resetting.TickCount);
+            Assert.Equal(0, staleParticipant.TickCount);
+            Assert.Equal(-1, resetSnapshot.LastTick);
+            Assert.Equal(0, resetSnapshot.TickedAgents);
+            Assert.Equal(0, resetSnapshot.FaultedAgents);
+            Assert.Equal(1, replacement.TickCount);
+            Assert.Equal(0, scheduler.GetSnapshot().LastTick);
+        }
+
         private sealed class StubAgentControl : IAgentControl
         {
             private readonly Action? _onTick;

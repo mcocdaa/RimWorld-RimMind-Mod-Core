@@ -159,6 +159,41 @@ namespace RimMind.Tests.Infrastructure.Verse
             public AgentLoopSnapshot GetSnapshot() => _inner.GetSnapshot();
         }
 
+        private sealed class ReplacementDuringRegisterScheduler : IAgentLoopScheduler
+        {
+            private readonly AgentLoopScheduler _inner = new AgentLoopScheduler();
+            private readonly IAgentControl _newEpochAgent;
+            private bool _replaceDuringRegister = true;
+
+            public ReplacementDuringRegisterScheduler(IAgentControl newEpochAgent)
+            {
+                _newEpochAgent = newEpochAgent;
+            }
+
+            public long Generation => _inner.Generation;
+            public int RegisterCount { get; private set; }
+
+            public bool Register(string key, AgentLoopKind kind, IAgentControl agent)
+            {
+                RegisterCount++;
+                var registered = _inner.Register(key, kind, agent);
+                if (_replaceDuringRegister)
+                {
+                    _replaceDuringRegister = false;
+                    _inner.Clear();
+                    _inner.Register(key, kind, _newEpochAgent);
+                }
+
+                return registered;
+            }
+
+            public bool Unregister(string key) => _inner.Unregister(key);
+            public IAgentControl? Find(string key) => _inner.Find(key);
+            public void Tick(int currentTick) => _inner.Tick(currentTick);
+            public void Clear() => _inner.Clear();
+            public AgentLoopSnapshot GetSnapshot() => _inner.GetSnapshot();
+        }
+
         [Fact]
         public void CompTick_RegistersAgentWithoutTickingItDirectly()
         {
@@ -378,6 +413,26 @@ namespace RimMind.Tests.Infrastructure.Verse
             comp.CompTick();
 
             Assert.Same(agent, scheduler.Find(key));
+            Assert.Equal(2, scheduler.RegisterCount);
+        }
+
+        [Fact]
+        public void CompTick_WhenAnotherActorRegistersAfterClear_DoesNotDeleteNewEpochRegistration()
+        {
+            var newEpochAgent = new StubAgentControl(AgentState.Active);
+            var scheduler = new ReplacementDuringRegisterScheduler(newEpochAgent);
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var localAgent = new StubAgentControl(AgentState.Active);
+            var comp = CreateCompAwaitingTickRegistration(localAgent);
+            var key = AgentLoopKeys.ForPawn(42);
+
+            comp.CompTick();
+
+            Assert.Same(newEpochAgent, scheduler.Find(key));
+
+            comp.CompTick();
+
+            Assert.Same(localAgent, scheduler.Find(key));
             Assert.Equal(2, scheduler.RegisterCount);
         }
 

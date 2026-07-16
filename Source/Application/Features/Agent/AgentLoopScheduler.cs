@@ -105,6 +105,9 @@ namespace RimMind.Application.Features.Agent
                     var faultedAgents = 0;
                     foreach (var entry in tickEntries)
                     {
+                        if (Generation != loopGeneration)
+                            break;
+
                         try
                         {
                             entry.Agent.Tick();

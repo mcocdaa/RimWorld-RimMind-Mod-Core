@@ -101,10 +101,7 @@ namespace RimMind.Infrastructure.Verse
                 return;
 
             if (scheduler.Generation != schedulerGeneration)
-            {
-                scheduler.Unregister(loopKey);
                 return;
-            }
 
             _registeredLoopScheduler = scheduler;
             _registeredLoopKey = loopKey;
