@@ -24,8 +24,8 @@ namespace RimMind.Presentation.Agent
             if (_agents.TryGetValue(key, out var existing))
                 return existing;
             var agent = _factory.Create(AgentScope.Custom(scopeType, scopeId, mapId), agentBus);
-            _agents[key] = agent;
             _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
+            _agents[key] = agent;
             return agent;
         }
 
@@ -35,8 +35,8 @@ namespace RimMind.Presentation.Agent
             if (_agents.TryGetValue(key, out var existing))
                 return existing;
             var agent = _factory.Create(scope, agentBus);
-            _agents[key] = agent;
             _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
+            _agents[key] = agent;
             return agent;
         }
 
@@ -74,9 +74,17 @@ namespace RimMind.Presentation.Agent
             if (_agents.TryGetValue(key, out var agent))
             {
                 _scheduler.Unregister(AgentLoopKeys.ForScoped(key));
-                agent.Cleanup();
-                agent.Destroy();
-                _agents.Remove(key);
+                var errors = new List<Exception>();
+                try
+                {
+                    CollectLifecycleErrors(agent, errors);
+                }
+                finally
+                {
+                    _agents.Remove(key);
+                }
+
+                ThrowCollectedErrors(errors);
                 return true;
             }
             return false;
@@ -84,13 +92,59 @@ namespace RimMind.Presentation.Agent
 
         public void Clear()
         {
-            foreach (var pair in _agents)
+            var entries = new List<KeyValuePair<string, IScopedAgent>>(_agents);
+            var errors = new List<Exception>();
+
+            foreach (var pair in entries)
             {
-                _scheduler.Unregister(AgentLoopKeys.ForScoped(pair.Key));
-                pair.Value.Cleanup();
-                pair.Value.Destroy();
+                try
+                {
+                    _scheduler.Unregister(AgentLoopKeys.ForScoped(pair.Key));
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(ex);
+                    continue;
+                }
+
+                try
+                {
+                    CollectLifecycleErrors(pair.Value, errors);
+                }
+                finally
+                {
+                    _agents.Remove(pair.Key);
+                }
             }
-            _agents.Clear();
+
+            ThrowCollectedErrors(errors);
+        }
+
+        private static void CollectLifecycleErrors(IScopedAgent agent, ICollection<Exception> errors)
+        {
+            try
+            {
+                agent.Cleanup();
+            }
+            catch (Exception ex)
+            {
+                errors.Add(ex);
+            }
+
+            try
+            {
+                agent.Destroy();
+            }
+            catch (Exception ex)
+            {
+                errors.Add(ex);
+            }
+        }
+
+        private static void ThrowCollectedErrors(IReadOnlyCollection<Exception> errors)
+        {
+            if (errors.Count > 0)
+                throw new AggregateException("Scoped agent teardown failed.", errors);
         }
 
         private static string LegacyCompositeKey(string scopeType, string scopeId)
