@@ -9,8 +9,9 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Agent;
-using RimMind.Application.Features.Agent.Modes;
+using RimMind.Application.Features.Agent;
 using RimMind.Application.Features.Agent.InnerVoice;
+using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Agent.Psychology;
 using RimMind.Application.Features.Agent.Social;
 using RimMind.Presentation.Agent;
@@ -65,6 +66,9 @@ namespace RimMind.Presentation.Runtime.Composition
                 RimMindServiceLocator.Register<IDreamThoughtInjector>(dreamThoughtInjector);
             }
 
+            var agentLoopScheduler = new AgentLoopScheduler(logSink);
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(agentLoopScheduler);
+
             var pawnAgentFactory = new PawnAgentFactory(
                 RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor,
                 innerVoiceHandler, psychologyWatcher, tickProvider,
@@ -76,7 +80,7 @@ namespace RimMind.Presentation.Runtime.Composition
             var scopedAgentFactory = new ScopedAgentFactory();
             RimMindServiceLocator.Register<IScopedAgentFactory>(scopedAgentFactory);
 
-            var scopedAgentManager = new ScopedAgentManager(scopedAgentFactory);
+            var scopedAgentManager = new ScopedAgentManager(scopedAgentFactory, agentLoopScheduler);
             RimMindServiceLocator.Register<IScopedAgentManager>(scopedAgentManager);
 
             var gameContextBuilder = new GameContextBuilder(

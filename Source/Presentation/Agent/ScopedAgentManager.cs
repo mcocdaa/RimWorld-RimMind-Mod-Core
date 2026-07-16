@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
@@ -8,11 +9,13 @@ namespace RimMind.Presentation.Agent
     public sealed class ScopedAgentManager : IScopedAgentManager
     {
         private readonly IScopedAgentFactory _factory;
+        private readonly IAgentLoopScheduler _scheduler;
         private readonly Dictionary<string, IScopedAgent> _agents = new();
 
-        public ScopedAgentManager(IScopedAgentFactory factory)
+        public ScopedAgentManager(IScopedAgentFactory factory, IAgentLoopScheduler scheduler)
         {
-            _factory = factory;
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
         }
 
         public IScopedAgent GetOrCreate(string scopeType, string scopeId, IAgentBus agentBus, int? mapId = null)
@@ -22,6 +25,7 @@ namespace RimMind.Presentation.Agent
                 return existing;
             var agent = _factory.Create(AgentScope.Custom(scopeType, scopeId, mapId), agentBus);
             _agents[key] = agent;
+            _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
             return agent;
         }
 
@@ -32,6 +36,7 @@ namespace RimMind.Presentation.Agent
                 return existing;
             var agent = _factory.Create(scope, agentBus);
             _agents[key] = agent;
+            _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
             return agent;
         }
 
@@ -68,6 +73,7 @@ namespace RimMind.Presentation.Agent
         {
             if (_agents.TryGetValue(key, out var agent))
             {
+                _scheduler.Unregister(AgentLoopKeys.ForScoped(key));
                 agent.Cleanup();
                 agent.Destroy();
                 _agents.Remove(key);
@@ -78,10 +84,11 @@ namespace RimMind.Presentation.Agent
 
         public void Clear()
         {
-            foreach (var agent in _agents.Values)
+            foreach (var pair in _agents)
             {
-                agent.Cleanup();
-                agent.Destroy();
+                _scheduler.Unregister(AgentLoopKeys.ForScoped(pair.Key));
+                pair.Value.Cleanup();
+                pair.Value.Destroy();
             }
             _agents.Clear();
         }
