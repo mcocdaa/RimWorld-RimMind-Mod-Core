@@ -25,6 +25,7 @@ namespace RimMind.Infrastructure.Verse
         private IAgentLoopScheduler? _registeredLoopScheduler;
         private string? _registeredLoopKey;
         private int? _registeredPawnId;
+        private int? _registeredLoopGeneration;
 
         public IPawnAgentVerse? Agent
         {
@@ -83,7 +84,8 @@ namespace RimMind.Infrastructure.Verse
             }
 
             if (ReferenceEquals(_registeredLoopScheduler, scheduler)
-                && _registeredPawnId == pawn.thingIDNumber)
+                && _registeredPawnId == pawn.thingIDNumber
+                && _registeredLoopGeneration == scheduler.Generation)
             {
                 return;
             }
@@ -98,6 +100,7 @@ namespace RimMind.Infrastructure.Verse
                 _registeredLoopScheduler = scheduler;
                 _registeredLoopKey = loopKey;
                 _registeredPawnId = pawnId;
+                _registeredLoopGeneration = scheduler.Generation;
             }
         }
 
@@ -111,6 +114,7 @@ namespace RimMind.Infrastructure.Verse
             _registeredLoopScheduler = null;
             _registeredLoopKey = null;
             _registeredPawnId = null;
+            _registeredLoopGeneration = null;
         }
 
         public override void PostDestroy(DestroyMode mode, Map previousMap)

@@ -12,6 +12,7 @@ namespace RimMind.Application.Features.Agent
         private readonly object _syncRoot = new();
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
         private readonly ILogSink? _logSink;
+        private int _generation;
         private int _lastTick = -1;
         private int _tickedAgents;
         private int _faultedAgents;
@@ -22,6 +23,17 @@ namespace RimMind.Application.Features.Agent
         public AgentLoopScheduler(ILogSink? logSink = null)
         {
             _logSink = logSink;
+        }
+
+        public int Generation
+        {
+            get
+            {
+                lock (_syncRoot)
+                {
+                    return _generation;
+                }
+            }
         }
 
         public bool Register(string key, AgentLoopKind kind, IAgentControl agent)
@@ -153,6 +165,7 @@ namespace RimMind.Application.Features.Agent
             lock (_syncRoot)
             {
                 _entries.Clear();
+                _generation++;
             }
         }
 

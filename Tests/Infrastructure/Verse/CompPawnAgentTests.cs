@@ -108,6 +108,7 @@ namespace RimMind.Tests.Infrastructure.Verse
         {
             private readonly AgentLoopScheduler _inner = new AgentLoopScheduler();
 
+            public int Generation => _inner.Generation;
             public int RegisterCount { get; private set; }
             public int FindCount { get; private set; }
 
@@ -312,6 +313,26 @@ namespace RimMind.Tests.Infrastructure.Verse
 
             Assert.Equal(registerCount, scheduler.RegisterCount);
             Assert.Equal(findCount, scheduler.FindCount);
+        }
+
+        [Fact]
+        public void CompTick_AfterSchedulerClear_ReregistersSameAgent()
+        {
+            var scheduler = new CountingAgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateCompAwaitingTickRegistration(agent);
+            var key = AgentLoopKeys.ForPawn(42);
+            comp.CompTick();
+            var registerCount = scheduler.RegisterCount;
+
+            scheduler.Clear();
+            Assert.Null(scheduler.Find(key));
+
+            comp.CompTick();
+
+            Assert.Same(agent, scheduler.Find(key));
+            Assert.Equal(registerCount + 1, scheduler.RegisterCount);
         }
 
         [Fact]

@@ -4,6 +4,7 @@ namespace RimMind.Application.Common.Interfaces.Agent
 {
     public interface IAgentLoopScheduler
     {
+        int Generation { get; }
         bool Register(string key, AgentLoopKind kind, IAgentControl agent);
         bool Unregister(string key);
         IAgentControl? Find(string key);

@@ -348,6 +348,41 @@ namespace RimMind.Tests.Agent
             Assert.Equal(0, scheduler.GetSnapshot().RegisteredScopedAgents);
         }
 
+        [Fact]
+        public void Clear_EmptiesRegistrationsAndIncrementsGenerationForEveryExplicitReset()
+        {
+            var scheduler = new AgentLoopScheduler();
+            var initialGeneration = scheduler.Generation;
+            scheduler.Register(
+                AgentLoopKeys.ForPawn(23),
+                AgentLoopKind.Pawn,
+                new StubAgentControl());
+
+            scheduler.Clear();
+
+            Assert.Equal(initialGeneration + 1, scheduler.Generation);
+            Assert.Equal(0, scheduler.GetSnapshot().RegisteredPawnAgents);
+
+            scheduler.Clear();
+
+            Assert.Equal(initialGeneration + 2, scheduler.Generation);
+        }
+
+        [Fact]
+        public void RegisterAndUnregister_DoNotChangeGeneration()
+        {
+            var scheduler = new AgentLoopScheduler();
+            IAgentLoopScheduler contract = scheduler;
+            var initialGeneration = contract.Generation;
+            var key = AgentLoopKeys.ForPawn(24);
+
+            scheduler.Register(key, AgentLoopKind.Pawn, new StubAgentControl());
+            Assert.Equal(initialGeneration, contract.Generation);
+
+            scheduler.Unregister(key);
+            Assert.Equal(initialGeneration, contract.Generation);
+        }
+
         private sealed class StubAgentControl : IAgentControl
         {
             private readonly Action? _onTick;

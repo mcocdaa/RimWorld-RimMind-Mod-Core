@@ -305,6 +305,7 @@ namespace RimMind.Tests.Presentation.Agent
                 _events = events;
             }
 
+            public int Generation { get; private set; }
             public int RegisterFailuresRemaining { get; set; }
             public Exception? RegisterFailure { get; set; }
             public Dictionary<string, Exception> UnregisterFailures { get; } = new();
@@ -337,7 +338,11 @@ namespace RimMind.Tests.Presentation.Agent
             {
             }
 
-            public void Clear() => _agents.Clear();
+            public void Clear()
+            {
+                _agents.Clear();
+                Generation++;
+            }
 
             public AgentLoopSnapshot GetSnapshot() => AgentLoopSnapshot.Empty;
         }

@@ -1,89 +1,75 @@
-using System.Collections.Generic;
-using RimMind.Application.Common.Interfaces;
+using System;
 using RimMind.Application.Common.Interfaces.Agent;
-using RimMind.Application.Common.Interfaces.Client;
-using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Features.Queue;
-using RimMind.Domain.Enums;
-using RimMind.Presentation.Agent;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
     public class RimMindRuntimeGameComponent : GameComponent
     {
-        private readonly Dictionary<int, IPawnAgentVerse> _agents = new Dictionary<int, IPawnAgentVerse>();
-        private int _lastTick;
+        private IAgentLoopScheduler? _scheduler;
+        private IScopedAgentManager? _scopedAgentManager;
+        private int _lastTick = -1;
         private bool _initialized;
 
         public RimMindRuntimeGameComponent(Game game) : base() { }
 
-        public override void GameComponentTick()
+        private void EnsureInitialized()
         {
-            base.GameComponentTick();
             if (!_initialized)
             {
                 RimMindRuntime.Initialize();
                 _initialized = true;
             }
 
+            _scheduler ??= RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
+            _scopedAgentManager ??= RimMindServiceLocator.TryGet<IScopedAgentManager>();
+        }
+
+        public override void GameComponentTick()
+        {
+            base.GameComponentTick();
+            EnsureInitialized();
             int now = Find.TickManager.TicksGame;
             if (now == _lastTick) return;
             _lastTick = now;
-
-            foreach (var agent in _agents.Values)
-                agent.Tick();
+            _scheduler?.Tick(now);
         }
 
-        public IPawnAgentVerse GetOrCreateAgent(Pawn pawn)
+        public override void StartedNewGame()
         {
-            if (pawn == null) throw new System.ArgumentNullException(nameof(pawn));
-            if (!_agents.TryGetValue(pawn.thingIDNumber, out var agent))
+            base.StartedNewGame();
+            EnsureInitialized();
+            ResetRuntimeAgents();
+        }
+
+        public override void LoadedGame()
+        {
+            base.LoadedGame();
+            EnsureInitialized();
+            ResetRuntimeAgents();
+        }
+
+        private void ResetRuntimeAgents()
+        {
+            try
             {
-                var factory = RimMindRuntime.Instance.GetService<IPawnAgentFactoryVerse>();
-                var agentBus = RimMindRuntime.Instance.GetService<IAgentBus>();
-                var created = factory!.Create(pawn, agentBus!);
-                agent = created as IPawnAgentVerse
-                    ?? throw new System.InvalidOperationException("IPawnAgentFactoryVerse.Create must return an IPawnAgentVerse implementation");
-                agent.TransitionTo(AgentState.Active);
-                _agents[pawn.thingIDNumber] = agent;
+                _scopedAgentManager?.Clear();
             }
-            return agent;
-        }
-
-        public IPawnAgent? GetAgent(int pawnId)
-        {
-            _agents.TryGetValue(pawnId, out var agent);
-            return agent;
-        }
-
-        public bool RemoveAgent(int pawnId)
-        {
-            if (_agents.TryGetValue(pawnId, out var agent))
+            catch (Exception ex)
             {
-                agent.Cleanup();
-                _agents.Remove(pawnId);
-                return true;
+                Log.Error($"[RimMind-Core] Failed to clear runtime scoped agents: {ex}");
             }
-            return false;
-        }
-
-        public override void ExposeData()
-        {
-            base.ExposeData();
-            var agentList = new List<PawnAgent>(_agents.Values.Count);
-            foreach (var a in _agents.Values)
-                if (a is PawnAgent pa)
-                    agentList.Add(pa);
-            Scribe_Collections.Look(ref agentList, "agents", LookMode.Deep);
-            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            finally
             {
-                _agents.Clear();
-                if (agentList != null)
-                    foreach (var a in agentList)
-                        if (a?.Pawn != null)
-                            _agents[a.Pawn.thingIDNumber] = a;
+                try
+                {
+                    _scheduler?.Clear();
+                }
+                finally
+                {
+                    _lastTick = -1;
+                }
             }
         }
     }
