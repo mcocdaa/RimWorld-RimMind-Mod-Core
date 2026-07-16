@@ -1,22 +1,46 @@
+using System;
+using System.Threading;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Domain.Events;
 
 namespace RimMind.Application.Common.Defaults;
 
-public sealed class AgentBusCoreSubscriber
+public sealed class AgentBusCoreSubscriber : IDisposable
 {
+    private readonly IAgentBus _eventBus;
     private readonly ILogSink _logSink;
+    private readonly string _perceptionKey;
+    private readonly string _actionKey;
+    private readonly string _modeChangedKey;
+    private readonly string _lifecycleKey;
+    private readonly string _decisionKey;
+    private readonly string _goalKey;
+    private int _disposed;
 
     public AgentBusCoreSubscriber(IAgentBus eventBus, ILogSink logSink)
     {
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logSink = logSink;
-        eventBus.Subscribe<PerceptionEvent>(OnPerception);
-        eventBus.Subscribe<ActionEvent>(OnAction);
-        eventBus.Subscribe<AgentModeChangedEvent>(OnModeChanged);
-        eventBus.Subscribe<AgentLifecycleEvent>(OnLifecycle);
-        eventBus.Subscribe<DecisionEvent>(OnDecision);
-        eventBus.Subscribe<GoalEvent>(OnGoal);
+        _perceptionKey = eventBus.Subscribe<PerceptionEvent>(OnPerception);
+        _actionKey = eventBus.Subscribe<ActionEvent>(OnAction);
+        _modeChangedKey = eventBus.Subscribe<AgentModeChangedEvent>(OnModeChanged);
+        _lifecycleKey = eventBus.Subscribe<AgentLifecycleEvent>(OnLifecycle);
+        _decisionKey = eventBus.Subscribe<DecisionEvent>(OnDecision);
+        _goalKey = eventBus.Subscribe<GoalEvent>(OnGoal);
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        _eventBus.Unsubscribe<PerceptionEvent>(_perceptionKey);
+        _eventBus.Unsubscribe<ActionEvent>(_actionKey);
+        _eventBus.Unsubscribe<AgentModeChangedEvent>(_modeChangedKey);
+        _eventBus.Unsubscribe<AgentLifecycleEvent>(_lifecycleKey);
+        _eventBus.Unsubscribe<DecisionEvent>(_decisionKey);
+        _eventBus.Unsubscribe<GoalEvent>(_goalKey);
     }
 
     private void OnPerception(PerceptionEvent e)

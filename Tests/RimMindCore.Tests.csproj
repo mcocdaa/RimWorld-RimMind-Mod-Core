@@ -25,6 +25,7 @@
     <Compile Include="Result\*.cs" />
     <Compile Include="ScenarioRegistryTests.cs" />
     <Compile Include="ThreadSafetyTests.cs" />
+    <Compile Include="AgentBusTests.cs" />
     <Compile Include="Queue\*.cs" />
     <Compile Include="Pipeline\Unified\*.cs" />
     <Compile Include="Context\Diff\*.cs" />

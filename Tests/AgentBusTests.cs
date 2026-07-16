@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using RimMind.Domain.Events;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Defaults;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Common.Interfaces.Context;
 using Xunit;
@@ -80,6 +82,23 @@ namespace RimMind.Presentation.Tests
         }
 
         [Fact]
+        public void AgentBusCoreSubscriber_Dispose_RemovesOnlyOwnedHandlers()
+        {
+            var bus = new AgentBusImpl();
+            var thirdPartyCalls = 0;
+            bus.Subscribe<GoalEvent>(_ => thirdPartyCalls++);
+            var core = new AgentBusCoreSubscriber(bus, new SilentLogSink());
+
+            Assert.Equal(7, bus.GetHandlerCount());
+
+            core.Dispose();
+            bus.Publish(new GoalEvent("npc", 1, "goal", "active", "test"));
+
+            Assert.Equal(1, bus.GetHandlerCount());
+            Assert.Equal(1, thirdPartyCalls);
+        }
+
+        [Fact]
         public void FlushBackgroundQueue_DoesNotThrow()
         {
             var bus = new AgentBusImpl();
@@ -106,6 +125,14 @@ namespace RimMind.Presentation.Tests
             bus.Subscribe<DecisionEvent>(e => count++);
             bus.Publish(new DecisionEvent("n", 0, "t", "r", "a"));
             Assert.Equal(1, count);
+        }
+
+        private sealed class SilentLogSink : ILogSink
+        {
+            public void Message(string msg) { }
+            public void Warning(string msg) { }
+            public void Error(string msg) { }
+            public void LogFromBackground(string msg, bool isWarning = false) { }
         }
     }
 }

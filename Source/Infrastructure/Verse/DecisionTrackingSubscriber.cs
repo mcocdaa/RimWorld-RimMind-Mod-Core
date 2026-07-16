@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Flywheel;
@@ -9,16 +11,26 @@ namespace RimMind.Infrastructure.Verse
     /// Subscribes to DecisionEvent to record agent decisions for flywheel calibration
     /// and trigger context cache invalidation when decisions change agent state.
     /// </summary>
-    internal sealed class DecisionTrackingSubscriber
+    internal sealed class DecisionTrackingSubscriber : IDisposable
     {
+        private readonly IAgentBus _eventBus;
+        private readonly string _subscriptionKey;
         private readonly IFlywheelParameterStore _parameterStore;
         private readonly ILogSink _logSink;
+        private int _disposed;
 
         public DecisionTrackingSubscriber(IAgentBus eventBus, IFlywheelParameterStore parameterStore, ILogSink logSink)
         {
+            _eventBus = eventBus;
             _parameterStore = parameterStore;
             _logSink = logSink;
-            eventBus.Subscribe<DecisionEvent>(OnDecision);
+            _subscriptionKey = eventBus.Subscribe<DecisionEvent>(OnDecision);
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+                _eventBus.Unsubscribe<DecisionEvent>(_subscriptionKey);
         }
 
         private void OnDecision(DecisionEvent e)

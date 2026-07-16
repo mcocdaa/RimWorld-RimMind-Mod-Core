@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
@@ -14,6 +16,7 @@ namespace RimMind.Infrastructure.Verse
     {
         private IAgentBus? _agentBus;
         private IAgentBus? _subscribersRegisteredBus;
+        private readonly List<IDisposable> _coreSubscribers = new();
         private IAIRequestQueueTickable? _requestQueue;
         private AgentBusQueueTickCoordinator? _tickCoordinator;
         private ILogSink? _logSink;
@@ -29,8 +32,12 @@ namespace RimMind.Infrastructure.Verse
         {
             IAgentBus? agentBus = RimMindServiceLocator.TryGet<IAgentBus>();
             IAIRequestQueueTickable? requestQueue = RimMindServiceLocator.TryGet<IAIRequestQueueTickable>();
+            bool agentBusChanged = !ReferenceEquals(_agentBus, agentBus);
 
-            if (!ReferenceEquals(_agentBus, agentBus) || !ReferenceEquals(_requestQueue, requestQueue))
+            if (agentBusChanged)
+                DisposeCoreSubscribers();
+
+            if (agentBusChanged || !ReferenceEquals(_requestQueue, requestQueue))
             {
                 _agentBus = agentBus;
                 _requestQueue = requestQueue;
@@ -58,8 +65,6 @@ namespace RimMind.Infrastructure.Verse
         public override void StartedNewGame()
         {
             EnsureCached();
-            _agentBus?.ClearAllSubscribers();
-            _subscribersRegisteredBus = null;
             ReRegisterCoreSubscribers();
             _lifecycleStarted = true;
         }
@@ -67,8 +72,6 @@ namespace RimMind.Infrastructure.Verse
         public override void LoadedGame()
         {
             EnsureCached();
-            _agentBus?.ClearAllSubscribers();
-            _subscribersRegisteredBus = null;
             ReRegisterCoreSubscribers();
             _lifecycleStarted = true;
         }
@@ -81,26 +84,36 @@ namespace RimMind.Infrastructure.Verse
 
         private void ReRegisterCoreSubscribers()
         {
+            DisposeCoreSubscribers();
             if (_agentBus != null && _logSink != null)
             {
-                _ = new AgentBusCoreSubscriber(_agentBus, _logSink);
+                _coreSubscribers.Add(new AgentBusCoreSubscriber(_agentBus, _logSink));
 
                 if (_cacheManager != null)
-                    _ = new ContextInvalidationSubscriber(_agentBus, _cacheManager, _logSink);
+                    _coreSubscribers.Add(new ContextInvalidationSubscriber(_agentBus, _cacheManager, _logSink));
 
                 if (_parameterStore != null)
-                    _ = new FlywheelCalibrationSubscriber(_agentBus, _parameterStore, _logSink);
+                    _coreSubscribers.Add(new FlywheelCalibrationSubscriber(_agentBus, _parameterStore, _logSink));
 
                 if (_cacheManager != null)
-                    _ = new NpcCleanupSubscriber(_agentBus, _cacheManager, _logSink);
+                    _coreSubscribers.Add(new NpcCleanupSubscriber(_agentBus, _cacheManager, _logSink));
 
-                _ = new GoalOptimizationSubscriber(_agentBus, _logSink);
+                _coreSubscribers.Add(new GoalOptimizationSubscriber(_agentBus, _logSink));
 
                 if (_parameterStore != null)
-                    _ = new DecisionTrackingSubscriber(_agentBus, _parameterStore, _logSink);
+                    _coreSubscribers.Add(new DecisionTrackingSubscriber(_agentBus, _parameterStore, _logSink));
 
                 _subscribersRegisteredBus = _agentBus;
             }
+        }
+
+        private void DisposeCoreSubscribers()
+        {
+            for (int index = _coreSubscribers.Count - 1; index >= 0; index--)
+                _coreSubscribers[index].Dispose();
+
+            _coreSubscribers.Clear();
+            _subscribersRegisteredBus = null;
         }
     }
 }

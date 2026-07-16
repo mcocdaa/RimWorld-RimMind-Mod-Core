@@ -149,12 +149,32 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("_lifecycleStarted", ensureCached);
             Assert.Contains("!ReferenceEquals(_subscribersRegisteredBus, _agentBus)", ensureCached);
             Assert.Contains("ReRegisterCoreSubscribers();", ensureCached);
+            Assert.Contains("List<IDisposable>", content);
+            Assert.Contains("DisposeCoreSubscribers();", content);
+            Assert.DoesNotContain("ClearAllSubscribers()", content);
             Assert.Contains(
                 "_lifecycleStarted = true;",
                 ExtractMethodBody(content, "public override void StartedNewGame()"));
             Assert.Contains(
                 "_lifecycleStarted = true;",
                 ExtractMethodBody(content, "public override void LoadedGame()"));
+
+            string[] subscriberPaths =
+            {
+                "Application/Common/Defaults/AgentBusCoreSubscriber.cs",
+                "Infrastructure/Verse/ContextInvalidationSubscriber.cs",
+                "Infrastructure/Verse/FlywheelCalibrationSubscriber.cs",
+                "Infrastructure/Verse/NpcCleanupSubscriber.cs",
+                "Infrastructure/Verse/GoalOptimizationSubscriber.cs",
+                "Infrastructure/Verse/DecisionTrackingSubscriber.cs",
+            };
+
+            foreach (string path in subscriberPaths)
+            {
+                string subscriber = ReadSource(path);
+                Assert.Contains("IDisposable", subscriber);
+                Assert.Contains("Unsubscribe<", subscriber);
+            }
         }
 
         [Fact]
