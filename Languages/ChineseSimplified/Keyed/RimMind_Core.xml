@@ -474,6 +474,9 @@
   <RimMind.UI.Hub.NoPawn>未选择小人</RimMind.UI.Hub.NoPawn>
   <RimMind.UI.Hub.AgentSummary>当前地图 Agent</RimMind.UI.Hub.AgentSummary>
   <RimMind.UI.Hub.PendingRequests>待处理 AI 请求</RimMind.UI.Hub.PendingRequests>
+  <RimMind.UI.Hub.AgentLoop>Agent 运行循环</RimMind.UI.Hub.AgentLoop>
+  <RimMind.UI.Hub.AgentLoopLastTick>最近循环 Tick</RimMind.UI.Hub.AgentLoopLastTick>
+  <RimMind.UI.Hub.AgentLoopFaults>循环故障数</RimMind.UI.Hub.AgentLoopFaults>
   <RimMind.UI.Hub.QueueMissing>队列：尚未初始化</RimMind.UI.Hub.QueueMissing>
   <RimMind.UI.Hub.RequestPending>待处理请求</RimMind.UI.Hub.RequestPending>
   <RimMind.UI.Hub.RequestResults>AI 结果</RimMind.UI.Hub.RequestResults>

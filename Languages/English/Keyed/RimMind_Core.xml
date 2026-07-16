@@ -474,6 +474,9 @@
   <RimMind.UI.Hub.NoPawn>No pawn selected</RimMind.UI.Hub.NoPawn>
   <RimMind.UI.Hub.AgentSummary>Agents on map</RimMind.UI.Hub.AgentSummary>
   <RimMind.UI.Hub.PendingRequests>Pending AI requests</RimMind.UI.Hub.PendingRequests>
+  <RimMind.UI.Hub.AgentLoop>Agent runtime loop</RimMind.UI.Hub.AgentLoop>
+  <RimMind.UI.Hub.AgentLoopLastTick>Last loop tick</RimMind.UI.Hub.AgentLoopLastTick>
+  <RimMind.UI.Hub.AgentLoopFaults>Loop faults</RimMind.UI.Hub.AgentLoopFaults>
   <RimMind.UI.Hub.QueueMissing>Queue: not initialized</RimMind.UI.Hub.QueueMissing>
   <RimMind.UI.Hub.RequestPending>Pending Requests</RimMind.UI.Hub.RequestPending>
   <RimMind.UI.Hub.RequestResults>AI Results</RimMind.UI.Hub.RequestResults>

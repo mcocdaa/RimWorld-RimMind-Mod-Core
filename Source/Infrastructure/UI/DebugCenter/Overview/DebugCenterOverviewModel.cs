@@ -9,7 +9,11 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
             int errorAgents,
             int pendingRequests,
             string queueState,
-            string selectedObject)
+            string selectedObject,
+            int registeredPawnAgents,
+            int registeredScopedAgents,
+            int lastAgentLoopTick,
+            int agentLoopFaults)
         {
             ActiveAgents = activeAgents;
             PausedAgents = pausedAgents;
@@ -18,6 +22,10 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
             PendingRequests = pendingRequests;
             QueueState = queueState ?? string.Empty;
             SelectedObject = selectedObject ?? string.Empty;
+            RegisteredPawnAgents = registeredPawnAgents;
+            RegisteredScopedAgents = registeredScopedAgents;
+            LastAgentLoopTick = lastAgentLoopTick;
+            AgentLoopFaults = agentLoopFaults;
         }
 
         public int ActiveAgents { get; }
@@ -34,7 +42,17 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
 
         public string SelectedObject { get; }
 
+        public int RegisteredPawnAgents { get; }
+
+        public int RegisteredScopedAgents { get; }
+
+        public int LastAgentLoopTick { get; }
+
+        public int AgentLoopFaults { get; }
+
         public string AgentSummary => $"{ActiveAgents} active / {PausedAgents} paused / {PendingAgents} pending / {ErrorAgents} error";
+
+        public string AgentLoopSummary => $"{RegisteredPawnAgents} pawn / {RegisteredScopedAgents} scoped";
 
         public static DebugCenterOverviewModel SnapshotFixture()
             => new(
@@ -44,6 +62,10 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
                 errorAgents: 0,
                 pendingRequests: 4,
                 queueState: "Queue: Running",
-                selectedObject: "Nickie");
+                selectedObject: "Nickie",
+                registeredPawnAgents: 3,
+                registeredScopedAgents: 1,
+                lastAgentLoopTick: 900,
+                agentLoopFaults: 0);
     }
 }

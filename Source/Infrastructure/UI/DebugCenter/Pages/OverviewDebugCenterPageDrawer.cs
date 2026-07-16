@@ -1,5 +1,6 @@
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Domain.Enums;
+using RimMind.Application.Common.Models.Agent;
 using RimMind.Infrastructure.UI.DebugCenter.Overview;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
@@ -31,6 +32,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
             float y = cards[3].yMax + RimMindUI.SectionGap;
             y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.PendingRequests".Translate(), model.PendingRequests.ToString()) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoop".Translate(), model.AgentLoopSummary) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), model.LastAgentLoopTick.ToString()) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString()) + rect.y;
 
             y += RimMindUI.SectionGap;
             y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.QuickActions".Translate()) + rect.y;
@@ -46,37 +50,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
         private static DebugCenterOverviewModel BuildModel(Pawn? selectedPawn)
         {
-            int agentCount = 0;
-            int activeCount = 0;
-            int pausedCount = 0;
-            int pendingCount = 0;
-            int errorCount = 0;
-            var map = Find.CurrentMap;
-
-            if (map != null)
-            {
-                foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
-                {
-                    var agent = CompPawnAgent.GetComp(pawn)?.Agent;
-                    if (agent == null) continue;
-                    agentCount++;
-                    switch (agent.State)
-                    {
-                        case AgentState.Active:
-                            activeCount++;
-                            break;
-                        case AgentState.Paused:
-                            pausedCount++;
-                            break;
-                        case AgentState.Terminated:
-                            errorCount++;
-                            break;
-                        default:
-                            pendingCount++;
-                            break;
-                    }
-                }
-            }
+            AgentLoopSnapshot loop = RimMindServiceLocator
+                .TryGet<IAgentLoopScheduler>()?
+                .GetSnapshot() ?? AgentLoopSnapshot.Empty;
 
             var queue = RimMindServiceLocator.TryGet<IAIRequestQueue>();
             string queueText = queue == null
@@ -86,13 +62,17 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
                     : "RimMind.Settings.QueueRunning".Translate();
 
             return new DebugCenterOverviewModel(
-                activeCount,
-                pausedCount,
-                pendingCount,
-                errorCount,
+                loop.ActiveAgents,
+                loop.PausedAgents,
+                loop.PendingAgents,
+                loop.TerminatedAgents,
                 RequestOverlay.Pending.Count,
                 queueText,
-                selectedPawn?.LabelShortCap ?? "RimMind.UI.Hub.NoPawn".Translate());
+                selectedPawn?.LabelShortCap ?? "RimMind.UI.Hub.NoPawn".Translate(),
+                loop.RegisteredPawnAgents,
+                loop.RegisteredScopedAgents,
+                loop.LastTick,
+                loop.FaultedAgents);
         }
 
         private static Rect[] CalculateCardRects(Rect rect)

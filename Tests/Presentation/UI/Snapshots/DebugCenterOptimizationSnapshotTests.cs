@@ -54,8 +54,15 @@ public sealed class DebugCenterOptimizationSnapshotTests
             errorAgents: 4,
             pendingRequests: 5,
             queueState: "Running",
-            selectedObject: "Nickie");
+            selectedObject: "Nickie",
+            registeredPawnAgents: 4,
+            registeredScopedAgents: 2,
+            lastAgentLoopTick: 900,
+            agentLoopFaults: 1);
 
         Assert.Equal("2 active / 1 paused / 3 pending / 4 error", model.AgentSummary);
+        Assert.Equal("4 pawn / 2 scoped", model.AgentLoopSummary);
+        Assert.Equal(900, model.LastAgentLoopTick);
+        Assert.Equal(1, model.AgentLoopFaults);
     }
 }

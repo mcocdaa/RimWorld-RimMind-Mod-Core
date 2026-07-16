@@ -158,6 +158,43 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
+        public void DebugCenterOverview_UsesSchedulerSnapshotAndBothDiagnosticLocales()
+        {
+            string drawer = ReadSource(
+                "Infrastructure/UI/DebugCenter/Pages/OverviewDebugCenterPageDrawer.cs");
+
+            Assert.Contains("IAgentLoopScheduler", drawer);
+            Assert.Contains("GetSnapshot()", drawer);
+            Assert.Contains("AgentLoopSnapshot.Empty", drawer);
+            Assert.DoesNotContain("AllPawnsSpawned", drawer);
+            Assert.DoesNotContain("mapPawns", drawer);
+
+            string english = File.ReadAllText(Path.Combine(
+                ProjectRoot, "Languages", "English", "Keyed", "RimMind_Core.xml"));
+            string chinese = File.ReadAllText(Path.Combine(
+                ProjectRoot, "Languages", "ChineseSimplified", "Keyed", "RimMind_Core.xml"));
+
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoop>Agent runtime loop</RimMind.UI.Hub.AgentLoop>",
+                english);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopLastTick>Last loop tick</RimMind.UI.Hub.AgentLoopLastTick>",
+                english);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopFaults>Loop faults</RimMind.UI.Hub.AgentLoopFaults>",
+                english);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoop>Agent 运行循环</RimMind.UI.Hub.AgentLoop>",
+                chinese);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopLastTick>最近循环 Tick</RimMind.UI.Hub.AgentLoopLastTick>",
+                chinese);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopFaults>循环故障数</RimMind.UI.Hub.AgentLoopFaults>",
+                chinese);
+        }
+
+        [Fact]
         public void RuntimeLifecycle_ClearsScopedAgentsBeforeSchedulerForNewAndLoadedGames()
         {
             string content = ReadSource("Presentation/Runtime/RimMindRuntimeGameComponent.cs");
