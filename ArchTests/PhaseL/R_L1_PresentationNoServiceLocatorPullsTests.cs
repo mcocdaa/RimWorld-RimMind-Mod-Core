@@ -19,6 +19,8 @@ namespace RimMind.Core.ArchTests.PhaseL
         {
             "RimMindCompositionRoot.cs",
             "RimMindRuntime.cs",
+            // Verse constructs GameComponent instances, so this lifecycle host is a composition boundary.
+            "RimMindRuntimeGameComponent.cs",
             "RimMindLifecycleManager.cs",
             "RimMindExtensionManager.cs"
         };

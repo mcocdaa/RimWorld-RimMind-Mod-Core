@@ -1,20 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
-  <!-- Window_AIDebugLog.cs -->
-  <RimMind.UI.DebugLog.Title>AI Request Debug Log</RimMind.UI.DebugLog.Title>
-  <RimMind.UI.DebugLog.Search>Search source or response...</RimMind.UI.DebugLog.Search>
-  <RimMind.UI.DebugLog.Clear>Clear</RimMind.UI.DebugLog.Clear>
-  <RimMind.UI.DebugLog.CopyResponse>Copy Response</RimMind.UI.DebugLog.CopyResponse>
-  <RimMind.UI.DebugLog.ClickToView>(Click an entry on the left to view details)</RimMind.UI.DebugLog.ClickToView>
-  <RimMind.UI.DebugLog.RecordCount>{0} records</RimMind.UI.DebugLog.RecordCount>
-  <RimMind.UI.DebugLog.Empty>No AI request results recorded yet</RimMind.UI.DebugLog.Empty>
-  <RimMind.UI.DebugLog.NotReady>AI debug log is not initialized</RimMind.UI.DebugLog.NotReady>
-  <RimMind.UI.DebugLog.Tok>tok</RimMind.UI.DebugLog.Tok>
-  <RimMind.UI.DebugLog.Retry>retry</RimMind.UI.DebugLog.Retry>
-  <RimMind.UI.DebugLog.Wait>wait</RimMind.UI.DebugLog.Wait>
-  <RimMind.UI.DebugLog.Attempt>attempt</RimMind.UI.DebugLog.Attempt>
-  <RimMind.UI.DebugLog.QueueWait>queueWait</RimMind.UI.DebugLog.QueueWait>
-  <RimMind.UI.Empty>(empty)</RimMind.UI.Empty>
   <!-- AITogglePatch.cs -->
   <RimMind.Presentation.Toggle.Tooltip>RimMind-Core\n\nClick to toggle request overlay\nShift+Click to open mod settings\nCtrl+Click to open the debug center</RimMind.Presentation.Toggle.Tooltip>
   <!-- AICoreSettingsUI.cs - Tab labels -->
@@ -39,13 +24,10 @@
   <RimMind.Settings.MaxTokens.Desc>Maximum tokens per AI response. Higher values allow longer replies but increase cost.</RimMind.Settings.MaxTokens.Desc>
   <RimMind.Settings.Temperature>Temperature</RimMind.Settings.Temperature>
   <RimMind.Settings.Temperature.Desc>Controls randomness. Lower = more deterministic, higher = more creative. Range: 0.0-2.0</RimMind.Settings.Temperature.Desc>
-  <RimMind.Settings.ResetToDefault>Reset to Default</RimMind.Settings.ResetToDefault>
   <RimMind.Settings.DebugLogging>Verbose Logging (Player.log)</RimMind.Settings.DebugLogging>
   <RimMind.Settings.DebugLogging.Desc>Output detailed AI request and response info to Player.log for troubleshooting.</RimMind.Settings.DebugLogging.Desc>
   <RimMind.Settings.TestConnection>Test Connection</RimMind.Settings.TestConnection>
-  <RimMind.Settings.Status.Ok>✓ Connected</RimMind.Settings.Status.Ok>
   <RimMind.Settings.Status.NotConfigured>⚠ API Key not configured</RimMind.Settings.Status.NotConfigured>
-  <RimMind.Settings.Status.Error>✗ Connection failed</RimMind.Settings.Status.Error>
   <RimMind.Settings.Status.Testing>Testing...</RimMind.Settings.Status.Testing>
   <RimMind.Settings.Show>Show</RimMind.Settings.Show>
   <RimMind.Settings.Hide>Hide</RimMind.Settings.Hide>
@@ -151,7 +133,6 @@
   <RimMind.Context.IncludeSkills>Skills</RimMind.Context.IncludeSkills>
   <RimMind.Context.IncludeSkills.Desc>Inject the pawn's skill levels into AI context. Skills below the minimum level are filtered out.</RimMind.Context.IncludeSkills.Desc>
   <RimMind.Context.MinSkillLevel>Min Skill Level</RimMind.Context.MinSkillLevel>
-  <RimMind.Context.MinSkillLevel.Desc>Skills below this level are not injected into AI context, saving tokens.</RimMind.Context.MinSkillLevel.Desc>
   <RimMind.Context.IncludeHealth>Health</RimMind.Context.IncludeHealth>
   <RimMind.Context.IncludeHealth.Desc>Inject the pawn's health issues (wounds, diseases, implants, etc.) into AI context.</RimMind.Context.IncludeHealth.Desc>
   <RimMind.Context.IncludeCapacities>Capacities</RimMind.Context.IncludeCapacities>
@@ -242,9 +223,6 @@
   <RimMind.Prompt.Weapon>Weapon: {0}</RimMind.Prompt.Weapon>
   <RimMind.Prompt.Apparel>Apparel: {0}</RimMind.Prompt.Apparel>
   <RimMind.Prompt.Inventory>Carried: {0}</RimMind.Prompt.Inventory>
-  <RimMind.Prompt.Damaged>damaged</RimMind.Prompt.Damaged>
-  <RimMind.Prompt.Room.Indoors>Indoors</RimMind.Prompt.Room.Indoors>
-  <RimMind.Prompt.Room.Outdoors>Outdoors</RimMind.Prompt.Room.Outdoors>
   <RimMind.Prompt.Location>Location: {0}  Temp: {1}°C</RimMind.Prompt.Location>
   <RimMind.Prompt.Genes>Genes: {0}</RimMind.Prompt.Genes>
   <RimMind.Prompt.Relations>Relations: {0}</RimMind.Prompt.Relations>
@@ -263,11 +241,6 @@
   <RimMind.Prompt.CompactJob>Job: {0}</RimMind.Prompt.CompactJob>
   <RimMind.Prompt.CompactLocation>Location: {0}  Temp: {1}°C</RimMind.Prompt.CompactLocation>
   <RimMind.Prompt.CompactWeapon>Weapon: {0}</RimMind.Prompt.CompactWeapon>
-  <RimMind.Prompt.EnvironmentChange>[Environment Change]</RimMind.Prompt.EnvironmentChange>
-  <RimMind.Prompt.StateChange>{0}: {1} → {2}</RimMind.Prompt.StateChange>
-  <RimMind.Prompt.MapSummary>[Map] Time:{0} Colonists:{1}</RimMind.Prompt.MapSummary>
-  <!-- AIDebugLog.cs -->
-  <RimMind.Prompt.Time.Format>D{0} {1}:{2}</RimMind.Prompt.Time.Format>
   <!-- AICoreDebugActions.cs -->
   <RimMind.Infrastructure.Debug.ConnectionSuccess>[RimMind] Connection successful: {0}</RimMind.Infrastructure.Debug.ConnectionSuccess>
   <RimMind.Infrastructure.Debug.ConnectionFailed>[RimMind] Connection failed: {0}</RimMind.Infrastructure.Debug.ConnectionFailed>
@@ -278,17 +251,6 @@
   <RimMind.Prompts.PawnPromptLabel>Custom prompt appended after pawn context (leave empty to skip):</RimMind.Prompts.PawnPromptLabel>
   <RimMind.Prompts.MapPrompt>Global Map Prompt</RimMind.Prompts.MapPrompt>
   <RimMind.Prompts.MapPromptLabel>Custom prompt appended after map context (leave empty to skip):</RimMind.Prompts.MapPromptLabel>
-  <!-- ContextComposer.cs -->
-  <RimMind.Prompt.HistoryOmitted>({0} earlier records omitted)</RimMind.Prompt.HistoryOmitted>
-  <!-- AICoreAPI.cs - Custom prompt headers -->
-  <RimMind.Prompt.CustomPawnHeader>[Player Custom Pawn Prompt]</RimMind.Prompt.CustomPawnHeader>
-  <RimMind.Prompt.CustomMapHeader>[Player Custom Map Prompt]</RimMind.Prompt.CustomMapHeader>
-  <!-- Shared Prompt sections -->
-  <RimMind.Prompt.JsonConstraint>Only return valid JSON format. Do not output anything else. Do not wrap in markdown code blocks.</RimMind.Prompt.JsonConstraint>
-  <RimMind.Prompt.Fallback>If you cannot determine, return a default value or empty result.</RimMind.Prompt.Fallback>
-  <RimMind.Prompt.WorldConstraint>You are in the RimWorld game world. Do not break the fourth wall. Do not mention game mechanics, "player", or "game".</RimMind.Prompt.WorldConstraint>
-  <RimMind.Prompt.NoFourthWall>Do not break the fourth wall. Do not mention game mechanics, code, data structures, or the concept of "player". Act naturally as your character.</RimMind.Prompt.NoFourthWall>
-  <RimMind.Prompt.CustomHeader>[Player Custom Rules]</RimMind.Prompt.CustomHeader>
   <!-- RequestOverlay.cs -->
   <RimMind.UI.RequestOverlay.Title>RimMind Requests</RimMind.UI.RequestOverlay.Title>
   <RimMind.UI.RequestOverlay.SystemBlocked>[System Blocked] {0}</RimMind.UI.RequestOverlay.SystemBlocked>
@@ -312,9 +274,6 @@
   <!-- Task Instructions (npc_task_instruction) -->
   <RimMind.Prompt.TaskInstruction.Base>You are in the RimWorld game world.\n\nOutput constraints:\n- You must return valid JSON format\n- Do not wrap in markdown code blocks\n- If you cannot determine, return a default value or empty result\n\nBehavior constraints:\n- Do not break the fourth wall\n- Do not mention game mechanics, code, data structures, or the concept of "player"\n- Act naturally as your character</RimMind.Prompt.TaskInstruction.Base>
   <RimMind.Prompt.TaskInstruction.WorldOnly>You are in the RimWorld game world.</RimMind.Prompt.TaskInstruction.WorldOnly>
-  <!-- System Instruction (system_instruction) -->
-  <RimMind.Prompt.SystemInstruction.Pawn>You are {0}, a colonist in a RimWorld colony.</RimMind.Prompt.SystemInstruction.Pawn>
-  <RimMind.Prompt.SystemInstruction.Advisor>You are a colonial advisor. Recommend the most appropriate actions for colonists based on their current state and available actions.</RimMind.Prompt.SystemInstruction.Advisor>
   <RimMind.Prompt.Dialogue.SpeakerSays>{0} says to you: {1}</RimMind.Prompt.Dialogue.SpeakerSays>
   <RimMind.Prompt.AutoAwait>Based on the above context, provide your {0} response.</RimMind.Prompt.AutoAwait>
   <!-- Identity (npc_identity) -->
@@ -331,14 +290,6 @@
   <RimMind.Prompt.WorldRules.Relationships>- Relationships affect mood and productivity</RimMind.Prompt.WorldRules.Relationships>
   <RimMind.Prompt.WorldRules.Weather>- Weather and seasons impact survival</RimMind.Prompt.WorldRules.Weather>
   <RimMind.Prompt.WorldRules.Medical>- Medical needs must be addressed promptly</RimMind.Prompt.WorldRules.Medical>
-  <!-- Pawn Description (NpcProfileBuilder) -->
-  <RimMind.Prompt.PawnDesc.Name>Name: {0}</RimMind.Prompt.PawnDesc.Name>
-  <RimMind.Prompt.PawnDesc.Backstory>Backstory: {0}</RimMind.Prompt.PawnDesc.Backstory>
-  <RimMind.Prompt.PawnDesc.Traits>Traits: {0}</RimMind.Prompt.PawnDesc.Traits>
-  <RimMind.Prompt.PawnDesc.Skills>Skills: {0}</RimMind.Prompt.PawnDesc.Skills>
-  <!-- Command Descriptions (NpcProfileBuilder) -->
-  <RimMind.Prompt.Command.ExpressEmotion>Express an emotion or feeling</RimMind.Prompt.Command.ExpressEmotion>
-  <RimMind.Prompt.Command.ChangeRelationship>Change relationship with another pawn</RimMind.Prompt.Command.ChangeRelationship>
   <!-- L1-L3 ExtractXxx methods -->
   <RimMind.Prompt.Health.Healthy>Healthy</RimMind.Prompt.Health.Healthy>
   <RimMind.Prompt.Mood.MentalBreak>Mental break: {0}</RimMind.Prompt.Mood.MentalBreak>
@@ -352,7 +303,6 @@
   <RimMind.Agent.ModeChanged>{0} switched to {1} mode</RimMind.Agent.ModeChanged>
   <!-- Flywheel autoApplyMode UI -->
   <RimMind.UI.FlywheelAutoApply>Flywheel: auto-apply parameter recommendations</RimMind.UI.FlywheelAutoApply>
-  <RimMind.UI.FlywheelAutoApply.Desc>When enabled, Flywheel automatically applies recommended context parameter adjustments</RimMind.UI.FlywheelAutoApply.Desc>
   <RimMind.UI.FlywheelAutoApply.Off>Off</RimMind.UI.FlywheelAutoApply.Off>
   <RimMind.UI.FlywheelAutoApply.LogOnly>Log Only</RimMind.UI.FlywheelAutoApply.LogOnly>
   <RimMind.UI.FlywheelAutoApply.Apply>Apply with Log</RimMind.UI.FlywheelAutoApply.Apply>
@@ -366,7 +316,6 @@
   <RimMind.UpgradeWarning>RimMind v2.0 has breaking changes. Old saves may not be fully compatible. AI request queues and some internal structures have been reorganized. Please start a new game for the best experience.</RimMind.UpgradeWarning>
   <!-- RemoteSyncSettingsUI.cs -->
   <RimMind.Settings.Tab.RemoteSync>Remote Sync</RimMind.Settings.Tab.RemoteSync>
-  <RimMind.Settings.RemoteSync.NotAvailable>Remote sync service not available.</RimMind.Settings.RemoteSync.NotAvailable>
   <RimMind.Settings.RemoteSync.Section.AutoSync>Auto Sync</RimMind.Settings.RemoteSync.Section.AutoSync>
   <RimMind.Settings.RemoteSync.AutoPull>Auto Pull on Load</RimMind.Settings.RemoteSync.AutoPull>
   <RimMind.Settings.RemoteSync.AutoPull.Desc>Automatically pull remote data when loading a save.</RimMind.Settings.RemoteSync.AutoPull.Desc>
@@ -416,19 +365,15 @@
   <RimMind.UI.MechanismStatus.ToolMapping>Tools: {0}</RimMind.UI.MechanismStatus.ToolMapping>
   <RimMind.UI.MechanismStatus.FilterScope>Filter Scope</RimMind.UI.MechanismStatus.FilterScope>
   <RimMind.UI.MechanismStatus.FilterRisk>Filter Risk</RimMind.UI.MechanismStatus.FilterRisk>
-  <RimMind.UI.MechanismStatus.All>All</RimMind.UI.MechanismStatus.All>
-  <RimMind.UI.MechanismStatus.Registered>Registered</RimMind.UI.MechanismStatus.Registered>
   <RimMind.UI.MechanismStatus.NoToolMapping>(no tool mapping)</RimMind.UI.MechanismStatus.NoToolMapping>
   <!-- Window_AgentModeDebug.cs -->
   <RimMind.UI.AgentModeDebug.Title>Agent Mode Debug</RimMind.UI.AgentModeDebug.Title>
   <RimMind.UI.AgentModeDebug.NoPawns>No agents on current map</RimMind.UI.AgentModeDebug.NoPawns>
   <RimMind.UI.AgentModeDebug.NoPawnsHint>Create an agent for a pawn to see its mode info here</RimMind.UI.AgentModeDebug.NoPawnsHint>
   <RimMind.UI.AgentModeDebug.NoModes>No modes registered</RimMind.UI.AgentModeDebug.NoModes>
-  <RimMind.UI.AgentModeDebug.Mode>Mode: {0}</RimMind.UI.AgentModeDebug.Mode>
-  <RimMind.UI.AgentModeDebug.Active>Active</RimMind.UI.AgentModeDebug.Active>
-  <RimMind.UI.AgentModeDebug.Inactive>Inactive</RimMind.UI.AgentModeDebug.Inactive>
-  <RimMind.UI.AgentModeDebug.AllowedTools>Allowed Tools: {0}</RimMind.UI.AgentModeDebug.AllowedTools>
-  <RimMind.UI.AgentModeDebug.ShouldThink>Should Think: {0}</RimMind.UI.AgentModeDebug.ShouldThink>
+  <RimMind.UI.AgentModeDebug.Mode>Mode</RimMind.UI.AgentModeDebug.Mode>
+  <RimMind.UI.AgentModeDebug.AllowedTools>Allowed Tools</RimMind.UI.AgentModeDebug.AllowedTools>
+  <RimMind.UI.AgentModeDebug.ShouldThink>Should Think</RimMind.UI.AgentModeDebug.ShouldThink>
   <RimMind.UI.AgentModeDebug.SwitchMode>Switch Mode</RimMind.UI.AgentModeDebug.SwitchMode>
   <RimMind.UI.AgentModeDebug.SelectPawn>Select a pawn</RimMind.UI.AgentModeDebug.SelectPawn>
   <RimMind.UI.AgentModeDebug.History>Mode Change History</RimMind.UI.AgentModeDebug.History>
@@ -449,18 +394,6 @@
   <RimMind.Agent.ITab.Goals>Goals</RimMind.Agent.ITab.Goals>
   <RimMind.Agent.ITab.Strategy>Strategy Weights</RimMind.Agent.ITab.Strategy>
   <RimMind.Agent.ITab.History>Behavior History</RimMind.Agent.ITab.History>
-  <!-- RimMindOverlayGameComponent.cs -->
-  <RimMind.UI.OverlayButton.Label>RimMind</RimMind.UI.OverlayButton.Label>
-  <RimMind.UI.OverlayMenu.AgentHub>Debug Center</RimMind.UI.OverlayMenu.AgentHub>
-  <RimMind.UI.OverlayMenu.RequestLog>AI Request Log</RimMind.UI.OverlayMenu.RequestLog>
-  <RimMind.UI.OverlayMenu.AIDebugLog>AI Debug Log</RimMind.UI.OverlayMenu.AIDebugLog>
-  <RimMind.UI.OverlayMenu.ToolCallDebug>ToolCall Debug</RimMind.UI.OverlayMenu.ToolCallDebug>
-  <RimMind.UI.OverlayMenu.MechanismStatus>Mechanism Status</RimMind.UI.OverlayMenu.MechanismStatus>
-  <RimMind.UI.OverlayMenu.AgentModeDebug>Mode Debug</RimMind.UI.OverlayMenu.AgentModeDebug>
-  <RimMind.UI.OverlayMenu.AgentState>Agent State</RimMind.UI.OverlayMenu.AgentState>
-  <RimMind.UI.OverlayMenu.ContextKeys>Context Keys</RimMind.UI.OverlayMenu.ContextKeys>
-  <RimMind.UI.OverlayMenu.AgentFlowLab>Agent Flow Lab</RimMind.UI.OverlayMenu.AgentFlowLab>
-  <RimMind.UI.OverlayMenu.Settings>Settings</RimMind.UI.OverlayMenu.Settings>
   <!-- MainTabWindow_RimMindHub.cs -->
   <RimMind.UI.Hub.Title>RimMind Debug Center</RimMind.UI.Hub.Title>
   <RimMind.UI.Hub.Tab.Overview>Overview</RimMind.UI.Hub.Tab.Overview>
@@ -481,24 +414,12 @@
   <RimMind.UI.Hub.AgentLoopScoped>scoped</RimMind.UI.Hub.AgentLoopScoped>
   <RimMind.UI.Hub.AgentLoopNeverRun>Not run</RimMind.UI.Hub.AgentLoopNeverRun>
   <RimMind.UI.Hub.QueueMissing>Queue: not initialized</RimMind.UI.Hub.QueueMissing>
-  <RimMind.UI.Hub.RequestPending>Pending Requests</RimMind.UI.Hub.RequestPending>
-  <RimMind.UI.Hub.RequestResults>AI Results</RimMind.UI.Hub.RequestResults>
-  <RimMind.UI.Hub.AIDebugLog>AI Debug Log</RimMind.UI.Hub.AIDebugLog>
-  <RimMind.UI.Hub.AgentFlowLab>Agent Flow Lab</RimMind.UI.Hub.AgentFlowLab>
-  <RimMind.UI.Hub.AgentState>Agent State</RimMind.UI.Hub.AgentState>
-  <RimMind.UI.Hub.AgentMode>Agent Mode</RimMind.UI.Hub.AgentMode>
-  <RimMind.UI.Hub.AgentProgress>Agent Progress</RimMind.UI.Hub.AgentProgress>
-  <RimMind.UI.Hub.RequestLog>Request Log</RimMind.UI.Hub.RequestLog>
-  <RimMind.UI.Hub.ToolCallDebug>ToolCall Debug</RimMind.UI.Hub.ToolCallDebug>
-  <RimMind.UI.Hub.MechanismStatus>Mechanism Status</RimMind.UI.Hub.MechanismStatus>
-  <RimMind.UI.Hub.ContextKeys>Context Keys</RimMind.UI.Hub.ContextKeys>
   <RimMind.UI.Hub.QueueState>Queue State</RimMind.UI.Hub.QueueState>
   <RimMind.UI.Hub.QuickActions>Quick Actions</RimMind.UI.Hub.QuickActions>
   <RimMind.UI.Hub.Settings>Settings</RimMind.UI.Hub.Settings>
   <RimMind.UI.Hub.SettingsEntryTitle>Settings</RimMind.UI.Hub.SettingsEntryTitle>
   <RimMind.UI.Hub.SettingsEntryDescription>The Debug Center provides an entry point only. Full configuration stays in the RimMind Settings window.</RimMind.UI.Hub.SettingsEntryDescription>
   <RimMind.UI.Hub.OpenSettings>Open Settings</RimMind.UI.Hub.OpenSettings>
-  <RimMind.UI.Hub.SelectPawnState>Refresh Selection</RimMind.UI.Hub.SelectPawnState>
   <!-- Debug table shared headers -->
   <RimMind.UI.DebugTable.Header.Id>ID</RimMind.UI.DebugTable.Header.Id>
   <RimMind.UI.DebugTable.Header.Status>Status</RimMind.UI.DebugTable.Header.Status>
@@ -552,17 +473,13 @@
   <!-- Window_AgentStateDebug.cs -->
   <RimMind.UI.AgentStateDebug.Title>Agent State Debug</RimMind.UI.AgentStateDebug.Title>
   <RimMind.UI.AgentStateDebug.NoPawn>No pawn selected</RimMind.UI.AgentStateDebug.NoPawn>
-  <RimMind.UI.AgentStateDebug.NoPawnHint>Click on a pawn in the game world to view its agent state</RimMind.UI.AgentStateDebug.NoPawnHint>
-  <RimMind.UI.AgentStateDebug.NoAgent>No Agent</RimMind.UI.AgentStateDebug.NoAgent>
   <RimMind.UI.AgentStateDebug.AgentMissingHint>Click the 'Create/Get Agent' button below to create an agent for this pawn</RimMind.UI.AgentStateDebug.AgentMissingHint>
   <RimMind.UI.AgentStateDebug.PawnInfo>Pawn: {0} (ID: {1})</RimMind.UI.AgentStateDebug.PawnInfo>
-  <RimMind.UI.AgentStateDebug.NpcId>NPC ID: {0}</RimMind.UI.AgentStateDebug.NpcId>
-  <RimMind.UI.AgentStateDebug.AgentExists>Agent: Created</RimMind.UI.AgentStateDebug.AgentExists>
+  <RimMind.UI.AgentStateDebug.NpcId>NPC ID</RimMind.UI.AgentStateDebug.NpcId>
   <RimMind.UI.AgentStateDebug.AgentMissing>Agent: Not Created</RimMind.UI.AgentStateDebug.AgentMissing>
-  <RimMind.UI.AgentStateDebug.State>State: {0}</RimMind.UI.AgentStateDebug.State>
-  <RimMind.UI.AgentStateDebug.Mode>Mode: {0}</RimMind.UI.AgentStateDebug.Mode>
-  <RimMind.UI.AgentStateDebug.Thinking>Thinking: {0}</RimMind.UI.AgentStateDebug.Thinking>
-  <RimMind.UI.AgentStateDebug.LastThinkTick>Last Think: {0}</RimMind.UI.AgentStateDebug.LastThinkTick>
+  <RimMind.UI.AgentStateDebug.Mode>Mode</RimMind.UI.AgentStateDebug.Mode>
+  <RimMind.UI.AgentStateDebug.Thinking>Thinking</RimMind.UI.AgentStateDebug.Thinking>
+  <RimMind.UI.AgentStateDebug.LastThinkTick>Last Think</RimMind.UI.AgentStateDebug.LastThinkTick>
   <RimMind.UI.AgentStateDebug.CreateAgent>Create/Get Agent</RimMind.UI.AgentStateDebug.CreateAgent>
   <RimMind.UI.AgentStateDebug.BuildContext>Build Context</RimMind.UI.AgentStateDebug.BuildContext>
   <RimMind.UI.AgentStateDebug.SendTestRequest>Send Test Request</RimMind.UI.AgentStateDebug.SendTestRequest>
@@ -575,10 +492,9 @@
   <RimMind.UI.ContextPreview.Loading>Building context…</RimMind.UI.ContextPreview.Loading>
   <RimMind.UI.AgentStateDebug.QueuePaused>Queue: Paused</RimMind.UI.AgentStateDebug.QueuePaused>
   <RimMind.UI.AgentStateDebug.QueueRunning>Queue: Running (Active: {0}, Queued: {1})</RimMind.UI.AgentStateDebug.QueueRunning>
-  <RimMind.UI.AgentStateDebug.ScopedAgentTitle>Scoped Agent: {0}</RimMind.UI.AgentStateDebug.ScopedAgentTitle>
-  <RimMind.UI.AgentStateDebug.ScopeId>Scope ID: {0}</RimMind.UI.AgentStateDebug.ScopeId>
-  <RimMind.UI.AgentStateDebug.MapId>Map ID: {0}</RimMind.UI.AgentStateDebug.MapId>
-  <RimMind.UI.AgentStateDebug.SuccessRate>Success Rate: {0}</RimMind.UI.AgentStateDebug.SuccessRate>
+  <RimMind.UI.AgentStateDebug.ScopeId>Scope ID</RimMind.UI.AgentStateDebug.ScopeId>
+  <RimMind.UI.AgentStateDebug.MapId>Map ID</RimMind.UI.AgentStateDebug.MapId>
+  <RimMind.UI.AgentStateDebug.SuccessRate>Success Rate</RimMind.UI.AgentStateDebug.SuccessRate>
   <RimMind.UI.AgentStateDebug.RecentBehavior>Recent Behavior</RimMind.UI.AgentStateDebug.RecentBehavior>
   <RimMind.UI.AgentStateDebug.NoBehaviorHistory>No behavior history</RimMind.UI.AgentStateDebug.NoBehaviorHistory>
   <RimMind.UI.AgentStateDebug.SectionIdentity>Identity</RimMind.UI.AgentStateDebug.SectionIdentity>
@@ -642,7 +558,6 @@
   <RimMind.UI.AgentFlowLab.NoData>No Data</RimMind.UI.AgentFlowLab.NoData>
   <RimMind.UI.AgentFlowLab.NoError>No Errors</RimMind.UI.AgentFlowLab.NoError>
   <RimMind.UI.AgentFlowLab.Messages>Messages: {0}</RimMind.UI.AgentFlowLab.Messages>
-  <RimMind.UI.AgentFlowLab.MappedMechanisms>Mapped Mechanisms: {0}</RimMind.UI.AgentFlowLab.MappedMechanisms>
   <RimMind.UI.AgentFlowLab.OfflineMode>Offline Mode (Stub)</RimMind.UI.AgentFlowLab.OfflineMode>
   <RimMind.UI.AgentFlowLab.LiveMode>Live Mode (Real API)</RimMind.UI.AgentFlowLab.LiveMode>
   <RimMind.UI.AgentFlowLab.OfflineHint>No API calls. Uses stub response for testing.</RimMind.UI.AgentFlowLab.OfflineHint>
@@ -678,8 +593,6 @@
   <RimMind.UI.AgentProgressFloat.PhaseRecording>Recording</RimMind.UI.AgentProgressFloat.PhaseRecording>
   <RimMind.UI.AgentProgressFloat.Elapsed>Elapsed: {0}</RimMind.UI.AgentProgressFloat.Elapsed>
   <RimMind.UI.AgentProgressFloat.Details>Details</RimMind.UI.AgentProgressFloat.Details>
-  <!-- RimMindPlaySettingsPatch.cs - Core menu -->
-  <RimMind.UI.OverlayMenu.AgentProgress>Agent Progress</RimMind.UI.OverlayMenu.AgentProgress>
   <!-- AgentsPageDrawer.cs -->
   <RimMind.UI.AgentsPage.Active>Active</RimMind.UI.AgentsPage.Active>
   <RimMind.UI.AgentsPage.Paused>Paused</RimMind.UI.AgentsPage.Paused>
@@ -718,6 +631,4 @@
   <RimMind.UI.AIRequestsPage.State.Running>Running</RimMind.UI.AIRequestsPage.State.Running>
   <RimMind.UI.AIRequestsPage.State.Completed>Completed</RimMind.UI.AIRequestsPage.State.Completed>
   <RimMind.UI.AIRequestsPage.State.Failed>Failed</RimMind.UI.AIRequestsPage.State.Failed>
-  <RimMind.UI.LayoutConflict.Dump>Dump UI Layout Conflicts</RimMind.UI.LayoutConflict.Dump>
-  <RimMind.UI.LayoutConflict.Overlay>Toggle UI Layout Conflict Overlay</RimMind.UI.LayoutConflict.Overlay>
 </LanguageData>

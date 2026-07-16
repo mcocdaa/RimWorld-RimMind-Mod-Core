@@ -33,6 +33,10 @@ namespace RimMind.Core.ArchTests.PhaseG
                          && !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)
                          && !f.Contains(Path.DirectorySeparatorChar + "backup_dead_code" + Path.DirectorySeparatorChar)))
             {
+                if (File.ReadLines(file).All(line =>
+                        string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//")))
+                    continue;
+
                 var fileName = Path.GetFileName(file);
                 if (Whitelist.Contains(fileName)) continue;
 

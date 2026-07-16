@@ -253,6 +253,49 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains(
                 "<RimMind.UI.Hub.AgentLoopNeverRun>尚未运行</RimMind.UI.Hub.AgentLoopNeverRun>",
                 chinese);
+
+            AssertKeyValueLabelsDoNotContainFormatPlaceholders(english);
+            AssertKeyValueLabelsDoNotContainFormatPlaceholders(chinese);
+        }
+
+        private static void AssertKeyValueLabelsDoNotContainFormatPlaceholders(string xml)
+        {
+            string[] keys =
+            {
+                "RimMind.UI.AgentStateDebug.NpcId",
+                "RimMind.UI.AgentStateDebug.Mode",
+                "RimMind.UI.AgentStateDebug.Thinking",
+                "RimMind.UI.AgentStateDebug.LastThinkTick",
+                "RimMind.UI.AgentStateDebug.ScopeId",
+                "RimMind.UI.AgentStateDebug.MapId",
+                "RimMind.UI.AgentStateDebug.SuccessRate",
+                "RimMind.UI.AgentModeDebug.Mode",
+                "RimMind.UI.AgentModeDebug.AllowedTools",
+                "RimMind.UI.AgentModeDebug.ShouldThink"
+            };
+
+            foreach (string key in keys)
+            {
+                Assert.DoesNotMatch(
+                    $"<{Regex.Escape(key)}>[^<]*\\{{0\\}}[^<]*</",
+                    xml);
+            }
+        }
+
+        [Fact]
+        public void PureCoreProjects_TargetNet10ForTestsWithoutDeployingNet10Artifacts()
+        {
+            string domainProject = File.ReadAllText(Path.Combine(
+                ProjectRoot, "Source", "Domain", "RimMindCore.Domain.csproj"));
+            string applicationProject = File.ReadAllText(Path.Combine(
+                ProjectRoot, "Source", "Application", "RimMindCore.Application.csproj"));
+
+            foreach (string project in new[] { domainProject, applicationProject })
+            {
+                Assert.Contains("<TargetFrameworks>net48;net10.0</TargetFrameworks>", project);
+                Assert.Contains("<OutputPath Condition=\"'$(TargetFramework)' == 'net48'\">", project);
+                Assert.Contains("<AppendTargetFrameworkToOutputPath Condition=\"'$(TargetFramework)' == 'net48'\">false", project);
+            }
         }
 
         [Fact]

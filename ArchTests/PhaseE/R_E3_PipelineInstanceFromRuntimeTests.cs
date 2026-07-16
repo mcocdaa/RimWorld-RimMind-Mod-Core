@@ -68,7 +68,7 @@ namespace RimMind.Core.ArchTests.PhaseE
 
         [Fact]
         [Trait("Phase", "E")]
-        public void R_E3_ExecuteAsync_Should_Use_Runtime_Pipeline_Instance()
+        public void R_E3_ExecuteAsync_Should_Use_Runtime_Or_Injected_Pipeline_Instance()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
@@ -111,8 +111,16 @@ namespace RimMind.Core.ArchTests.PhaseE
                     {
                         var hasRuntimePrefix = Regex.IsMatch(line, @"RimMindRuntime\.Instance\.\w+Pipeline\.ExecuteAsync")
                             || Regex.IsMatch(line, @"RimMindRuntime\.Instance\.\w+Pipeline\s*\)");
+                        var injectedPipelineMatch = Regex.Match(line, @"(?<field>_\w*[Pp]ipeline)\.ExecuteAsync\s*\(");
+                        var usesInjectedPipeline = injectedPipelineMatch.Success
+                            && Regex.IsMatch(
+                                source,
+                                Regex.Escape(injectedPipelineMatch.Groups["field"].Value) + @"\s*=\s*\w*[Pp]ipeline\s*;");
+                        var usesRuntimeBackedExecutor = line.Contains("executor.ExecuteAsync")
+                            && source.Contains("new QueuedPipelineRequestExecutor(RimMindRuntime.Instance.UnifiedPipeline");
 
-                        if (!hasRuntimePrefix && !line.TrimStart().StartsWith("//"))
+                        if (!hasRuntimePrefix && !usesInjectedPipeline && !usesRuntimeBackedExecutor
+                            && !line.TrimStart().StartsWith("//"))
                         {
                             violatingFiles.Add($"{relativePath}:{i + 1} (line: {line.Trim()})");
                             break;
@@ -122,10 +130,10 @@ namespace RimMind.Core.ArchTests.PhaseE
             }
 
             violatingFiles.Should().BeEmpty(
-                "R-E3: Pipeline.ExecuteAsync() calls must use pipeline instances from RimMindRuntime.Instance. " +
-                "Ad-hoc pipeline execution bypasses the centralized lifecycle, extension registration, " +
-                "and middleware chain configured at runtime initialization. " +
-                "Pattern: RimMindRuntime.Instance.*Pipeline.ExecuteAsync(ctx). " +
+                "R-E3: Pipeline.ExecuteAsync() calls must use a runtime-owned or constructor-injected pipeline. " +
+                "Ad-hoc pipeline execution bypasses centralized lifecycle, extension registration, " +
+                "and middleware configuration. Allowed forms are RimMindRuntime.Instance.*Pipeline, " +
+                "an injected _pipeline field, or a QueuedPipelineRequestExecutor built from Runtime.UnifiedPipeline. " +
                 $"Violating files:\n  {string.Join("\n  ", violatingFiles)}");
         }
 

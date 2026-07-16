@@ -10,7 +10,7 @@ LLM 客户端(OpenAI+Player2)、异步请求队列、ContextEngine(L0-L4分层+D
 
 | 项 | 值 |
 |----|-----|
-| Target | net48, C#9.0, Nullable enable |
+| Target | 游戏运行时 net48；Domain/Application 同时提供 net10.0 测试目标；C#9.0，Nullable enable |
 | RimWorld | 1.6 |
 | Output | `../1.6/Assemblies/` |
 | NuGet | Krafs.Rimworld.Ref 1.6.*, Lib.Harmony.Ref 2.*, Newtonsoft.Json 13.0.* |

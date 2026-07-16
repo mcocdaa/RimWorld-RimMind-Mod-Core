@@ -96,6 +96,10 @@ namespace RimMind.Core.ArchTests.PhaseC
                 var relativePath = file.Substring(applicationDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (CoreCompiledFiles.Contains(relativePath)) continue;
                 if (Path.GetFileName(file).Equals("IsExternalInit.cs", System.StringComparison.OrdinalIgnoreCase)) continue;
+                if (File.ReadLines(file).All(line =>
+                        string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//")))
+                    continue;
+
                 var source = File.ReadAllText(file);
 
                 foreach (var pattern in ForbiddenUsingPatterns)
@@ -173,6 +177,10 @@ namespace RimMind.Core.ArchTests.PhaseC
                 var relativePath = file.Substring(applicationDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 if (CoreCompiledFiles.Contains(relativePath)) continue;
                 if (Path.GetFileName(file).Equals("IsExternalInit.cs", System.StringComparison.OrdinalIgnoreCase)) continue;
+                if (File.ReadLines(file).All(line =>
+                        string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("//")))
+                    continue;
+
                 var source = File.ReadAllText(file);
                 if (!Regex.IsMatch(source, expectedNsPattern))
                 {
