@@ -15,24 +15,28 @@ namespace RimMind.Presentation.Tests.Queue
         public async Task PausedQueue_DoesNotRunExecutorUntilResumed()
         {
             var queue = new AIRequestQueueImpl();
-            var started = false;
+            var executorStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             queue.PauseQueue();
 
             queue.Enqueue(CreateEnvelope("paused"), _ => { }, _ =>
             {
-                started = true;
+                executorStarted.TrySetResult(true);
                 return Task.FromResult(Success());
             });
 
-            await Task.Yield();
-            Assert.False(started);
+            var completionWhilePaused = await Task.WhenAny(
+                executorStarted.Task,
+                Task.Delay(TimeSpan.FromMilliseconds(100)));
+            Assert.NotSame(executorStarted.Task, completionWhilePaused);
 
             queue.ResumeQueue();
             queue.CurrentTick = 60;
             queue.Tick();
 
-            await Task.Delay(20);
-            Assert.True(started);
+            var completionAfterResume = await Task.WhenAny(
+                executorStarted.Task,
+                Task.Delay(TimeSpan.FromSeconds(1)));
+            Assert.Same(executorStarted.Task, completionAfterResume);
         }
 
         [Fact]
