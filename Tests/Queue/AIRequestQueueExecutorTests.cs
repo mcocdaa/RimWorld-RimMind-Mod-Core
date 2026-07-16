@@ -44,7 +44,10 @@ namespace RimMind.Presentation.Tests.Queue
         {
             var queue = new AIRequestQueueImpl();
             var executorStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var allowCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            // Inline continuation makes the executor and the queue's completion path finish
+            // before TrySetResult returns, so one subsequent main-thread tick is deterministic.
+            var allowCompletion = new TaskCompletionSource<bool>();
+            var executorCompleted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var callbackInvoked = new TaskCompletionSource<Result<LlmResponse, RimMindError>>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -52,6 +55,7 @@ namespace RimMind.Presentation.Tests.Queue
             {
                 executorStarted.TrySetResult(true);
                 await allowCompletion.Task;
+                executorCompleted.TrySetResult(true);
                 return Success();
             });
 
@@ -62,13 +66,14 @@ namespace RimMind.Presentation.Tests.Queue
 
             allowCompletion.TrySetResult(true);
 
-            for (var attempt = 0; attempt < 100 && !callbackInvoked.Task.IsCompleted; attempt++)
-            {
-                queue.Tick();
-                await Task.Delay(TimeSpan.FromMilliseconds(1));
-            }
+            var executorCompletion = await Task.WhenAny(
+                executorCompleted.Task,
+                Task.Delay(TimeSpan.FromSeconds(1)));
+            Assert.Same(executorCompleted.Task, executorCompletion);
 
-            Assert.True(callbackInvoked.Task.IsCompleted, "Queue.Tick() did not drain the completed request callback.");
+            queue.Tick();
+
+            Assert.True(callbackInvoked.Task.IsCompleted, "A single Queue.Tick() did not drain the completed request callback.");
             Assert.True((await callbackInvoked.Task).IsOk);
         }
 

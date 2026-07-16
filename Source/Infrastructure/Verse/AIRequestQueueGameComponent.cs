@@ -8,33 +8,31 @@ namespace RimMind.Infrastructure.Verse
     public class AIRequestQueueGameComponent : GameComponent
     {
         private IAIRequestQueueTickable? _impl;
-        private bool _initialized;
 
         private void EnsureCached()
         {
-            if (_initialized) return;
             var impl = RimMindServiceLocator.TryGet<IAIRequestQueueTickable>();
-            if (impl == null) return;
+            if (ReferenceEquals(_impl, impl)) return;
             _impl = impl;
-            _impl.CurrentTick = Find.TickManager.TicksGame;
-            _impl.LogHandler = (msg, isWarning) =>
-            {
-                if (isWarning) RimMindErrors.Warn(msg);
-                else Log.Message(msg);
-            };
-            _initialized = true;
+            if (_impl != null)
+                Configure(_impl);
         }
 
         public AIRequestQueueGameComponent() : base() { }
 
         public AIRequestQueueGameComponent(Game game) : base() { }
 
-        public override void GameComponentTick()
+        internal static void Configure(IAIRequestQueueTickable impl)
         {
-            EnsureCached();
-            if (_impl == null) return;
-            _impl.CurrentTick = Find.TickManager.TicksGame;
-            _impl.Tick();
+            if (impl == null) throw new System.ArgumentNullException(nameof(impl));
+            impl.CurrentTick = Find.TickManager.TicksGame;
+            impl.LogHandler = LogQueueMessage;
+        }
+
+        private static void LogQueueMessage(string message, bool isWarning)
+        {
+            if (isWarning) RimMindErrors.Warn(message);
+            else Log.Message(message);
         }
 
         public override void StartedNewGame()

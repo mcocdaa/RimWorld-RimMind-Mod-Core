@@ -74,19 +74,30 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
-        public void AgentBusGameComponent_IsTheOnlyVerseFlushOwner()
+        public void AgentBusGameComponent_IsTheOnlyVerseQueueTickCoordinatorHost()
         {
             const string flushMember = "FlushBackgroundQueue";
-            const string hostInvocation = "_agentBus?.FlushBackgroundQueue()";
+            const string coordinatorTick = "_tickCoordinator?.Tick(Find.TickManager.TicksGame)";
 
             string agentBusComponent = ReadSource("Infrastructure/Verse/AgentBusGameComponent.cs");
-            Assert.Equal(1, CountOccurrences(agentBusComponent, hostInvocation));
+            Assert.Contains("AgentBusQueueTickCoordinator", agentBusComponent);
+            Assert.Equal(1, CountOccurrences(agentBusComponent, coordinatorTick));
+
+            string queueComponent = ReadSource("Infrastructure/Verse/AIRequestQueueGameComponent.cs");
+            Assert.DoesNotContain("GameComponentTick", queueComponent);
+            Assert.DoesNotContain(".Tick()", queueComponent);
+            Assert.DoesNotContain(flushMember, queueComponent);
+
+            string coordinator = ReadSource("Application/Features/Queue/AgentBusQueueTickCoordinator.cs");
+            int flushIndex = coordinator.IndexOf("_agentBus.FlushBackgroundQueue()", StringComparison.Ordinal);
+            int queueTickIndex = coordinator.IndexOf("_queue.Tick()", StringComparison.Ordinal);
+            Assert.True(flushIndex >= 0, "Coordinator must flush the AgentBus.");
+            Assert.True(queueTickIndex > flushIndex, "Coordinator must tick the queue after the AgentBus flush.");
 
             string[] queueTypes =
             {
                 "Application/Common/Interfaces/Internal/IAIRequestQueueTickable.cs",
                 "Application/Features/Queue/AIRequestQueueImpl.cs",
-                "Infrastructure/Verse/AIRequestQueueGameComponent.cs",
             };
 
             foreach (string path in queueTypes)
@@ -96,18 +107,23 @@ namespace RimMind.Tests.ArchTests.PhaseP7
                 Assert.DoesNotContain("[Obsolete", content);
             }
 
-            var verseFlushOwners = ReadProductionSources()
-                .Where(source => source.Path.StartsWith(
-                    $"Infrastructure{Path.DirectorySeparatorChar}Verse{Path.DirectorySeparatorChar}",
-                    StringComparison.Ordinal))
-                .Where(source => source.Content.Contains(flushMember, StringComparison.Ordinal))
+            var coordinatorHosts = ReadProductionSources()
+                .Where(source => source.Content.Contains(coordinatorTick, StringComparison.Ordinal))
                 .ToList();
 
-            Assert.Single(verseFlushOwners);
+            Assert.Single(coordinatorHosts);
             Assert.Equal(
                 Path.Combine("Infrastructure", "Verse", "AgentBusGameComponent.cs"),
-                verseFlushOwners[0].Path);
-            Assert.Equal(1, CountOccurrences(verseFlushOwners[0].Content, hostInvocation));
+                coordinatorHosts[0].Path);
+
+            var directFlushOwners = ReadProductionSources()
+                .Where(source => source.Content.Contains(".FlushBackgroundQueue()", StringComparison.Ordinal))
+                .ToList();
+
+            Assert.Single(directFlushOwners);
+            Assert.Equal(
+                Path.Combine("Application", "Features", "Queue", "AgentBusQueueTickCoordinator.cs"),
+                directFlushOwners[0].Path);
         }
 
         [Fact]

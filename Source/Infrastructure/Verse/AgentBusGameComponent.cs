@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Defaults;
+using RimMind.Application.Features.Queue;
 
 using Verse;
 
@@ -12,21 +13,36 @@ namespace RimMind.Infrastructure.Verse
     public class AgentBusGameComponent : GameComponent
     {
         private IAgentBus? _agentBus;
+        private IAIRequestQueueTickable? _requestQueue;
+        private AgentBusQueueTickCoordinator? _tickCoordinator;
         private ILogSink? _logSink;
         private IContextCacheManager? _cacheManager;
         private IFlywheelParameterStore? _parameterStore;
 
         public AgentBusGameComponent(Game game) : base() { }
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
-        // EnsureCached() guard pattern: resolves once on first access, then uses cached fields.
+        // [Framework-Forced SL] Verse GameComponent requires parameterless construction.
+        // Reconcile the tick pair because the composition root can replace either service.
         private void EnsureCached()
         {
-            if (_agentBus != null) return;
-            _agentBus = RimMindServiceLocator.Get<IAgentBus>();
-            _logSink = RimMindServiceLocator.Get<ILogSink>();
-            _cacheManager = RimMindServiceLocator.Get<IContextCacheManager>();
-            _parameterStore = RimMindServiceLocator.Get<IFlywheelParameterStore>();
+            IAgentBus? agentBus = RimMindServiceLocator.TryGet<IAgentBus>();
+            IAIRequestQueueTickable? requestQueue = RimMindServiceLocator.TryGet<IAIRequestQueueTickable>();
+
+            if (!ReferenceEquals(_agentBus, agentBus) || !ReferenceEquals(_requestQueue, requestQueue))
+            {
+                _agentBus = agentBus;
+                _requestQueue = requestQueue;
+                _tickCoordinator = agentBus != null && requestQueue != null
+                    ? new AgentBusQueueTickCoordinator(agentBus, requestQueue)
+                    : null;
+            }
+
+            if (_requestQueue != null)
+                AIRequestQueueGameComponent.Configure(_requestQueue);
+
+            _logSink ??= RimMindServiceLocator.TryGet<ILogSink>();
+            _cacheManager ??= RimMindServiceLocator.TryGet<IContextCacheManager>();
+            _parameterStore ??= RimMindServiceLocator.TryGet<IFlywheelParameterStore>();
         }
 
         public override void StartedNewGame()
@@ -46,7 +62,7 @@ namespace RimMind.Infrastructure.Verse
         public override void GameComponentTick()
         {
             EnsureCached();
-            _agentBus?.FlushBackgroundQueue();
+            _tickCoordinator?.Tick(Find.TickManager.TicksGame);
         }
 
         private void ReRegisterCoreSubscribers()
