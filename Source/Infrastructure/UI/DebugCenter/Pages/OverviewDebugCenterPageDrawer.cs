@@ -32,8 +32,8 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
             float y = cards[3].yMax + RimMindUI.SectionGap;
             y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.PendingRequests".Translate(), model.PendingRequests.ToString()) + rect.y;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoop".Translate(), model.AgentLoopSummary) + rect.y;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), model.LastAgentLoopTick.ToString()) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoop".Translate(), BuildAgentLoopSummary(model)) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), BuildLastAgentLoopTick(model)) + rect.y;
             y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString()) + rect.y;
 
             y += RimMindUI.SectionGap;
@@ -98,6 +98,15 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
                 ? "RimMind.Agent.State.Active".Translate()
                 : "RimMind.Prompt.Health.Healthy".Translate();
         }
+
+        private static string BuildAgentLoopSummary(DebugCenterOverviewModel model)
+            => $"{model.RegisteredPawnAgents} {"RimMind.UI.Hub.AgentLoopPawn".Translate()} / "
+                + $"{model.RegisteredScopedAgents} {"RimMind.UI.Hub.AgentLoopScoped".Translate()}";
+
+        private static string BuildLastAgentLoopTick(DebugCenterOverviewModel model)
+            => model.LastAgentLoopTick < 0
+                ? "RimMind.UI.Hub.AgentLoopNeverRun".Translate()
+                : model.LastAgentLoopTick.ToString();
 
         private static Color ResolveHealthColor(DebugCenterOverviewModel model)
         {

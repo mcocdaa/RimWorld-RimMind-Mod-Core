@@ -169,10 +169,10 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.DoesNotContain("AllPawnsSpawned", drawer);
             Assert.DoesNotContain("mapPawns", drawer);
             Assert.Contains(
-                "\"RimMind.UI.Hub.AgentLoop\".Translate(), model.AgentLoopSummary",
+                "\"RimMind.UI.Hub.AgentLoop\".Translate(), BuildAgentLoopSummary(model)",
                 drawer);
             Assert.Contains(
-                "\"RimMind.UI.Hub.AgentLoopLastTick\".Translate(), model.LastAgentLoopTick.ToString()",
+                "\"RimMind.UI.Hub.AgentLoopLastTick\".Translate(), BuildLastAgentLoopTick(model)",
                 drawer);
             Assert.Contains(
                 "\"RimMind.UI.Hub.AgentLoopFaults\".Translate(), model.AgentLoopFaults.ToString()",
@@ -201,6 +201,18 @@ namespace RimMind.Tests.ArchTests.PhaseP7
                 "<RimMind.UI.Hub.AgentLoopFaults>Loop faults</RimMind.UI.Hub.AgentLoopFaults>",
                 english);
             Assert.Contains(
+                "<RimMind.UI.Hub.AgentSummary>Runtime agent states</RimMind.UI.Hub.AgentSummary>",
+                english);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopPawn>pawn</RimMind.UI.Hub.AgentLoopPawn>",
+                english);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopScoped>scoped</RimMind.UI.Hub.AgentLoopScoped>",
+                english);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopNeverRun>Not run</RimMind.UI.Hub.AgentLoopNeverRun>",
+                english);
+            Assert.Contains(
                 "<RimMind.UI.Hub.AgentLoop>Agent 运行循环</RimMind.UI.Hub.AgentLoop>",
                 chinese);
             Assert.Contains(
@@ -208,6 +220,18 @@ namespace RimMind.Tests.ArchTests.PhaseP7
                 chinese);
             Assert.Contains(
                 "<RimMind.UI.Hub.AgentLoopFaults>循环故障数</RimMind.UI.Hub.AgentLoopFaults>",
+                chinese);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentSummary>运行时 Agent 状态</RimMind.UI.Hub.AgentSummary>",
+                chinese);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopPawn>小人</RimMind.UI.Hub.AgentLoopPawn>",
+                chinese);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopScoped>作用域</RimMind.UI.Hub.AgentLoopScoped>",
+                chinese);
+            Assert.Contains(
+                "<RimMind.UI.Hub.AgentLoopNeverRun>尚未运行</RimMind.UI.Hub.AgentLoopNeverRun>",
                 chinese);
         }
 

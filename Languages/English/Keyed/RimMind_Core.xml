@@ -472,11 +472,14 @@
   <RimMind.UI.Hub.Tab.Settings>Settings</RimMind.UI.Hub.Tab.Settings>
   <RimMind.UI.Hub.SelectedPawn>Selected pawn</RimMind.UI.Hub.SelectedPawn>
   <RimMind.UI.Hub.NoPawn>No pawn selected</RimMind.UI.Hub.NoPawn>
-  <RimMind.UI.Hub.AgentSummary>Agents on map</RimMind.UI.Hub.AgentSummary>
+  <RimMind.UI.Hub.AgentSummary>Runtime agent states</RimMind.UI.Hub.AgentSummary>
   <RimMind.UI.Hub.PendingRequests>Pending AI requests</RimMind.UI.Hub.PendingRequests>
   <RimMind.UI.Hub.AgentLoop>Agent runtime loop</RimMind.UI.Hub.AgentLoop>
   <RimMind.UI.Hub.AgentLoopLastTick>Last loop tick</RimMind.UI.Hub.AgentLoopLastTick>
   <RimMind.UI.Hub.AgentLoopFaults>Loop faults</RimMind.UI.Hub.AgentLoopFaults>
+  <RimMind.UI.Hub.AgentLoopPawn>pawn</RimMind.UI.Hub.AgentLoopPawn>
+  <RimMind.UI.Hub.AgentLoopScoped>scoped</RimMind.UI.Hub.AgentLoopScoped>
+  <RimMind.UI.Hub.AgentLoopNeverRun>Not run</RimMind.UI.Hub.AgentLoopNeverRun>
   <RimMind.UI.Hub.QueueMissing>Queue: not initialized</RimMind.UI.Hub.QueueMissing>
   <RimMind.UI.Hub.RequestPending>Pending Requests</RimMind.UI.Hub.RequestPending>
   <RimMind.UI.Hub.RequestResults>AI Results</RimMind.UI.Hub.RequestResults>

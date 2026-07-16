@@ -45,6 +45,24 @@ public sealed class DebugCenterOptimizationSnapshotTests
     }
 
     [Fact]
+    public void DebugOverviewSnapshot_ContainsRuntimeLoopDiagnosticsAndQuickActionsWithinViewport()
+    {
+        var document = UiSnapshotCases.All().Single(item => item.Id == "debug_overview");
+
+        Assert.Contains(document.Elements, element => element.Name == "overview_agent_loop");
+        Assert.Contains(document.Elements, element => element.Name == "overview_last_loop_tick");
+        Assert.Contains(document.Elements, element => element.Name == "overview_loop_faults");
+        Assert.Contains(document.Elements, element => element.Name == "overview_quick_actions");
+        Assert.Contains(document.Elements, element => element.Name == "overview_nav_agents");
+        Assert.Contains(document.Elements, element => element.Name == "overview_nav_ai_requests");
+        Assert.Contains(document.Elements, element => element.Name == "overview_nav_tool_calls");
+        Assert.Contains(document.Elements, element => element.Name == "overview_nav_mechanisms");
+        Assert.All(document.Elements, element => Assert.True(
+            element.Rect.yMax <= document.Viewport.yMax,
+            $"{element.Name} extends below the overview viewport."));
+    }
+
+    [Fact]
     public void DebugCenterOverviewModel_DerivesAgentSummaryFromCounts()
     {
         var model = new DebugCenterOverviewModel(

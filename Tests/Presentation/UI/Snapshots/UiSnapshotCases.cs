@@ -75,6 +75,16 @@ public static class UiSnapshotCases
         var agents = new Rect(root.x + cardW + gap, root.y, cardW, cardH);
         var queue = new Rect(root.x, root.y + cardH + gap, cardW, cardH);
         var selection = new Rect(root.x + cardW + gap, root.y + cardH + gap, cardW, cardH);
+        float detailsY = selection.yMax + gap;
+        float rowH = RimMindUiMetrics.RowHeight;
+        var pendingRequests = new Rect(root.x, detailsY, root.width, rowH);
+        var agentLoop = new Rect(root.x, pendingRequests.yMax, root.width, rowH);
+        var lastLoopTick = new Rect(root.x, agentLoop.yMax, root.width, rowH);
+        var loopFaults = new Rect(root.x, lastLoopTick.yMax, root.width, rowH);
+        var quickActions = new Rect(root.x, loopFaults.yMax + gap, root.width, rowH);
+        float actionY = quickActions.yMax + padding;
+        float actionW = (root.width - padding) / 2f;
+        float actionH = RimMindUiMetrics.RowHeight;
 
         return new RimMindUiDocument("debug_overview", root, new[]
         {
@@ -89,7 +99,16 @@ public static class UiSnapshotCases
             RimMindUiElement.Label("overview_queue_value", new Rect(queue.x + padding, queue.y + padding + RimMindUiMetrics.RowHeight, queue.width - padding * 2f, RimMindUiMetrics.RowHeight), "Queue: Running"),
             RimMindUiElement.Panel("overview_selection", selection),
             RimMindUiElement.Label("overview_selection_title", new Rect(selection.x + padding, selection.y + padding, selection.width - padding * 2f, RimMindUiMetrics.RowHeight), "Selection"),
-            RimMindUiElement.Label("overview_selection_value", new Rect(selection.x + padding, selection.y + padding + RimMindUiMetrics.RowHeight, selection.width - padding * 2f, RimMindUiMetrics.RowHeight), "Nickie")
+            RimMindUiElement.Label("overview_selection_value", new Rect(selection.x + padding, selection.y + padding + RimMindUiMetrics.RowHeight, selection.width - padding * 2f, RimMindUiMetrics.RowHeight), "Nickie"),
+            RimMindUiElement.Label("overview_pending_requests", pendingRequests, "Pending AI requests: 4"),
+            RimMindUiElement.Label("overview_agent_loop", agentLoop, "Agent runtime loop: 3 pawn / 1 scoped"),
+            RimMindUiElement.Label("overview_last_loop_tick", lastLoopTick, "Last loop tick: 900"),
+            RimMindUiElement.Label("overview_loop_faults", loopFaults, "Loop faults: 0"),
+            RimMindUiElement.Label("overview_quick_actions", quickActions, "Quick Actions"),
+            RimMindUiElement.Button("overview_nav_agents", new Rect(root.x, actionY, actionW, actionH), "Agents"),
+            RimMindUiElement.Button("overview_nav_ai_requests", new Rect(root.x + actionW + padding, actionY, actionW, actionH), "AI Requests"),
+            RimMindUiElement.Button("overview_nav_tool_calls", new Rect(root.x, actionY + actionH + padding, actionW, actionH), "ToolCalls"),
+            RimMindUiElement.Button("overview_nav_mechanisms", new Rect(root.x + actionW + padding, actionY + actionH + padding, actionW, actionH), "Mechanisms")
         });
     }
 
