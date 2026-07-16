@@ -90,6 +90,7 @@ namespace RimMind.Application.Features.Queue
 
         public int CurrentTick { get; set; }
         public Action<string, bool>? LogHandler { get; set; }
+        internal int PendingCallbackCount => _results.Count;
 
         private ISettingsProvider Settings => _settingsFactory?.Invoke() ?? new DefaultSettingsProvider();
 

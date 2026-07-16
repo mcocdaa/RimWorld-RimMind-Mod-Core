@@ -63,7 +63,7 @@ namespace RimMind.Presentation.Tests.Queue
             allowCompletion.TrySetResult(true);
 
             Task<bool> completionObserved = Task.Run(() =>
-                SpinWait.SpinUntil(() => queue.ActiveRequestCount == 0, TimeSpan.FromSeconds(1)));
+                SpinWait.SpinUntil(() => queue.PendingCallbackCount > 0, TimeSpan.FromSeconds(1)));
             var executorCompletion = await Task.WhenAny(
                 completionObserved,
                 Task.Delay(TimeSpan.FromSeconds(2)));
