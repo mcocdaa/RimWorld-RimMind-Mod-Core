@@ -467,6 +467,35 @@ namespace RimMind.Tests.Agent
             Assert.Equal(0, scheduler.GetSnapshot().LastTick);
         }
 
+        [Fact]
+        public async Task Clear_DuringActiveTick_PreservesFirstPendingTickOfNewEpoch()
+        {
+            using var oldTickEntered = new ManualResetEventSlim();
+            using var releaseOldTick = new ManualResetEventSlim();
+            var scheduler = new AgentLoopScheduler();
+            var oldAgent = new StubAgentControl(onTick: () =>
+            {
+                oldTickEntered.Set();
+                releaseOldTick.Wait(TimeSpan.FromSeconds(10));
+            });
+            var newAgent = new StubAgentControl();
+            scheduler.Register(AgentLoopKeys.ForPawn(31), AgentLoopKind.Pawn, oldAgent);
+
+            Task oldTick = Task.Run(() => scheduler.Tick(100));
+            Assert.True(oldTickEntered.Wait(TimeSpan.FromSeconds(5)));
+
+            scheduler.Clear();
+            scheduler.Register(AgentLoopKeys.ForPawn(32), AgentLoopKind.Pawn, newAgent);
+            scheduler.Tick(101);
+            releaseOldTick.Set();
+
+            Task completed = await Task.WhenAny(oldTick, Task.Delay(TimeSpan.FromSeconds(5)));
+            Assert.Same(oldTick, completed);
+            await oldTick;
+            Assert.Equal(1, newAgent.TickCount);
+            Assert.Equal(101, scheduler.GetSnapshot().LastTick);
+        }
+
         private sealed class StubAgentControl : IAgentControl
         {
             private readonly Action? _onTick;

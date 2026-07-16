@@ -19,7 +19,8 @@ namespace RimMind.Application.Features.Agent
         private int _faultedAgents;
         private bool _isLoopActive;
         private int _activeTick = -1;
-        private int? _pendingTick;
+        private long _activeGeneration = -1;
+        private PendingTick? _pendingTick;
 
         public AgentLoopScheduler(ILogSink? logSink = null)
         {
@@ -72,14 +73,28 @@ namespace RimMind.Application.Features.Agent
             long loopGeneration;
             lock (_syncRoot)
             {
+                long currentGeneration = _generation;
                 if (_isLoopActive)
                 {
-                    if (currentTick <= _activeTick)
+                    if (currentGeneration == _activeGeneration && currentTick <= _activeTick)
                         return;
 
-                    if (!_pendingTick.HasValue || currentTick > _pendingTick.Value)
-                        _pendingTick = currentTick;
+                    if (!_pendingTick.HasValue
+                        || currentGeneration > _pendingTick.Value.Generation
+                        || (currentGeneration == _pendingTick.Value.Generation
+                            && currentTick > _pendingTick.Value.Tick))
+                    {
+                        _pendingTick = new PendingTick(currentTick, currentGeneration);
+                    }
                     return;
+                }
+
+                if (_pendingTick.HasValue)
+                {
+                    PendingTick pending = _pendingTick.Value;
+                    _pendingTick = null;
+                    if (pending.Generation == currentGeneration && pending.Tick > currentTick)
+                        currentTick = pending.Tick;
                 }
 
                 if (currentTick <= _lastTick)
@@ -87,7 +102,8 @@ namespace RimMind.Application.Features.Agent
 
                 _isLoopActive = true;
                 _activeTick = currentTick;
-                loopGeneration = Generation;
+                _activeGeneration = currentGeneration;
+                loopGeneration = currentGeneration;
             }
 
             var tickToRun = currentTick;
@@ -125,8 +141,21 @@ namespace RimMind.Application.Features.Agent
                     {
                         if (Generation != loopGeneration)
                         {
+                            if (_pendingTick.HasValue
+                                && _pendingTick.Value.Generation == _generation)
+                            {
+                                PendingTick pending = _pendingTick.Value;
+                                _pendingTick = null;
+                                tickToRun = pending.Tick;
+                                loopGeneration = pending.Generation;
+                                _activeTick = tickToRun;
+                                _activeGeneration = loopGeneration;
+                                continue;
+                            }
+
                             _isLoopActive = false;
                             _activeTick = -1;
+                            _activeGeneration = -1;
                             _pendingTick = null;
                             return;
                         }
@@ -137,14 +166,18 @@ namespace RimMind.Application.Features.Agent
 
                         if (_pendingTick.HasValue)
                         {
-                            tickToRun = _pendingTick.Value;
+                            PendingTick pending = _pendingTick.Value;
+                            tickToRun = pending.Tick;
+                            loopGeneration = pending.Generation;
                             _pendingTick = null;
                             _activeTick = tickToRun;
+                            _activeGeneration = loopGeneration;
                             continue;
                         }
 
                         _isLoopActive = false;
                         _activeTick = -1;
+                        _activeGeneration = -1;
                         return;
                     }
                 }
@@ -153,11 +186,18 @@ namespace RimMind.Application.Features.Agent
             {
                 lock (_syncRoot)
                 {
-                    if (_isLoopActive && _activeTick == tickToRun)
+                    if (_isLoopActive
+                        && _activeGeneration == loopGeneration
+                        && _activeTick == tickToRun)
                     {
                         _isLoopActive = false;
                         _activeTick = -1;
-                        _pendingTick = null;
+                        _activeGeneration = -1;
+                        if (_pendingTick.HasValue
+                            && _pendingTick.Value.Generation == loopGeneration)
+                        {
+                            _pendingTick = null;
+                        }
                     }
                 }
 
@@ -247,6 +287,18 @@ namespace RimMind.Application.Features.Agent
             public string Key { get; }
             public AgentLoopKind Kind { get; }
             public IAgentControl Agent { get; }
+        }
+
+        private readonly struct PendingTick
+        {
+            public PendingTick(int tick, long generation)
+            {
+                Tick = tick;
+                Generation = generation;
+            }
+
+            public int Tick { get; }
+            public long Generation { get; }
         }
     }
 }
