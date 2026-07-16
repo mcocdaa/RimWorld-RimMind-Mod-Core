@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace RimMind.Tests.ArchTests.PhaseP7
@@ -117,13 +118,43 @@ namespace RimMind.Tests.ArchTests.PhaseP7
                 coordinatorHosts[0].Path);
 
             var directFlushOwners = ReadProductionSources()
-                .Where(source => source.Content.Contains(".FlushBackgroundQueue()", StringComparison.Ordinal))
+                .Where(source => Regex.IsMatch(source.Content, @"\.\s*FlushBackgroundQueue\s*\("))
                 .ToList();
 
             Assert.Single(directFlushOwners);
             Assert.Equal(
                 Path.Combine("Application", "Features", "Queue", "AgentBusQueueTickCoordinator.cs"),
                 directFlushOwners[0].Path);
+
+            var directQueueTickOwners = ReadProductionSources()
+                .Where(source => Regex.IsMatch(
+                    source.Content,
+                    @"\b(?:_?queue|_?requestQueue|_?impl)\s*\??\.\s*Tick\s*\("))
+                .ToList();
+
+            Assert.Single(directQueueTickOwners);
+            Assert.Equal(
+                Path.Combine("Application", "Features", "Queue", "AgentBusQueueTickCoordinator.cs"),
+                directQueueTickOwners[0].Path);
+        }
+
+        [Fact]
+        public void AgentBusGameComponent_ReconcilesCoreSubscribersAfterLifecycleAndBusReplacement()
+        {
+            string content = ReadSource("Infrastructure/Verse/AgentBusGameComponent.cs");
+            string ensureCached = ExtractMethodBody(content, "private void EnsureCached()");
+
+            Assert.Contains("private IAgentBus? _subscribersRegisteredBus;", content);
+            Assert.Contains("private bool _lifecycleStarted;", content);
+            Assert.Contains("_lifecycleStarted", ensureCached);
+            Assert.Contains("!ReferenceEquals(_subscribersRegisteredBus, _agentBus)", ensureCached);
+            Assert.Contains("ReRegisterCoreSubscribers();", ensureCached);
+            Assert.Contains(
+                "_lifecycleStarted = true;",
+                ExtractMethodBody(content, "public override void StartedNewGame()"));
+            Assert.Contains(
+                "_lifecycleStarted = true;",
+                ExtractMethodBody(content, "public override void LoadedGame()"));
         }
 
         [Fact]

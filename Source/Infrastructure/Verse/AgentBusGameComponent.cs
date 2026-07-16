@@ -13,11 +13,13 @@ namespace RimMind.Infrastructure.Verse
     public class AgentBusGameComponent : GameComponent
     {
         private IAgentBus? _agentBus;
+        private IAgentBus? _subscribersRegisteredBus;
         private IAIRequestQueueTickable? _requestQueue;
         private AgentBusQueueTickCoordinator? _tickCoordinator;
         private ILogSink? _logSink;
         private IContextCacheManager? _cacheManager;
         private IFlywheelParameterStore? _parameterStore;
+        private bool _lifecycleStarted;
 
         public AgentBusGameComponent(Game game) : base() { }
 
@@ -43,20 +45,32 @@ namespace RimMind.Infrastructure.Verse
             _logSink ??= RimMindServiceLocator.TryGet<ILogSink>();
             _cacheManager ??= RimMindServiceLocator.TryGet<IContextCacheManager>();
             _parameterStore ??= RimMindServiceLocator.TryGet<IFlywheelParameterStore>();
+
+            if (_lifecycleStarted
+                && _agentBus != null
+                && _logSink != null
+                && !ReferenceEquals(_subscribersRegisteredBus, _agentBus))
+            {
+                ReRegisterCoreSubscribers();
+            }
         }
 
         public override void StartedNewGame()
         {
             EnsureCached();
             _agentBus?.ClearAllSubscribers();
+            _subscribersRegisteredBus = null;
             ReRegisterCoreSubscribers();
+            _lifecycleStarted = true;
         }
 
         public override void LoadedGame()
         {
             EnsureCached();
             _agentBus?.ClearAllSubscribers();
+            _subscribersRegisteredBus = null;
             ReRegisterCoreSubscribers();
+            _lifecycleStarted = true;
         }
 
         public override void GameComponentTick()
@@ -67,7 +81,6 @@ namespace RimMind.Infrastructure.Verse
 
         private void ReRegisterCoreSubscribers()
         {
-            EnsureCached();
             if (_agentBus != null && _logSink != null)
             {
                 _ = new AgentBusCoreSubscriber(_agentBus, _logSink);
@@ -85,6 +98,8 @@ namespace RimMind.Infrastructure.Verse
 
                 if (_parameterStore != null)
                     _ = new DecisionTrackingSubscriber(_agentBus, _parameterStore, _logSink);
+
+                _subscribersRegisteredBus = _agentBus;
             }
         }
     }
