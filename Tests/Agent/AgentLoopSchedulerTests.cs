@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
@@ -43,6 +45,99 @@ namespace RimMind.Tests.Agent
         }
 
         [Fact]
+        public async Task Tick_ConcurrentDifferentTick_SerializesParticipantExecution()
+        {
+            using var firstEntered = new ManualResetEventSlim();
+            using var releaseFirst = new ManualResetEventSlim();
+            var activeTicks = 0;
+            var maximumActiveTicks = 0;
+            var invocations = 0;
+            var scheduler = new AgentLoopScheduler();
+            var agent = new StubAgentControl(onTick: () =>
+            {
+                var active = Interlocked.Increment(ref activeTicks);
+                RecordMaximum(ref maximumActiveTicks, active);
+                var invocation = Interlocked.Increment(ref invocations);
+                try
+                {
+                    if (invocation == 1)
+                    {
+                        firstEntered.Set();
+                        releaseFirst.Wait(TimeSpan.FromSeconds(10));
+                    }
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref activeTicks);
+                }
+            });
+            scheduler.Register(AgentLoopKeys.ForPawn(120), AgentLoopKind.Pawn, agent);
+
+            var firstTask = Task.Run(() => scheduler.Tick(100));
+            var enteredInTime = firstEntered.Wait(TimeSpan.FromSeconds(5));
+            var secondTask = enteredInTime
+                ? Task.Run(() => scheduler.Tick(101))
+                : Task.CompletedTask;
+            var secondReturnedInTime = enteredInTime
+                && await Task.WhenAny(secondTask, Task.Delay(TimeSpan.FromSeconds(5))) == secondTask;
+            releaseFirst.Set();
+            var allTasks = Task.WhenAll(firstTask, secondTask);
+            var allCompletedInTime = await Task.WhenAny(allTasks, Task.Delay(TimeSpan.FromSeconds(5))) == allTasks;
+            if (allCompletedInTime)
+                await allTasks;
+
+            Assert.True(enteredInTime);
+            Assert.True(secondReturnedInTime);
+            Assert.True(allCompletedInTime);
+            Assert.Equal(1, maximumActiveTicks);
+            Assert.Equal(2, invocations);
+            Assert.Equal(101, scheduler.GetSnapshot().LastTick);
+        }
+
+        [Fact]
+        public void Tick_RecursiveDifferentTick_QueuesLatestWithoutReentryAndKeepsLatestMetrics()
+        {
+            var activeTicks = 0;
+            var maximumActiveTicks = 0;
+            var invocations = 0;
+            var scheduler = new AgentLoopScheduler();
+            var agent = new StubAgentControl(onTick: () =>
+            {
+                var active = Interlocked.Increment(ref activeTicks);
+                RecordMaximum(ref maximumActiveTicks, active);
+                var invocation = Interlocked.Increment(ref invocations);
+                try
+                {
+                    if (invocation == 1)
+                    {
+                        scheduler.Tick(100);
+                        scheduler.Tick(101);
+                        scheduler.Tick(99);
+                        scheduler.Tick(101);
+                    }
+                    else if (invocation == 2)
+                    {
+                        throw new InvalidOperationException("latest tick failed");
+                    }
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref activeTicks);
+                }
+            });
+            scheduler.Register(AgentLoopKeys.ForPawn(121), AgentLoopKind.Pawn, agent);
+
+            scheduler.Tick(100);
+
+            var snapshot = scheduler.GetSnapshot();
+            Assert.Equal(1, maximumActiveTicks);
+            Assert.Equal(2, invocations);
+            Assert.Equal(101, snapshot.LastTick);
+            Assert.Equal(0, snapshot.TickedAgents);
+            Assert.Equal(1, snapshot.FaultedAgents);
+        }
+
+        [Fact]
         public void Register_ReplacementAtStableKey_TicksOnlyReplacementAndFindReturnsIt()
         {
             var scheduler = new AgentLoopScheduler();
@@ -81,6 +176,15 @@ namespace RimMind.Tests.Agent
         }
 
         [Fact]
+        public void Register_InvalidKind_Throws()
+        {
+            var scheduler = new AgentLoopScheduler();
+
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                scheduler.Register("pawn:invalid-kind", (AgentLoopKind)999, new StubAgentControl()));
+        }
+
+        [Fact]
         public void Unregister_UnknownKey_ReturnsFalse()
         {
             var scheduler = new AgentLoopScheduler();
@@ -97,6 +201,15 @@ namespace RimMind.Tests.Agent
             Assert.Equal("pawn:42", pawnKey);
             Assert.Equal("scope:42", scopedKey);
             Assert.NotEqual(pawnKey, scopedKey);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void AgentLoopKeys_ForScopedRejectsNullOrBlankCompositeKey(string? compositeKey)
+        {
+            Assert.ThrowsAny<ArgumentException>(() => AgentLoopKeys.ForScoped(compositeKey!));
         }
 
         [Fact]
@@ -165,6 +278,36 @@ namespace RimMind.Tests.Agent
         }
 
         [Fact]
+        public void GetSnapshot_StateGetterCanMutateRegistryWithoutInvalidationOrDeadlock()
+        {
+            var scheduler = new AgentLoopScheduler();
+            var mutatingKey = AgentLoopKeys.ForPawn(122);
+            var replacementKey = AgentLoopKeys.ForScoped("state-mutation");
+            var replacement = new StubAgentControl();
+            var hasMutated = false;
+            var mutating = new StubAgentControl(onStateRead: () =>
+            {
+                if (hasMutated)
+                    return;
+
+                hasMutated = true;
+                scheduler.Register(replacementKey, AgentLoopKind.Scoped, replacement);
+                scheduler.Unregister(mutatingKey);
+            });
+            scheduler.Register(mutatingKey, AgentLoopKind.Pawn, mutating);
+            scheduler.Register(AgentLoopKeys.ForPawn(123), AgentLoopKind.Pawn, new StubAgentControl());
+
+            var snapshot = scheduler.GetSnapshot();
+
+            Assert.True(hasMutated);
+            Assert.Equal(2, snapshot.RegisteredPawnAgents);
+            Assert.Equal(0, snapshot.RegisteredScopedAgents);
+            Assert.Equal(2, snapshot.ActiveAgents);
+            Assert.Null(scheduler.Find(mutatingKey));
+            Assert.Same(replacement, scheduler.Find(replacementKey));
+        }
+
+        [Fact]
         public void Empty_HasZeroCountsAndNoLastTick()
         {
             var snapshot = AgentLoopSnapshot.Empty;
@@ -208,14 +351,27 @@ namespace RimMind.Tests.Agent
         private sealed class StubAgentControl : IAgentControl
         {
             private readonly Action? _onTick;
+            private readonly Action? _onStateRead;
+            private AgentState _state;
 
-            public StubAgentControl(AgentState state = AgentState.Active, Action? onTick = null)
+            public StubAgentControl(
+                AgentState state = AgentState.Active,
+                Action? onTick = null,
+                Action? onStateRead = null)
             {
-                State = state;
+                _state = state;
                 _onTick = onTick;
+                _onStateRead = onStateRead;
             }
 
-            public AgentState State { get; private set; }
+            public AgentState State
+            {
+                get
+                {
+                    _onStateRead?.Invoke();
+                    return _state;
+                }
+            }
             public bool IsActive => State == AgentState.Active;
             public AgentModeId CurrentModeId => AgentModeId.Dormant;
             public IAgentMode CurrentMode => null!;
@@ -236,7 +392,7 @@ namespace RimMind.Tests.Agent
 
             public bool TransitionTo(AgentState newState)
             {
-                State = newState;
+                _state = newState;
                 return true;
             }
 
@@ -276,6 +432,18 @@ namespace RimMind.Tests.Agent
             public object? ConsumePendingJob() => null;
 
             public string GetDebugInfo() => string.Empty;
+        }
+
+        private static void RecordMaximum(ref int maximum, int candidate)
+        {
+            var observed = Volatile.Read(ref maximum);
+            while (candidate > observed)
+            {
+                var previous = Interlocked.CompareExchange(ref maximum, candidate, observed);
+                if (previous == observed)
+                    return;
+                observed = previous;
+            }
         }
 
         private sealed class CapturingLogSink : ILogSink

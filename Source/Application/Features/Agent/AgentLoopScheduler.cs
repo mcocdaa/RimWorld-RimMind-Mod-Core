@@ -15,6 +15,9 @@ namespace RimMind.Application.Features.Agent
         private int _lastTick = -1;
         private int _tickedAgents;
         private int _faultedAgents;
+        private bool _isLoopActive;
+        private int _activeTick = -1;
+        private int? _pendingTick;
 
         public AgentLoopScheduler(ILogSink? logSink = null)
         {
@@ -27,6 +30,8 @@ namespace RimMind.Application.Features.Agent
                 throw new ArgumentException("Agent loop key cannot be blank.", nameof(key));
             if (agent == null)
                 throw new ArgumentNullException(nameof(agent));
+            if (kind != AgentLoopKind.Pawn && kind != AgentLoopKind.Scoped)
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unsupported agent loop kind.");
 
             lock (_syncRoot)
             {
@@ -60,40 +65,86 @@ namespace RimMind.Application.Features.Agent
 
         public void Tick(int currentTick)
         {
-            List<Entry> tickEntries;
             lock (_syncRoot)
             {
-                if (_lastTick == currentTick)
+                if (_isLoopActive)
+                {
+                    if (currentTick <= _activeTick)
+                        return;
+
+                    if (!_pendingTick.HasValue || currentTick > _pendingTick.Value)
+                        _pendingTick = currentTick;
+                    return;
+                }
+
+                if (currentTick <= _lastTick)
                     return;
 
-                _lastTick = currentTick;
-                tickEntries = new List<Entry>(_entries.Values);
+                _isLoopActive = true;
+                _activeTick = currentTick;
             }
 
-            var tickedAgents = 0;
-            var faultedAgents = 0;
-            foreach (var entry in tickEntries)
+            var tickToRun = currentTick;
+            try
             {
-                try
+                while (true)
                 {
-                    entry.Agent.Tick();
-                    tickedAgents++;
-                }
-                catch (Exception ex)
-                {
-                    faultedAgents++;
-                    _logSink?.Error(
-                        $"[RimMind.AgentLoop] action=TickFailed key={entry.Key} kind={entry.Kind} error={ex.GetType().Name}: {ex.Message}");
+                    List<Entry> tickEntries;
+                    lock (_syncRoot)
+                    {
+                        tickEntries = new List<Entry>(_entries.Values);
+                    }
+
+                    var tickedAgents = 0;
+                    var faultedAgents = 0;
+                    foreach (var entry in tickEntries)
+                    {
+                        try
+                        {
+                            entry.Agent.Tick();
+                            tickedAgents++;
+                        }
+                        catch (Exception ex)
+                        {
+                            faultedAgents++;
+                            _logSink?.Error(
+                                $"[RimMind.AgentLoop] action=TickFailed key={entry.Key} kind={entry.Kind} error={ex.GetType().Name}: {ex.Message}");
+                        }
+                    }
+
+                    lock (_syncRoot)
+                    {
+                        _lastTick = tickToRun;
+                        _tickedAgents = tickedAgents;
+                        _faultedAgents = faultedAgents;
+
+                        if (_pendingTick.HasValue)
+                        {
+                            tickToRun = _pendingTick.Value;
+                            _pendingTick = null;
+                            _activeTick = tickToRun;
+                            continue;
+                        }
+
+                        _isLoopActive = false;
+                        _activeTick = -1;
+                        return;
+                    }
                 }
             }
-
-            lock (_syncRoot)
+            catch
             {
-                if (_lastTick == currentTick)
+                lock (_syncRoot)
                 {
-                    _tickedAgents = tickedAgents;
-                    _faultedAgents = faultedAgents;
+                    if (_isLoopActive && _activeTick == tickToRun)
+                    {
+                        _isLoopActive = false;
+                        _activeTick = -1;
+                        _pendingTick = null;
+                    }
                 }
+
+                throw;
             }
         }
 
@@ -107,50 +158,59 @@ namespace RimMind.Application.Features.Agent
 
         public AgentLoopSnapshot GetSnapshot()
         {
+            List<Entry> entries;
+            int lastTick;
+            int tickedAgents;
+            int faultedAgents;
             lock (_syncRoot)
             {
-                var registeredPawnAgents = 0;
-                var registeredScopedAgents = 0;
-                var activeAgents = 0;
-                var pausedAgents = 0;
-                var pendingAgents = 0;
-                var terminatedAgents = 0;
-
-                foreach (var entry in _entries.Values)
-                {
-                    if (entry.Kind == AgentLoopKind.Pawn)
-                        registeredPawnAgents++;
-                    else if (entry.Kind == AgentLoopKind.Scoped)
-                        registeredScopedAgents++;
-
-                    switch (entry.Agent.State)
-                    {
-                        case AgentState.Active:
-                            activeAgents++;
-                            break;
-                        case AgentState.Paused:
-                            pausedAgents++;
-                            break;
-                        case AgentState.Terminated:
-                            terminatedAgents++;
-                            break;
-                        default:
-                            pendingAgents++;
-                            break;
-                    }
-                }
-
-                return new AgentLoopSnapshot(
-                    registeredPawnAgents,
-                    registeredScopedAgents,
-                    activeAgents,
-                    pausedAgents,
-                    pendingAgents,
-                    terminatedAgents,
-                    _lastTick,
-                    _tickedAgents,
-                    _faultedAgents);
+                entries = new List<Entry>(_entries.Values);
+                lastTick = _lastTick;
+                tickedAgents = _tickedAgents;
+                faultedAgents = _faultedAgents;
             }
+
+            var registeredPawnAgents = 0;
+            var registeredScopedAgents = 0;
+            var activeAgents = 0;
+            var pausedAgents = 0;
+            var pendingAgents = 0;
+            var terminatedAgents = 0;
+
+            foreach (var entry in entries)
+            {
+                if (entry.Kind == AgentLoopKind.Pawn)
+                    registeredPawnAgents++;
+                else if (entry.Kind == AgentLoopKind.Scoped)
+                    registeredScopedAgents++;
+
+                switch (entry.Agent.State)
+                {
+                    case AgentState.Active:
+                        activeAgents++;
+                        break;
+                    case AgentState.Paused:
+                        pausedAgents++;
+                        break;
+                    case AgentState.Terminated:
+                        terminatedAgents++;
+                        break;
+                    default:
+                        pendingAgents++;
+                        break;
+                }
+            }
+
+            return new AgentLoopSnapshot(
+                registeredPawnAgents,
+                registeredScopedAgents,
+                activeAgents,
+                pausedAgents,
+                pendingAgents,
+                terminatedAgents,
+                lastTick,
+                tickedAgents,
+                faultedAgents);
         }
 
         private sealed class Entry
