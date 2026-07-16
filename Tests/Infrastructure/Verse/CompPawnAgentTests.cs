@@ -104,6 +104,32 @@ namespace RimMind.Tests.Infrastructure.Verse
             public float GetRecentSuccessRate(int count = 10) => 1.0f;
         }
 
+        private sealed class CountingAgentLoopScheduler : IAgentLoopScheduler
+        {
+            private readonly AgentLoopScheduler _inner = new AgentLoopScheduler();
+
+            public int RegisterCount { get; private set; }
+            public int FindCount { get; private set; }
+
+            public bool Register(string key, AgentLoopKind kind, IAgentControl agent)
+            {
+                RegisterCount++;
+                return _inner.Register(key, kind, agent);
+            }
+
+            public bool Unregister(string key) => _inner.Unregister(key);
+
+            public IAgentControl? Find(string key)
+            {
+                FindCount++;
+                return _inner.Find(key);
+            }
+
+            public void Tick(int currentTick) => _inner.Tick(currentTick);
+            public void Clear() => _inner.Clear();
+            public AgentLoopSnapshot GetSnapshot() => _inner.GetSnapshot();
+        }
+
         [Fact]
         public void CompTick_RegistersAgentWithoutTickingItDirectly()
         {
@@ -201,6 +227,91 @@ namespace RimMind.Tests.Infrastructure.Verse
 
             Assert.Same(agent, scheduler.Find(AgentLoopKeys.ForPawn(42)));
             Assert.Equal(0, agent.TickCount);
+        }
+
+        [Fact]
+        public void CompTick_WhenSchedulerIsReplaced_TransfersRegistrationOwnership()
+        {
+            var schedulerA = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(schedulerA);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateAttachedComp(agent);
+            var key = AgentLoopKeys.ForPawn(42);
+            Assert.Same(agent, schedulerA.Find(key));
+
+            var schedulerB = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(schedulerB);
+            comp.CompTick();
+
+            Assert.Null(schedulerA.Find(key));
+            Assert.Same(agent, schedulerB.Find(key));
+        }
+
+        [Fact]
+        public void CompTick_WhenRegisterReturnsFalseForSameAgent_ClaimsOwnershipForCleanup()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var key = AgentLoopKeys.ForPawn(42);
+            Assert.True(scheduler.Register(key, AgentLoopKind.Pawn, agent));
+            var comp = CreateCompAwaitingTickRegistration(agent);
+
+            comp.CompTick();
+            comp.Agent = null;
+
+            Assert.Null(scheduler.Find(key));
+        }
+
+        [Fact]
+        public void CompTick_WhenPawnIdChanges_MovesRegistrationToNewStableKey()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateAttachedComp(agent);
+            var oldKey = AgentLoopKeys.ForPawn(42);
+            var newKey = AgentLoopKeys.ForPawn(84);
+            Assert.Same(agent, scheduler.Find(oldKey));
+
+            ((Pawn)comp.parent).thingIDNumber = 84;
+            comp.CompTick();
+
+            Assert.Null(scheduler.Find(oldKey));
+            Assert.Same(agent, scheduler.Find(newKey));
+        }
+
+        [Fact]
+        public void PostDestroy_AfterRegistration_UnregistersAgentLoopEntry()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateAttachedComp(agent);
+            var key = AgentLoopKeys.ForPawn(42);
+            Assert.Same(agent, scheduler.Find(key));
+
+            comp.PostDestroy(DestroyMode.Vanish, new Map());
+
+            Assert.Null(scheduler.Find(key));
+        }
+
+        [Fact]
+        public void CompTick_WithStableOwnership_DoesNotReconcileSchedulerAgain()
+        {
+            var scheduler = new CountingAgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateCompAwaitingTickRegistration(agent);
+            comp.CompTick();
+            var registerCount = scheduler.RegisterCount;
+            var findCount = scheduler.FindCount;
+
+            comp.CompTick();
+            comp.CompTick();
+
+            Assert.Equal(registerCount, scheduler.RegisterCount);
+            Assert.Equal(findCount, scheduler.FindCount);
         }
 
         [Fact]

@@ -22,7 +22,9 @@ namespace RimMind.Infrastructure.Verse
     public class CompPawnAgent : ThingComp
     {
         private IPawnAgentVerse? _agent;
+        private IAgentLoopScheduler? _registeredLoopScheduler;
         private string? _registeredLoopKey;
+        private int? _registeredPawnId;
 
         public IPawnAgentVerse? Agent
         {
@@ -73,31 +75,48 @@ namespace RimMind.Infrastructure.Verse
                 return;
             }
 
-            var loopKey = AgentLoopKeys.ForPawn(pawn.thingIDNumber);
-            if (_registeredLoopKey != null
-                && !string.Equals(_registeredLoopKey, loopKey, System.StringComparison.Ordinal))
+            var scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
+            if (scheduler == null)
             {
                 UnregisterFromAgentLoop();
+                return;
             }
 
-            if (_registeredLoopKey != null)
-                return;
-
-            var scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
-            if (scheduler != null
-                && scheduler.Register(loopKey, AgentLoopKind.Pawn, _agent))
+            if (ReferenceEquals(_registeredLoopScheduler, scheduler)
+                && _registeredPawnId == pawn.thingIDNumber)
             {
+                return;
+            }
+
+            UnregisterFromAgentLoop();
+
+            var pawnId = pawn.thingIDNumber;
+            var loopKey = AgentLoopKeys.ForPawn(pawnId);
+            if (scheduler.Register(loopKey, AgentLoopKind.Pawn, _agent)
+                || ReferenceEquals(scheduler.Find(loopKey), _agent))
+            {
+                _registeredLoopScheduler = scheduler;
                 _registeredLoopKey = loopKey;
+                _registeredPawnId = pawnId;
             }
         }
 
         private void UnregisterFromAgentLoop()
         {
-            if (_registeredLoopKey == null)
-                return;
+            var scheduler = _registeredLoopScheduler;
+            var loopKey = _registeredLoopKey;
+            if (scheduler != null && loopKey != null)
+                scheduler.Unregister(loopKey);
 
-            RimMindServiceLocator.TryGet<IAgentLoopScheduler>()?.Unregister(_registeredLoopKey);
+            _registeredLoopScheduler = null;
             _registeredLoopKey = null;
+            _registeredPawnId = null;
+        }
+
+        public override void PostDestroy(DestroyMode mode, Map previousMap)
+        {
+            UnregisterFromAgentLoop();
+            base.PostDestroy(mode, previousMap);
         }
 
         public override void PostExposeData()

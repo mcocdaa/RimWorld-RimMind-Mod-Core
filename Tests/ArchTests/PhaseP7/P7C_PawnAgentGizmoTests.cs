@@ -218,6 +218,17 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
+        public void PostDestroy_UnregistersWithoutAddingDespawnLifecycleHook()
+        {
+            string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
+            string methodBody = ExtractMethodBody(content, "PostDestroy");
+
+            Assert.Contains("UnregisterFromAgentLoop();", methodBody);
+            Assert.DoesNotContain("CreateAgent()", methodBody);
+            Assert.DoesNotContain("PostDeSpawn", content);
+        }
+
+        [Fact]
         public void CompTick_RegistersWithAgentLoopInsteadOfTickingAgentDirectly()
         {
             string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
@@ -226,6 +237,28 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("EnsureAgentLoopRegistration();", methodBody);
             Assert.DoesNotContain("Agent?.Tick()", methodBody);
             Assert.DoesNotContain("Agent.Tick()", methodBody);
+        }
+
+        [Fact]
+        public void AgentLoopRegistration_HotPathChecksCachedOwnershipBeforeConstructingKey()
+        {
+            string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
+            string methodBody = ExtractMethodBody(content, "private void EnsureAgentLoopRegistration()");
+
+            Assert.Contains("private IAgentLoopScheduler? _registeredLoopScheduler;", content);
+            Assert.Contains("private int? _registeredPawnId;", content);
+            int schedulerIdentityCheck = methodBody.IndexOf(
+                "ReferenceEquals(_registeredLoopScheduler, scheduler)",
+                StringComparison.Ordinal);
+            int pawnIdCheck = methodBody.IndexOf(
+                "_registeredPawnId == pawn.thingIDNumber",
+                StringComparison.Ordinal);
+            int keyConstruction = methodBody.IndexOf("AgentLoopKeys.ForPawn", StringComparison.Ordinal);
+
+            Assert.True(schedulerIdentityCheck >= 0, "Steady-state scheduler identity check must exist.");
+            Assert.True(pawnIdCheck >= 0, "Steady-state pawn ID check must exist.");
+            Assert.True(keyConstruction > schedulerIdentityCheck, "Scheduler identity must be checked before key construction.");
+            Assert.True(keyConstruction > pawnIdCheck, "Pawn ID must be checked before key construction.");
         }
 
         [Fact]

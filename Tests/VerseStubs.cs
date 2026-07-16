@@ -127,12 +127,18 @@ namespace Verse
     /// <summary>Stub for Verse.ThingWithComps base class.</summary>
     public class ThingWithComps { }
 
+    public enum DestroyMode
+    {
+        Vanish,
+    }
+
     /// <summary>Stub for Verse.ThingComp base class.</summary>
     public class ThingComp
     {
         public ThingWithComps parent = null!;
 
         public virtual void PostSpawnSetup(bool respawningAfterLoad) { }
+        public virtual void PostDestroy(DestroyMode mode, Map previousMap) { }
         public virtual void CompTick() { }
         public virtual void PostExposeData() { }
         public virtual IEnumerable<Gizmo> CompGetGizmosExtra() { yield break; }
