@@ -168,6 +168,23 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("AgentLoopSnapshot.Empty", drawer);
             Assert.DoesNotContain("AllPawnsSpawned", drawer);
             Assert.DoesNotContain("mapPawns", drawer);
+            Assert.Contains(
+                "\"RimMind.UI.Hub.AgentLoop\".Translate(), model.AgentLoopSummary",
+                drawer);
+            Assert.Contains(
+                "\"RimMind.UI.Hub.AgentLoopLastTick\".Translate(), model.LastAgentLoopTick.ToString()",
+                drawer);
+            Assert.Contains(
+                "\"RimMind.UI.Hub.AgentLoopFaults\".Translate(), model.AgentLoopFaults.ToString()",
+                drawer);
+            Assert.Contains("loop.ActiveAgents,", drawer);
+            Assert.Contains("loop.PausedAgents,", drawer);
+            Assert.Contains("loop.PendingAgents,", drawer);
+            Assert.Contains("loop.TerminatedAgents,", drawer);
+            Assert.Contains("loop.RegisteredPawnAgents,", drawer);
+            Assert.Contains("loop.RegisteredScopedAgents,", drawer);
+            Assert.Contains("loop.LastTick,", drawer);
+            Assert.Contains("loop.FaultedAgents);", drawer);
 
             string english = File.ReadAllText(Path.Combine(
                 ProjectRoot, "Languages", "English", "Keyed", "RimMind_Core.xml"));
