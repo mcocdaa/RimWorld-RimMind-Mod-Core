@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.Agent;
+using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
 using UnityEngine;
@@ -19,7 +21,22 @@ namespace RimMind.Infrastructure.Verse
 
     public class CompPawnAgent : ThingComp
     {
-        public IPawnAgentVerse? Agent { get; internal set; }
+        private IPawnAgentVerse? _agent;
+        private string? _registeredLoopKey;
+
+        public IPawnAgentVerse? Agent
+        {
+            get => _agent;
+            internal set
+            {
+                if (ReferenceEquals(_agent, value))
+                    return;
+
+                UnregisterFromAgentLoop();
+                _agent = value;
+                EnsureAgentLoopRegistration();
+            }
+        }
 
         private IPawnAgentFactoryVerse? _cachedFactory;
         private IAgentBus? _cachedAgentBus;
@@ -39,7 +56,48 @@ namespace RimMind.Infrastructure.Verse
         public override void CompTick()
         {
             base.CompTick();
-            Agent?.Tick();
+            EnsureAgentLoopRegistration();
+        }
+
+        private void EnsureAgentLoopRegistration()
+        {
+            if (_agent == null || _agent.State == AgentState.Terminated)
+            {
+                UnregisterFromAgentLoop();
+                return;
+            }
+
+            if (!(parent is Pawn pawn))
+            {
+                UnregisterFromAgentLoop();
+                return;
+            }
+
+            var loopKey = AgentLoopKeys.ForPawn(pawn.thingIDNumber);
+            if (_registeredLoopKey != null
+                && !string.Equals(_registeredLoopKey, loopKey, System.StringComparison.Ordinal))
+            {
+                UnregisterFromAgentLoop();
+            }
+
+            if (_registeredLoopKey != null)
+                return;
+
+            var scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
+            if (scheduler != null
+                && scheduler.Register(loopKey, AgentLoopKind.Pawn, _agent))
+            {
+                _registeredLoopKey = loopKey;
+            }
+        }
+
+        private void UnregisterFromAgentLoop()
+        {
+            if (_registeredLoopKey == null)
+                return;
+
+            RimMindServiceLocator.TryGet<IAgentLoopScheduler>()?.Unregister(_registeredLoopKey);
+            _registeredLoopKey = null;
         }
 
         public override void PostExposeData()

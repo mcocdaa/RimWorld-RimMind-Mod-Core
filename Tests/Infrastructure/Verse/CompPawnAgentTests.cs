@@ -4,7 +4,9 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
+using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
+using RimMind.Application.Features.Agent;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
@@ -17,11 +19,38 @@ using Xunit;
 
 namespace RimMind.Tests.Infrastructure.Verse
 {
-    public class CompPawnAgentGizmoTests
+    public class CompPawnAgentGizmoTests : IDisposable
     {
+        public CompPawnAgentGizmoTests()
+        {
+            RimMindServiceLocator.Reset();
+        }
+
+        public void Dispose()
+        {
+            RimMindServiceLocator.Reset();
+        }
+
         private static CompPawnAgent CreateCompWithAgent(IPawnAgentVerse? agent)
         {
             return new CompPawnAgent { Agent = agent };
+        }
+
+        private static CompPawnAgent CreateAttachedComp(IPawnAgentVerse? agent)
+        {
+            var pawn = new Pawn { thingIDNumber = 42 };
+            var comp = new CompPawnAgent();
+            pawn.AddComp(comp);
+            comp.Agent = agent;
+            return comp;
+        }
+
+        private static CompPawnAgent CreateCompAwaitingTickRegistration(IPawnAgentVerse agent)
+        {
+            var comp = new CompPawnAgent { Agent = agent };
+            var pawn = new Pawn { thingIDNumber = 42 };
+            pawn.AddComp(comp);
+            return comp;
         }
 
         private sealed class StubAgentControl : IPawnAgentVerse
@@ -43,6 +72,7 @@ namespace RimMind.Tests.Infrastructure.Verse
             public string Label => "TestPawn";
             public int? LastThinkTick { get; set; }
             public int GoalCount => 0;
+            public int TickCount { get; private set; }
             public Pawn Pawn => throw new NotImplementedException();
             public AgentIdentity Identity => throw new NotImplementedException();
             public IReadOnlyList<BehaviorRecord> BehaviorHistory => Array.Empty<BehaviorRecord>();
@@ -52,7 +82,7 @@ namespace RimMind.Tests.Infrastructure.Verse
             public AgentAutonomyLevel AutonomyLevel { get => AgentAutonomyLevel.Autonomous; set { } }
             public AgentWorkflowPhase WorkflowPhase => AgentWorkflowPhase.Idle;
 
-            public void Tick() { }
+            public void Tick() { TickCount++; }
             public bool TransitionTo(AgentState newState) { _state = newState; return true; }
             public void ForceThink() { }
             public void SwitchMode(AgentModeId modeId) { }
@@ -72,6 +102,105 @@ namespace RimMind.Tests.Infrastructure.Verse
             float IPawnAgent.GetRecentSuccessRate(int count) => 1.0f;
             public IReadOnlyList<BehaviorRecordDto> GetRecentHistory(int count = 10) => Array.Empty<BehaviorRecordDto>();
             public float GetRecentSuccessRate(int count = 10) => 1.0f;
+        }
+
+        [Fact]
+        public void CompTick_RegistersAgentWithoutTickingItDirectly()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateCompAwaitingTickRegistration(agent);
+
+            Assert.Null(scheduler.Find(AgentLoopKeys.ForPawn(42)));
+
+            comp.CompTick();
+
+            Assert.Same(agent, scheduler.Find(AgentLoopKeys.ForPawn(42)));
+            Assert.Equal(0, agent.TickCount);
+        }
+
+        [Fact]
+        public void CompTick_RepeatedCallsKeepOneRegistrationAndSchedulerTicksOncePerGameTick()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateCompAwaitingTickRegistration(agent);
+
+            comp.CompTick();
+            comp.CompTick();
+            scheduler.Tick(100);
+            scheduler.Tick(100);
+
+            Assert.Same(agent, scheduler.Find(AgentLoopKeys.ForPawn(42)));
+            Assert.Equal(1, scheduler.GetSnapshot().RegisteredPawnAgents);
+            Assert.Equal(1, agent.TickCount);
+        }
+
+        [Fact]
+        public void Agent_AssignedNull_UnregistersPreviousLoopEntry()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var comp = CreateAttachedComp(new StubAgentControl(AgentState.Active));
+            var key = AgentLoopKeys.ForPawn(42);
+            Assert.NotNull(scheduler.Find(key));
+
+            comp.Agent = null;
+
+            Assert.Null(scheduler.Find(key));
+        }
+
+        [Fact]
+        public void CompTick_TerminatedAgent_UnregistersWithoutReregistering()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateAttachedComp(agent);
+            var key = AgentLoopKeys.ForPawn(42);
+            Assert.Same(agent, scheduler.Find(key));
+
+            agent.TransitionTo(AgentState.Terminated);
+            comp.CompTick();
+
+            Assert.Null(scheduler.Find(key));
+            Assert.Equal(0, scheduler.GetSnapshot().RegisteredPawnAgents);
+        }
+
+        [Fact]
+        public void Agent_Replaced_UpdatesSchedulerEntryToReplacement()
+        {
+            var scheduler = new AgentLoopScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var original = new StubAgentControl(AgentState.Active);
+            var replacement = new StubAgentControl(AgentState.Active);
+            var comp = CreateAttachedComp(original);
+            var key = AgentLoopKeys.ForPawn(42);
+            Assert.Same(original, scheduler.Find(key));
+
+            comp.Agent = replacement;
+
+            Assert.Same(replacement, scheduler.Find(key));
+            scheduler.Tick(200);
+            Assert.Equal(0, original.TickCount);
+            Assert.Equal(1, replacement.TickCount);
+        }
+
+        [Fact]
+        public void CompTick_RetriesRegistrationAfterSchedulerBecomesAvailable()
+        {
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateAttachedComp(agent);
+            var scheduler = new AgentLoopScheduler();
+            Assert.False(RimMindServiceLocator.IsRegistered<IAgentLoopScheduler>());
+
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            comp.CompTick();
+
+            Assert.Same(agent, scheduler.Find(AgentLoopKeys.ForPawn(42)));
+            Assert.Equal(0, agent.TickCount);
         }
 
         [Fact]

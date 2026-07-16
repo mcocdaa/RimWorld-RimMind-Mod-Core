@@ -218,11 +218,23 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
+        public void CompTick_RegistersWithAgentLoopInsteadOfTickingAgentDirectly()
+        {
+            string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
+            string methodBody = ExtractMethodBody(content, "CompTick");
+
+            Assert.Contains("EnsureAgentLoopRegistration();", methodBody);
+            Assert.DoesNotContain("Agent?.Tick()", methodBody);
+            Assert.DoesNotContain("Agent.Tick()", methodBody);
+        }
+
+        [Fact]
         public void PostExposeData_Does_Not_AutoCreate_Agent()
         {
             string content = ReadSource("Infrastructure/Verse/CompPawnAgent.cs");
             string methodBody = ExtractMethodBody(content, "PostExposeData");
 
+            Assert.Contains("SerializeAgent(ref pawnAgent, \"pawnAgent\")", methodBody);
             Assert.DoesNotContain("CreateAgent()", methodBody);
         }
 
