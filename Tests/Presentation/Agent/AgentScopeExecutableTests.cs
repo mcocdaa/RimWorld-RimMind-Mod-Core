@@ -84,15 +84,24 @@ namespace RimMind.Tests.Presentation.Agent
         [Fact]
         public void GetOrCreate_When_Register_Throws_Does_Not_Cache_And_Allows_Retry()
         {
+            var registerError = new InvalidOperationException("register failed");
             var firstAgent = new LifecycleAgent();
             var retryAgent = new LifecycleAgent();
             var factory = new QueueScopedAgentFactory(firstAgent, retryAgent);
-            var scheduler = new RecordingScheduler { RegisterFailuresRemaining = 1 };
+            var scheduler = new RecordingScheduler
+            {
+                RegisterFailure = registerError,
+                RegisterFailuresRemaining = 1
+            };
             var manager = new ScopedAgentManager(factory, scheduler);
             var bus = new AgentBusImpl();
             var scope = AgentScope.Global("retry");
 
-            Assert.Throws<InvalidOperationException>(() => manager.GetOrCreate(scope, bus));
+            var error = Assert.Throws<InvalidOperationException>(() => manager.GetOrCreate(scope, bus));
+
+            Assert.Same(registerError, error);
+            Assert.Equal(1, firstAgent.CleanupCount);
+            Assert.Equal(1, firstAgent.DestroyCount);
             Assert.Null(manager.Find(scope));
 
             var created = manager.GetOrCreate(scope, bus);
@@ -100,6 +109,58 @@ namespace RimMind.Tests.Presentation.Agent
             Assert.Same(retryAgent, created);
             Assert.Equal(2, factory.CreateCount);
             Assert.Same(retryAgent, scheduler.Find(AgentLoopKeys.ForScoped(scope.CompositeKey)));
+        }
+
+        [Fact]
+        public void Legacy_GetOrCreate_When_Register_Throws_Cleans_Agent_And_Rethrows_Original()
+        {
+            var registerError = new InvalidOperationException("register failed");
+            var agent = new LifecycleAgent();
+            var factory = new QueueScopedAgentFactory(agent);
+            var scheduler = new RecordingScheduler
+            {
+                RegisterFailure = registerError,
+                RegisterFailuresRemaining = 1
+            };
+            var manager = new ScopedAgentManager(factory, scheduler);
+            var bus = new AgentBusImpl();
+
+            var error = Assert.Throws<InvalidOperationException>(
+                () => manager.GetOrCreate("storyteller", "failed", bus, mapId: 9));
+
+            Assert.Same(registerError, error);
+            Assert.Equal(1, agent.CleanupCount);
+            Assert.Equal(1, agent.DestroyCount);
+            Assert.Null(manager.Find("storyteller", "failed"));
+        }
+
+        [Fact]
+        public void GetOrCreate_When_Register_And_Teardown_Throw_Aggregates_All_Errors()
+        {
+            var registerError = new InvalidOperationException("register failed");
+            var cleanupError = new InvalidOperationException("cleanup failed");
+            var destroyError = new InvalidOperationException("destroy failed");
+            var agent = new LifecycleAgent(cleanupError: cleanupError, destroyError: destroyError);
+            var factory = new QueueScopedAgentFactory(agent);
+            var scheduler = new RecordingScheduler
+            {
+                RegisterFailure = registerError,
+                RegisterFailuresRemaining = 1
+            };
+            var manager = new ScopedAgentManager(factory, scheduler);
+            var bus = new AgentBusImpl();
+            var scope = AgentScope.Global("aggregate-registration-failure");
+
+            var error = Assert.Throws<AggregateException>(() => manager.GetOrCreate(scope, bus));
+
+            Assert.Collection(
+                error.InnerExceptions,
+                exception => Assert.Same(registerError, exception),
+                exception => Assert.Same(cleanupError, exception),
+                exception => Assert.Same(destroyError, exception));
+            Assert.Equal(1, agent.CleanupCount);
+            Assert.Equal(1, agent.DestroyCount);
+            Assert.Null(manager.Find(scope));
         }
 
         [Fact]
@@ -245,6 +306,7 @@ namespace RimMind.Tests.Presentation.Agent
             }
 
             public int RegisterFailuresRemaining { get; set; }
+            public Exception? RegisterFailure { get; set; }
             public Dictionary<string, Exception> UnregisterFailures { get; } = new();
 
             public bool Register(string key, AgentLoopKind kind, IAgentControl agent)
@@ -253,7 +315,7 @@ namespace RimMind.Tests.Presentation.Agent
                 if (RegisterFailuresRemaining > 0)
                 {
                     RegisterFailuresRemaining--;
-                    throw new InvalidOperationException("register failed");
+                    throw RegisterFailure ?? new InvalidOperationException("register failed");
                 }
 
                 _agents[key] = agent;

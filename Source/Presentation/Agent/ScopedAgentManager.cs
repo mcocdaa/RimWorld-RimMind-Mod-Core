@@ -21,21 +21,38 @@ namespace RimMind.Presentation.Agent
         public IScopedAgent GetOrCreate(string scopeType, string scopeId, IAgentBus agentBus, int? mapId = null)
         {
             var key = LegacyCompositeKey(scopeType, scopeId);
-            if (_agents.TryGetValue(key, out var existing))
-                return existing;
-            var agent = _factory.Create(AgentScope.Custom(scopeType, scopeId, mapId), agentBus);
-            _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
-            _agents[key] = agent;
-            return agent;
+            return GetOrCreateByKey(
+                key,
+                () => _factory.Create(AgentScope.Custom(scopeType, scopeId, mapId), agentBus));
         }
 
         public IScopedAgent GetOrCreate(AgentScope scope, IAgentBus agentBus)
         {
             var key = scope.CompositeKey;
+            return GetOrCreateByKey(key, () => _factory.Create(scope, agentBus));
+        }
+
+        private IScopedAgent GetOrCreateByKey(string key, Func<IScopedAgent> createAgent)
+        {
             if (_agents.TryGetValue(key, out var existing))
                 return existing;
-            var agent = _factory.Create(scope, agentBus);
-            _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
+
+            var agent = createAgent();
+            try
+            {
+                _scheduler.Register(AgentLoopKeys.ForScoped(key), AgentLoopKind.Scoped, agent);
+            }
+            catch (Exception registrationError)
+            {
+                var teardownErrors = new List<Exception>();
+                CollectLifecycleErrors(agent, teardownErrors);
+                if (teardownErrors.Count == 0)
+                    throw;
+
+                teardownErrors.Insert(0, registrationError);
+                throw new AggregateException("Scoped agent registration and teardown failed.", teardownErrors);
+            }
+
             _agents[key] = agent;
             return agent;
         }
