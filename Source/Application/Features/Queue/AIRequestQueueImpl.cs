@@ -90,7 +90,6 @@ namespace RimMind.Application.Features.Queue
 
         public int CurrentTick { get; set; }
         public Action<string, bool>? LogHandler { get; set; }
-        public Action? FlushBackgroundQueue { get; set; }
 
         private ISettingsProvider Settings => _settingsFactory?.Invoke() ?? new DefaultSettingsProvider();
 
@@ -105,7 +104,6 @@ namespace RimMind.Application.Features.Queue
 
         public void Tick()
         {
-            FlushBackgroundQueue?.Invoke();
             while (_pendingLogs.TryDequeue(out var log)) { LogHandler?.Invoke(log.msg, log.isWarning); }
             while (_results.TryDequeue(out var item))
             {

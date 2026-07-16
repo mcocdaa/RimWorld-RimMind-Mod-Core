@@ -40,6 +40,39 @@ namespace RimMind.Presentation.Tests.Queue
         }
 
         [Fact]
+        public async Task CompletedRequest_CallbackIsDrainedByQueueTickWithoutBusHook()
+        {
+            var queue = new AIRequestQueueImpl();
+            var executorStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var allowCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var callbackInvoked = new TaskCompletionSource<Result<LlmResponse, RimMindError>>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+            queue.Enqueue(CreateEnvelope("tick-drains-result"), result => callbackInvoked.TrySetResult(result), async _ =>
+            {
+                executorStarted.TrySetResult(true);
+                await allowCompletion.Task;
+                return Success();
+            });
+
+            var executorStart = await Task.WhenAny(
+                executorStarted.Task,
+                Task.Delay(TimeSpan.FromSeconds(1)));
+            Assert.Same(executorStarted.Task, executorStart);
+
+            allowCompletion.TrySetResult(true);
+
+            for (var attempt = 0; attempt < 100 && !callbackInvoked.Task.IsCompleted; attempt++)
+            {
+                queue.Tick();
+                await Task.Delay(TimeSpan.FromMilliseconds(1));
+            }
+
+            Assert.True(callbackInvoked.Task.IsCompleted, "Queue.Tick() did not drain the completed request callback.");
+            Assert.True((await callbackInvoked.Task).IsOk);
+        }
+
+        [Fact]
         public async Task CancelActiveExecutor_InvokesCallbackExactlyOnce()
         {
             var queue = new AIRequestQueueImpl();

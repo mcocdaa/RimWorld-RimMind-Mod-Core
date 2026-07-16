@@ -1,6 +1,5 @@
 using Verse;
 using RimMind.Domain.ValueObjects;
-using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 
 
@@ -9,11 +8,7 @@ namespace RimMind.Infrastructure.Verse
     public class AIRequestQueueGameComponent : GameComponent
     {
         private IAIRequestQueueTickable? _impl;
-        private IAgentBus? _cachedAgentBus;
         private bool _initialized;
-
-        private IAgentBus? GetAgentBus()
-            => _cachedAgentBus ??= RimMindServiceLocator.TryGet<IAgentBus>();
 
         private void EnsureCached()
         {
@@ -27,8 +22,6 @@ namespace RimMind.Infrastructure.Verse
                 if (isWarning) RimMindErrors.Warn(msg);
                 else Log.Message(msg);
             };
-            _impl.FlushBackgroundQueue = () =>
-                GetAgentBus()?.FlushBackgroundQueue();
             _initialized = true;
         }
 

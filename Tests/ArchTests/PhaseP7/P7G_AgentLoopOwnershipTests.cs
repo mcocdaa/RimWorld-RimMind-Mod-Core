@@ -74,6 +74,43 @@ namespace RimMind.Tests.ArchTests.PhaseP7
         }
 
         [Fact]
+        public void AgentBusGameComponent_IsTheOnlyVerseFlushOwner()
+        {
+            const string flushMember = "FlushBackgroundQueue";
+            const string hostInvocation = "_agentBus?.FlushBackgroundQueue()";
+
+            string agentBusComponent = ReadSource("Infrastructure/Verse/AgentBusGameComponent.cs");
+            Assert.Equal(1, CountOccurrences(agentBusComponent, hostInvocation));
+
+            string[] queueTypes =
+            {
+                "Application/Common/Interfaces/Internal/IAIRequestQueueTickable.cs",
+                "Application/Features/Queue/AIRequestQueueImpl.cs",
+                "Infrastructure/Verse/AIRequestQueueGameComponent.cs",
+            };
+
+            foreach (string path in queueTypes)
+            {
+                string content = ReadSource(path);
+                Assert.DoesNotContain(flushMember, content);
+                Assert.DoesNotContain("[Obsolete", content);
+            }
+
+            var verseFlushOwners = ReadProductionSources()
+                .Where(source => source.Path.StartsWith(
+                    $"Infrastructure{Path.DirectorySeparatorChar}Verse{Path.DirectorySeparatorChar}",
+                    StringComparison.Ordinal))
+                .Where(source => source.Content.Contains(flushMember, StringComparison.Ordinal))
+                .ToList();
+
+            Assert.Single(verseFlushOwners);
+            Assert.Equal(
+                Path.Combine("Infrastructure", "Verse", "AgentBusGameComponent.cs"),
+                verseFlushOwners[0].Path);
+            Assert.Equal(1, CountOccurrences(verseFlushOwners[0].Content, hostInvocation));
+        }
+
+        [Fact]
         public void RuntimeLifecycle_ClearsScopedAgentsBeforeSchedulerForNewAndLoadedGames()
         {
             string content = ReadSource("Presentation/Runtime/RimMindRuntimeGameComponent.cs");

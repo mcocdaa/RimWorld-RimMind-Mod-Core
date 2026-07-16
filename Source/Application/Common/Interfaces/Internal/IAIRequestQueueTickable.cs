@@ -6,7 +6,6 @@ namespace RimMind.Application.Common.Interfaces.Internal
     {
         int CurrentTick { get; set; }
         Action<string, bool>? LogHandler { get; set; }
-        Action? FlushBackgroundQueue { get; set; }
         void Tick();
         void Reset();
     }
