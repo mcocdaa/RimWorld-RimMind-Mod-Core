@@ -82,10 +82,34 @@ namespace RimMind.Tests.ArchTests.PhaseP7
             Assert.Contains("LoadedGame", content);
             Assert.Contains("_scopedAgentManager?.Clear()", content);
             Assert.Contains("_scheduler?.Clear()", content);
+            Assert.Contains(
+                "ResetRuntimeAgents();",
+                ExtractMethodBody(content, "public override void StartedNewGame()"));
+            Assert.Contains(
+                "ResetRuntimeAgents();",
+                ExtractMethodBody(content, "public override void LoadedGame()"));
             Assert.True(
                 content.IndexOf("_scopedAgentManager?.Clear()", StringComparison.Ordinal)
                 < content.IndexOf("_scheduler?.Clear()", StringComparison.Ordinal),
                 "Scoped agents must be cleared before the scheduler registry is invalidated.");
+        }
+
+        [Fact]
+        public void SchedulerGeneration_IsLongAndLockFree()
+        {
+            string content = ReadSource("Application/Features/Agent/AgentLoopScheduler.cs");
+
+            Assert.Contains("private long _generation;", content);
+            Assert.Contains("public long Generation => Interlocked.Read(ref _generation);", content);
+        }
+
+        [Fact]
+        public void RuntimeBehaviorTests_CompileTheProductionGameComponent()
+        {
+            string project = File.ReadAllText(Path.Combine(ProjectRoot, "Tests", "RimMindCore.Tests.csproj"));
+
+            Assert.Contains("Presentation\\Runtime\\*.cs", project);
+            Assert.Contains("../Source/Presentation/Runtime/RimMindRuntimeGameComponent.cs", project);
         }
 
         [Fact]

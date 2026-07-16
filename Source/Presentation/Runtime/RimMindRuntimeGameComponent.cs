@@ -22,8 +22,8 @@ namespace RimMind.Presentation.Runtime
                 _initialized = true;
             }
 
-            _scheduler ??= RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
-            _scopedAgentManager ??= RimMindServiceLocator.TryGet<IScopedAgentManager>();
+            _scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
+            _scopedAgentManager = RimMindServiceLocator.TryGet<IScopedAgentManager>();
         }
 
         public override void GameComponentTick()

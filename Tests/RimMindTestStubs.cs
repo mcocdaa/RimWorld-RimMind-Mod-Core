@@ -44,3 +44,21 @@ namespace RimMind.Tests
         public int TicksGame => 0;
     }
 }
+
+namespace RimMind.Presentation.Runtime
+{
+    internal static class RimMindRuntime
+    {
+        public static int InitializeCallCount { get; private set; }
+
+        public static void Initialize()
+        {
+            InitializeCallCount++;
+        }
+
+        public static void ResetForTests()
+        {
+            InitializeCallCount = 0;
+        }
+    }
+}

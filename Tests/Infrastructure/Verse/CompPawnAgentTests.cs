@@ -108,7 +108,7 @@ namespace RimMind.Tests.Infrastructure.Verse
         {
             private readonly AgentLoopScheduler _inner = new AgentLoopScheduler();
 
-            public int Generation => _inner.Generation;
+            public long Generation => _inner.Generation;
             public int RegisterCount { get; private set; }
             public int FindCount { get; private set; }
 
@@ -126,6 +126,34 @@ namespace RimMind.Tests.Infrastructure.Verse
                 return _inner.Find(key);
             }
 
+            public void Tick(int currentTick) => _inner.Tick(currentTick);
+            public void Clear() => _inner.Clear();
+            public AgentLoopSnapshot GetSnapshot() => _inner.GetSnapshot();
+        }
+
+        private sealed class ClearDuringRegisterScheduler : IAgentLoopScheduler
+        {
+            private readonly AgentLoopScheduler _inner = new AgentLoopScheduler();
+            private bool _clearDuringRegister = true;
+
+            public long Generation => _inner.Generation;
+            public int RegisterCount { get; private set; }
+
+            public bool Register(string key, AgentLoopKind kind, IAgentControl agent)
+            {
+                RegisterCount++;
+                var registered = _inner.Register(key, kind, agent);
+                if (_clearDuringRegister)
+                {
+                    _clearDuringRegister = false;
+                    _inner.Clear();
+                }
+
+                return registered;
+            }
+
+            public bool Unregister(string key) => _inner.Unregister(key);
+            public IAgentControl? Find(string key) => _inner.Find(key);
             public void Tick(int currentTick) => _inner.Tick(currentTick);
             public void Clear() => _inner.Clear();
             public AgentLoopSnapshot GetSnapshot() => _inner.GetSnapshot();
@@ -333,6 +361,24 @@ namespace RimMind.Tests.Infrastructure.Verse
 
             Assert.Same(agent, scheduler.Find(key));
             Assert.Equal(registerCount + 1, scheduler.RegisterCount);
+        }
+
+        [Fact]
+        public void CompTick_WhenSchedulerClearsDuringRegister_RetriesWithoutCachingFalseOwnership()
+        {
+            var scheduler = new ClearDuringRegisterScheduler();
+            RimMindServiceLocator.Register<IAgentLoopScheduler>(scheduler);
+            var agent = new StubAgentControl(AgentState.Active);
+            var comp = CreateCompAwaitingTickRegistration(agent);
+            var key = AgentLoopKeys.ForPawn(42);
+
+            comp.CompTick();
+            Assert.Null(scheduler.Find(key));
+
+            comp.CompTick();
+
+            Assert.Same(agent, scheduler.Find(key));
+            Assert.Equal(2, scheduler.RegisterCount);
         }
 
         [Fact]

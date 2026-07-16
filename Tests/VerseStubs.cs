@@ -89,6 +89,15 @@ namespace RimWorld
 
 namespace Verse
 {
+    public class Game { }
+
+    public class GameComponent
+    {
+        public virtual void GameComponentTick() { }
+        public virtual void StartedNewGame() { }
+        public virtual void LoadedGame() { }
+    }
+
     /// <summary>Stub for RimWorld Verse.Pawn used in test compilation.</summary>
     public class Pawn : ThingWithComps
     {

@@ -67,6 +67,7 @@
     <Compile Include="Application\Features\Agent\Psychology\*.cs" />
     <Compile Include="Application\Features\Agent\InnerVoice\*.cs" />
     <Compile Include="Presentation\Agent\*.cs" />
+    <Compile Include="Presentation\Runtime\*.cs" />
     <Compile Include="Presentation\UI\*.cs" />
     <Compile Include="Presentation\UI\DebugTables\*.cs" />
     <Compile Include="Presentation\UI\Framework\*.cs" />
@@ -92,6 +93,7 @@
     <Compile Include="../Source/Presentation/Agent/ScopedAgentFactory.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgentManager.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
+    <Compile Include="../Source/Presentation/Runtime/RimMindRuntimeGameComponent.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentState/AgentContextPreviewCoordinator.cs" />

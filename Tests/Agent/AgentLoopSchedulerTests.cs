@@ -383,6 +383,62 @@ namespace RimMind.Tests.Agent
             Assert.Equal(initialGeneration, contract.Generation);
         }
 
+        [Fact]
+        public void Generation_ContractUsesLongEpoch()
+        {
+            var property = typeof(IAgentLoopScheduler).GetProperty("Generation");
+
+            Assert.NotNull(property);
+            Assert.Equal(typeof(long), property.PropertyType);
+        }
+
+        [Fact]
+        public void Clear_AfterHighTick_ResetsMetricsAndAllowsTickZeroInNewEpoch()
+        {
+            var scheduler = new AgentLoopScheduler();
+            var agent = new StubAgentControl();
+            var key = AgentLoopKeys.ForPawn(25);
+            scheduler.Register(key, AgentLoopKind.Pawn, agent);
+            scheduler.Tick(5000);
+            var generation = scheduler.Generation;
+
+            scheduler.Clear();
+            var resetSnapshot = scheduler.GetSnapshot();
+            scheduler.Register(key, AgentLoopKind.Pawn, agent);
+            scheduler.Tick(0);
+
+            Assert.Equal(generation + 1, scheduler.Generation);
+            Assert.Equal(-1, resetSnapshot.LastTick);
+            Assert.Equal(0, resetSnapshot.TickedAgents);
+            Assert.Equal(0, resetSnapshot.FaultedAgents);
+            Assert.Equal(2, agent.TickCount);
+            Assert.Equal(0, scheduler.GetSnapshot().LastTick);
+        }
+
+        [Fact]
+        public void Clear_DuringActiveTick_PreventsOldEpochFromOverwritingResetMetrics()
+        {
+            var scheduler = new AgentLoopScheduler();
+            var replacement = new StubAgentControl();
+            var replacementKey = AgentLoopKeys.ForPawn(27);
+            var resetting = new StubAgentControl(onTick: () =>
+            {
+                scheduler.Clear();
+                scheduler.Register(replacementKey, AgentLoopKind.Pawn, replacement);
+            });
+            scheduler.Register(AgentLoopKeys.ForPawn(26), AgentLoopKind.Pawn, resetting);
+
+            scheduler.Tick(5000);
+            var resetSnapshot = scheduler.GetSnapshot();
+            scheduler.Tick(0);
+
+            Assert.Equal(-1, resetSnapshot.LastTick);
+            Assert.Equal(0, resetSnapshot.TickedAgents);
+            Assert.Equal(0, resetSnapshot.FaultedAgents);
+            Assert.Equal(1, replacement.TickCount);
+            Assert.Equal(0, scheduler.GetSnapshot().LastTick);
+        }
+
         private sealed class StubAgentControl : IAgentControl
         {
             private readonly Action? _onTick;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Models.Agent;
@@ -12,7 +13,7 @@ namespace RimMind.Application.Features.Agent
         private readonly object _syncRoot = new();
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
         private readonly ILogSink? _logSink;
-        private int _generation;
+        private long _generation;
         private int _lastTick = -1;
         private int _tickedAgents;
         private int _faultedAgents;
@@ -25,16 +26,7 @@ namespace RimMind.Application.Features.Agent
             _logSink = logSink;
         }
 
-        public int Generation
-        {
-            get
-            {
-                lock (_syncRoot)
-                {
-                    return _generation;
-                }
-            }
-        }
+        public long Generation => Interlocked.Read(ref _generation);
 
         public bool Register(string key, AgentLoopKind kind, IAgentControl agent)
         {
@@ -77,6 +69,7 @@ namespace RimMind.Application.Features.Agent
 
         public void Tick(int currentTick)
         {
+            long loopGeneration;
             lock (_syncRoot)
             {
                 if (_isLoopActive)
@@ -94,6 +87,7 @@ namespace RimMind.Application.Features.Agent
 
                 _isLoopActive = true;
                 _activeTick = currentTick;
+                loopGeneration = Generation;
             }
 
             var tickToRun = currentTick;
@@ -126,6 +120,14 @@ namespace RimMind.Application.Features.Agent
 
                     lock (_syncRoot)
                     {
+                        if (Generation != loopGeneration)
+                        {
+                            _isLoopActive = false;
+                            _activeTick = -1;
+                            _pendingTick = null;
+                            return;
+                        }
+
                         _lastTick = tickToRun;
                         _tickedAgents = tickedAgents;
                         _faultedAgents = faultedAgents;
@@ -165,7 +167,11 @@ namespace RimMind.Application.Features.Agent
             lock (_syncRoot)
             {
                 _entries.Clear();
-                _generation++;
+                Interlocked.Increment(ref _generation);
+                _lastTick = -1;
+                _tickedAgents = 0;
+                _faultedAgents = 0;
+                _pendingTick = null;
             }
         }
 

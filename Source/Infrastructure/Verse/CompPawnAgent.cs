@@ -25,7 +25,7 @@ namespace RimMind.Infrastructure.Verse
         private IAgentLoopScheduler? _registeredLoopScheduler;
         private string? _registeredLoopKey;
         private int? _registeredPawnId;
-        private int? _registeredLoopGeneration;
+        private long? _registeredLoopGeneration;
 
         public IPawnAgentVerse? Agent
         {
@@ -83,9 +83,10 @@ namespace RimMind.Infrastructure.Verse
                 return;
             }
 
+            var schedulerGeneration = scheduler.Generation;
             if (ReferenceEquals(_registeredLoopScheduler, scheduler)
                 && _registeredPawnId == pawn.thingIDNumber
-                && _registeredLoopGeneration == scheduler.Generation)
+                && _registeredLoopGeneration == schedulerGeneration)
             {
                 return;
             }
@@ -94,14 +95,21 @@ namespace RimMind.Infrastructure.Verse
 
             var pawnId = pawn.thingIDNumber;
             var loopKey = AgentLoopKeys.ForPawn(pawnId);
-            if (scheduler.Register(loopKey, AgentLoopKind.Pawn, _agent)
-                || ReferenceEquals(scheduler.Find(loopKey), _agent))
+            var ownsRegistration = scheduler.Register(loopKey, AgentLoopKind.Pawn, _agent)
+                || ReferenceEquals(scheduler.Find(loopKey), _agent);
+            if (!ownsRegistration)
+                return;
+
+            if (scheduler.Generation != schedulerGeneration)
             {
-                _registeredLoopScheduler = scheduler;
-                _registeredLoopKey = loopKey;
-                _registeredPawnId = pawnId;
-                _registeredLoopGeneration = scheduler.Generation;
+                scheduler.Unregister(loopKey);
+                return;
             }
+
+            _registeredLoopScheduler = scheduler;
+            _registeredLoopKey = loopKey;
+            _registeredPawnId = pawnId;
+            _registeredLoopGeneration = schedulerGeneration;
         }
 
         private void UnregisterFromAgentLoop()
