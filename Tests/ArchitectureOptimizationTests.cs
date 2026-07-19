@@ -11,8 +11,6 @@ using RimMind.Presentation.Runtime;
 using RimMind.Application.Features.Registry;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Features.Flywheel;
-using RimMind.Presentation.Runtime;
-using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Extension;
 using Verse;
 using Xunit;

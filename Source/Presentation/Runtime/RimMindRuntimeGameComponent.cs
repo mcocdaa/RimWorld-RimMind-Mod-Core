@@ -9,6 +9,7 @@ namespace RimMind.Presentation.Runtime
     {
         private IAgentLoopScheduler? _scheduler;
         private IScopedAgentManager? _scopedAgentManager;
+        private IOverlayService? _overlayService;
         private int _lastTick = -1;
         private bool _initialized;
 
@@ -24,6 +25,7 @@ namespace RimMind.Presentation.Runtime
 
             _scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
             _scopedAgentManager = RimMindServiceLocator.TryGet<IScopedAgentManager>();
+            _overlayService = RimMindServiceLocator.TryGet<IOverlayService>();
         }
 
         public override void GameComponentTick()
@@ -34,6 +36,7 @@ namespace RimMind.Presentation.Runtime
             if (now == _lastTick) return;
             _lastTick = now;
             _scheduler?.Tick(now);
+            _overlayService?.Tick();
         }
 
         public override void StartedNewGame()
@@ -59,6 +62,15 @@ namespace RimMind.Presentation.Runtime
             catch (Exception ex)
             {
                 Log.Error($"[RimMind-Core] Failed to clear runtime scoped agents: {ex}");
+            }
+
+            try
+            {
+                _overlayService?.Clear();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimMind-Core] Failed to clear pending requests: {ex}");
             }
             finally
             {

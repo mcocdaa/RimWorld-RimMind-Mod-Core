@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Text;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
@@ -126,8 +125,7 @@ namespace RimMind.Infrastructure.UI
                     Rect btnRect = new Rect(entryRect.x + Padding + j * (btnW + BtnPadding), btnY, btnW, BtnHeight);
                     if (Widgets.ButtonText(btnRect, entry.options[j]))
                     {
-                        entry.callback?.Invoke(entry.options[j]);
-                        RequestOverlay.Remove(entry);
+                        RequestOverlay.Resolve(entry, entry.options[j]);
                         break;
                     }
                 }
@@ -194,9 +192,7 @@ namespace RimMind.Infrastructure.UI
             scope?.Record(clearRect, "Button:ClearAll");
             if (Widgets.ButtonText(clearRect, "RimMind.UI.RequestLog.ClearAll".Translate()))
             {
-                var pending = RequestOverlay.Pending.ToList();
-                foreach (var entry in pending)
-                    RequestOverlay.Remove(entry);
+                RimMindServiceLocator.Get<IOverlayService>()?.Clear();
             }
 
             var countRect = new Rect(rect.x, rect.y, 200f, rect.height);

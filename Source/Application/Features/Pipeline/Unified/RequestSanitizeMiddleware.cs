@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Abstractions;
@@ -41,7 +42,9 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 {
                     if (!string.IsNullOrEmpty(msg.Content))
                     {
-                        msg.Content = PromptSanitizer.Sanitize(msg.Content);
+                        msg.Content = string.Equals(msg.Role, "user", StringComparison.OrdinalIgnoreCase)
+                            ? PromptSanitizer.SanitizeUserInput(msg.Content)
+                            : PromptSanitizer.Sanitize(msg.Content);
                     }
                     if (msg.ReasoningContent is { Length: > 0 } reasoning)
                     {

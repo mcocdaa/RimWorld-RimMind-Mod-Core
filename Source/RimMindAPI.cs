@@ -105,6 +105,7 @@ namespace RimMind.Presentation.Api
         public static void PublishPerception(int pawnId, string type, string content, float importance = 0.5f) => Bus.PublishPerception(pawnId, type, content, importance);
         public static void RegisterPendingRequest(UIRequestEntry entry) => Bus.RegisterPendingRequest(entry);
         public static IReadOnlyList<UIRequestEntry> GetPendingRequests() => Bus.GetPendingRequests();
+        public static bool DismissPendingRequest(UIRequestEntry entry) => Bus.DismissPendingRequest(entry);
         internal static IAIClient? GetClient() => Bus.GetClient();
         public static void InvalidateClientCache() => Bus.InvalidateClientCache();
         [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using RimMind.Application.Features.Flywheel;
 using Xunit;
 
@@ -17,10 +15,12 @@ namespace RimMind.Presentation.Tests
         public void Get_DefaultValue_ReturnsDefault()
         {
             var store = CreateStore();
-            Assert.Equal(0.4f, store.Get("w1"), 4);
-            Assert.Equal(0.6f, store.Get("w2"), 4);
+            Assert.Equal(0.30f, store.Get("W1"), 4);
+            Assert.Equal(0.25f, store.Get("W2"), 4);
+            Assert.Equal(0.05f, store.Get("W6"), 4);
             Assert.Equal(0.01f, store.Get("Alpha"), 4);
-            Assert.Equal(4000f, store.Get("TotalBudget"), 4);
+            Assert.Equal(1.0f, store.Get("ContextBudget"), 4);
+            Assert.Equal(100f, store.Get("MaxCacheEntries"), 4);
         }
 
         [Fact]
@@ -34,8 +34,8 @@ namespace RimMind.Presentation.Tests
         public void UpdateParameter_ChangesValue()
         {
             var store = CreateStore();
-            store.UpdateParameter("w1", 0.8f);
-            Assert.Equal(0.8f, store.Get("w1"), 4);
+            store.UpdateParameter("W1", 0.8f);
+            Assert.Equal(0.8f, store.Get("W1"), 4);
         }
 
         [Fact]
@@ -50,8 +50,8 @@ namespace RimMind.Presentation.Tests
                 changedValue = value;
             };
 
-            store.UpdateParameter("w1", 0.9f);
-            Assert.Equal("w1", changedKey);
+            store.UpdateParameter("W1", 0.9f);
+            Assert.Equal("W1", changedKey);
             Assert.Equal(0.9f, changedValue, 4);
         }
 
@@ -62,7 +62,7 @@ namespace RimMind.Presentation.Tests
             bool fired = false;
             store.OnParameterChanged += (key, value) => fired = true;
 
-            store.UpdateParameter("w1", store.Get("w1") + 0.00001f);
+            store.UpdateParameter("W1", store.Get("W1") + 0.00001f);
             Assert.False(fired);
         }
 
@@ -70,19 +70,19 @@ namespace RimMind.Presentation.Tests
         public void ResetToDefault_RestoresValue()
         {
             var store = CreateStore();
-            store.UpdateParameter("w1", 0.99f);
-            store.ResetToDefault("w1");
-            Assert.Equal(0.4f, store.Get("w1"), 4);
+            store.UpdateParameter("W1", 0.99f);
+            store.ResetToDefault("W1");
+            Assert.Equal(0.30f, store.Get("W1"), 4);
         }
 
         [Fact]
         public void ResetAll_RestoresAllValues()
         {
             var store = CreateStore();
-            store.UpdateParameter("w1", 0.99f);
+            store.UpdateParameter("W1", 0.99f);
             store.UpdateParameter("Alpha", 0.5f);
             store.ResetAll();
-            Assert.Equal(0.4f, store.Get("w1"), 4);
+            Assert.Equal(0.30f, store.Get("W1"), 4);
             Assert.Equal(0.01f, store.Get("Alpha"), 4);
         }
 
@@ -91,8 +91,8 @@ namespace RimMind.Presentation.Tests
         {
             var store = CreateStore();
             var all = store.GetAll();
-            Assert.True(all.ContainsKey("w1"));
-            Assert.True(all.ContainsKey("TotalBudget"));
+            Assert.True(all.ContainsKey("W1"));
+            Assert.True(all.ContainsKey("ContextBudget"));
         }
 
         [Fact]
@@ -100,8 +100,8 @@ namespace RimMind.Presentation.Tests
         {
             var store = CreateStore();
             var defaults = store.GetDefaults();
-            Assert.Equal(0.4f, defaults["w1"], 4);
-            Assert.Equal(4000f, defaults["TotalBudget"], 4);
+            Assert.Equal(0.30f, defaults["W1"], 4);
+            Assert.Equal(1.0f, defaults["ContextBudget"], 4);
         }
 
         [Fact]
@@ -142,25 +142,25 @@ namespace RimMind.Presentation.Tests
         }
 
         [Fact]
-        public void UpdateParameter_ClampsTotalBudget_ToRange()
+        public void UpdateParameter_ClampsContextBudget_ToRange()
         {
             var store = CreateStore();
-            store.UpdateParameter("TotalBudget", 50f);
-            Assert.Equal(100f, store.Get("TotalBudget"), 4);
+            store.UpdateParameter("ContextBudget", 0.1f);
+            Assert.Equal(0.3f, store.Get("ContextBudget"), 4);
 
-            store.UpdateParameter("TotalBudget", 50000f);
-            Assert.Equal(32000f, store.Get("TotalBudget"), 4);
+            store.UpdateParameter("ContextBudget", 5f);
+            Assert.Equal(2f, store.Get("ContextBudget"), 4);
         }
 
         [Fact]
-        public void UpdateParameter_ClampsDecayRate_ToRange()
+        public void UpdateParameter_ClampsWeights_ToRange()
         {
             var store = CreateStore();
-            store.UpdateParameter("DecayRate", -0.5f);
-            Assert.Equal(0.0f, store.Get("DecayRate"), 4);
+            store.UpdateParameter("W3", -0.5f);
+            Assert.Equal(0.0f, store.Get("W3"), 4);
 
-            store.UpdateParameter("DecayRate", 2.0f);
-            Assert.Equal(1.0f, store.Get("DecayRate"), 4);
+            store.UpdateParameter("W3", 2.0f);
+            Assert.Equal(1.0f, store.Get("W3"), 4);
         }
 
         [Fact]
@@ -180,6 +180,20 @@ namespace RimMind.Presentation.Tests
             store.UpdateParameter("Alpha", 5.0f);
             Assert.True(fired);
             Assert.Equal(1.0f, store.Get("Alpha"), 4);
+        }
+
+        [Fact]
+        public void LoadFromSnapshot_PreservesDefaultsMissingFromOlderSaves()
+        {
+            var store = CreateStore();
+
+            store.LoadFromSnapshot(
+                new System.Collections.Generic.List<string> { "W1" },
+                new System.Collections.Generic.List<float> { 0.8f });
+
+            Assert.Equal(0.8f, store.Get("W1"), 4);
+            Assert.Equal(0.25f, store.Get("W2"), 4);
+            Assert.Equal(1.0f, store.Get("ContextBudget"), 4);
         }
     }
 }

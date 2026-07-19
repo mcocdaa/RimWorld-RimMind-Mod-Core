@@ -42,7 +42,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void EstimateTokens_SingleCjkChar()
         {
-            int tokens = PromptSection.EstimateTokens("ä½?);
+            int tokens = PromptSection.EstimateTokens("ä½ ");
             Assert.Equal(1, tokens);
         }
 

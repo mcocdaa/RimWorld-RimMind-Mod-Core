@@ -133,11 +133,9 @@ namespace RimMind.Core.ArchTests.PhaseE
             }
         }
 
-        private static readonly string KnownDefinitionLocation = @"backup_dead_code\Presentation\Runtime\TransientExceptionChecker.cs";
-
-        [Fact(Skip = "TransientExceptionChecker moved to backup_dead_code (dead code)")]
+        [Fact]
         [Trait("Phase", "E")]
-        public void R_E2_TransientExceptionChecker_Definition_Location_Should_Not_Regress()
+        public void R_E2_TransientExceptionChecker_Definition_Should_Not_Return_To_Active_Source()
         {
             var sourceDir = FindSourceDirectory();
             sourceDir.Should().NotBeNullOrEmpty("Source directory must exist for analysis");
@@ -146,23 +144,9 @@ namespace RimMind.Core.ArchTests.PhaseE
                 .FirstOrDefault(f => !f.Contains(Path.DirectorySeparatorChar + "backup" + Path.DirectorySeparatorChar)
                                   && !f.Contains(Path.DirectorySeparatorChar + "backup_dead_code" + Path.DirectorySeparatorChar));
 
-            definitionFile.Should().NotBeNull(
-                "R-E2: TransientExceptionChecker.cs definition file must exist in the source tree");
-
-            if (definitionFile != null)
-            {
-                var relativePath = definitionFile.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-                var isInApplicationOrDomain = relativePath.StartsWith("Application") || relativePath.StartsWith("Domain");
-
-                if (!isInApplicationOrDomain)
-                {
-                    relativePath.Should().Be(KnownDefinitionLocation,
-                        $"R-E2: TransientExceptionChecker is currently at {relativePath} (known debt: should be in Application/ or Domain/). " +
-                        "If it has been moved to a new location, update KnownDefinitionLocation. " +
-                        "If it has been moved to Application/ or Domain/, this test will auto-pass.");
-                }
-            }
+            definitionFile.Should().BeNull(
+                "R-E2: TransientExceptionChecker was retired with the legacy retry path. " +
+                "Retry classification must remain encapsulated by the active retry middleware instead of restoring the dead helper.");
         }
 
         private static string FindSourceDirectory()

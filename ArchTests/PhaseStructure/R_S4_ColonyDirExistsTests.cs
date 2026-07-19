@@ -24,7 +24,7 @@ namespace RimMind.Core.ArchTests.PhaseStructure
                 "Agent/Modes/ directory must exist for I phase (IAgentMode + IThinkStrategy implementations)");
         }
 
-        [Fact(Skip = "Pipeline/Unified/ 目录为 K 阶段预留，尚未创建"), Trait("Phase", "Structure")]
+        [Fact, Trait("Phase", "Structure")]
         public void Application_Pipeline_Unified_Dir_Should_Exist()
         {
             var unifiedDir = Path.Combine(SourceRoot, "Application", "Features", "Pipeline", "Unified");

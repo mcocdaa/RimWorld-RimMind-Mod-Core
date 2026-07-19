@@ -1,9 +1,9 @@
+using System;
+using System.Collections.Generic;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.UI;
-
-using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -13,6 +13,7 @@ namespace RimMind.Infrastructure.UI
     {
         private static IOverlaySettings? _cachedOverlaySettings;
         private static IWindowService? _cachedWindowService;
+        private static IOverlayService? _cachedOverlayService;
 
         // Route through ServiceLocator (Application layer) instead of RimMindRuntime (Presentation layer)
         private static IOverlaySettings? GetOverlaySettings()
@@ -21,7 +22,10 @@ namespace RimMind.Infrastructure.UI
         private static IWindowService? GetWindowService()
             => _cachedWindowService ??= RimMindServiceLocator.Get<IWindowService>();
 
-        private static readonly List<RequestEntry> _pending = new List<RequestEntry>();
+        private static IOverlayService? GetOverlayService()
+            => _cachedOverlayService ??= RimMindServiceLocator.Get<IOverlayService>();
+
+        private static readonly IReadOnlyList<RequestEntry> EmptyPending = Array.Empty<RequestEntry>();
         private static Vector2 _scrollPos = Vector2.zero;
         private static bool _isDragging;
         private static bool _isResizing;
@@ -42,13 +46,17 @@ namespace RimMind.Infrastructure.UI
 
         public static void Register(RequestEntry entry)
         {
-            entry.tick = Find.TickManager?.TicksGame ?? 0;
-            _pending.Add(entry);
+            GetOverlayService()?.RegisterPendingRequest(entry);
         }
 
-        public static IReadOnlyList<RequestEntry> Pending => _pending;
+        public static IReadOnlyList<RequestEntry> Pending =>
+            GetOverlayService()?.GetPendingRequests() ?? EmptyPending;
 
-        public static void Remove(RequestEntry entry) => _pending.Remove(entry);
+        public static bool Remove(RequestEntry entry) =>
+            GetOverlayService()?.TryDismiss(entry) == true;
+
+        public static bool Resolve(RequestEntry entry, string choice) =>
+            GetOverlayService()?.TryResolve(entry, choice) == true;
 
         public static void OnGUI()
         {
@@ -71,7 +79,6 @@ namespace RimMind.Infrastructure.UI
                 _positionLoaded = true;
             }
 
-            ProcessExpiredEntries();
             HandleInput();
 
             bool isMouseOver = Mouse.IsOver(_windowRect);
@@ -106,7 +113,8 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            if (_pending.Count == 0)
+            var pending = Pending;
+            if (pending.Count == 0)
             {
                 GUI.color = Color.grey;
                 Text.Anchor = TextAnchor.MiddleCenter;
@@ -117,11 +125,11 @@ namespace RimMind.Infrastructure.UI
             }
 
             float contentH = 0f;
-            float[] heights = new float[_pending.Count];
-            for (int i = 0; i < _pending.Count; i++)
+            float[] heights = new float[pending.Count];
+            for (int i = 0; i < pending.Count; i++)
             {
                 float h = EntryLineH;
-                if (!_pending[i].description.NullOrEmpty())
+                if (!pending[i].description.NullOrEmpty())
                     h += EntryLineH;
                 h += BtnHeight + BtnPadding * 2f;
                 heights[i] = h;
@@ -132,9 +140,9 @@ namespace RimMind.Infrastructure.UI
             Widgets.BeginScrollView(contentRect, ref _scrollPos, viewRect);
 
             float y = viewRect.y;
-            for (int i = 0; i < _pending.Count; i++)
+            for (int i = 0; i < pending.Count; i++)
             {
-                var entry = _pending[i];
+                var entry = pending[i];
                 float entryH = heights[i];
 
                 var entryRect = new Rect(viewRect.x, y, viewRect.width, entryH);
@@ -167,8 +175,7 @@ namespace RimMind.Infrastructure.UI
                     Rect btnRect = new Rect(entryRect.x + TextPadding + j * (btnW + BtnPadding), btnY, btnW, BtnHeight);
                     if (Widgets.ButtonText(btnRect, entry.options[j]))
                     {
-                        entry.callback?.Invoke(entry.options[j]);
-                        _pending.RemoveAt(i);
+                        Resolve(entry, entry.options[j]);
                         break;
                     }
                     if (entry.optionTooltips != null && j < entry.optionTooltips.Length && !entry.optionTooltips[j].NullOrEmpty())
@@ -267,26 +274,6 @@ namespace RimMind.Infrastructure.UI
                     _windowRect.x = Mathf.Clamp(_windowRect.x, 0, global::Verse.UI.screenWidth - _windowRect.width);
                     _windowRect.y = Mathf.Clamp(_windowRect.y, 0, global::Verse.UI.screenHeight - _windowRect.height);
                     currentEvent.Use();
-                }
-            }
-        }
-
-        private static void ProcessExpiredEntries()
-        {
-            if (_pending.Count == 0) return;
-            int now = Find.TickManager.TicksGame;
-            for (int i = _pending.Count - 1; i >= 0; i--)
-            {
-                var entry = _pending[i];
-                if (entry.expireTicks <= 0) continue;
-                if (now - entry.tick >= entry.expireTicks)
-                {
-                    string? ignoreOption = entry.options.Length > 0
-                        ? entry.options[entry.options.Length - 1]
-                        : null;
-                    if (ignoreOption != null)
-                        entry.callback?.Invoke(ignoreOption);
-                    _pending.RemoveAt(i);
                 }
             }
         }

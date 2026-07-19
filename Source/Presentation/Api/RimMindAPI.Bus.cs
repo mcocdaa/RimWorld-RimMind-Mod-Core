@@ -24,6 +24,9 @@ namespace RimMind.Presentation.Api
             public static IReadOnlyList<RequestEntry> GetPendingRequests()
                 => RimMindRuntime.Instance.OverlayService.GetPendingRequests();
 
+            public static bool DismissPendingRequest(RequestEntry entry)
+                => RimMindRuntime.Instance.OverlayService.TryDismiss(entry);
+
             internal static IAIClient? GetClient()
                 => RimMindRuntime.Instance.GetClient();
 

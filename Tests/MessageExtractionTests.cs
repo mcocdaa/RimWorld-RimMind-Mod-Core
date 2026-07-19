@@ -15,7 +15,7 @@ namespace RimMind.Presentation.Tests
         [Fact]
         public void JsonRepairer_TryRepairTruncatedJson_NullInput_ReturnsNull()
         {
-            Assert.Null(JsonRepairer.TryRepairTruncatedJson(null));
+            Assert.Null(JsonRepairer.TryRepairTruncatedJson(null!));
         }
 
         [Fact]

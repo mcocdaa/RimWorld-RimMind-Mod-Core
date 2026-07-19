@@ -92,7 +92,7 @@ namespace RimMind.Presentation.Tests
             string input = "{\"items\":[{\"name\":\"a\"";
             string? result = JsonRepairer.TryRepairTruncatedJson(input);
             Assert.NotNull(result);
-            Assert.Equal("{\"items\":[{\"name\":\"a\"]}}", result);
+            Assert.Equal("{\"items\":[{\"name\":\"a\"}]}", result);
         }
 
         [Fact]

@@ -18,14 +18,51 @@
   </ItemGroup>
 
   <ItemGroup>
+    <DormantTest Include="AgentGoalStackTests.cs" Reason="Targets SerializableAgentGoalStack, a Verse-backed pre-composition persistence wrapper not compiled into the pure test target." />
+    <DormantTest Include="AIRequestQueueCancellationTokenTests.cs" Reason="Targets removed AIRequest/AIResponse queue contracts; migrate to LlmRequestEnvelope queue tests." />
+    <DormantTest Include="ApiContractHardenTests.cs" Reason="Targets retired AIResponse, HistoryManager, ProviderRegistry, and StrategyOptimizer APIs." />
+    <DormantTest Include="ArchitectureOptimizationTests.cs" Reason="Targets the retired AIRequestPool and pre-runtime composition APIs." />
+    <DormantTest Include="BudgetSchedulerTests.cs" Reason="Targets the retired static RelevanceTable; current scheduler coverage uses IRelevanceTable." />
+    <DormantTest Include="ContextEngineTests.cs" Reason="Targets retired ContextEngine and ContextRequest types; migrate assertions to ContextOrchestrator." />
+    <DormantTest Include="ContextEntryQueryTests.cs" Reason="Targets the retired ContextEntryQuery API." />
+    <DormantTest Include="DataFlowSideEffectTests.cs" Reason="Partially targets the retired ContextEntryQuery API; split current data-flow assertions before re-enabling." />
+    <DormantTest Include="ErrorBoundaryTests.cs" Reason="Targets the retired TransientExceptionChecker and old error factory signatures." />
+    <DormantTest Include="LifecycleSafetyTests.cs" Reason="Targets retired ContextEngine lifecycle; replace with current runtime/context ownership tests." />
+    <DormantTest Include="ToolCallDispatchMiddlewareTests.cs" Reason="Targets retired Pipeline.AI middleware and AIRequest contracts; unified pipeline coverage lives under Pipeline/Unified." />
+    <DormantTest Include="FlywheelRuleEngineTests.cs" Reason="Targets retired TelemetryRecord contract; migrate to current flywheel domain record." />
+    <DormantTest Include="FlywheelTelemetryCollectorTests.cs" Reason="Targets retired TelemetryRecord contract; migrate to current telemetry API." />
+    <DormantTest Include="NpcManagerTests.cs" Reason="Requires the Verse NpcManager adapter, which is not compiled into the pure net10 test target." />
+    <DormantTest Include="PerceptionBridgeTests.cs" Reason="Targets the retired Presentation.Perception namespace." />
+    <DormantTest Include="RimMindLoggerTests.cs" Reason="Targets the retired Application.Features.Logging namespace and an obsolete ILogSink shape." />
+    <DormantTest Include="PawnActorTests.cs" Reason="Targets the pre-composition PawnAgent runtime fixture." />
+    <DormantTest Include="PawnAgentTests.cs" Reason="Targets the pre-composition PawnAgent and RimMindCoreSettings runtime fixture." />
+    <DormantTest Include="PawnPerceiverTests.cs" Reason="Targets the pre-composition PawnAgent runtime fixture." />
+    <DormantTest Include="PawnRecorderTests.cs" Reason="Targets the pre-composition PawnAgent runtime fixture." />
+    <DormantTest Include="PawnThinkerTests.cs" Reason="Targets the pre-composition PawnAgent runtime fixture." />
+    <DormantTest Include="MentalStateRecoveryTests.cs" Reason="Targets the pre-composition PawnAgent/NpcManager runtime fixture." />
+    <DormantTest Include="PublishDecisionJobEnqueueTests.cs" Reason="Targets retired Infrastructure.Patches and the pre-composition PawnAgent fixture." />
+    <DormantTest Include="PromptSectionTests.cs" Reason="Targets retired PromptSection trimming semantics and priority constants." />
+    <DormantTest Include="RelevanceTableTests.cs" Reason="Targets the retired static RelevanceTable; current coverage uses RelevanceTableImpl." />
+    <DormantTest Include="RimMindRuntimeTests.cs" Reason="Targets the retired static RimMindRuntime.Instance/ResetInstance composition API." />
+    <DormantTest Include="SettingsDefaultsTests.cs" Reason="Requires Verse-backed settings types not compiled into the pure test target." />
+    <DormantTest Include="StrategyOptimizerTests.cs" Reason="Targets the Verse-backed pre-composition StrategyOptimizer fixture." />
+    <DormantTest Include="ThinkNodeRimMindAgentTests.cs" Reason="Targets retired Infrastructure.Patches and the pre-composition PawnAgent fixture." />
+    <DormantTest Include="Pipeline\LoggerTraceIdTests.cs" Reason="Targets the retired RimMindLogger trace-scope implementation." />
+    <DormantTest Include="Pipeline\PipelineCoreTests.cs" Reason="Targets the retired mutable generic pipeline API; current coverage lives under Pipeline/Unified." />
+    <DormantTest Include="Pipeline\AI\AIRequestPipelineTests.cs" Reason="Targets retired AIRequest/AIResponse pipeline contexts; migrate relevant behavior to Pipeline/Unified." />
+    <DormantTest Include="Pipeline\Bus\BusPublishPipelineTests.cs" Reason="Targets the retired bus middleware pipeline; current AgentBus coverage exercises direct subscriber isolation." />
+    <DormantTest Include="Pipeline\Context\ContextBuildPipelineTests.cs" Reason="Targets the retired ContextBuildContext pipeline; current context coverage uses ContextOrchestrator and unified middleware." />
+    <DormantTest Include="Pipeline\Npc\NpcChatPipelineTests.cs" Reason="Targets the retired NpcChatContext pipeline; current request coverage uses LlmRequestEnvelope and unified middleware." />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="VerseStubs.cs" />
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="GlobalUsings.cs" />
     <Compile Include="MockAIClient.cs" />
+    <!-- Every root *Tests.cs file is either compiled here or documented as dormant below. -->
+    <Compile Include="*Tests.cs" Exclude="@(DormantTest)" />
     <Compile Include="Result\*.cs" />
-    <Compile Include="ScenarioRegistryTests.cs" />
-    <Compile Include="ThreadSafetyTests.cs" />
-    <Compile Include="AgentBusTests.cs" />
     <Compile Include="Queue\*.cs" />
     <Compile Include="Pipeline\Unified\*.cs" />
     <Compile Include="Context\Diff\*.cs" />
@@ -53,7 +90,7 @@
     <Compile Include="ArchTests\PhaseP5\*.cs" />
     <Compile Include="ArchTests\PhaseP6\*.cs" />
     <Compile Include="ArchTests\PhaseP7\*.cs" />
-    <Compile Include="Agent\*.cs" Exclude="Agent\PawnThinkerTimeoutTests.cs" />
+    <Compile Include="Agent\*.cs" />
     <Compile Include="Agent\PhaseO\*.cs" />
     <Compile Include="Domain\*.cs" />
     <Compile Include="Domain\ValueObjects\*.cs" />
@@ -95,6 +132,7 @@
     <Compile Include="../Source/Presentation/Agent/ScopedAgentManager.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Presentation/Runtime/RimMindRuntimeGameComponent.cs" />
+    <Compile Include="../Source/Presentation/Runtime/OverlayService.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentState/AgentContextPreviewCoordinator.cs" />
@@ -129,5 +167,21 @@
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismListToolHandler.cs" />
     <Compile Include="../Source/Infrastructure/Mechanisms/MechanismToolHelper.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <TestSourceCandidate Include="**\*Tests.cs" Exclude="bin\**;obj\**;_backup\**" />
+    <UnclassifiedTest Include="@(TestSourceCandidate)" Exclude="@(Compile);@(DormantTest)" />
+  </ItemGroup>
+
+  <Target Name="ValidateTestSourcePartition" BeforeTargets="CoreCompile">
+    <Error Condition="'@(UnclassifiedTest)' != ''"
+           Text="Test source files must be compiled or explicitly declared as DormantTest: @(UnclassifiedTest)" />
+    <Error Condition="'%(DormantTest.Reason)' == ''"
+           Text="Dormant test '%(DormantTest.Identity)' must include a non-empty Reason." />
+    <Error Condition="!Exists('%(DormantTest.FullPath)')"
+           Text="Dormant test '%(DormantTest.Identity)' does not exist." />
+    <Message Importance="High"
+             Text="RimMind Core test partition: @(Compile->Count()) compiled items, @(DormantTest->Count()) documented dormant tests." />
+  </Target>
 
 </Project>
