@@ -15,17 +15,23 @@ namespace RimMind.Presentation.Runtime
         {
             if (entry == null) return;
 
-            var now = Find.TickManager?.TicksGame ?? 0;
-            entry.tick = now;
-            if (entry.expireTicks > 0)
-            {
-                var expireAt = (long)now + entry.expireTicks;
-                entry.ExpireAtTicks = expireAt > int.MaxValue ? int.MaxValue : (int)expireAt;
-            }
-
             List<RequestEntry>? evicted = null;
             lock (_pendingRequests)
             {
+                foreach (var pending in _pendingRequests)
+                {
+                    if (ReferenceEquals(pending, entry))
+                        return;
+                }
+
+                var now = Find.TickManager?.TicksGame ?? 0;
+                entry.tick = now;
+                if (entry.ExpireAtTicks <= 0 && entry.expireTicks > 0)
+                {
+                    var expireAt = (long)now + entry.expireTicks;
+                    entry.ExpireAtTicks = expireAt > int.MaxValue ? int.MaxValue : (int)expireAt;
+                }
+
                 _pendingRequests.Add(entry);
                 while (_pendingRequests.Count > MaxEntries)
                 {

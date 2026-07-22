@@ -27,11 +27,7 @@ namespace RimMind.Application.Common.Models.UI
         public int expireTicks;
         public int tick;
 
-        public int ExpireAtTicks
-        {
-            get => expireTicks;
-            set => expireTicks = value;
-        }
+        public int ExpireAtTicks { get; set; }
 
         public bool TryComplete(string? choice, RequestCompletionReason reason)
         {

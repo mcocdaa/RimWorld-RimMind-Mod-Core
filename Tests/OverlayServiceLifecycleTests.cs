@@ -8,7 +8,7 @@ namespace RimMind.Tests
     public class OverlayServiceLifecycleTests
     {
         [Fact]
-        public void Register_ConvertsRelativeLifetimeAndExpirationCompletesOnce()
+        public void Register_PreservesRelativeLifetimeAndSetsAbsoluteDeadline()
         {
             Find.TickManager.TicksGame = 100;
             var completionCount = 0;
@@ -24,6 +24,7 @@ namespace RimMind.Tests
             };
 
             service.RegisterPendingRequest(entry);
+            Assert.Equal(10, entry.expireTicks);
             Assert.Equal(110, entry.ExpireAtTicks);
 
             Find.TickManager.TicksGame = 109;
@@ -36,6 +37,79 @@ namespace RimMind.Tests
 
             Assert.Empty(service.GetPendingRequests());
             Assert.Equal(1, completionCount);
+        }
+
+        [Fact]
+        public void Register_PreservesExplicitAbsoluteDeadline()
+        {
+            Find.TickManager.TicksGame = 100;
+            var completionCount = 0;
+            var service = new OverlayService();
+            var entry = new RequestEntry
+            {
+                expireTicks = 25,
+                ExpireAtTicks = 110,
+                completionCallback = reason =>
+                {
+                    Assert.Equal(RequestCompletionReason.Expired, reason);
+                    completionCount++;
+                }
+            };
+
+            service.RegisterPendingRequest(entry);
+
+            Assert.Equal(25, entry.expireTicks);
+            Assert.Equal(110, entry.ExpireAtTicks);
+
+            Find.TickManager.TicksGame = 109;
+            service.Tick();
+            Assert.Single(service.GetPendingRequests());
+            Assert.Equal(0, completionCount);
+
+            Find.TickManager.TicksGame = 110;
+            service.Tick();
+            service.Tick();
+
+            Assert.Empty(service.GetPendingRequests());
+            Assert.Equal(1, completionCount);
+        }
+
+        [Fact]
+        public void Register_SameInstanceTwiceIsIdempotent()
+        {
+            Find.TickManager.TicksGame = 100;
+            var service = new OverlayService();
+            var entry = new RequestEntry { expireTicks = 10 };
+
+            service.RegisterPendingRequest(entry);
+            Find.TickManager.TicksGame = 150;
+            service.RegisterPendingRequest(entry);
+
+            Assert.Single(service.GetPendingRequests());
+            Assert.Equal(100, entry.tick);
+            Assert.Equal(10, entry.expireTicks);
+            Assert.Equal(110, entry.ExpireAtTicks);
+        }
+
+        [Fact]
+        public void Register_SaturatesRelativeDeadlineOnOverflow()
+        {
+            var previousTicksGame = Find.TickManager.TicksGame;
+            try
+            {
+                Find.TickManager.TicksGame = int.MaxValue - 5;
+                var service = new OverlayService();
+                var entry = new RequestEntry { expireTicks = 10 };
+
+                service.RegisterPendingRequest(entry);
+
+                Assert.Equal(10, entry.expireTicks);
+                Assert.Equal(int.MaxValue, entry.ExpireAtTicks);
+            }
+            finally
+            {
+                Find.TickManager.TicksGame = previousTicksGame;
+            }
         }
 
         [Fact]
