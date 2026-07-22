@@ -60,6 +60,8 @@
     <Compile Include="RimMindTestStubs.cs" />
     <Compile Include="GlobalUsings.cs" />
     <Compile Include="MockAIClient.cs" />
+    <Compile Include="Contracts\**\*.cs" />
+    <Compile Include="..\TestSupport\ContractCaseRunner.cs" Link="Support\ContractCaseRunner.cs" />
     <!-- Every root *Tests.cs file is either compiled here or documented as dormant below. -->
     <Compile Include="*Tests.cs" Exclude="@(DormantTest)" />
     <Compile Include="Result\*.cs" />
@@ -133,6 +135,7 @@
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Presentation/Runtime/RimMindRuntimeGameComponent.cs" />
     <Compile Include="../Source/Presentation/Runtime/OverlayService.cs" />
+    <Compile Include="../Source/Presentation/Runtime/Services/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentState/AgentContextPreviewCoordinator.cs" />
