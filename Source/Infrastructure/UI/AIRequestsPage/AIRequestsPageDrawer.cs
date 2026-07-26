@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Debug;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -11,6 +12,8 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 {
     public sealed class AIRequestsPageDrawer
     {
+        private readonly RuntimeServiceRef<IAIRequestTraceLog> _traceLog =
+            RuntimeServiceRef<IAIRequestTraceLog>.Optional();
         private int _selectedIndex;
         private Vector2 _scrollPosition;
         private Vector2 _detailScrollPosition;
@@ -22,7 +25,7 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 
         public void Draw(Rect rect, RimMindLayoutScope? scope = null)
         {
-            var log = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
+            var log = _traceLog.ValueOrDefault;
             if (log == null)
             {
                 Widgets.Label(rect, "RimMind.UI.AIRequestsPage.TraceUnavailable".Translate());

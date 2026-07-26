@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
@@ -39,6 +41,7 @@ namespace RimMind.Presentation.Agent
         private readonly IDreamGenerator _dreamGenerator;
         private readonly IDreamThoughtInjector? _dreamThoughtInjector;
         private readonly ITraitEvolver _traitEvolver;
+        private readonly ICompletionFence _completionFence;
         private int _lastThinkTick;
         private int ThinkCooldownTicks => _tickSettings?.ThinkCooldownTicks ?? DefaultThinkCooldownTicks;
         private volatile bool _thinking;
@@ -51,6 +54,8 @@ namespace RimMind.Presentation.Agent
         private IReadOnlyList<ToolDefinition>? _pendingAvailableTools;
         private int _pendingToolCallRound;
         private string? _pendingTraceId;
+        private ICompletionFence? _pendingCompletionFence;
+        private CancellationToken _pendingGenerationToken;
 
         internal PawnThinker(
             IPawnAgentVerse agent,
@@ -62,7 +67,8 @@ namespace RimMind.Presentation.Agent
             IDreamGenerator dreamGenerator,
             IDreamThoughtInjector? dreamThoughtInjector,
             ITraitEvolver traitEvolver,
-            ILogSink? log = null)
+            ILogSink? log,
+            ICompletionFence completionFence)
         {
             _agent = agent ?? throw new ArgumentNullException(nameof(agent));
             _tickSettings = tickSettings;
@@ -74,12 +80,14 @@ namespace RimMind.Presentation.Agent
             _dreamThoughtInjector = dreamThoughtInjector;
             _traitEvolver = traitEvolver ?? throw new ArgumentNullException(nameof(traitEvolver));
             _log = log;
+            _completionFence = completionFence ?? throw new ArgumentNullException(nameof(completionFence));
             _proactiveExecutor = new ProactiveBehaviorExecutor(
                 agentBus,
                 _dreamGenerator,
                 _dreamThoughtInjector,
                 _traitEvolver,
-                log);
+                log,
+                _completionFence);
             _contextEnricher = new ThinkContextEnricher(
                 _innerVoiceHandler,
                 _psychologyWatcher);
@@ -108,6 +116,8 @@ namespace RimMind.Presentation.Agent
             _requestSentTick = 0;
             _cachedPerceptions = Array.Empty<PerceptionBufferEntry>();
             _pendingTraceId = null;
+            _pendingCompletionFence = null;
+            _pendingGenerationToken = default;
         }
 
         public void Tick()
@@ -177,6 +187,9 @@ namespace RimMind.Presentation.Agent
 
         private void SendThinkRequest(LlmRequestEnvelope envelope, IThinkStrategy strategy, IReadOnlyList<ToolDefinition> availableTools, int toolCallRound)
         {
+            if (_completionFence.CancellationToken.IsCancellationRequested)
+            { ResetThinkingState(); return; }
+
             _pendingStrategy = strategy;
             _pendingAvailableTools = availableTools;
             _pendingToolCallRound = toolCallRound;
@@ -184,15 +197,28 @@ namespace RimMind.Presentation.Agent
             var modeId = _agent.CurrentModeId;
             RimMindAPI.Request.Send(envelope, (result, ctx) =>
             {
+                if (!_completionFence.TryAcceptCompletion()) return;
                 _pendingResult = result;
                 _pendingContext = ctx;
-                _hasPendingCallback = true;
+                _pendingCompletionFence = _completionFence;
+                _pendingGenerationToken = _completionFence.CancellationToken;
                 if (ctx != null) ctx.AgentModeId = modeId;
+                _hasPendingCallback = true;
             });
         }
 
         private void ProcessPendingCallback()
         {
+            var completionFence = _pendingCompletionFence;
+            var accepted = completionFence?.TryAcceptCompletion() == true;
+            if (!accepted || _pendingGenerationToken.IsCancellationRequested)
+            {
+                ResetThinkingState();
+                _pendingCompletionFence = null;
+                _pendingGenerationToken = default;
+                return;
+            }
+
             var traceScope = _pendingTraceId != null ? TraceContext.BeginScope(_pendingTraceId) : null;
             try
             {
@@ -204,7 +230,12 @@ namespace RimMind.Presentation.Agent
                 _agent.TransitionWorkflow(AgentWorkflowPhase.Idle);
                 _log?.Error($"[RimMind.Thinker] action=CallbackError npcId={_agent.Identity.NpcId} modeId={_agent.CurrentModeId.Value} error={ex}");
             }
-            finally { traceScope?.Dispose(); }
+            finally
+            {
+                traceScope?.Dispose();
+                _pendingCompletionFence = null;
+                _pendingGenerationToken = default;
+            }
         }
 
         private void RequestFollowUpThink()

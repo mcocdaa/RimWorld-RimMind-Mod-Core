@@ -61,7 +61,6 @@ namespace RimMind.Presentation.Runtime
             parameterTuners.Clear();
             registries.Clear();
             extensionManager.Reset();
-            RimMindServiceLocator.Reset();
             _keyRegistry?.Clear();
             // L3: Static ContextKeyRegistry.ResetCache() and Clear() are no longer needed
             // as the instance-based ContextKeyRegistryImpl.Clear() is called above.

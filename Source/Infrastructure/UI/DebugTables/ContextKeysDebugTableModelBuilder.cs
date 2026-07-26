@@ -9,15 +9,26 @@ namespace RimMind.Infrastructure.UI.DebugTables
 {
     public sealed class ContextKeysDebugTableModelBuilder : IDebugTableModelBuilder
     {
-        private readonly IContextKeyRegistry? _registry;
+        private IContextKeyRegistry? _registry;
+        private long _cachedGeneration = long.MinValue;
+        private DebugTableModel? _cachedModel;
 
-        public ContextKeysDebugTableModelBuilder(IContextKeyRegistry? registry)
+        public ContextKeysDebugTableModelBuilder(IContextKeyRegistry? registry = null)
         {
             _registry = registry;
         }
 
+        public void Bind(IContextKeyRegistry? registry, long generation)
+        {
+            if (_cachedGeneration == generation && ReferenceEquals(_registry, registry))
+                return;
+            _registry = registry;
+            _cachedGeneration = generation;
+            _cachedModel = null;
+        }
+
         public DebugTableModel Build()
-            => Build(_registry?.GetAll() ?? System.Array.Empty<KeyMeta>());
+            => _cachedModel ??= Build(_registry?.GetAll() ?? System.Array.Empty<KeyMeta>());
 
         public static DebugTableModel Build(IReadOnlyList<KeyMeta> keys)
         {

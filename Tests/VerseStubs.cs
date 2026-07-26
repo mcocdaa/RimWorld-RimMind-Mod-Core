@@ -89,7 +89,16 @@ namespace RimWorld
 
 namespace Verse
 {
-    public class Game { }
+    public class Game
+    {
+        public T? GetComponent<T>() where T : class
+            => Activator.CreateInstance(typeof(T)) as T;
+    }
+
+    public static class Current
+    {
+        public static Game? Game { get; set; } = new Game();
+    }
 
     public class GameComponent
     {
@@ -312,6 +321,47 @@ namespace Verse
     {
         public static void Look<T>(ref System.Collections.Generic.List<T>? list, string label, LookMode lookMode = LookMode.Undef) where T : new() { }
         public static void Look<T>(ref System.Collections.Generic.List<T>? list, string label, bool saveDestroyedThings) where T : new() { }
+        public static void Look<TKey, TValue>(
+            ref System.Collections.Generic.Dictionary<TKey, TValue> dictionary,
+            string label,
+            LookMode keyLookMode,
+            LookMode valueLookMode)
+            where TKey : notnull
+        {
+        }
+    }
+}
+
+namespace RimMind.Infrastructure.Verse
+{
+    using RimMind.Application.Common.Interfaces.Internal;
+    using RimMind.Application.Common.Interfaces.Npc;
+    using RimMind.Application.Common.Models.Npc;
+    using RimMind.Domain.Llm;
+
+    public sealed class NpcManager : INpcManager
+    {
+        public void SpawnNpc(NpcProfile profile) { }
+        public void KillNpc(string npcId) { }
+        public bool IsNpcAlive(string npcId) => false;
+        public NpcProfile? GetNpc(string npcId) => null;
+        public IReadOnlyList<NpcProfile> GetAllNpcs() => Array.Empty<NpcProfile>();
+        public string GetNpcForMap(object map) => string.Empty;
+        public object? FindPawnByNpcId(string npcId) => null;
+        public object? FindProxyPawnForMap(object map) => null;
+        public void RegisterActiveAgent(int thingId) { }
+        public void UnregisterActiveAgent(int thingId) { }
+        public HashSet<int> GetActiveAgentPawnIds() => new HashSet<int>();
+        public void IndexPawn(object pawn) { }
+        public void UnindexPawn(int thingId) { }
+        public string GetMapNpcId(object map) => string.Empty;
+    }
+
+    public sealed class AIDebugLog : IAIDebugLog
+    {
+        public IReadOnlyList<AIDebugEntry> Entries => Array.Empty<AIDebugEntry>();
+        public void Clear() { }
+        public void Record(LlmRequestEnvelope envelope, LlmResponse response, int elapsedMs) { }
     }
 }
 

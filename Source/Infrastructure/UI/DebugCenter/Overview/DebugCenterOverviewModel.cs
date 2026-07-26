@@ -1,3 +1,5 @@
+using RimMind.Presentation.Runtime.Services;
+
 namespace RimMind.Infrastructure.UI.DebugCenter.Overview
 {
     public sealed class DebugCenterOverviewModel
@@ -13,7 +15,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
             int registeredPawnAgents,
             int registeredScopedAgents,
             int lastAgentLoopTick,
-            int agentLoopFaults)
+            int agentLoopFaults,
+            RuntimeLifecycleDiagnostics? runtimeDiagnostics = null,
+            GameLifecycleDiagnostics? gameDiagnostics = null)
         {
             ActiveAgents = activeAgents;
             PausedAgents = pausedAgents;
@@ -26,6 +30,8 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
             RegisteredScopedAgents = registeredScopedAgents;
             LastAgentLoopTick = lastAgentLoopTick;
             AgentLoopFaults = agentLoopFaults;
+            RuntimeDiagnostics = runtimeDiagnostics;
+            GameDiagnostics = gameDiagnostics;
         }
 
         public int ActiveAgents { get; }
@@ -49,6 +55,36 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
         public int LastAgentLoopTick { get; }
 
         public int AgentLoopFaults { get; }
+
+        public RuntimeLifecycleDiagnostics? RuntimeDiagnostics { get; private set; }
+
+        public GameLifecycleDiagnostics? GameDiagnostics { get; private set; }
+
+        public void AttachLifecycleDiagnostics(
+            RuntimeLifecycleDiagnostics? runtimeDiagnostics,
+            GameLifecycleDiagnostics? gameDiagnostics)
+        {
+            RuntimeDiagnostics = runtimeDiagnostics;
+            GameDiagnostics = gameDiagnostics;
+        }
+
+        public long RuntimeGeneration => RuntimeDiagnostics?.Generation ?? 0;
+
+        public int RuntimeServiceCount => RuntimeDiagnostics?.ServiceCount ?? 0;
+
+        public System.DateTimeOffset? RuntimePublishedAtUtc => RuntimeDiagnostics?.PublishedAtUtc;
+
+        public System.Guid RuntimeId => RuntimeDiagnostics?.RuntimeId ?? System.Guid.Empty;
+
+        public string? LastBuildFailureSummary => RuntimeDiagnostics?.LastBuildFailureSummary;
+
+        public long StaleCompletionDiscardCount => RuntimeDiagnostics?.StaleCompletionDiscardCount ?? 0;
+
+        public long GameGeneration => GameDiagnostics?.Generation ?? 0;
+
+        public int GameServiceCount => GameDiagnostics?.ServiceCount ?? 0;
+
+        public System.DateTimeOffset? GamePublishedAtUtc => GameDiagnostics?.PublishedAtUtc;
 
         public string AgentSummary => $"{ActiveAgents} active / {PausedAgents} paused / {PendingAgents} pending / {ErrorAgents} error";
 

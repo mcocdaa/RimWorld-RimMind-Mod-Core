@@ -7,6 +7,7 @@ using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -22,7 +23,10 @@ namespace RimMind.Infrastructure.UI
         private const float PhaseIndicatorW = 10f;
 
         private Vector2 _scrollPos = Vector2.zero;
-        private string _busSubscriptionKey = "";
+        private readonly RuntimeBinding _runtimeBinding = new RuntimeBinding();
+        private readonly RuntimeServiceRef<IAIRequestQueue> _requestQueue = RuntimeServiceRef<IAIRequestQueue>.Optional();
+        private readonly RuntimeServiceRef<IScopedAgentManager> _scopedAgentManager = RuntimeServiceRef<IScopedAgentManager>.Optional();
+        private long _cachedGeneration = long.MinValue;
         private int _lastRefreshTick;
         private readonly List<AgentProgressEntry> _cachedEntries = new List<AgentProgressEntry>();
 
@@ -45,12 +49,13 @@ namespace RimMind.Infrastructure.UI
 
         public override void PreClose()
         {
-            base.PreClose();
             UnsubscribeBus();
+            base.PreClose();
         }
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            _runtimeBinding.Refresh(BindRuntime);
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
@@ -93,7 +98,7 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             y += HeaderH;
 
-            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            var queue = _requestQueue.ValueOrDefault;
             if (queue != null)
             {
                 string queueInfo = queue.IsPaused
@@ -261,7 +266,7 @@ namespace RimMind.Infrastructure.UI
                     agentControl: comp.Agent));
             }
 
-            var scopedAgentManager = RimMindServiceLocator.Get<IScopedAgentManager>();
+            var scopedAgentManager = _scopedAgentManager.ValueOrDefault;
             if (scopedAgentManager != null)
             {
                 foreach (var scoped in scopedAgentManager.GetAll())
@@ -289,25 +294,47 @@ namespace RimMind.Infrastructure.UI
             _lastRefreshTick = Find.TickManager?.TicksGame ?? 0;
         }
 
-        private void SubscribeBus()
+        private IDisposable? BindRuntime(RuntimeServiceScope scope)
         {
-            var bus = RimMindServiceLocator.Get<IAgentBus>();
-            if (bus == null) return;
-
-            _busSubscriptionKey = bus.SubscribeByName(
+            if (_cachedGeneration != scope.Generation)
+                _cachedEntries.Clear();
+            _cachedGeneration = scope.Generation;
+            IAgentBus? bus = scope.GetOptional<IAgentBus>();
+            if (bus == null)
+                return null;
+            string subscriptionKey = bus.SubscribeByName(
                 nameof(AgentBusEventType.WorkflowPhaseChange),
                 OnWorkflowPhaseChange);
+            return new BusSubscriptionLease(bus, subscriptionKey);
+        }
+
+        private void SubscribeBus()
+        {
+            _runtimeBinding.Refresh(BindRuntime);
         }
 
         private void UnsubscribeBus()
         {
-            if (string.IsNullOrEmpty(_busSubscriptionKey)) return;
+            _runtimeBinding.Dispose();
+        }
 
-            var bus = RimMindServiceLocator.Get<IAgentBus>();
-            if (bus == null) return;
+        private sealed class BusSubscriptionLease : IDisposable
+        {
+            private IAgentBus? _bus;
+            private readonly string _key;
 
-            bus.Unsubscribe<AgentBusEvent>(_busSubscriptionKey);
-            _busSubscriptionKey = "";
+            public BusSubscriptionLease(IAgentBus bus, string key)
+            {
+                _bus = bus;
+                _key = key;
+            }
+
+            public void Dispose()
+            {
+                IAgentBus? bus = _bus;
+                _bus = null;
+                bus?.Unsubscribe<AgentBusEvent>(_key);
+            }
         }
 
         private void OnWorkflowPhaseChange(AgentBusEvent evt)

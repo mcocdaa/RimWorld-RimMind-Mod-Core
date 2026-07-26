@@ -3,6 +3,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Api;
+using RimMind.Presentation.Runtime.Services;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -15,6 +16,10 @@ namespace RimMind.Infrastructure.Patches
     {
         private static readonly Texture2D Icon =
             ContentFinder<Texture2D>.Get("UI/RimMind/Icon", reportFailure: false) ?? BaseContent.BadTex;
+        private static readonly RuntimeServiceRef<IExtensionRegistry<IToggleBehavior>> ToggleRegistry =
+            RuntimeServiceRef<IExtensionRegistry<IToggleBehavior>>.Optional();
+        private static readonly RuntimeServiceRef<ISettingsProvider> SettingsProvider =
+            RuntimeServiceRef<ISettingsProvider>.Optional();
 
         private static bool _iconState;
 
@@ -39,13 +44,13 @@ namespace RimMind.Infrastructure.Patches
             bool shift = Event.current.shift;
             bool control = Event.current.control;
 
-            if (shift)
-            {
-                OpenSettings();
-            }
-            else if (control)
+            if (control)
             {
                 Find.WindowStack.Add(Window_RimMindHub.OpenAIRequests());
+            }
+            else if (shift)
+            {
+                OpenSettings();
             }
             else
             {
@@ -58,7 +63,7 @@ namespace RimMind.Infrastructure.Patches
 
         private static bool IsAnyToggleActive()
         {
-            var registry = RimMindAPI.Extensions<IToggleBehavior>();
+            var registry = ToggleRegistry.ValueOrDefault;
             if (registry == null) return false;
             foreach (var toggle in registry.All)
             {
@@ -69,7 +74,7 @@ namespace RimMind.Infrastructure.Patches
 
         private static void ToggleCoreOverlay()
         {
-            var registry = RimMindAPI.Extensions<IToggleBehavior>();
+            var registry = ToggleRegistry.ValueOrDefault;
             if (registry == null) return;
             foreach (var toggle in registry.All)
             {
@@ -83,7 +88,7 @@ namespace RimMind.Infrastructure.Patches
 
         private static void OpenSettings()
         {
-            var sp = RimMindServiceLocator.Get<ISettingsProvider>();
+            var sp = SettingsProvider.ValueOrDefault;
             if (sp != null)
             {
                 Find.WindowStack.Add(new Window_RimMindSettings(sp));

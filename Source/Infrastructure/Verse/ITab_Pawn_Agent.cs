@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Agent;
 using RimWorld;
@@ -146,15 +147,22 @@ namespace RimMind.Infrastructure.Verse
             scope.Record(createBtn, "Button:CreateAgent");
             if (Widgets.ButtonText(createBtn, "RimMind.Agent.ITab.CreateAgent".Translate()))
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
-                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                var factory = runtimeScope.GetOptional<IPawnAgentFactoryVerse>();
+                var agentBus = runtimeScope.GetOptional<IAgentBus>();
                 if (factory != null && agentBus != null)
                 {
                     var createdAgent = factory.Create(pawn, agentBus);
-                    if (createdAgent != null)
+                    if (createdAgent != null && RuntimeServiceHub.Shared.IsCurrent(runtimeScope.Token))
                     {
                         if (comp != null && comp.Agent == null)
                             comp.Agent = createdAgent as IPawnAgentVerse;
+                    }
+                    else if (createdAgent != null)
+                    {
+                        RuntimeServiceHub.Shared.RecordStaleCompletion();
+                        Messages.Message("RimMind.Agent.ITab.CreateFailed".Translate(),
+                            MessageTypeDefOf.RejectInput, false);
                     }
                 }
                 else

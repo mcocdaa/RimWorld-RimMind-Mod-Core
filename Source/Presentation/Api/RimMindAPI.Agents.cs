@@ -2,6 +2,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 
 namespace RimMind.Presentation.Api
@@ -10,16 +11,20 @@ namespace RimMind.Presentation.Api
     {
         public static class Agents
         {
+            private static readonly RuntimeServiceRef<IScopedAgentManager> Managers =
+                RuntimeServiceRef<IScopedAgentManager>.Optional();
+
             public static IScopedAgent? FindScoped(string scopeType, string scopeId)
             {
-                var manager = RimMindRuntime.Instance.GetService<IScopedAgentManager>();
+                var manager = Managers.ValueOrDefault;
                 return manager?.Find(scopeType, scopeId);
             }
 
             public static IScopedAgent? GetOrCreateScoped(string scopeType, string scopeId, int? mapId = null)
             {
-                var manager = RimMindRuntime.Instance.GetService<IScopedAgentManager>();
-                var bus = RimMindRuntime.Instance.GetService<IAgentBus>();
+                var scope = RuntimeServiceHub.Shared.Capture();
+                var manager = scope.GetOptional<IScopedAgentManager>();
+                var bus = scope.GetOptional<IAgentBus>();
                 if (manager == null || bus == null)
                 {
                     Log.Warning("[RimMind-Core] Scoped agent services are not available.");

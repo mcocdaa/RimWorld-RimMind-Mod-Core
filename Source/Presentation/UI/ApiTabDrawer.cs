@@ -10,6 +10,7 @@ using RimMind.Domain.Enums;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;
@@ -21,20 +22,26 @@ namespace RimMind.Presentation.UI
         private static bool _showApiKey;
         private static string _testStatus = "";
         private static Color _testStatusColor = Color.white;
+        private static bool _testPending;
         private static Vector2 _apiScroll;
 
-        private static IPlayer2Lifecycle? _cachedPlayer2Lifecycle;
-        private static IClientManager? _cachedClientManager;
-        private static IOpenAISettings? _cachedOpenAISettings;
+        private static readonly RuntimeServiceRef<IPlayer2Lifecycle> Player2Lifecycle =
+            RuntimeServiceRef<IPlayer2Lifecycle>.Optional();
+        private static readonly RuntimeServiceRef<IClientManager> ClientManager =
+            RuntimeServiceRef<IClientManager>.Optional();
+        private static readonly RuntimeServiceRef<IOpenAISettings> OpenAISettings =
+            RuntimeServiceRef<IOpenAISettings>.Optional();
+        private static readonly RuntimeServiceRef<IAIRequestQueue> RequestQueue =
+            RuntimeServiceRef<IAIRequestQueue>.Optional();
 
         private static IPlayer2Lifecycle? GetPlayer2Lifecycle()
-            => _cachedPlayer2Lifecycle ??= RimMindRuntime.Instance.GetService<IPlayer2Lifecycle>();
+            => Player2Lifecycle.ValueOrDefault;
 
         private static IClientManager? GetClientManager()
-            => _cachedClientManager ??= RimMindRuntime.Instance.GetService<IClientManager>();
+            => ClientManager.ValueOrDefault;
 
         private static IOpenAISettings? GetOpenAISettings()
-            => _cachedOpenAISettings ??= RimMindRuntime.Instance.GetService<IOpenAISettings>();
+            => OpenAISettings.ValueOrDefault;
 
         public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
         {
@@ -213,7 +220,11 @@ namespace RimMind.Presentation.UI
             Rect row = listing.GetRect(28f);
             Rect btn = new Rect(row.x, row.y, 110f, row.height);
             Rect status = new Rect(btn.xMax + 8f, row.y + 4f, row.width - 120f, row.height);
-            if (Widgets.ButtonText(btn, "RimMind.Settings.TestConnection".Translate()))
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = wasEnabled && !_testPending;
+            bool testClicked = Widgets.ButtonText(btn, "RimMind.Settings.TestConnection".Translate());
+            GUI.enabled = wasEnabled;
+            if (testClicked)
                 RunConnectionTest(s);
             GUI.color = _testStatusColor;
             Widgets.Label(status, _testStatus);
@@ -314,7 +325,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
             s.DefaultModCooldownTicks = (int)listing.Slider(s.DefaultModCooldownTicks, 600f, 36000f);
 
-            var queue = RimMindRuntime.Instance.GetService<IAIRequestQueue>();
+            var queue = RequestQueue.ValueOrDefault;
             if (queue != null)
             {
                 listing.Gap(4f);

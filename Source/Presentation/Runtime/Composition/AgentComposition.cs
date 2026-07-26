@@ -1,3 +1,4 @@
+using System;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
@@ -5,6 +6,7 @@ using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Agent.Social;
+using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Npc;
@@ -16,6 +18,7 @@ using RimMind.Application.Features.Agent.Psychology;
 using RimMind.Application.Features.Agent.Social;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Llm;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 
 namespace RimMind.Presentation.Runtime.Composition
@@ -25,11 +28,15 @@ namespace RimMind.Presentation.Runtime.Composition
         public IPawnAgentFactoryVerse PawnAgentFactory { get; init; } = null!;
         public IGameContextBuilder GameContextBuilder { get; init; } = null!;
         public IResponseDispatcher ResponseDispatcher { get; init; } = null!;
+        public ISocialEventOrganizer SocialEventOrganizer { get; init; } = null!;
+        public ITraitEvolutionEngine TraitEvolutionEngine { get; init; } = null!;
     }
 
     internal static class AgentComposition
     {
-        public static AgentCompositionServices RegisterAgents(
+        public static AgentCompositionServices ComposeAgents(
+            RuntimeServiceBuilder services,
+            ExtensionRegistryCatalog extensions,
             ISettingsProvider resolvedSettings,
             IAgentBus agentBus,
             IActionExecutor actionExecutor,
@@ -37,77 +44,94 @@ namespace RimMind.Presentation.Runtime.Composition
             IPsychologyWatcher? psychologyWatcher,
             ITickProvider tickProvider,
             ILogSink logSink,
-            INpcManager? npcManager)
+            INpcManagerAccessor npcManagers,
+            ICompletionFence completionFence,
+            Func<Pawn, AgentIdentity?> identityProvider,
+            IThoughtInjector? thoughtInjector = null)
         {
-            RimMindServiceLocator.Register<IAgentIdentityProvider>(new AgentIdentityProviderAdapter());
+            services.Bind<IAgentIdentityProvider>(new AgentIdentityProviderAdapter(identityProvider));
 
             var informationDiffuser = new DefaultInformationDiffuser(agentBus, tickProvider);
-            RimMindServiceLocator.Register<IInformationDiffuser>(informationDiffuser);
+            services.Bind<IInformationDiffuser>(informationDiffuser);
 
             var socialEventOrganizer = new DefaultSocialEventOrganizer(tickProvider, agentBus);
-            RimMindServiceLocator.Register<ISocialEventOrganizer>(socialEventOrganizer);
+            services.Bind<ISocialEventOrganizer>(socialEventOrganizer);
 
             var traitEvolutionEngine = new DefaultTraitEvolutionEngine(tickProvider, psychologyWatcher, agentBus);
-            RimMindServiceLocator.Register<ITraitEvolutionEngine>(traitEvolutionEngine);
+            services.Bind<ITraitEvolutionEngine>(traitEvolutionEngine);
 
             var sleepDetector = new RimMind.Infrastructure.Social.VersePawnSleepDetector();
-            RimMindServiceLocator.Register<ISleepDetector>(sleepDetector);
+            services.Bind<ISleepDetector>(sleepDetector);
 
             var dreamGenerator = new DefaultDreamGenerator(tickProvider, sleepDetector, agentBus);
-            RimMindServiceLocator.Register<IDreamGenerator>(dreamGenerator);
+            services.Bind<IDreamGenerator>(dreamGenerator);
 
             var traitEvolver = new RimMind.Infrastructure.Social.VerseTraitEvolver();
-            RimMindServiceLocator.Register<ITraitEvolver>(traitEvolver);
+            services.Bind<ITraitEvolver>(traitEvolver);
 
-            var thoughtInjector = RimMindServiceLocator.TryGet<IThoughtInjector>();
+            IDreamThoughtInjector? dreamThoughtInjector = null;
             if (thoughtInjector != null)
             {
-                var dreamThoughtInjector = new RimMind.Infrastructure.Social.VerseDreamThoughtInjector(thoughtInjector);
-                RimMindServiceLocator.Register<IDreamThoughtInjector>(dreamThoughtInjector);
+                dreamThoughtInjector = new RimMind.Infrastructure.Social.VerseDreamThoughtInjector(thoughtInjector);
+                services.Bind<IDreamThoughtInjector>(dreamThoughtInjector);
             }
 
             var agentLoopScheduler = new AgentLoopScheduler(logSink);
-            RimMindServiceLocator.Register<IAgentLoopScheduler>(agentLoopScheduler);
+            services.Bind<IAgentLoopScheduler>(agentLoopScheduler);
+
+            var tickSettings = resolvedSettings as IAgentTickSettings
+                ?? throw new InvalidOperationException("The settings provider must implement IAgentTickSettings.");
 
             var pawnAgentFactory = new PawnAgentFactory(
-                RimMindServiceLocator.Get<IAgentTickSettings>(), agentBus, actionExecutor,
+                tickSettings, agentBus, actionExecutor,
                 innerVoiceHandler, psychologyWatcher, tickProvider,
-                dreamGenerator, RimMindServiceLocator.TryGet<IDreamThoughtInjector>(), traitEvolver,
-                logSink, CompositionRegistry.GetExtensionRegistry<IPerceptionSource>());
-            RimMindServiceLocator.Register<IPawnAgentFactoryVerse>(pawnAgentFactory);
-            RimMindServiceLocator.Register<IPawnAgentFactory>(pawnAgentFactory);
+                dreamGenerator, dreamThoughtInjector, traitEvolver,
+                logSink, extensions.GetExtensionRegistry<IPerceptionSource>(),
+                completionFence);
+            services.Bind<IPawnAgentFactoryVerse>(pawnAgentFactory);
+            services.Bind<IPawnAgentFactory>(pawnAgentFactory);
+            services.Bind(extensions.GetExtensionRegistry<IPerceptionSource>());
 
             var scopedAgentFactory = new ScopedAgentFactory();
-            RimMindServiceLocator.Register<IScopedAgentFactory>(scopedAgentFactory);
+            services.Bind<IScopedAgentFactory>(scopedAgentFactory);
 
             var scopedAgentManager = new ScopedAgentManager(scopedAgentFactory, agentLoopScheduler);
-            RimMindServiceLocator.Register<IScopedAgentManager>(scopedAgentManager);
+            services.Bind<IScopedAgentManager>(scopedAgentManager);
 
             var gameContextBuilder = new GameContextBuilder(
-                new PawnContextBuilder(resolvedSettings),
+                new PawnContextBuilder(resolvedSettings, logSink),
                 new MapContextBuilder(resolvedSettings),
-                npcManager);
-            RimMindServiceLocator.Register<IGameContextBuilder>(gameContextBuilder);
+                npcManagers);
+            services.Bind<IGameContextBuilder>(gameContextBuilder);
 
             var responseDispatcher = new ResponseDispatcher(agentBus);
-            RimMindServiceLocator.Register<IResponseDispatcher>(responseDispatcher);
+            services.Bind<IResponseDispatcher>(responseDispatcher);
 
-            var modePolicyRegistry = CompositionRegistry.GetExtensionRegistry<IModeTransitionPolicy>();
+            var modePolicyRegistry = extensions.GetExtensionRegistry<IModeTransitionPolicy>();
             modePolicyRegistry.Register(new DefaultModeTransitionPolicy());
-            RimMindServiceLocator.Register(modePolicyRegistry);
+            services.Bind(modePolicyRegistry);
 
             return new AgentCompositionServices
             {
                 PawnAgentFactory = pawnAgentFactory,
                 GameContextBuilder = gameContextBuilder,
-                ResponseDispatcher = responseDispatcher
+                ResponseDispatcher = responseDispatcher,
+                SocialEventOrganizer = socialEventOrganizer,
+                TraitEvolutionEngine = traitEvolutionEngine
             };
         }
 
         private sealed class AgentIdentityProviderAdapter : IAgentIdentityProvider
         {
+            private readonly Func<Pawn, AgentIdentity?> _provider;
+
+            public AgentIdentityProviderAdapter(Func<Pawn, AgentIdentity?> provider)
+            {
+                _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            }
+
             public AgentIdentity? GetAgentIdentity(object pawn)
-                => RimMindRuntime.Instance.GetAgentIdentity((Pawn)pawn);
+                => _provider((Pawn)pawn);
         }
     }
 }

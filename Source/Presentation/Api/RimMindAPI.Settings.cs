@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Api
 {
@@ -11,8 +12,17 @@ namespace RimMind.Presentation.Api
     {
         public static class Settings
         {
+            private static readonly RuntimeServiceRef<ISettingsProvider> SettingsProviders =
+                RuntimeServiceRef<ISettingsProvider>.Optional();
+            private static readonly RuntimeServiceRef<IHistoryManager> HistoryManagers =
+                RuntimeServiceRef<IHistoryManager>.Required();
+            private static readonly RuntimeServiceRef<IContextEngine> ContextEngines =
+                RuntimeServiceRef<IContextEngine>.Required();
+            private static readonly RuntimeServiceRef<ITelemetryCollector> TelemetryCollectors =
+                RuntimeServiceRef<ITelemetryCollector>.Required();
+
             private static ISettingsProvider? GetSettingsProvider()
-                => RimMindRuntime.Instance?.GetSettingsProvider();
+                => SettingsProviders.ValueOrDefault;
 
             public static bool IsConfigured() => GetSettingsProvider()?.IsConfigured == true;
 
@@ -20,11 +30,11 @@ namespace RimMind.Presentation.Api
 
             public static bool DebugLogging => GetSettingsProvider()?.DebugLogging == true;
 
-            internal static IHistoryManager GetHistoryManager() => RimMindRuntime.Instance.HistoryManager;
-            public static IContextEngine GetContextEngine() => RimMindRuntime.Instance.ContextEngine;
-            internal static IBudgetScheduler? GetContextScheduler() => RimMindRuntime.Instance.ContextEngine.GetScheduler();
-            internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => RimMindRuntime.Instance.ContextEngine.GetEmbeddingSnapshotStore();
-            public static ITelemetryCollector Telemetry => RimMindRuntime.Instance.Telemetry;
+            internal static IHistoryManager GetHistoryManager() => HistoryManagers.Value;
+            public static IContextEngine GetContextEngine() => ContextEngines.Value;
+            internal static IBudgetScheduler? GetContextScheduler() => ContextEngines.Value.GetScheduler();
+            internal static EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => ContextEngines.Value.GetEmbeddingSnapshotStore();
+            public static ITelemetryCollector Telemetry => TelemetryCollectors.Value;
         }
     }
 }

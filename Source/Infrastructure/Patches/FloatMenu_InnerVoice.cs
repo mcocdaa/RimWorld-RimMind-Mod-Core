@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Infrastructure.UI;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -17,6 +18,9 @@ namespace RimMind.Infrastructure.Patches
 #endif
     internal static class FloatMenu_InnerVoice
     {
+        private static readonly RuntimeServiceRef<IAgentIdentityProvider> IdentityProvider =
+            RuntimeServiceRef<IAgentIdentityProvider>.Optional();
+
 #if V1_5
         [HarmonyPostfix]
         internal static void Postfix(Vector3 clickPos, Pawn pawn, ref List<FloatMenuOption> __result)
@@ -42,7 +46,7 @@ namespace RimMind.Infrastructure.Patches
             if (pawn == null || !pawn.Spawned || pawn.Dead) return;
 
             // Only show for pawns that have a PawnAgent
-            var identityProvider = RimMindServiceLocator.Get<IAgentIdentityProvider>();
+            var identityProvider = IdentityProvider.ValueOrDefault;
             var identity = identityProvider?.GetAgentIdentity(pawn);
             if (identity == null) return;
 

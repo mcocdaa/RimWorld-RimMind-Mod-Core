@@ -431,7 +431,7 @@ namespace RimMind.Presentation.Agent
             {
                 concrete.RebuildCollaborators(
                     new PawnPerceiver(concrete, factory.AgentBus),
-                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus, factory.InnerVoiceHandler, factory.PsychologyWatcher, factory.TickProvider, factory.DreamGenerator, factory.DreamThoughtInjector, factory.TraitEvolver, factory.LogSink),
+                    new PawnThinker(concrete, factory.TickSettings!, factory.AgentBus, factory.InnerVoiceHandler, factory.PsychologyWatcher, factory.TickProvider, factory.DreamGenerator, factory.DreamThoughtInjector, factory.TraitEvolver, factory.LogSink, factory.CompletionFence),
                     new PawnActor(concrete, factory.ActionExecutor),
                     new PawnRecorder(concrete, factory.AgentBus));
 

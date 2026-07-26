@@ -1,17 +1,20 @@
 using Verse;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.Runtime.Services;
 
 
 namespace RimMind.Infrastructure.Verse
 {
     public class AIRequestQueueGameComponent : GameComponent
     {
+        private readonly RuntimeServiceRef<IAIRequestQueueTickable> _implRef =
+            RuntimeServiceRef<IAIRequestQueueTickable>.Optional();
         private IAIRequestQueueTickable? _impl;
 
         private void EnsureCached()
         {
-            var impl = RimMindServiceLocator.TryGet<IAIRequestQueueTickable>();
+            var impl = _implRef.ValueOrDefault;
             if (ReferenceEquals(_impl, impl)) return;
             _impl = impl;
             if (_impl != null)

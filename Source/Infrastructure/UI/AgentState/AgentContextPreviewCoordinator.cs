@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Infrastructure.UI.AgentStatePreview
 {
@@ -9,7 +10,8 @@ namespace RimMind.Infrastructure.UI.AgentStatePreview
         Idle,
         Pending,
         Completed,
-        Faulted
+        Faulted,
+        Discarded
     }
 
     /// <summary>
@@ -19,6 +21,18 @@ namespace RimMind.Infrastructure.UI.AgentStatePreview
     internal sealed class AgentContextPreviewCoordinator
     {
         private Task<ContextSnapshot?>? _pendingTask;
+        private RuntimeGenerationToken? _token;
+        private readonly RuntimeServiceHub _runtimeHub;
+
+        public AgentContextPreviewCoordinator()
+            : this(RuntimeServiceHub.Shared)
+        {
+        }
+
+        internal AgentContextPreviewCoordinator(RuntimeServiceHub runtimeHub)
+        {
+            _runtimeHub = runtimeHub ?? throw new ArgumentNullException(nameof(runtimeHub));
+        }
 
         public AgentContextPreviewState State { get; private set; }
         public string Summary { get; private set; } = string.Empty;
@@ -26,6 +40,18 @@ namespace RimMind.Infrastructure.UI.AgentStatePreview
         public void Begin(Task<ContextSnapshot?> previewTask, string loadingSummary)
         {
             _pendingTask = previewTask ?? throw new ArgumentNullException(nameof(previewTask));
+            _token = null;
+            Summary = loadingSummary ?? string.Empty;
+            State = AgentContextPreviewState.Pending;
+        }
+
+        public void Begin(
+            Task<ContextSnapshot?> previewTask,
+            string loadingSummary,
+            RuntimeGenerationToken token)
+        {
+            _pendingTask = previewTask ?? throw new ArgumentNullException(nameof(previewTask));
+            _token = token;
             Summary = loadingSummary ?? string.Empty;
             State = AgentContextPreviewState.Pending;
         }
@@ -33,6 +59,7 @@ namespace RimMind.Infrastructure.UI.AgentStatePreview
         public void MarkUnavailable(string unavailableSummary)
         {
             _pendingTask = null;
+            _token = null;
             Summary = unavailableSummary ?? string.Empty;
             State = AgentContextPreviewState.Faulted;
         }
@@ -44,6 +71,15 @@ namespace RimMind.Infrastructure.UI.AgentStatePreview
 
             Task<ContextSnapshot?> completedTask = _pendingTask;
             _pendingTask = null;
+            RuntimeGenerationToken? token = _token;
+            _token = null;
+            if (token.HasValue && !_runtimeHub.IsCurrent(token.Value))
+            {
+                _runtimeHub.RecordStaleCompletion();
+                Summary = unavailableSummary ?? string.Empty;
+                State = AgentContextPreviewState.Discarded;
+                return;
+            }
 
             if (completedTask.IsFaulted || completedTask.IsCanceled)
             {

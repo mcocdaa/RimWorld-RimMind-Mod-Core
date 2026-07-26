@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Infrastructure.UI.DebugCenter;
 using RimMind.Infrastructure.UI.Framework;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -17,6 +19,7 @@ namespace RimMind.Infrastructure.UI
         private readonly IReadOnlyList<DebugCenterPageRegistration> _pages;
         private readonly Dictionary<string, IDebugCenterPageDrawer> _drawerCache = new();
         private readonly RimMindTabbedPageHostDrawer _tabDrawer = new();
+        private readonly RuntimeBinding _runtimeBinding = new();
 
         public override Vector2 InitialSize => new Vector2(780f, 580f);
 
@@ -28,6 +31,8 @@ namespace RimMind.Infrastructure.UI
         private Window_RimMindHub(string initialPageId, Pawn? selectedPawn)
         {
             _pages = DebugCenterPageRegistry.CreateAllRegistrations();
+            foreach (DebugCenterPageRegistration page in _pages)
+                _drawerCache[page.Descriptor.Id] = page.CreateDrawer();
             _pageId = ResolvePageId(initialPageId);
             _context = new DebugCenterPageContext(selectedPawn, _navigation);
             forcePause = false;
@@ -44,6 +49,7 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            _runtimeBinding.Refresh(BindDrawers);
             Rect body = inRect.InsetSafe(RimMindUiMetrics.WindowInset);
             Rect header = new Rect(body.x, body.y, body.width, RimMindUiMetrics.HeaderHeight);
             Rect tabRoot = new Rect(
@@ -93,13 +99,48 @@ namespace RimMind.Infrastructure.UI
 
         private IDebugCenterPageDrawer GetDrawer(DebugCenterPageRegistration registration)
         {
-            if (!_drawerCache.TryGetValue(registration.Descriptor.Id, out IDebugCenterPageDrawer drawer))
+            return _drawerCache[registration.Descriptor.Id];
+        }
+
+        private IDisposable? BindDrawers(RuntimeServiceScope scope)
+        {
+            var leases = new List<IDisposable>();
+            foreach (IDebugCenterPageDrawer drawer in _drawerCache.Values)
             {
-                drawer = registration.CreateDrawer();
-                _drawerCache[registration.Descriptor.Id] = drawer;
+                if (!(drawer is IRuntimeBoundDebugCenterPageDrawer runtimeBoundDrawer))
+                    continue;
+                IDisposable? lease = runtimeBoundDrawer.Bind(scope);
+                if (lease != null)
+                    leases.Add(lease);
             }
 
-            return drawer;
+            return leases.Count == 0 ? null : new DrawerLease(leases);
+        }
+
+        public override void PreClose()
+        {
+            _runtimeBinding.Dispose();
+            base.PreClose();
+        }
+
+        private sealed class DrawerLease : IDisposable
+        {
+            private List<IDisposable>? _leases;
+
+            public DrawerLease(List<IDisposable> leases)
+            {
+                _leases = leases;
+            }
+
+            public void Dispose()
+            {
+                List<IDisposable>? leases = _leases;
+                _leases = null;
+                if (leases == null)
+                    return;
+                foreach (IDisposable lease in leases)
+                    lease.Dispose();
+            }
         }
 
         private static string ResolvePageId(string pageId)

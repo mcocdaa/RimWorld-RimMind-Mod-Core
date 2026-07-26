@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 
 namespace RimMind.Presentation.Api
@@ -9,9 +10,12 @@ namespace RimMind.Presentation.Api
     {
         public static class ChatFlow
         {
+            private static readonly RuntimeServiceRef<IGameContextBuilder> ContextBuilders =
+                RuntimeServiceRef<IGameContextBuilder>.Required();
+
             public static string BuildMapContext(Map map, bool brief = false)
             {
-                var builder = RimMindRuntime.Instance.GameContextBuilder;
+                var builder = ContextBuilders.Value;
                 return builder.BuildMapContextInstance(map, brief);
             }
         }

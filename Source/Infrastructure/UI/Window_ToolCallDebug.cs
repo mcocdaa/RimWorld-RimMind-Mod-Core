@@ -10,6 +10,7 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -28,6 +29,7 @@ namespace RimMind.Infrastructure.UI
         private string _jsonInput = "{}";
         private string _executionResult = "";
         private bool _isExecuting;
+        private ToolExecutionOperation? _activeExecution;
 
         public override Vector2 InitialSize => new Vector2(640f, 520f);
 
@@ -41,6 +43,7 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            RefreshExecutionFence();
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
@@ -273,7 +276,8 @@ namespace RimMind.Infrastructure.UI
         {
             if (_isExecuting) return;
 
-            var registry = RimMindAPI.Tools;
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var registry = runtimeScope.GetOptional<IToolRegistry>();
             if (registry == null) return;
 
             var handler = registry.FindById(toolId);
@@ -285,6 +289,8 @@ namespace RimMind.Infrastructure.UI
 
             _isExecuting = true;
             _executionResult = "RimMind.UI.ToolCallDebug.Executing".Translate();
+            var operation = new ToolExecutionOperation(runtimeScope.Token);
+            _activeExecution = operation;
             string jsonInput = _jsonInput;
 
             var sw = Stopwatch.StartNew();
@@ -327,8 +333,7 @@ namespace RimMind.Infrastructure.UI
 
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        _executionResult = resultText;
-                        _isExecuting = false;
+                        TryPublishExecution(operation, () => _executionResult = resultText);
                     });
                 }
                 catch (Exception ex)
@@ -339,11 +344,56 @@ namespace RimMind.Infrastructure.UI
 
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        _executionResult = status + "\n" + ex.Message;
-                        _isExecuting = false;
+                        TryPublishExecution(operation, () => _executionResult = status + "\n" + ex.Message);
                     });
                 }
             });
+        }
+
+        private void RefreshExecutionFence()
+        {
+            ToolExecutionOperation? operation = _activeExecution;
+            if (operation != null && !RuntimeServiceHub.Shared.IsCurrent(operation.RuntimeToken))
+                TryPublishExecution(operation, () => { });
+        }
+
+        private bool TryPublishExecution(ToolExecutionOperation operation, Action publish)
+        {
+            if (!ReferenceEquals(_activeExecution, operation))
+                return false;
+
+            bool isCurrent = RuntimeServiceHub.Shared.IsCurrent(operation.RuntimeToken);
+            if (isCurrent)
+                publish();
+            else
+            {
+                operation.RecordStaleOnce(RuntimeServiceHub.Shared);
+                _executionResult = "RimMind.UI.Lifecycle.StaleCompletion".Translate();
+            }
+
+            _activeExecution = null;
+            _isExecuting = false;
+            return isCurrent;
+        }
+
+        private sealed class ToolExecutionOperation
+        {
+            private bool _staleRecorded;
+
+            public ToolExecutionOperation(RuntimeGenerationToken runtimeToken)
+            {
+                RuntimeToken = runtimeToken;
+            }
+
+            public RuntimeGenerationToken RuntimeToken { get; }
+
+            public void RecordStaleOnce(RuntimeServiceHub runtimeHub)
+            {
+                if (_staleRecorded)
+                    return;
+                _staleRecorded = true;
+                runtimeHub.RecordStaleCompletion();
+            }
         }
 
         private static string Truncate(string value, int maxLen)

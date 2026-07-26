@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -12,6 +13,12 @@ namespace RimMind.Infrastructure.UI
 {
     public class Window_RequestLog : RimMindWindowBase
     {
+        private readonly RuntimeServiceRef<IAIRequestQueue> _requestQueue =
+            RuntimeServiceRef<IAIRequestQueue>.Optional();
+        private readonly RuntimeServiceRef<IApiCredentialSettings> _apiCredentials =
+            RuntimeServiceRef<IApiCredentialSettings>.Optional();
+        private readonly RuntimeServiceRef<IOverlayService> _overlayService =
+            RuntimeServiceRef<IOverlayService>.Optional();
         private Vector2 _scrollPos = Vector2.zero;
         private const float Padding = 6f;
         private const float EntryLineH = 22f;
@@ -147,11 +154,11 @@ namespace RimMind.Infrastructure.UI
                 "RimMind.UI.RequestOverlay.Empty".Translate());
 
             var sb = new StringBuilder();
-            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            var queue = _requestQueue.ValueOrDefault;
             if (queue != null && queue.IsPaused)
                 sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.QueuePaused".Translate());
 
-            var apiCred = RimMindServiceLocator.Get<IApiCredentialSettings>();
+            var apiCred = _apiCredentials.ValueOrDefault;
             if (apiCred != null && apiCred.ApiKey.NullOrEmpty())
                 sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.NoApiKey".Translate());
 
@@ -192,7 +199,7 @@ namespace RimMind.Infrastructure.UI
             scope?.Record(clearRect, "Button:ClearAll");
             if (Widgets.ButtonText(clearRect, "RimMind.UI.RequestLog.ClearAll".Translate()))
             {
-                RimMindServiceLocator.Get<IOverlayService>()?.Clear();
+                _overlayService.ValueOrDefault?.Clear();
             }
 
             var countRect = new Rect(rect.x, rect.y, 200f, rect.height);

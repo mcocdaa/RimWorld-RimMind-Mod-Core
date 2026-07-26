@@ -17,28 +17,36 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public string Id => "UnifiedNpcEnrich";
         public string OwnerModId => RimMindOwnerConsts.CoreModId;
 
-        private readonly INpcManager? _npcManager;
+        private readonly INpcManagerAccessor? _npcManagers;
         private readonly ILogSink? _log;
 
-        public NpcEnrichMiddleware(INpcManager? npcManager = null, ILogSink? log = null)
+        public NpcEnrichMiddleware(INpcManagerAccessor? npcManagers = null, ILogSink? log = null)
         {
-            _npcManager = npcManager;
+            _npcManagers = npcManagers;
             _log = log;
+        }
+
+        public NpcEnrichMiddleware(INpcManager? npcManager, ILogSink? log = null)
+            : this(
+                npcManager == null ? null : new FixedNpcManagerAccessor(npcManager),
+                log)
+        {
         }
 
         public async Task InvokeAsync(LlmRequestContext context, MiddlewareDelegate<LlmRequestContext> next)
         {
             var envelope = context.Envelope;
             var npcId = envelope?.NpcId;
+            var npcManager = _npcManagers?.Current;
             if (npcId is { Length: > 0 } npcIdText)
             {
-                if (_npcManager != null && !_npcManager.IsNpcAlive(npcIdText))
+                if (npcManager != null && !npcManager.IsNpcAlive(npcIdText))
                 {
-                    var profile = _npcManager.GetNpc(npcIdText);
+                    var profile = npcManager.GetNpc(npcIdText);
                     if (profile != null)
                     {
                         _log?.Message($"[UnifiedNpcEnrich] NPC {npcIdText} not alive, respawning");
-                        _npcManager.SpawnNpc(profile);
+                        npcManager.SpawnNpc(profile);
                     }
                     else
                     {
@@ -53,7 +61,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
                 // Inject game state info if not already set
                 if (envelope!.GameStateInfo == null)
                 {
-                    var npcProfile = _npcManager?.GetNpc(npcIdText);
+                    var npcProfile = npcManager?.GetNpc(npcIdText);
                     if (npcProfile != null)
                     {
                         context.Items["NpcProfile"] = npcProfile;
@@ -64,6 +72,16 @@ namespace RimMind.Application.Features.Pipeline.Unified
             }
 
             await next(context);
+        }
+
+        private sealed class FixedNpcManagerAccessor : INpcManagerAccessor
+        {
+            public FixedNpcManagerAccessor(INpcManager current)
+            {
+                Current = current;
+            }
+
+            public INpcManager? Current { get; }
         }
     }
 }

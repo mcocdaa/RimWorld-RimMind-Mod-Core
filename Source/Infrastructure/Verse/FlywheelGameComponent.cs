@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Flywheel;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Runtime.Services;
 
 using Verse;
 
@@ -15,15 +16,22 @@ namespace RimMind.Infrastructure.Verse
         private IContextCalibrationSettings? _calibrationSettings;
         private ITelemetryCollector? _telemetryCollector;
         private IFlywheelRuleEngine? _ruleEngine;
+        private readonly RuntimeBinding _binding = new RuntimeBinding();
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
-        // EnsureCached() guard pattern: resolves once on first access, then uses cached fields.
         private void EnsureCached()
         {
-            if (_calibrationSettings != null) return;
-            _calibrationSettings = RimMindServiceLocator.Get<IContextCalibrationSettings>();
-            _telemetryCollector = RimMindServiceLocator.Get<ITelemetryCollector>();
-            _ruleEngine = RimMindServiceLocator.Get<IFlywheelRuleEngine>();
+            _binding.Refresh(scope =>
+            {
+                _calibrationSettings = scope.GetOptional<IContextCalibrationSettings>();
+                _telemetryCollector = scope.GetOptional<ITelemetryCollector>();
+                _ruleEngine = scope.GetOptional<IFlywheelRuleEngine>();
+                return null;
+            });
+        }
+
+        public void Dispose()
+        {
+            _binding.Dispose();
         }
 
         private int AnalysisIntervalTicks

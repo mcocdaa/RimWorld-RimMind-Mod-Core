@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.UI;
 using UnityEngine;
@@ -8,13 +9,13 @@ namespace RimMind.Infrastructure.UI
 {
     public class Window_RimMindSettings : RimMindWindowBase
     {
-        private readonly ISettingsProvider _settingsProvider;
+        private readonly RuntimeServiceRef<ISettingsProvider> _settingsProvider =
+            RuntimeServiceRef<ISettingsProvider>.Required();
 
         public override Vector2 InitialSize => new Vector2(800f, 600f);
 
         public Window_RimMindSettings(ISettingsProvider settingsProvider)
         {
-            _settingsProvider = settingsProvider;
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -24,12 +25,12 @@ namespace RimMind.Infrastructure.UI
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
             scope.Record(inRect, "Settings:Body");
-            RimMindCoreSettingsUI.Draw(inRect, _settingsProvider, scope);
+            RimMindCoreSettingsUI.Draw(inRect, _settingsProvider.Value, scope);
         }
 
         public override void PreClose()
         {
-            _settingsProvider.Persist();
+            _settingsProvider.Value.Persist();
             base.PreClose();
         }
     }

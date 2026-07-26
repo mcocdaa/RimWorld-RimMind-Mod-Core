@@ -50,7 +50,7 @@ namespace RimMind.Presentation.Context
         private bool _disposed;
 
         private readonly IHistoryManager _historyManager;
-        private readonly INpcManager? _npcManager;
+        private readonly INpcManagerAccessor _npcManagers;
         private readonly ContextBuildServices _buildServices;
         private readonly ISettingsProvider _settingsProvider;
         private readonly ITranslationService _translationService;
@@ -61,6 +61,34 @@ namespace RimMind.Presentation.Context
         private readonly IRelevanceTable _relevanceTable;
         private readonly ProviderCache? _providerCache;
         private readonly ITickProvider? _tickProvider;
+
+        public ContextOrchestrator(
+            IHistoryManager historyManager,
+            INpcManagerAccessor npcManagers,
+            ContextBuildServices buildServices,
+            ISettingsProvider settingsProvider,
+            ITranslationService translationService,
+            IFlywheelParameterStore flywheelParameterStore,
+            ILogSink logSink,
+            EmbeddingSnapshotStore embeddingSnapshotStore,
+            IContextKeyRegistry keyRegistry,
+            IRelevanceTable relevanceTable,
+            ProviderCache? providerCache = null,
+            ITickProvider? tickProvider = null)
+        {
+            _historyManager = historyManager;
+            _npcManagers = npcManagers ?? throw new ArgumentNullException(nameof(npcManagers));
+            _buildServices = buildServices;
+            _settingsProvider = settingsProvider;
+            _translationService = translationService;
+            _flywheelParameterStore = flywheelParameterStore;
+            _logSink = logSink;
+            _embeddingSnapshotStore = embeddingSnapshotStore;
+            _keyRegistry = keyRegistry;
+            _relevanceTable = relevanceTable;
+            _providerCache = providerCache;
+            _tickProvider = tickProvider;
+        }
 
         public ContextOrchestrator(
             IHistoryManager historyManager,
@@ -75,19 +103,20 @@ namespace RimMind.Presentation.Context
             IRelevanceTable relevanceTable,
             ProviderCache? providerCache = null,
             ITickProvider? tickProvider = null)
+            : this(
+                historyManager,
+                new FixedNpcManagerAccessor(npcManager),
+                buildServices,
+                settingsProvider,
+                translationService,
+                flywheelParameterStore,
+                logSink,
+                embeddingSnapshotStore,
+                keyRegistry,
+                relevanceTable,
+                providerCache,
+                tickProvider)
         {
-            _historyManager = historyManager;
-            _npcManager = npcManager;
-            _buildServices = buildServices;
-            _settingsProvider = settingsProvider;
-            _translationService = translationService;
-            _flywheelParameterStore = flywheelParameterStore;
-            _logSink = logSink;
-            _embeddingSnapshotStore = embeddingSnapshotStore;
-            _keyRegistry = keyRegistry;
-            _relevanceTable = relevanceTable;
-            _providerCache = providerCache;
-            _tickProvider = tickProvider;
         }
 
         private ContextSnapshot? BuildSnapshotInternal(BuildContext ctx)
@@ -114,9 +143,10 @@ namespace RimMind.Presentation.Context
                 BuildStartTicks = DateTime.Now.Ticks,
             };
 
-            var pawn = _npcManager?.FindPawnByNpcId(ctx.NpcId);
+            var npcManager = _npcManagers.Current;
+            var pawn = npcManager?.FindPawnByNpcId(ctx.NpcId);
             if (pawn == null && ctx.Map != null)
-                pawn = _npcManager?.FindProxyPawnForMap((Verse.Map)ctx.Map!);
+                pawn = npcManager?.FindProxyPawnForMap((Verse.Map)ctx.Map!);
 
             var (schedule, filteredKeys, budget) = ScheduleBudget(ctx, scenario, pawn);
             PopulateSnapshotKeys(snapshot, schedule, filteredKeys);
@@ -209,9 +239,10 @@ namespace RimMind.Presentation.Context
                 BuildStartTicks = DateTime.Now.Ticks,
             };
 
-            var pawn = _npcManager?.FindPawnByNpcId(ctx.NpcId);
+            var npcManager = _npcManagers.Current;
+            var pawn = npcManager?.FindPawnByNpcId(ctx.NpcId);
             if (pawn == null && ctx.Map != null)
-                pawn = _npcManager?.FindProxyPawnForMap((Verse.Map)ctx.Map!);
+                pawn = npcManager?.FindProxyPawnForMap((Verse.Map)ctx.Map!);
 
             var (schedule, filteredKeys, budget) = ScheduleBudget(ctx, scenario, pawn);
             PopulateSnapshotKeys(snapshot, schedule, filteredKeys);
@@ -542,5 +573,15 @@ namespace RimMind.Presentation.Context
         public IBudgetScheduler? GetScheduler() => _buildServices.BudgetScheduler;
         public EmbeddingSnapshotStore? GetEmbeddingSnapshotStore() => _embeddingSnapshotStore;
         public void Dispose() { _disposed = true; }
+
+        private sealed class FixedNpcManagerAccessor : INpcManagerAccessor
+        {
+            public FixedNpcManagerAccessor(INpcManager? current)
+            {
+                Current = current;
+            }
+
+            public INpcManager? Current { get; }
+        }
     }
 }

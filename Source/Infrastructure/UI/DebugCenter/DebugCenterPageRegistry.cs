@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Models.UI;
 using RimMind.Infrastructure.UI.DebugCenter.Pages;
 using RimMind.Infrastructure.UI.DebugTables;
@@ -32,29 +29,25 @@ namespace RimMind.Infrastructure.UI.DebugCenter
                 "ai_requests",
                 "RimMind.UI.Hub.Tab.AIRequests",
                 20,
-                IsDefault: false), () => new AIRequestsDebugCenterPageDrawer(
-                    RimMindServiceLocator.TryGet<IAIRequestTraceLog>()));
+                IsDefault: false), () => new AIRequestsDebugCenterPageDrawer(log: null));
 
             Register(new DebugCenterPageDescriptor(
                 "tool_calls",
                 "RimMind.UI.Hub.Tab.ToolCalls",
                 30,
-                IsDefault: false), () => new ToolCallsDebugCenterPageDrawer(
-                    new ToolCallsDebugTableModelBuilder(RimMindServiceLocator.TryGet<IAIRequestTraceLog>())));
+                IsDefault: false), () => new ToolCallsDebugCenterPageDrawer(new ToolCallsDebugTableModelBuilder()));
 
             Register(new DebugCenterPageDescriptor(
                 "mechanisms",
                 "RimMind.UI.Hub.Tab.Mechanisms",
                 40,
-                IsDefault: false), () => new MechanismsDebugCenterPageDrawer(
-                    new MechanismsDebugTableModelBuilder(RimMindServiceLocator.TryGet<IGameMechanismRegistry>())));
+                IsDefault: false), () => new MechanismsDebugCenterPageDrawer(new MechanismsDebugTableModelBuilder()));
 
             Register(new DebugCenterPageDescriptor(
                 "context_keys",
                 "RimMind.UI.Hub.Tab.ContextKeys",
                 50,
-                IsDefault: false), () => new ContextKeysDebugCenterPageDrawer(
-                    new ContextKeysDebugTableModelBuilder(RimMindServiceLocator.TryGet<IContextKeyRegistry>())));
+                IsDefault: false), () => new ContextKeysDebugCenterPageDrawer(new ContextKeysDebugTableModelBuilder()));
 
             Register(new DebugCenterPageDescriptor(
                 "settings",

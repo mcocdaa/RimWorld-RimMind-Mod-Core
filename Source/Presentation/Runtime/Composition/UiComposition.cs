@@ -16,6 +16,7 @@ using RimMind.Domain.Settings;
 using RimMind.Presentation.Sensor;
 using RimMind.Presentation.Settings;
 using RimMind.Presentation.UI;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime.Composition
 {
@@ -27,15 +28,17 @@ namespace RimMind.Presentation.Runtime.Composition
 
     internal static class UiComposition
     {
-        public static UiCompositionServices RegisterServices()
+        public static UiCompositionServices ComposeServices(
+            RuntimeServiceBuilder services,
+            ExtensionRegistryCatalog extensions)
         {
             var sensorManager = new SensorManager();
-            RimMindServiceLocator.Register<ISensorManager>(sensorManager);
+            services.Bind<ISensorManager>(sensorManager);
 
             var overlayService = new OverlayService();
-            RimMindServiceLocator.Register<IOverlayService>(overlayService);
+            services.Bind<IOverlayService>(overlayService);
 
-            RimMindServiceLocator.Register(CompositionRegistry.GetExtensionRegistry<ISettingsTab>());
+            services.Bind(extensions.GetExtensionRegistry<ISettingsTab>());
 
             return new UiCompositionServices
             {
@@ -44,45 +47,13 @@ namespace RimMind.Presentation.Runtime.Composition
             };
         }
 
-        public static void RegisterRemoteSyncSettingsTab(RemoteSyncSettings settings, IRemoteSyncService service)
+        public static void RegisterRemoteSyncSettingsTab(
+            IExtensionRegistry<ISettingsTab> settingsTabs,
+            RemoteSyncSettings settings,
+            IRemoteSyncService service)
         {
-            var settingsTabRegistry = RimMindServiceLocator.TryGet<IExtensionRegistry<ISettingsTab>>();
-            settingsTabRegistry?.Register(new RemoteSyncSettingsUI(settings, service));
+            settingsTabs.Register(new RemoteSyncSettingsUI(settings, service));
         }
 
-        public static void InitializeDebugActions(
-            ISettingsProvider resolvedSettings,
-            IAIRequestQueue queue,
-            IClientManager clientManager,
-            IAIDebugLog? aiDebugLog,
-            IContextKeyProvider keyProvider,
-            IContextEngine contextEngine,
-            IProviderRegistry providerRegistry,
-            IContextKeyRegistry contextKeyRegistry,
-            IFlywheelParameterStore flywheelParameterStore,
-            ITelemetryCollector telemetry,
-            IAgentBus agentBus,
-            IHistoryManager historyManager,
-            INpcManager? npcManager,
-            IToolRegistry toolRegistry,
-            IGameMechanismRegistry mechanismRegistry)
-        {
-            RimMind.Infrastructure.UI.RimMindCoreDebugActions.Initialize(
-                resolvedSettings,
-                queue,
-                clientManager,
-                aiDebugLog,
-                keyProvider,
-                contextEngine,
-                providerRegistry,
-                contextKeyRegistry,
-                flywheelParameterStore,
-                telemetry,
-                agentBus,
-                historyManager,
-                npcManager,
-                toolRegistry,
-                mechanismRegistry);
-        }
     }
 }

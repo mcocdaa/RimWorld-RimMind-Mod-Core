@@ -83,12 +83,8 @@ namespace RimMind.Infrastructure
 
         public static void AddGameDependentServices()
         {
-            // Services that require Current.Game to be available.
-            // NpcManager is a GameComponent — Verse instantiates it automatically.
-            // Do NOT create a manual instance here; the GameComponent constructor
-            // self-registers into RimMindServiceLocator.
-            // If Verse hasn't instantiated it yet, downstream code uses null-safe
-            // access (?.) and will pick it up once it becomes available.
+            // Verse creates save-owned components. RimMindRuntimeGameComponent
+            // publishes them together after StartedNewGame/LoadedGame.
         }
 
         public static void RegisterBuiltinClientFactories(IExtensionRegistry<IAIClientFactory> registry,

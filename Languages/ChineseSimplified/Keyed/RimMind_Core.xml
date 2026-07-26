@@ -271,6 +271,12 @@
   <RimMind.UI.AgentDialogue.PlayerLabel>玩家</RimMind.UI.AgentDialogue.PlayerLabel>
   <RimMind.UI.AgentDialogue.AgentLabel>Agent</RimMind.UI.AgentDialogue.AgentLabel>
   <RimMind.UI.AgentDialogue.Thinking>(思考中...)</RimMind.UI.AgentDialogue.Thinking>
+  <RimMind.UI.AgentDialogue.RequestStatus>请求 {0}：{1}</RimMind.UI.AgentDialogue.RequestStatus>
+  <RimMind.UI.AgentDialogue.State.Idle>空闲</RimMind.UI.AgentDialogue.State.Idle>
+  <RimMind.UI.AgentDialogue.State.Streaming>流式响应中</RimMind.UI.AgentDialogue.State.Streaming>
+  <RimMind.UI.AgentDialogue.State.Completed>已完成</RimMind.UI.AgentDialogue.State.Completed>
+  <RimMind.UI.AgentDialogue.State.Failed>失败</RimMind.UI.AgentDialogue.State.Failed>
+  <RimMind.UI.AgentDialogue.State.Discarded>已丢弃（运行时已切换）</RimMind.UI.AgentDialogue.State.Discarded>
   <!-- Task Instructions (npc_task_instruction) -->
   <RimMind.Prompt.TaskInstruction.Base>你处于 RimWorld 游戏世界中。\n\n输出约束：\n- 必须返回有效的 JSON 格式\n- 不要用 markdown 代码块包裹\n- 如果无法判断，返回默认值或空结果\n\n行为约束：\n- 不要打破第四面墙\n- 不要提及游戏机制、代码、数据结构或"玩家"概念\n- 以角色身份自然行动</RimMind.Prompt.TaskInstruction.Base>
   <RimMind.Prompt.TaskInstruction.WorldOnly>你处于 RimWorld 游戏世界中。</RimMind.Prompt.TaskInstruction.WorldOnly>
@@ -631,4 +637,22 @@
   <RimMind.UI.AIRequestsPage.State.Running>运行中</RimMind.UI.AIRequestsPage.State.Running>
   <RimMind.UI.AIRequestsPage.State.Completed>已完成</RimMind.UI.AIRequestsPage.State.Completed>
   <RimMind.UI.AIRequestsPage.State.Failed>已失败</RimMind.UI.AIRequestsPage.State.Failed>
+  <!-- 现有调试中心总览中的运行时生命周期诊断 -->
+  <RimMind.UI.Hub.Lifecycle.Title>生命周期</RimMind.UI.Hub.Lifecycle.Title>
+  <RimMind.UI.Hub.Lifecycle.RuntimeState>运行时状态</RimMind.UI.Hub.Lifecycle.RuntimeState>
+  <RimMind.UI.Hub.Lifecycle.GameState>游戏状态</RimMind.UI.Hub.Lifecycle.GameState>
+  <RimMind.UI.Hub.Lifecycle.Generation>世代</RimMind.UI.Hub.Lifecycle.Generation>
+  <RimMind.UI.Hub.Lifecycle.ServiceCount>服务数</RimMind.UI.Hub.Lifecycle.ServiceCount>
+  <RimMind.UI.Hub.Lifecycle.PublishedAt>发布时间（UTC）</RimMind.UI.Hub.Lifecycle.PublishedAt>
+  <RimMind.UI.Hub.Lifecycle.RuntimeId>运行时 ID</RimMind.UI.Hub.Lifecycle.RuntimeId>
+  <RimMind.UI.Hub.Lifecycle.LastFailure>最近构建失败</RimMind.UI.Hub.Lifecycle.LastFailure>
+  <RimMind.UI.Hub.Lifecycle.StaleDiscards>已丢弃过期完成</RimMind.UI.Hub.Lifecycle.StaleDiscards>
+  <RimMind.UI.Hub.Lifecycle.Never>从未</RimMind.UI.Hub.Lifecycle.Never>
+  <RimMind.UI.Hub.Lifecycle.None>无</RimMind.UI.Hub.Lifecycle.None>
+  <RimMind.UI.Lifecycle.Building>构建中</RimMind.UI.Lifecycle.Building>
+  <RimMind.UI.Lifecycle.Running>运行中</RimMind.UI.Lifecycle.Running>
+  <RimMind.UI.Lifecycle.Stopped>已停止</RimMind.UI.Lifecycle.Stopped>
+  <RimMind.UI.Lifecycle.Failed>失败</RimMind.UI.Lifecycle.Failed>
+  <RimMind.UI.Lifecycle.NeverPublished>从未发布</RimMind.UI.Lifecycle.NeverPublished>
+  <RimMind.UI.Lifecycle.StaleCompletion>运行时已切换，过期结果已丢弃。</RimMind.UI.Lifecycle.StaleCompletion>
 </LanguageData>

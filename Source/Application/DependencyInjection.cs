@@ -12,6 +12,7 @@ using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Json;
 using RimMind.Application.Features.Queue;
 using RimMind.Application.Features.Tools;
+using RimMind.Application.Common.Interfaces.Async;
 
 namespace RimMind.Application
 {
@@ -32,7 +33,9 @@ namespace RimMind.Application
 
     public static class DependencyInjection
     {
-        public static ApplicationServiceBag AddApplicationServices(ISettingsProvider? settingsProvider = null)
+        public static ApplicationServiceBag AddApplicationServices(
+            ISettingsProvider? settingsProvider = null,
+            ICompletionFence? completionFence = null)
         {
             var agentBus = new AgentBusImpl();
 
@@ -42,7 +45,9 @@ namespace RimMind.Application
 
             var ruleEngine = new FlywheelRuleEngine(parameterStore);
 
-            var queue = new AIRequestQueueImpl(() => settingsProvider);
+            var queue = new AIRequestQueueImpl(
+                () => settingsProvider,
+                completionFence: completionFence);
 
             var jsonExtractor = new JsonExtractor();
 

@@ -11,14 +11,7 @@ namespace RimMind.Presentation.Agent
 {
     public static class PawnDataExtractor
     {
-        private static ILogSink? _logSink;
-
-        public static void Initialize(ILogSink? logSink)
-        {
-            _logSink = logSink;
-        }
-
-        public static PawnExtractedData Extract(Pawn pawn)
+        public static PawnExtractedData Extract(Pawn pawn, ILogSink? logSink)
         {
             var result = new PawnExtractedData();
             if (pawn == null) return result;
@@ -60,7 +53,7 @@ namespace RimMind.Presentation.Agent
                 if (pawn.Map != null)
                     result.SeasonLabel = pawn.Map.gameConditionManager?.ActiveConditions?.Select(c => c.Label)?.ToCommaList() ?? "";
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: SeasonLabel failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: SeasonLabel failed for {pawn.Name}: {ex.Message}"); }
             result.ColonistCount = pawn.Map?.mapPawns?.FreeColonistsCount ?? 0;
             result.ColonyWealth = pawn.Map?.wealthWatcher?.WealthTotal ?? 0f;
             result.ThreatCount = 0;
@@ -80,7 +73,7 @@ namespace RimMind.Presentation.Agent
                         if (gene != null && gene.def != null)
                             result.NotableGenes.Add(gene.def.label ?? gene.def.defName);
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Genes failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: Genes failed for {pawn.Name}: {ex.Message}"); }
 
             result.MoodThoughts = new List<MoodThoughtEntry>();
             try
@@ -94,7 +87,7 @@ namespace RimMind.Presentation.Agent
                                 Offset = thought.MoodOffset()
                             });
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: MoodThoughts failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: MoodThoughts failed for {pawn.Name}: {ex.Message}"); }
 
             result.Capacities = new List<CapacityEntry>();
             try
@@ -105,7 +98,7 @@ namespace RimMind.Presentation.Agent
                         result.Capacities.Add(new CapacityEntry { Label = capDef.label ?? capDef.defName, Level = level });
                 }
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Capacities failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: Capacities failed for {pawn.Name}: {ex.Message}"); }
 
             result.WorkPriorities = new List<WorkPriorityEntry>();
             try
@@ -115,7 +108,7 @@ namespace RimMind.Presentation.Agent
                         if (wtd != null && pawn.workSettings.GetPriority(wtd) > 0)
                             result.WorkPriorities.Add(new WorkPriorityEntry { Label = wtd.labelShort ?? wtd.defName, Priority = pawn.workSettings.GetPriority(wtd) });
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: WorkPriorities failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: WorkPriorities failed for {pawn.Name}: {ex.Message}"); }
 
             result.ApparelLabels = new List<string>();
             try
@@ -125,7 +118,7 @@ namespace RimMind.Presentation.Agent
                         if (apparel != null)
                             result.ApparelLabels.Add(apparel.Label ?? apparel.def?.label ?? "");
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Apparel failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: Apparel failed for {pawn.Name}: {ex.Message}"); }
 
             result.InventoryItems = new Dictionary<string, int>();
             try
@@ -142,7 +135,7 @@ namespace RimMind.Presentation.Agent
                                 result.InventoryItems[key] = count;
                         }
             }
-            catch (System.Exception ex) { _logSink?.Warning($"PawnDataExtractor: Inventory failed for {pawn.Name}: {ex.Message}"); }
+            catch (System.Exception ex) { logSink?.Warning($"PawnDataExtractor: Inventory failed for {pawn.Name}: {ex.Message}"); }
 
             if (pawn.skills?.skills != null)
                 foreach (var s in pawn.skills.skills)

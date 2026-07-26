@@ -10,27 +10,8 @@ namespace RimMind.Application.Common.Helpers
     {
         private static readonly string FallbackProvider = "openai";
 
-        private static IExtensionRegistry<IAIClientFactory>? _defaultRegistry;
-        private static bool _defaultRegistrySet;
-
-        /// <summary>
-        /// Set by Composition Root at startup. Eliminates the need for direct SL.Get fallback.
-        /// Can only be assigned once; subsequent assignments are silently ignored.
-        /// </summary>
-        public static IExtensionRegistry<IAIClientFactory>? DefaultRegistry
-        {
-            get => _defaultRegistry;
-            set
-            {
-                if (_defaultRegistrySet) return;
-                _defaultRegistry = value;
-                _defaultRegistrySet = true;
-            }
-        }
-
         public static IReadOnlyList<string> GetAllProviderIds(IExtensionRegistry<IAIClientFactory>? registry = null)
         {
-            registry ??= DefaultRegistry;
             if (registry == null || registry.All.Count == 0)
                 return new List<string> { FallbackProvider };
             return registry.All.Select(f => f.ProviderId).ToList();
@@ -45,14 +26,12 @@ namespace RimMind.Application.Common.Helpers
         public static bool IsProviderRegistered(string providerId, IExtensionRegistry<IAIClientFactory>? registry = null)
         {
             if (string.IsNullOrEmpty(providerId)) return false;
-            registry ??= DefaultRegistry;
             return registry?.FindById(providerId) != null;
         }
 
         public static bool RequiresApiKey(string providerId, IExtensionRegistry<IAIClientFactory>? registry = null)
         {
             if (string.IsNullOrEmpty(providerId)) return true;
-            registry ??= DefaultRegistry;
             var factory = registry?.FindById(providerId);
             return factory?.RequiresApiKey ?? true;
         }

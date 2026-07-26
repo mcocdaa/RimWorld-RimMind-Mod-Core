@@ -12,6 +12,7 @@ using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Api;
 using RimMind.Infrastructure.UI;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -26,7 +27,8 @@ namespace RimMind.Infrastructure.UI
 
         private int _selectedPawnIndex = -1;
         private int _targetModeIndex;
-        private bool _isSubscribed;
+        private readonly RuntimeBinding _runtimeBinding = new RuntimeBinding();
+        private readonly string _subscriptionKey = "AgentModeDebugWindow:" + Guid.NewGuid().ToString("N");
         private readonly List<AgentModeChangedEvent> _modeChangeHistory = new();
         private List<Pawn> _cachedPawns = new();
         private Pawn? _initialPawn;
@@ -49,7 +51,7 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            EnsureSubscribed();
+            _runtimeBinding.Refresh(BindRuntime);
             RefreshPawnCache();
 
             float y = RimMindUI.DrawWindowHeader(inRect, "RimMind.UI.AgentModeDebug.Title".Translate());
@@ -76,7 +78,7 @@ namespace RimMind.Infrastructure.UI
 
         public override void PreClose()
         {
-            Unsubscribe();
+            _runtimeBinding.Dispose();
             base.PreClose();
         }
 
@@ -353,26 +355,32 @@ namespace RimMind.Infrastructure.UI
 
         #region Bus Subscription
 
-        private void EnsureSubscribed()
+        private IDisposable? BindRuntime(RuntimeServiceScope scope)
         {
-            if (_isSubscribed) return;
-
-            var bus = RimMindServiceLocator.Get<IAgentBus>();
-            if (bus == null) return;
-
-            bus.Subscribe<AgentModeChangedEvent>("AgentModeDebugWindow", OnModeChanged);
-            _isSubscribed = true;
+            IAgentBus? bus = scope.GetOptional<IAgentBus>();
+            if (bus == null)
+                return null;
+            bus.Subscribe<AgentModeChangedEvent>(_subscriptionKey, OnModeChanged);
+            return new BusSubscriptionLease(bus, _subscriptionKey);
         }
 
-        private void Unsubscribe()
+        private sealed class BusSubscriptionLease : IDisposable
         {
-            if (!_isSubscribed) return;
+            private IAgentBus? _bus;
+            private readonly string _key;
 
-            var bus = RimMindServiceLocator.Get<IAgentBus>();
-            if (bus == null) return;
+            public BusSubscriptionLease(IAgentBus bus, string key)
+            {
+                _bus = bus;
+                _key = key;
+            }
 
-            bus.Unsubscribe<AgentModeChangedEvent>("AgentModeDebugWindow");
-            _isSubscribed = false;
+            public void Dispose()
+            {
+                IAgentBus? bus = _bus;
+                _bus = null;
+                bus?.Unsubscribe<AgentModeChangedEvent>(_key);
+            }
         }
 
         private void OnModeChanged(AgentModeChangedEvent evt)

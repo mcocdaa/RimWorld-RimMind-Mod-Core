@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces.Mechanisms;
 using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Api
 {
@@ -8,8 +9,13 @@ namespace RimMind.Presentation.Api
     {
         public static class ToolSet
         {
-            public static IToolRegistry Registry => RimMindRuntime.Instance.ToolRegistry;
-            public static IGameMechanismRegistry Mechanisms => RimMindRuntime.Instance.MechanismRegistry;
+            private static readonly RuntimeServiceRef<IToolRegistry> ToolRegistries =
+                RuntimeServiceRef<IToolRegistry>.Required();
+            private static readonly RuntimeServiceRef<IGameMechanismRegistry> MechanismRegistries =
+                RuntimeServiceRef<IGameMechanismRegistry>.Required();
+
+            public static IToolRegistry Registry => ToolRegistries.Value;
+            public static IGameMechanismRegistry Mechanisms => MechanismRegistries.Value;
         }
     }
 }

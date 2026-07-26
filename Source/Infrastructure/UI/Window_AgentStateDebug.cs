@@ -6,6 +6,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
@@ -245,7 +246,7 @@ namespace RimMind.Infrastructure.UI
             scope.Record(destroyBtn, "Button:DestroyScopedAgent");
             if (Widgets.ButtonText(destroyBtn, "RimMind.UI.AgentStateDebug.DestroyScopedAgent".Translate()))
             {
-                var manager = RimMindServiceLocator.Get<IScopedAgentManager>();
+                var manager = RuntimeServiceHub.Shared.Capture().GetOptional<IScopedAgentManager>();
                 if (manager != null)
                 {
                     manager.Remove(scopedAgent.ScopeType, scopedAgent.ScopeId);
@@ -263,7 +264,7 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawNoPawnState(Rect rect, RimMindLayoutScope scope)
         {
-            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IAIRequestQueue>();
             string? queueInfo = null;
             if (queue != null)
             {
@@ -350,7 +351,7 @@ namespace RimMind.Infrastructure.UI
             y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
             y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.QueueState".Translate()) + viewRect.y;
 
-            var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+            var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IAIRequestQueue>();
             if (queue != null)
             {
                 string qSummary = $"Paused={queue.IsPaused} Active={queue.ActiveRequestCount} Queued={queue.TotalQueuedCount}";
@@ -437,8 +438,9 @@ namespace RimMind.Infrastructure.UI
             scope.Record(createAgentBtn, "Button:CreateAgent");
             if (Widgets.ButtonText(createAgentBtn, "RimMind.UI.AgentStateDebug.CreateAgent".Translate()))
             {
-                var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
-                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                var factory = runtimeScope.GetOptional<IPawnAgentFactoryVerse>();
+                var agentBus = runtimeScope.GetOptional<IAgentBus>();
                 if (factory != null && agentBus != null)
                 {
                     var createdAgent = factory.Create(pawn, agentBus);
@@ -456,12 +458,14 @@ namespace RimMind.Infrastructure.UI
             if (Widgets.ButtonText(buildContextBtn, "RimMind.UI.AgentStateDebug.BuildContext".Translate()))
             {
                 string npcId = $"NPC-{pawn.thingIDNumber}";
-                var contextEngine = RimMindServiceLocator.Get<IContextBuilder>();
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                var contextEngine = runtimeScope.GetOptional<IContextBuilder>();
                 if (contextEngine != null)
                 {
                     _contextPreview.Begin(
                         contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[Debug] AgentStateDebug"),
-                        "RimMind.UI.ContextPreview.Loading".Translate());
+                        "RimMind.UI.ContextPreview.Loading".Translate(),
+                        runtimeScope.Token);
                 }
                 else
                 {

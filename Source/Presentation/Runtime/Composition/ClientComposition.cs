@@ -8,6 +8,7 @@ using RimMind.Application.Common.Interfaces.Storage;
 using RimMind.Application.Features.Storage;
 using RimMind.Domain.Settings;
 using RimMind.Domain.Storage;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime.Composition
 {
@@ -25,11 +26,15 @@ namespace RimMind.Presentation.Runtime.Composition
 
     internal static class ClientComposition
     {
-        public static ClientCompositionServices RegisterClientManager(ISettingsProvider resolvedSettings)
+        public static ClientCompositionServices ComposeClientManager(
+            RuntimeServiceBuilder services,
+            ExtensionRegistryCatalog extensions,
+            ISettingsProvider resolvedSettings)
         {
-            var clientFactoryRegistry = CompositionRegistry.GetExtensionRegistry<IAIClientFactory>();
+            var clientFactoryRegistry = extensions.GetExtensionRegistry<IAIClientFactory>();
             var clientManager = new ClientManager(resolvedSettings, clientFactoryRegistry);
-            RimMindServiceLocator.Register<IClientManager>(clientManager);
+            services.Bind<IClientManager>(clientManager);
+            services.Bind(clientFactoryRegistry);
 
             return new ClientCompositionServices
             {
@@ -43,24 +48,22 @@ namespace RimMind.Presentation.Runtime.Composition
             ILogSink logSink,
             IOpenAISettings? openAISettings)
         {
-            var resolvedOpenAISettings = openAISettings ?? RimMindServiceLocator.TryGet<IOpenAISettings>();
             Infrastructure.DependencyInjection.RegisterBuiltinClientFactories(
                 clientFactoryRegistry,
                 logSink,
-                resolvedOpenAISettings);
-            RimMindServiceLocator.Register(clientFactoryRegistry);
-            AIProviderRegistry.DefaultRegistry = clientFactoryRegistry;
+                openAISettings);
         }
 
-        public static RemoteSyncCompositionServices RegisterRemoteSync(ILogSink logSink)
+        public static RemoteSyncCompositionServices ComposeRemoteSync(
+            RuntimeServiceBuilder services,
+            ILogSink logSink,
+            IRemoteBackend? remoteBackend = null)
         {
             var remoteSyncSettings = new RemoteSyncSettings();
-            RimMindServiceLocator.Register(remoteSyncSettings);
-
-            var remoteBackend = RimMindServiceLocator.TryGet<IRemoteBackend>();
             var remoteSyncOrchestrator = new RemoteSyncOrchestrator(remoteBackend, remoteSyncSettings, logSink);
             var remoteSyncService = new RimMind.Infrastructure.Services.Storage.RemoteSyncService(remoteSyncOrchestrator);
-            RimMindServiceLocator.Register<IRemoteSyncService>(remoteSyncService);
+            services.Bind(remoteSyncSettings);
+            services.Bind<IRemoteSyncService>(remoteSyncService);
 
             return new RemoteSyncCompositionServices
             {

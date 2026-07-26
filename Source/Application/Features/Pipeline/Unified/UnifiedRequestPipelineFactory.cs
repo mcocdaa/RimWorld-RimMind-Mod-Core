@@ -19,7 +19,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
         public static MutablePipeline<LlmRequestContext> Build(
             IToolRegistry toolRegistry,
             ILogSink? log = null,
-            INpcManager? npcManager = null,
+            INpcManagerAccessor? npcManagers = null,
             IContextEngine? contextEngine = null,
             ITelemetryCollector? telemetry = null,
             ICircuitBreakerSettings? circuitBreakerSettings = null,
@@ -33,7 +33,7 @@ namespace RimMind.Application.Features.Pipeline.Unified
             {
                 new ShortCircuitMiddleware(log),
                 new TraceContextMiddleware(log),
-                new NpcEnrichMiddleware(npcManager, log),
+                new NpcEnrichMiddleware(npcManagers, log),
                 new InputGuardrailMiddleware(new IInputGuardrail[]
                 {
                     new EmptyPerceptionGuardrail(),

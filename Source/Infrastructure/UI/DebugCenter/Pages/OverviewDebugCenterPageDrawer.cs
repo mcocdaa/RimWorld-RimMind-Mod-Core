@@ -1,16 +1,28 @@
+using System;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Infrastructure.UI.DebugCenter.Overview;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
-    public sealed class OverviewDebugCenterPageDrawer : IDebugCenterPageDrawer
+    public sealed class OverviewDebugCenterPageDrawer : IRuntimeBoundDebugCenterPageDrawer
     {
+        private IAgentLoopScheduler? _agentLoopScheduler;
+        private IAIRequestQueue? _requestQueue;
+
+        public IDisposable? Bind(RuntimeServiceScope scope)
+        {
+            _agentLoopScheduler = scope.GetOptional<IAgentLoopScheduler>();
+            _requestQueue = scope.GetOptional<IAIRequestQueue>();
+            return null;
+        }
+
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
             Pawn? selectedPawn = context.SelectedPawn ?? Find.Selector.SingleSelectedThing as Pawn;
@@ -37,6 +49,10 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString()) + rect.y;
 
             y += RimMindUI.SectionGap;
+            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.Lifecycle.Title".Translate()) + rect.y;
+            y = DrawLifecycleDiagnostics(rect, y, model, scope);
+
+            y += RimMindUI.SectionGap;
             y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.QuickActions".Translate()) + rect.y;
 
             DebugCenterToolGrid.Draw(
@@ -48,20 +64,17 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
                 ("RimMind.UI.Hub.Tab.Mechanisms", () => context.Navigation.GoTo("mechanisms")));
         }
 
-        private static DebugCenterOverviewModel BuildModel(Pawn? selectedPawn)
+        private DebugCenterOverviewModel BuildModel(Pawn? selectedPawn)
         {
-            AgentLoopSnapshot loop = RimMindServiceLocator
-                .TryGet<IAgentLoopScheduler>()?
-                .GetSnapshot() ?? AgentLoopSnapshot.Empty;
+            AgentLoopSnapshot loop = _agentLoopScheduler?.GetSnapshot() ?? AgentLoopSnapshot.Empty;
 
-            var queue = RimMindServiceLocator.TryGet<IAIRequestQueue>();
-            string queueText = queue == null
+            string queueText = _requestQueue == null
                 ? "RimMind.UI.Hub.QueueMissing".Translate()
-                : queue.IsPaused
+                : _requestQueue.IsPaused
                     ? "RimMind.Settings.QueuePaused".Translate()
                     : "RimMind.Settings.QueueRunning".Translate();
 
-            return new DebugCenterOverviewModel(
+            var model = new DebugCenterOverviewModel(
                 loop.ActiveAgents,
                 loop.PausedAgents,
                 loop.PendingAgents,
@@ -73,7 +86,83 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
                 loop.RegisteredScopedAgents,
                 loop.LastTick,
                 loop.FaultedAgents);
+            model.AttachLifecycleDiagnostics(
+                RuntimeServiceHub.Shared.GetDiagnostics(),
+                GameServiceHub.Shared.GetDiagnostics());
+            return model;
         }
+
+        private static float DrawLifecycleDiagnostics(
+            Rect rect,
+            float y,
+            DebugCenterOverviewModel model,
+            RimMindLayoutScope scope)
+        {
+            float gap = RimMindUI.Padding;
+            float columnWidth = (rect.width - gap) / 2f;
+            const float diagnosticsHeight = 116f;
+            Rect runtimeRect = new Rect(rect.x, y, columnWidth, diagnosticsHeight);
+            Rect gameRect = new Rect(runtimeRect.xMax + gap, y, columnWidth, diagnosticsHeight);
+            scope.Record(runtimeRect, "Hub:Overview:RuntimeLifecycle");
+            scope.Record(gameRect, "Hub:Overview:GameLifecycle");
+
+            float runtimeY = 0f;
+            runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.RuntimeState", LocalizeLifecycleState(model.RuntimeDiagnostics?.State));
+            runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.Generation", model.RuntimeGeneration.ToString());
+            runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.ServiceCount", model.RuntimeServiceCount.ToString());
+            runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.PublishedAt", FormatPublished(model.RuntimePublishedAtUtc));
+            runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.RuntimeId", model.RuntimeId.ToString());
+            runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.LastFailure", FormatFailure(model.LastBuildFailureSummary));
+            DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.StaleDiscards", model.StaleCompletionDiscardCount.ToString());
+
+            float gameY = 0f;
+            gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.GameState", LocalizeLifecycleState(model.GameDiagnostics?.State));
+            gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.Generation", model.GameGeneration.ToString());
+            gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.ServiceCount", model.GameServiceCount.ToString());
+            DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.PublishedAt", FormatPublished(model.GamePublishedAtUtc));
+            return y + diagnosticsHeight;
+        }
+
+        private static float DrawLifecycleRow(Rect column, float y, string labelKey, string value)
+        {
+            const float rowHeight = 16f;
+            Rect row = new Rect(column.x + RimMindUI.Padding, column.y + y, column.width - RimMindUI.Padding * 2f, rowHeight);
+            string text = labelKey.Translate() + ": " + value;
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(row, text);
+            TooltipHandler.TipRegion(row, text);
+            Text.Font = GameFont.Small;
+            return y + rowHeight;
+        }
+
+        private static string FormatPublished(DateTimeOffset? publishedAtUtc)
+            => publishedAtUtc?.ToString("u") ?? "RimMind.UI.Hub.Lifecycle.Never".Translate();
+
+        private static string FormatFailure(string? failure)
+            => string.IsNullOrWhiteSpace(failure)
+                ? "RimMind.UI.Hub.Lifecycle.None".Translate()
+                : failure;
+
+        private static string LocalizeLifecycleState(RuntimeLifecycleState? state)
+            => state switch
+            {
+                RuntimeLifecycleState.NeverPublished => "RimMind.UI.Lifecycle.NeverPublished".Translate(),
+                RuntimeLifecycleState.Building => "RimMind.UI.Lifecycle.Building".Translate(),
+                RuntimeLifecycleState.Running => "RimMind.UI.Lifecycle.Running".Translate(),
+                RuntimeLifecycleState.Stopped => "RimMind.UI.Lifecycle.Stopped".Translate(),
+                RuntimeLifecycleState.Failed => "RimMind.UI.Lifecycle.Failed".Translate(),
+                _ => string.Empty
+            };
+
+        private static string LocalizeLifecycleState(GameLifecycleState? state)
+            => state switch
+            {
+                GameLifecycleState.NeverPublished => "RimMind.UI.Lifecycle.NeverPublished".Translate(),
+                GameLifecycleState.Running => "RimMind.UI.Lifecycle.Running".Translate(),
+                GameLifecycleState.Stopped => "RimMind.UI.Lifecycle.Stopped".Translate(),
+                GameLifecycleState.Failed => "RimMind.UI.Lifecycle.Failed".Translate(),
+                _ => string.Empty
+            };
 
         private static Rect[] CalculateCardRects(Rect rect)
         {

@@ -5,6 +5,7 @@ using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Domain.Enums;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Infrastructure.UI.AgentFlow
 {
@@ -15,8 +16,22 @@ namespace RimMind.Infrastructure.UI.AgentFlow
     /// </summary>
     internal sealed class AgentFlowAsyncCoordinator
     {
+        public const string StaleCompletionTranslationKey = "RimMind.UI.Lifecycle.StaleCompletion";
+
         private Task<ContextSnapshot?>? _contextBuildTask;
+        private RuntimeGenerationToken? _contextBuildToken;
         private readonly List<PendingMechanismExecution> _pendingMechanismExecutions = new();
+        private readonly RuntimeServiceHub _runtimeHub;
+
+        public AgentFlowAsyncCoordinator()
+            : this(RuntimeServiceHub.Shared)
+        {
+        }
+
+        internal AgentFlowAsyncCoordinator(RuntimeServiceHub runtimeHub)
+        {
+            _runtimeHub = runtimeHub ?? throw new ArgumentNullException(nameof(runtimeHub));
+        }
 
         public bool HasPendingMechanismExecution => _pendingMechanismExecutions.Count > 0;
 
@@ -34,6 +49,15 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         public void BeginContextBuild(Task<ContextSnapshot?> contextBuildTask)
         {
             _contextBuildTask = contextBuildTask ?? throw new ArgumentNullException(nameof(contextBuildTask));
+            _contextBuildToken = null;
+        }
+
+        public void BeginContextBuild(
+            Task<ContextSnapshot?> contextBuildTask,
+            RuntimeGenerationToken token)
+        {
+            _contextBuildTask = contextBuildTask ?? throw new ArgumentNullException(nameof(contextBuildTask));
+            _contextBuildToken = token;
         }
 
         public bool PollContextBuild(out ContextSnapshot? snapshot, out string? error)
@@ -45,6 +69,14 @@ namespace RimMind.Infrastructure.UI.AgentFlow
 
             Task<ContextSnapshot?> completedTask = _contextBuildTask;
             _contextBuildTask = null;
+            RuntimeGenerationToken? token = _contextBuildToken;
+            _contextBuildToken = null;
+            if (token.HasValue && !_runtimeHub.IsCurrent(token.Value))
+            {
+                _runtimeHub.RecordStaleCompletion();
+                error = StaleCompletionTranslationKey;
+                return true;
+            }
             if (completedTask.IsFaulted)
             {
                 error = completedTask.Exception?.GetBaseException().Message ?? "context build failed";
@@ -66,15 +98,29 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         public void BeginMechanismExecution(Task<Result<bool, RimMindError>> mechanismExecutionTask)
             => BeginMechanismExecution(
                 mechanismExecutionTask,
-                new AgentFlowExecutionContext(0, string.Empty, string.Empty, string.Empty, MechanismOperationType.Set));
+                new AgentFlowExecutionContext(0, string.Empty, string.Empty, string.Empty, MechanismOperationType.Set),
+                token: null);
 
         public void BeginMechanismExecution(
             Task<Result<bool, RimMindError>> mechanismExecutionTask,
             AgentFlowExecutionContext context)
+            => BeginMechanismExecution(mechanismExecutionTask, context, token: null);
+
+        public void BeginMechanismExecution(
+            Task<Result<bool, RimMindError>> mechanismExecutionTask,
+            AgentFlowExecutionContext context,
+            RuntimeGenerationToken token)
+            => BeginMechanismExecution(mechanismExecutionTask, context, (RuntimeGenerationToken?)token);
+
+        private void BeginMechanismExecution(
+            Task<Result<bool, RimMindError>> mechanismExecutionTask,
+            AgentFlowExecutionContext context,
+            RuntimeGenerationToken? token)
         {
             _pendingMechanismExecutions.Add(new PendingMechanismExecution(
                 mechanismExecutionTask ?? throw new ArgumentNullException(nameof(mechanismExecutionTask)),
-                context ?? throw new ArgumentNullException(nameof(context))));
+                context ?? throw new ArgumentNullException(nameof(context)),
+                token));
         }
 
         public bool PollMechanismExecution(out Result<bool, RimMindError>? result, out string? error)
@@ -99,6 +145,15 @@ namespace RimMind.Infrastructure.UI.AgentFlow
                     continue;
 
                 _pendingMechanismExecutions.RemoveAt(index);
+                if (pending.Token.HasValue && !_runtimeHub.IsCurrent(pending.Token.Value))
+                {
+                    _runtimeHub.RecordStaleCompletion();
+                    completion = new AgentFlowMechanismExecutionCompletion(
+                        pending.Context,
+                        null,
+                        StaleCompletionTranslationKey);
+                    return true;
+                }
                 completion = CreateCompletion(pending);
                 return true;
             }
@@ -129,18 +184,24 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         public void ResetContextBuild()
         {
             _contextBuildTask = null;
+            _contextBuildToken = null;
         }
 
         private sealed class PendingMechanismExecution
         {
-            public PendingMechanismExecution(Task<Result<bool, RimMindError>> task, AgentFlowExecutionContext context)
+            public PendingMechanismExecution(
+                Task<Result<bool, RimMindError>> task,
+                AgentFlowExecutionContext context,
+                RuntimeGenerationToken? token)
             {
                 Task = task;
                 Context = context;
+                Token = token;
             }
 
             public Task<Result<bool, RimMindError>> Task { get; }
             public AgentFlowExecutionContext Context { get; }
+            public RuntimeGenerationToken? Token { get; }
         }
     }
 

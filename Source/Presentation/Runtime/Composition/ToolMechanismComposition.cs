@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime.Composition
 {
@@ -29,10 +30,12 @@ namespace RimMind.Presentation.Runtime.Composition
             registry.Register(new RimMind.Infrastructure.Mechanisms.World.ChoiceLetter.ChoiceLetterMechanism());
         }
 
-        public static IActionExecutor RegisterActionExecutor(IGameMechanismRegistry mechanismRegistry)
+        public static IActionExecutor ComposeActionExecutor(
+            RuntimeServiceBuilder services,
+            IGameMechanismRegistry mechanismRegistry)
         {
             var actionExecutor = new RimMind.Infrastructure.Agent.MechanismActionExecutor(mechanismRegistry);
-            RimMindServiceLocator.Register<IActionExecutor>(actionExecutor);
+            services.Bind<IActionExecutor>(actionExecutor);
             return actionExecutor;
         }
     }

@@ -1,9 +1,13 @@
+using System;
+using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Agent;
+using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Diagnostics;
+using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Mechanisms;
@@ -22,6 +26,8 @@ using RimMind.Infrastructure.Cache;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Settings;
 using RimMind.Presentation.Runtime.Composition;
+using RimMind.Presentation.Runtime.Services;
+using RimMind.Application.Common.Interfaces.Runtime;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -73,166 +79,201 @@ namespace RimMind.Presentation.Runtime
             public IPipeline<BusPublishContext> BusPublishPipeline { get; init; } = null!;
             public IPipeline<LlmRequestContext> UnifiedPipeline { get; init; } = null!;
 
-            // Resolved GameComponent services (Verse-instantiated, may be null)
-            public INpcManager? NpcManager { get; init; }
+            public INpcManagerAccessor NpcManagers { get; init; } = null!;
+            public IAIDebugLogAccessor AIDebugLogs { get; init; } = null!;
 
             // Settings
             public ISettingsProvider SettingsProvider { get; init; } = null!;
         }
 
-        public CompositionResult Compose(ISettingsProvider? settingsProvider, IOpenAISettings? openAISettings)
+        public RuntimeComposition Compose(
+            ISettingsProvider? settingsProvider,
+            IOpenAISettings? openAISettings,
+            ExtensionRegistryCatalog extensions,
+            AgentActionBridgeSlot actionBridge)
         {
-            // Phase 1: Use injected settings (passed from AICoreMod) — no SL fallback needed
-            var resolvedSettings = settingsProvider!;
+            if (extensions == null) throw new ArgumentNullException(nameof(extensions));
+            if (actionBridge == null) throw new ArgumentNullException(nameof(actionBridge));
 
-            SettingsComposition.Register(resolvedSettings, openAISettings);
+            var services = new RuntimeServiceBuilder();
+            var lifetime = new RuntimeLifetime(
+                services.RuntimeId,
+                RuntimeServiceHub.Shared.IsCurrent,
+                RuntimeServiceHub.Shared.RecordStaleCompletion);
+            var owned = new List<IDisposable>();
+            RimMindRuntime? runtime = null;
 
-            // Phase 2: Register Application and Infrastructure services, capture direct references
-            var appBag = Application.DependencyInjection.AddApplicationServices(resolvedSettings);
-            SettingsComposition.RegisterApplicationServices(appBag);
-
-            var infraBag = Infrastructure.DependencyInjection.AddInfrastructureServices(
-                appBag.ToolRegistry, appBag.JsonExtractor, resolvedSettings);
-            SettingsComposition.RegisterInfrastructureServices(infraBag);
-
-            var logSink = infraBag.LogSink;
-            var tickProvider = infraBag.TickProvider;
-            var agentBus = appBag.AgentBus;
-            var flywheelParameterStore = appBag.ParameterStore;
-            var translationService = infraBag.TranslationService;
-
-            // H2: Register all 17 built-in Mechanisms
-            var mechanismRegistry = infraBag.MechanismRegistry;
-            ToolMechanismComposition.RegisterAllMechanisms(mechanismRegistry);
-
-            PawnDataExtractor.Initialize(logSink);
-
-            var clientServices = ClientComposition.RegisterClientManager(resolvedSettings);
-            var uiServices = UiComposition.RegisterServices();
-            var npcManager = RimMindServiceLocator.TryGet<INpcManager>();
-
-            var contextServices = ContextComposition.Register(
-                resolvedSettings,
-                agentBus,
-                tickProvider,
-                logSink,
-                npcManager,
-                translationService,
-                flywheelParameterStore,
-                new EmbedCache());
-
-            var busPublishPipeline = BusPublishPipelineFactory.Build(
-                evt => agentBus.DispatchAction?.Invoke(evt),
-                logSink,
-                infraBag.ThreadChecker,
-                CompositionRegistry.GetExtensionRegistry<IMiddleware<BusPublishContext>>());
-            agentBus.SetPipeline(busPublishPipeline);
-
-            // Phase 5b: Build unified pipeline
-            // L5: Create AIResponseAnalyzer for context feedback (RelevanceLearner created in Phase 3)
-            var responseAnalyzer = new AIResponseAnalyzer();
-
-            var unifiedPipeline = UnifiedRequestPipelineFactory.Build(
-                appBag.ToolRegistry,
-                logSink,
-                npcManager,
-                contextServices.ContextEngine,
-                appBag.Telemetry,
-                resolvedSettings,
-                CompositionRegistry.GetExtensionRegistry<IMiddleware<LlmRequestContext>>(),
-                contextServices.RelevanceLearner,
-                responseAnalyzer,
-                RimMindServiceLocator.TryGet<IAIRequestTraceLog>());
-
-            var actionExecutor = ToolMechanismComposition.RegisterActionExecutor(infraBag.MechanismRegistry);
-            var psychologyWatcher = RimMindServiceLocator.TryGet<IPsychologyWatcher>();
-            var agentServices = AgentComposition.RegisterAgents(
-                resolvedSettings,
-                agentBus,
-                actionExecutor,
-                contextServices.InnerVoiceHandler,
-                psychologyWatcher,
-                tickProvider,
-                logSink,
-                npcManager);
-
-            RimMindServiceLocator.Register<IContextKeyRegistry>(contextServices.ContextKeyRegistry);
-
-            SettingsComposition.RegisterDefaultExtensionRegistries();
-
-            ClientComposition.RegisterBuiltinClientFactories(
-                clientServices.ClientFactoryRegistry,
-                logSink,
-                openAISettings);
-            var aiDebugLog = RimMindServiceLocator.TryGet<IAIDebugLog>();
-            var remoteSync = ClientComposition.RegisterRemoteSync(logSink);
-            UiComposition.RegisterRemoteSyncSettingsTab(remoteSync.Settings, remoteSync.Service);
-
-            UiComposition.InitializeDebugActions(
-                resolvedSettings,
-                appBag.Queue,
-                clientServices.ClientManager,
-                aiDebugLog,
-                contextServices.ContextKeyProvider,
-                contextServices.ContextEngine,
-                contextServices.ProviderRegistry,
-                contextServices.ContextKeyRegistry,
-                flywheelParameterStore,
-                appBag.Telemetry,
-                agentBus,
-                contextServices.HistoryManager,
-                npcManager,
-                appBag.ToolRegistry,
-                infraBag.MechanismRegistry);
-
-            return new CompositionResult
+            try
             {
-                // Application
-                AgentBus = agentBus,
-                ToolRegistry = appBag.ToolRegistry,
-                Queue = appBag.Queue,
-                Telemetry = appBag.Telemetry,
-                ParameterStore = flywheelParameterStore,
+                var resolvedSettings = settingsProvider
+                    ?? throw new ArgumentNullException(nameof(settingsProvider));
+                SettingsComposition.Compose(services, resolvedSettings, openAISettings);
 
-                // Infrastructure
-                AudioPlayer = infraBag.AudioPlayer,
-                TickProvider = tickProvider,
-                ThreadChecker = infraBag.ThreadChecker,
-                LogSink = logSink,
-                TranslationService = translationService,
-                MechanismRegistry = infraBag.MechanismRegistry,
-                WindowService = infraBag.WindowService,
-                Player2Lifecycle = infraBag.Player2Lifecycle,
+                var appBag = Application.DependencyInjection.AddApplicationServices(resolvedSettings, lifetime);
+                SettingsComposition.ComposeApplicationServices(services, appBag);
+                var infraBag = Infrastructure.DependencyInjection.AddInfrastructureServices(
+                    appBag.ToolRegistry, appBag.JsonExtractor, resolvedSettings);
+                SettingsComposition.ComposeInfrastructureServices(services, infraBag);
 
-                // Presentation
-                ProviderRegistry = contextServices.ProviderRegistry,
-                HistoryManager = contextServices.HistoryManager,
-                ClientManager = clientServices.ClientManager,
-                SensorManager = uiServices.SensorManager,
-                OverlayService = uiServices.OverlayService,
-                ContextEngine = contextServices.ContextEngine,
-                PawnAgentFactory = agentServices.PawnAgentFactory,
-                GameContextBuilder = agentServices.GameContextBuilder,
-                ResponseDispatcher = agentServices.ResponseDispatcher,
-                ContextKeyRegistry = contextServices.ContextKeyRegistry,
-                ContextKeyProvider = contextServices.ContextKeyProvider,
-                CacheManager = contextServices.CacheManager,
-                DiffTracker = contextServices.DiffTracker,
-                LayerBuilder = contextServices.LayerBuilder,
-                BudgetScheduler = contextServices.BudgetScheduler,
-                RelevanceTable = contextServices.RelevanceTable,
-                RelevanceLearner = contextServices.RelevanceLearner,
+                var logSink = infraBag.LogSink;
+                var tickProvider = infraBag.TickProvider;
+                var agentBus = appBag.AgentBus;
+                var flywheelParameterStore = appBag.ParameterStore;
+                var npcManagers = new NpcManagerAccessor();
+                var aiDebugLogs = new AIDebugLogAccessor();
+                services.Bind<INpcManagerAccessor>(npcManagers);
+                services.Bind<IAIDebugLogAccessor>(aiDebugLogs);
+                services.Bind<ICompletionFence>(lifetime);
+                services.Bind<IAgentActionBridgeAccessor>(actionBridge);
 
-                // Pipelines
-                BusPublishPipeline = busPublishPipeline,
-                UnifiedPipeline = unifiedPipeline,
+                ToolMechanismComposition.RegisterAllMechanisms(infraBag.MechanismRegistry);
 
-                // GameComponent
-                NpcManager = npcManager,
+                var clientServices = ClientComposition.ComposeClientManager(
+                    services, extensions, resolvedSettings);
+                var uiServices = UiComposition.ComposeServices(services, extensions);
+                var contextServices = ContextComposition.Compose(
+                    services,
+                    resolvedSettings,
+                    agentBus,
+                    tickProvider,
+                    logSink,
+                    npcManagers,
+                    infraBag.TranslationService,
+                    flywheelParameterStore,
+                    new EmbedCache());
+                owned.Add(new ActionLease(contextServices.InnerVoiceHandler.StopListening));
 
-                // Settings
-                SettingsProvider = resolvedSettings
-            };
+                var busMiddleware = extensions.GetExtensionRegistry<IMiddleware<BusPublishContext>>();
+                services.Bind(busMiddleware);
+                var busPublishPipeline = BusPublishPipelineFactory.Build(
+                    evt => agentBus.DispatchAction?.Invoke(evt),
+                    logSink,
+                    infraBag.ThreadChecker,
+                    busMiddleware);
+                services.Bind<IPipeline<BusPublishContext>>(busPublishPipeline);
+                agentBus.SetPipeline(busPublishPipeline);
+
+                var llmMiddleware = extensions.GetExtensionRegistry<IMiddleware<LlmRequestContext>>();
+                services.Bind(llmMiddleware);
+                var unifiedPipeline = UnifiedRequestPipelineFactory.Build(
+                    appBag.ToolRegistry,
+                    logSink,
+                    npcManagers,
+                    contextServices.ContextEngine,
+                    appBag.Telemetry,
+                    resolvedSettings,
+                    llmMiddleware,
+                    contextServices.RelevanceLearner,
+                    new AIResponseAnalyzer(),
+                    infraBag.RequestTraceLog);
+                services.Bind<IPipeline<LlmRequestContext>>(unifiedPipeline);
+
+                var actionExecutor = ToolMechanismComposition.ComposeActionExecutor(
+                    services, infraBag.MechanismRegistry);
+                var agentServices = AgentComposition.ComposeAgents(
+                    services,
+                    extensions,
+                    resolvedSettings,
+                    agentBus,
+                    actionExecutor,
+                    contextServices.InnerVoiceHandler,
+                    null,
+                    tickProvider,
+                    logSink,
+                    npcManagers,
+                    lifetime,
+                    pawn => runtime?.GetAgentIdentity(pawn));
+
+                SettingsComposition.ComposeDefaultExtensionRegistries(services, extensions);
+                ClientComposition.RegisterBuiltinClientFactories(
+                    clientServices.ClientFactoryRegistry,
+                    logSink,
+                    openAISettings ?? resolvedSettings as IOpenAISettings);
+                var remoteSync = ClientComposition.ComposeRemoteSync(services, logSink);
+                UiComposition.RegisterRemoteSyncSettingsTab(
+                    extensions.GetExtensionRegistry<ISettingsTab>(),
+                    remoteSync.Settings,
+                    remoteSync.Service);
+
+                var result = new CompositionResult
+                {
+                    AgentBus = agentBus,
+                    ToolRegistry = appBag.ToolRegistry,
+                    Queue = appBag.Queue,
+                    Telemetry = appBag.Telemetry,
+                    ParameterStore = flywheelParameterStore,
+                    AudioPlayer = infraBag.AudioPlayer,
+                    TickProvider = tickProvider,
+                    ThreadChecker = infraBag.ThreadChecker,
+                    LogSink = logSink,
+                    TranslationService = infraBag.TranslationService,
+                    MechanismRegistry = infraBag.MechanismRegistry,
+                    WindowService = infraBag.WindowService,
+                    Player2Lifecycle = infraBag.Player2Lifecycle,
+                    ProviderRegistry = contextServices.ProviderRegistry,
+                    HistoryManager = contextServices.HistoryManager,
+                    ClientManager = clientServices.ClientManager,
+                    SensorManager = uiServices.SensorManager,
+                    OverlayService = uiServices.OverlayService,
+                    ContextEngine = contextServices.ContextEngine,
+                    PawnAgentFactory = agentServices.PawnAgentFactory,
+                    GameContextBuilder = agentServices.GameContextBuilder,
+                    ResponseDispatcher = agentServices.ResponseDispatcher,
+                    ContextKeyRegistry = contextServices.ContextKeyRegistry,
+                    ContextKeyProvider = contextServices.ContextKeyProvider,
+                    CacheManager = contextServices.CacheManager,
+                    DiffTracker = contextServices.DiffTracker,
+                    LayerBuilder = contextServices.LayerBuilder,
+                    BudgetScheduler = contextServices.BudgetScheduler,
+                    RelevanceTable = contextServices.RelevanceTable,
+                    RelevanceLearner = contextServices.RelevanceLearner,
+                    BusPublishPipeline = busPublishPipeline,
+                    UnifiedPipeline = unifiedPipeline,
+                    NpcManagers = npcManagers,
+                    AIDebugLogs = aiDebugLogs,
+                    SettingsProvider = resolvedSettings
+                };
+
+                var lifecycle = new RimMindLifecycleManager(
+                    result.Telemetry,
+                    result.ContextEngine,
+                    result.Player2Lifecycle,
+                    result.AgentBus,
+                    result.ContextKeyRegistry);
+                var extensionManager = new RimMindExtensionManager(
+                    result.LogSink,
+                    result.TickProvider,
+                    result.AgentBus,
+                    actionBridge,
+                    socialEventOrganizer: agentServices.SocialEventOrganizer,
+                    traitEvolutionEngine: agentServices.TraitEvolutionEngine);
+                runtime = new RimMindRuntime(result, lifecycle, extensionManager, extensions);
+                var modeRegistry = extensions.GetExtensionRegistry<Application.Common.Interfaces.Agent.Modes.IAgentMode>();
+                extensionManager.RegisterBuiltinModes(modeRegistry);
+                services.Bind(modeRegistry);
+                services.Bind(runtime);
+                services.Bind<IRimMindRuntime>(runtime);
+                services.Bind(extensions);
+
+                services
+                    .Require<RimMindRuntime>()
+                    .Require<IRimMindRuntime>()
+                    .Require<IAgentBus>()
+                    .Require<IAIRequestQueue>()
+                    .Require<IPipeline<LlmRequestContext>>()
+                    .Require<ICompletionFence>()
+                    .Require<IAgentActionBridgeAccessor>();
+                services.Build();
+                return new RuntimeComposition(runtime, services, extensions, lifetime, owned);
+            }
+            catch
+            {
+                runtime?.Shutdown();
+                for (var index = owned.Count - 1; index >= 0; index--)
+                    owned[index].Dispose();
+                lifetime.Dispose();
+                throw;
+            }
         }
 
     }

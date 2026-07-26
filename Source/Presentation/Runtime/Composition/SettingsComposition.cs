@@ -4,107 +4,104 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Registry;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime.Composition
 {
     internal static class SettingsComposition
     {
-        public static void Register(ISettingsProvider resolvedSettings, IOpenAISettings? openAISettings)
+        public static void Compose(
+            RuntimeServiceBuilder services,
+            ISettingsProvider resolvedSettings,
+            IOpenAISettings? openAISettings)
         {
-            RimMindServiceLocator.Register(resolvedSettings);
+            services.Bind<ISettingsProvider>(resolvedSettings);
 
             if (resolvedSettings is IContextSettings contextSettings)
-                RimMindServiceLocator.Register(contextSettings);
+                services.Bind<IContextSettings>(contextSettings);
             if (resolvedSettings is IContextBudgetSettings budgetSettings)
-                RimMindServiceLocator.Register(budgetSettings);
+                services.Bind<IContextBudgetSettings>(budgetSettings);
             if (resolvedSettings is IContextIncludeSettings includeSettings)
-                RimMindServiceLocator.Register(includeSettings);
+                services.Bind<IContextIncludeSettings>(includeSettings);
             if (resolvedSettings is IContextEnvironmentSettings environmentSettings)
-                RimMindServiceLocator.Register(environmentSettings);
+                services.Bind<IContextEnvironmentSettings>(environmentSettings);
             if (resolvedSettings is IAIModelSettings aiModelSettings)
-                RimMindServiceLocator.Register(aiModelSettings);
+                services.Bind<IAIModelSettings>(aiModelSettings);
             if (resolvedSettings is IApiCredentialSettings apiCredSettings)
-                RimMindServiceLocator.Register(apiCredSettings);
+                services.Bind<IApiCredentialSettings>(apiCredSettings);
             if (resolvedSettings is ICircuitBreakerSettings circuitBreakerSettings)
-                RimMindServiceLocator.Register(circuitBreakerSettings);
+                services.Bind<ICircuitBreakerSettings>(circuitBreakerSettings);
             if (resolvedSettings is IContextCalibrationSettings calibrationSettings)
-                RimMindServiceLocator.Register(calibrationSettings);
+                services.Bind<IContextCalibrationSettings>(calibrationSettings);
             if (resolvedSettings is IQueueSettings queueSettings)
-                RimMindServiceLocator.Register(queueSettings);
+                services.Bind<IQueueSettings>(queueSettings);
             if (resolvedSettings is IAgentTickSettings tickSettings)
-                RimMindServiceLocator.Register(tickSettings);
+                services.Bind<IAgentTickSettings>(tickSettings);
             if (resolvedSettings is IDebugSettings debugSettings)
-                RimMindServiceLocator.Register(debugSettings);
+                services.Bind<IDebugSettings>(debugSettings);
             if (resolvedSettings is IOverlaySettings overlaySettings)
-                RimMindServiceLocator.Register(overlaySettings);
+                services.Bind<IOverlaySettings>(overlaySettings);
             if (resolvedSettings is IPromptSettings promptSettings)
-                RimMindServiceLocator.Register(promptSettings);
+                services.Bind<IPromptSettings>(promptSettings);
             if (resolvedSettings is IFlywheelSettings flywheelSettings)
-                RimMindServiceLocator.Register(flywheelSettings);
+                services.Bind<IFlywheelSettings>(flywheelSettings);
 
             if (openAISettings != null)
-                RimMindServiceLocator.Register(openAISettings);
+                services.Bind<IOpenAISettings>(openAISettings);
             else if (resolvedSettings is IOpenAISettings openAISettingsFromProvider)
-                RimMindServiceLocator.Register(openAISettingsFromProvider);
+                services.Bind<IOpenAISettings>(openAISettingsFromProvider);
         }
 
-        public static void RegisterApplicationServices(Application.ApplicationServiceBag appBag)
+        public static void ComposeApplicationServices(
+            RuntimeServiceBuilder services,
+            Application.ApplicationServiceBag appBag)
         {
-            RimMindServiceLocator.Register(appBag.AgentBus);
-            RimMindServiceLocator.Register(appBag.ToolRegistry);
-            RimMindServiceLocator.Register(appBag.ParameterStore);
-            RimMindServiceLocator.Register(appBag.RuleEngine);
-            RimMindServiceLocator.Register(appBag.Queue);
-            RimMindServiceLocator.Register<IAIRequestQueueTickable>((IAIRequestQueueTickable)appBag.Queue);
-            RimMindServiceLocator.Register(appBag.JsonExtractor);
-            RimMindServiceLocator.Register(appBag.Telemetry);
+            services.Bind(appBag.AgentBus);
+            services.Bind(appBag.ToolRegistry);
+            services.Bind(appBag.ParameterStore);
+            services.Bind(appBag.RuleEngine);
+            services.Bind(appBag.Queue);
+            services.Bind<IAIRequestQueueTickable>((IAIRequestQueueTickable)appBag.Queue);
+            services.Bind(appBag.JsonExtractor);
+            services.Bind(appBag.Telemetry);
         }
 
-        public static void RegisterInfrastructureServices(RimMind.Infrastructure.InfrastructureServiceBag infraBag)
+        public static void ComposeInfrastructureServices(
+            RuntimeServiceBuilder services,
+            RimMind.Infrastructure.InfrastructureServiceBag infraBag)
         {
-            RimMindServiceLocator.Register(infraBag.AudioPlayer);
-            RimMindServiceLocator.Register(infraBag.TickProvider);
-            RimMindServiceLocator.Register(infraBag.ThreadChecker);
-            RimMindServiceLocator.Register(infraBag.PathProvider);
-            RimMindServiceLocator.Register(infraBag.LogSink);
-            RimMindServiceLocator.Register(infraBag.TranslationService);
-            RimMindServiceLocator.Register(infraBag.MechanismRegistry);
-            RimMindServiceLocator.Register(infraBag.WindowService);
-            RimMindServiceLocator.Register(infraBag.AgentActiveChecker);
-            RimMindServiceLocator.Register(infraBag.Player2Lifecycle);
-            RimMindServiceLocator.Register(infraBag.RequestTraceLog);
+            services.Bind(infraBag.AudioPlayer);
+            services.Bind(infraBag.TickProvider);
+            services.Bind(infraBag.ThreadChecker);
+            services.Bind(infraBag.PathProvider);
+            services.Bind(infraBag.LogSink);
+            services.Bind(infraBag.TranslationService);
+            services.Bind(infraBag.MechanismRegistry);
+            services.Bind(infraBag.WindowService);
+            services.Bind(infraBag.AgentActiveChecker);
+            services.Bind(infraBag.Player2Lifecycle);
+            services.Bind(infraBag.RequestTraceLog);
         }
 
-        public static void RegisterDefaultExtensionRegistries()
+        public static void ComposeDefaultExtensionRegistries(
+            RuntimeServiceBuilder services,
+            ExtensionRegistryCatalog extensions)
         {
-            var modCooldownRegistry = new ExtensionRegistry<IModCooldown>();
+            var modCooldownRegistry = extensions.GetExtensionRegistry<IModCooldown>();
             modCooldownRegistry.Register(NullModCooldown.Instance);
-            RimMindServiceLocator.Register<IExtensionRegistry<IModCooldown>>(modCooldownRegistry);
+            services.Bind(modCooldownRegistry);
 
-            var dialogueTriggerRegistry = new ExtensionRegistry<IDialogueTrigger>();
+            var dialogueTriggerRegistry = extensions.GetExtensionRegistry<IDialogueTrigger>();
             dialogueTriggerRegistry.Register(NullDialogueTrigger.Instance);
-            RimMindServiceLocator.Register<IExtensionRegistry<IDialogueTrigger>>(dialogueTriggerRegistry);
+            services.Bind(dialogueTriggerRegistry);
 
-            var incidentListenerRegistry = new ExtensionRegistry<IIncidentExecutedListener>();
+            var incidentListenerRegistry = extensions.GetExtensionRegistry<IIncidentExecutedListener>();
             incidentListenerRegistry.Register(NullIncidentExecutedListener.Instance);
-            RimMindServiceLocator.Register<IExtensionRegistry<IIncidentExecutedListener>>(incidentListenerRegistry);
+            services.Bind(incidentListenerRegistry);
 
-            var skipCheckRegistry = new ExtensionRegistry<ISkipCheck>();
+            var skipCheckRegistry = extensions.GetExtensionRegistry<ISkipCheck>();
             skipCheckRegistry.Register(NullSkipCheck.Instance);
-            RimMindServiceLocator.Register<IExtensionRegistry<ISkipCheck>>(skipCheckRegistry);
-        }
-    }
-
-    internal static class CompositionRegistry
-    {
-        public static IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension
-        {
-            var registry = RimMindServiceLocator.TryGet<IExtensionRegistry<T>>();
-            if (registry != null) return registry;
-
-            var newRegistry = new ExtensionRegistry<T>();
-            RimMindServiceLocator.Register(newRegistry);
-            return newRegistry;
+            services.Bind(skipCheckRegistry);
         }
     }
 }

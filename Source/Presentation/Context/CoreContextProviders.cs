@@ -19,15 +19,6 @@ namespace RimMind.Presentation.Context
     /// </summary>
     public static class CoreContextProviders
     {
-        private static ITranslationService? _translationService;
-        private static IContextKeyProvider? _contextKeyProvider;
-        private static INpcManager? _npcManager;
-
-        private static string? T(string key, params object[] args)
-        {
-            return _translationService?.Translate(key, args);
-        }
-
         private static Pawn? ResolvePawn(int pawnId)
         {
             if (pawnId == 0) return null;
@@ -46,13 +37,11 @@ namespace RimMind.Presentation.Context
         public static void RegisterAll(IContextKeyRegistry registry,
             ITranslationService? translationService = null,
             IContextKeyProvider? contextKeyProvider = null,
-            INpcManager? npcManager = null)
+            INpcManagerAccessor? npcManagers = null)
         {
-            _translationService = translationService;
-            _contextKeyProvider = contextKeyProvider;
-            _npcManager = npcManager;
-
-            var ctx = _contextKeyProvider;
+            var ctx = contextKeyProvider;
+            string? Translate(string key, params object[] args) =>
+                translationService?.Translate(key, args);
 
             // ── L0_Static (stalenessTicks: 0 — always fresh, scenario-dependent) ──
 
@@ -72,7 +61,7 @@ namespace RimMind.Presentation.Context
                         return null;
                     var pawn = ResolvePawn(pctx.PawnId);
                     if (pawn == null) return null;
-                    var profile = _npcManager?.GetNpc($"NPC-{pawn.thingIDNumber}");
+                    var profile = npcManagers?.Current?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     return NullIfEmpty(profile?.SystemPrompt);
                 },
                 ownerMod: "Core",
@@ -91,14 +80,14 @@ namespace RimMind.Presentation.Context
                         return null;
                     var pawn = ResolvePawn(pctx.PawnId);
                     if (pawn == null) return null;
-                    var profile = _npcManager?.GetNpc($"NPC-{pawn.thingIDNumber}");
+                    var profile = npcManagers?.Current?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null) return null;
                     var sb = new StringBuilder();
-                    sb.AppendLine(T("RimMind.Prompt.Identity.Name", profile.Name) ?? "");
+                    sb.AppendLine(Translate("RimMind.Prompt.Identity.Name", profile.Name) ?? "");
                     if (!string.IsNullOrEmpty(profile.ShortName))
-                        sb.AppendLine(T("RimMind.Prompt.Identity.ShortName", profile.ShortName) ?? "");
+                        sb.AppendLine(Translate("RimMind.Prompt.Identity.ShortName", profile.ShortName) ?? "");
                     if (!string.IsNullOrEmpty(profile.CharacterDescription))
-                        sb.AppendLine(T("RimMind.Prompt.Identity.Description", profile.CharacterDescription) ?? "");
+                        sb.AppendLine(Translate("RimMind.Prompt.Identity.Description", profile.CharacterDescription) ?? "");
                     return NullIfEmpty(sb.ToString().TrimEnd());
                 },
                 ownerMod: "Core",
@@ -115,12 +104,12 @@ namespace RimMind.Presentation.Context
                     if (pctx.Scenario == ScenarioIds.Dialogue) return null;
                     var pawn = ResolvePawn(pctx.PawnId);
                     if (pawn == null) return null;
-                    var profile = _npcManager?.GetNpc($"NPC-{pawn.thingIDNumber}");
+                    var profile = npcManagers?.Current?.GetNpc($"NPC-{pawn.thingIDNumber}");
                     if (profile == null || profile.Commands.Count == 0) return null;
                     var sb = new StringBuilder();
-                    sb.AppendLine(T("RimMind.Prompt.Commands.Available") ?? "");
+                    sb.AppendLine(Translate("RimMind.Prompt.Commands.Available") ?? "");
                     foreach (var cmd in profile.Commands)
-                        sb.AppendLine(T("RimMind.Prompt.Commands.Entry", cmd.Name, cmd.Description) ?? "");
+                        sb.AppendLine(Translate("RimMind.Prompt.Commands.Entry", cmd.Name, cmd.Description) ?? "");
                     return NullIfEmpty(sb.ToString().TrimEnd());
                 },
                 ownerMod: "Core",
@@ -145,12 +134,12 @@ namespace RimMind.Presentation.Context
                         return sb.ToString().TrimEnd();
                     }
                     var sb2 = new StringBuilder();
-                    sb2.AppendLine(T("RimMind.Prompt.WorldRules.Header") ?? "");
-                    sb2.AppendLine(T("RimMind.Prompt.WorldRules.Survival") ?? "");
-                    sb2.AppendLine(T("RimMind.Prompt.WorldRules.Combat") ?? "");
-                    sb2.AppendLine(T("RimMind.Prompt.WorldRules.Relationships") ?? "");
-                    sb2.AppendLine(T("RimMind.Prompt.WorldRules.Weather") ?? "");
-                    sb2.AppendLine(T("RimMind.Prompt.WorldRules.Medical") ?? "");
+                    sb2.AppendLine(Translate("RimMind.Prompt.WorldRules.Header") ?? "");
+                    sb2.AppendLine(Translate("RimMind.Prompt.WorldRules.Survival") ?? "");
+                    sb2.AppendLine(Translate("RimMind.Prompt.WorldRules.Combat") ?? "");
+                    sb2.AppendLine(Translate("RimMind.Prompt.WorldRules.Relationships") ?? "");
+                    sb2.AppendLine(Translate("RimMind.Prompt.WorldRules.Weather") ?? "");
+                    sb2.AppendLine(Translate("RimMind.Prompt.WorldRules.Medical") ?? "");
                     return NullIfEmpty(sb2.ToString().TrimEnd());
                 },
                 ownerMod: "Core",
@@ -166,10 +155,10 @@ namespace RimMind.Presentation.Context
                     if (pctx.Scenario == ScenarioIds.Storyteller)
                         return "Select the most fitting incident for the colony's current state. Return structured JSON with defName, reason, and optional params.";
                     if (pctx.Scenario == ScenarioIds.Decision)
-                        return NullIfEmpty(T("RimMind.Prompt.TaskInstruction.WorldOnly"));
+                        return NullIfEmpty(Translate("RimMind.Prompt.TaskInstruction.WorldOnly"));
                     if (pctx.Scenario == ScenarioIds.Dialogue)
-                        return NullIfEmpty(T("RimMind.Prompt.TaskInstruction.WorldOnly"));
-                    return NullIfEmpty(T("RimMind.Prompt.TaskInstruction.Base"));
+                        return NullIfEmpty(Translate("RimMind.Prompt.TaskInstruction.WorldOnly"));
+                    return NullIfEmpty(Translate("RimMind.Prompt.TaskInstruction.Base"));
                 },
                 ownerMod: "Core",
                 stalenessTicks: 0,

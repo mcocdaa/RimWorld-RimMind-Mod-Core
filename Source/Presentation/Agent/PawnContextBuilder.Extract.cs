@@ -15,7 +15,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractPawnBaseInfo(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             var parts = new List<string>();
             parts.Add(data.Name);
             parts.Add($"{data.Age}yo");
@@ -33,7 +33,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractFixedRelations(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (data.Relations.Count == 0) return "";
             return string.Join(", ", data.Relations.Select(r => $"{r.RelationLabel}({r.OtherName})"));
         }
@@ -41,7 +41,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractIdeology(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (data.IdeologyName == null) return "";
             return $"{data.IdeologyName}{data.IdeologyMemes}";
         }
@@ -49,7 +49,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractSkillsSummary(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (data.Skills.Count == 0) return "";
             var top = data.Skills
                 .OrderByDescending(s => s.Value)
@@ -61,7 +61,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractCurrentArea(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (!data.HasMap) return "";
             int temp = Mathf.RoundToInt(data.Temperature);
             return $"{data.RoomLabel}, {temp}°C";
@@ -70,35 +70,35 @@ namespace RimMind.Presentation.Agent
         public string ExtractWeather(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             return data.WeatherLabel ?? "";
         }
 
         public string ExtractTimeOfDay(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             return data.TimeString ?? "";
         }
 
         public string ExtractNearbyPawns(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             return !string.IsNullOrEmpty(data.NearbyPawnNames) ? data.NearbyPawnNames : "";
         }
 
         public string ExtractSeason(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             return data.SeasonLabel ?? "";
         }
 
         public string ExtractColonyStatus(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (!data.HasMap) return "";
             return "RimMind.Prompt.Colony.Status".Translate(data.ColonistCount, $"{data.ColonyWealth:F0}", data.ThreatCount);
         }
@@ -106,7 +106,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractHealth(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             var notable = data.Hediffs
                 .Where(h => h.Visible)
                 .Select(h => h.HediffLabel)
@@ -118,7 +118,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractMood(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (data.MoodString == null) return "";
             if (data.InMentalState)
                 return "RimMind.Prompt.Mood.MentalBreak".Translate(data.MentalStateInspectLine ?? "");
@@ -128,14 +128,14 @@ namespace RimMind.Presentation.Agent
         public string ExtractCurrentJob(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             return data.CurrentJobReport ?? data.CurrentJobDefLabel ?? "RimMind.Prompt.Job.Idle".Translate();
         }
 
         public string ExtractCombatStatus(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             var parts = new List<string>();
             if (data.Drafted) parts.Add("RimMind.Prompt.Combat.Drafted".Translate());
             if (data.EnemyTargetLabel != null)
@@ -146,7 +146,7 @@ namespace RimMind.Presentation.Agent
         public string ExtractTargetInfo(Pawn pawn)
         {
             if (pawn == null) return "";
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             if (data.EnemyTargetLabel == null) return "";
             string label = data.EnemyTargetHpPercent.HasValue
                 ? $"{data.EnemyTargetLabel} (HP:{data.EnemyTargetHpPercent.Value:F0}%)"

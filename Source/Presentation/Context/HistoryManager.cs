@@ -7,17 +7,11 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.ValueObjects;
-using RimMind.Presentation.Runtime;
 
 namespace RimMind.Presentation.Context
 {
     public class HistoryManager : IHistoryManager
     {
-        public static IHistoryManager? Instance
-        {
-            get => RimMindRuntime.Instance.GetService<IHistoryManager>();
-        }
-
         private readonly ConcurrentDictionary<string, List<HistoryEntry>> _histories =
             new ConcurrentDictionary<string, List<HistoryEntry>>();
         private readonly object _listLock = new object();
@@ -31,7 +25,7 @@ namespace RimMind.Presentation.Context
             _tickProvider = tickProvider;
         }
 
-        private int CurrentTick => _tickProvider?.TicksGame ?? RimMindRuntime.Instance.GetService<ITickProvider>()?.TicksGame ?? 0;
+        private int CurrentTick => _tickProvider?.TicksGame ?? 0;
 
         public void AddTurn(string npcId, string userMessage, string assistantMessage, string? scenario = null)
         {
@@ -44,13 +38,41 @@ namespace RimMind.Presentation.Context
             }
         }
 
+        public void AddPendingTurn(
+            string npcId,
+            string turnId,
+            string userMessage,
+            string assistantPlaceholder,
+            string? scenario = null)
+        {
+            var entries = _histories.GetOrAdd(npcId, _ => new List<HistoryEntry>());
+            int tick = CurrentTick;
+            lock (_listLock)
+            {
+                entries.Add(new HistoryEntry("user", userMessage, tick, scenario, turnId, isPending: true));
+                entries.Add(new HistoryEntry("assistant", assistantPlaceholder, tick, scenario, turnId, isPending: true));
+            }
+        }
+
         public List<(string role, string content)> GetHistory(string npcId, int maxRounds, string? scenario = null)
+            => GetHistorySnapshot(npcId, includePending: false);
+
+        public List<(string role, string content)> GetHistoryForDisplay(
+            string npcId,
+            int maxRounds,
+            string? scenario = null)
+            => GetHistorySnapshot(npcId, includePending: true);
+
+        private List<(string role, string content)> GetHistorySnapshot(string npcId, bool includePending)
         {
             if (!_histories.TryGetValue(npcId, out var entries) || entries.Count == 0)
                 return new List<(string, string)>();
             List<HistoryEntry> snapshot;
             lock (_listLock) { snapshot = entries.ToList(); }
-            return snapshot.Select(e => (e.Role, e.Content)).ToList();
+            return snapshot
+                .Where(entry => includePending || !entry.IsPending)
+                .Select(entry => (entry.Role, entry.Content))
+                .ToList();
         }
 
         public int GetHistoryCount(string npcId)
@@ -94,6 +116,51 @@ namespace RimMind.Presentation.Context
             }
         }
 
+        public bool ReplaceAssistantTurn(string npcId, string turnId, string content)
+        {
+            if (!_histories.TryGetValue(npcId, out var entries)) return false;
+            lock (_listLock)
+            {
+                int assistantIndex = entries.FindLastIndex(entry =>
+                    entry.Role == "assistant"
+                    && entry.IsPending
+                    && string.Equals(entry.TurnId, turnId, StringComparison.Ordinal));
+                if (assistantIndex < 0)
+                    return false;
+
+                HistoryEntry assistant = entries[assistantIndex];
+                foreach (HistoryEntry entry in entries)
+                {
+                    if (entry.IsPending
+                        && string.Equals(entry.TurnId, turnId, StringComparison.Ordinal))
+                    {
+                        entry.IsPending = false;
+                        entry.TurnId = null;
+                    }
+                }
+                entries[assistantIndex] = new HistoryEntry(
+                    "assistant",
+                    content,
+                    assistant.Tick,
+                    assistant.Scenario,
+                    turnId: null,
+                    isPending: false);
+                return true;
+            }
+        }
+
+        public bool RemoveTurn(string npcId, string turnId)
+        {
+            if (!_histories.TryGetValue(npcId, out var entries)) return false;
+            lock (_listLock)
+            {
+                return entries.RemoveAll(entry =>
+                    entry.IsPending
+                    &&
+                    string.Equals(entry.TurnId, turnId, StringComparison.Ordinal)) > 0;
+            }
+        }
+
         public string GetAllForSave()
         {
             var dict = GetAllForSaveDict();
@@ -107,7 +174,9 @@ namespace RimMind.Presentation.Context
             {
                 lock (_listLock)
                 {
-                    result[kvp.Key] = kvp.Value.ToList();
+                    result[kvp.Key] = kvp.Value
+                        .Where(entry => !entry.IsPending)
+                        .ToList();
                 }
             }
             return result;

@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -14,10 +15,11 @@ namespace RimMind.Presentation.UI
     {
         private static Vector2 _queueScroll;
 
-        private static IAIRequestQueue? _cachedRequestQueue;
+        private static readonly RuntimeServiceRef<IAIRequestQueue> RequestQueue =
+            RuntimeServiceRef<IAIRequestQueue>.Optional();
 
         private static IAIRequestQueue? GetRequestQueue()
-            => _cachedRequestQueue ??= RimMindRuntime.Instance.GetService<IAIRequestQueue>();
+            => RequestQueue.ValueOrDefault;
 
         public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
         {

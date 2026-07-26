@@ -22,13 +22,16 @@ namespace RimMind.Presentation.Agent
     {
         private readonly PawnContextBuilder _pawnBuilder;
         private readonly MapContextBuilder _mapBuilder;
-        private readonly INpcManager? _npcManager;
+        private readonly INpcManagerAccessor _npcManagers;
 
-        public GameContextBuilder(PawnContextBuilder pawnBuilder, MapContextBuilder mapBuilder, INpcManager? npcManager = null)
+        public GameContextBuilder(
+            PawnContextBuilder pawnBuilder,
+            MapContextBuilder mapBuilder,
+            INpcManagerAccessor npcManagers)
         {
             _pawnBuilder = pawnBuilder ?? throw new ArgumentNullException(nameof(pawnBuilder));
             _mapBuilder = mapBuilder ?? throw new ArgumentNullException(nameof(mapBuilder));
-            _npcManager = npcManager;
+            _npcManagers = npcManagers ?? throw new ArgumentNullException(nameof(npcManagers));
         }
 
         // --- IGameContextBuilder ---
@@ -36,7 +39,7 @@ namespace RimMind.Presentation.Agent
         public string CollectBasicGameState(string npcId)
         {
             var sb = new StringBuilder();
-            var pawnObj = _npcManager?.FindPawnByNpcId(npcId);
+            var pawnObj = _npcManagers.Current?.FindPawnByNpcId(npcId);
             var pawn = pawnObj as Pawn;
 
             if (pawn != null)

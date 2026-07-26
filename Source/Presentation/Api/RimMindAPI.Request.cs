@@ -1,6 +1,8 @@
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
@@ -10,11 +12,13 @@ using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Verse;
 
@@ -24,18 +28,21 @@ namespace RimMind.Presentation.Api
     {
         public static class Request
         {
-            public static void PauseQueue() => RimMindRuntime.Instance.Queue?.PauseQueue();
-            public static void ResumeQueue() => RimMindRuntime.Instance.Queue?.ResumeQueue();
-            public static int ActiveRequestCount => RimMindRuntime.Instance.Queue?.ActiveRequestCount ?? 0;
-            public static IReadOnlyList<TrackedRequest> GetActiveRequests() => RimMindRuntime.Instance.Queue?.GetActiveRequests() ?? new List<TrackedRequest>();
-            public static IReadOnlyList<TrackedRequest> GetAllQueuedRequests() => RimMindRuntime.Instance.Queue?.GetAllQueuedRequests() ?? new List<TrackedRequest>();
-            public static int TotalQueuedCount => RimMindRuntime.Instance.Queue?.TotalQueuedCount ?? 0;
+            private static readonly RuntimeServiceRef<IAIRequestQueue> Queues =
+                RuntimeServiceRef<IAIRequestQueue>.Optional();
 
-            public static void ClearModCooldown(string modId) => RimMindRuntime.Instance.Queue?.ClearCooldown(modId);
+            public static void PauseQueue() => Queues.ValueOrDefault?.PauseQueue();
+            public static void ResumeQueue() => Queues.ValueOrDefault?.ResumeQueue();
+            public static int ActiveRequestCount => Queues.ValueOrDefault?.ActiveRequestCount ?? 0;
+            public static IReadOnlyList<TrackedRequest> GetActiveRequests() => Queues.ValueOrDefault?.GetActiveRequests() ?? new List<TrackedRequest>();
+            public static IReadOnlyList<TrackedRequest> GetAllQueuedRequests() => Queues.ValueOrDefault?.GetAllQueuedRequests() ?? new List<TrackedRequest>();
+            public static int TotalQueuedCount => Queues.ValueOrDefault?.TotalQueuedCount ?? 0;
+
+            public static void ClearModCooldown(string modId) => Queues.ValueOrDefault?.ClearCooldown(modId);
 
             /// <summary>Remaining cooldown ticks for a mod (0 when ready or when queue is unavailable).</summary>
             public static int GetModCooldownTicksLeft(string modId)
-                => RimMindRuntime.Instance.Queue?.GetCooldownTicksLeft(modId) ?? 0;
+                => Queues.ValueOrDefault?.GetCooldownTicksLeft(modId) ?? 0;
 
             /// <summary>Unified async request entry (callback style)</summary>
             public static void Send(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> onComplete)
@@ -46,32 +53,50 @@ namespace RimMind.Presentation.Api
             /// <summary>Unified async request entry (callback with context style)</summary>
             public static void Send(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>, LlmRequestContext> onComplete)
             {
-                if (RimMindRuntime.Instance.IsShutdown)
+                var scope = RuntimeServiceHub.Shared.Capture();
+                if (scope.Snapshot.State != RuntimeLifecycleState.Running)
                 {
                     onComplete?.Invoke(Result<LlmResponse, RimMindError>.Err(RimMindErrors.PipelineShortCircuited("shutdown")), null!);
                     return;
                 }
 
-                var client = Bus.GetClient();
+                var queue = scope.GetOptional<IAIRequestQueue>();
+                var clientManager = scope.GetOptional<IClientManager>();
+                var pipeline = scope.GetOptional<IPipeline<LlmRequestContext>>();
+                if (queue == null || clientManager == null || pipeline == null)
+                {
+                    onComplete?.Invoke(Result<LlmResponse, RimMindError>.Err(
+                        RimMindErrors.PipelineShortCircuited("runtime services unavailable")), null!);
+                    return;
+                }
+
+                var client = clientManager.GetClient();
                 if (client == null)
                 {
                     onComplete?.Invoke(Result<LlmResponse, RimMindError>.Err(RimMindErrors.ClientNotConfigured("No AI client available")), null!);
                     return;
                 }
 
-                var traceLog = RimMindRuntime.Instance.GetService<IAIRequestTraceLog>();
+                var traceLog = scope.GetOptional<IAIRequestTraceLog>();
+                var modelSettings = scope.GetOptional<IAIModelSettings>();
                 var elapsed = Stopwatch.StartNew();
                 traceLog?.StartRequest(
                     envelope.RequestId,
                     GetTraceSource(envelope),
-                    RimMindRuntime.Instance.GetService<IAIModelSettings>()?.ModelName ?? string.Empty,
+                    modelSettings?.ModelName ?? string.Empty,
                     BuildTracePrompt(envelope, "system"),
                     BuildTracePrompt(envelope, "user"),
                     BuildTracePrompt(envelope, "assistant"));
 
-                var executor = new QueuedPipelineRequestExecutor(RimMindRuntime.Instance.UnifiedPipeline, client, envelope);
-                RimMindRuntime.Instance.Queue.Enqueue(envelope, result =>
+                var executor = new QueuedPipelineRequestExecutor(pipeline, client, envelope);
+                queue.Enqueue(envelope, result =>
                 {
+                    if (!RuntimeServiceHub.Shared.IsCurrent(scope.Token))
+                    {
+                        RuntimeServiceHub.Shared.RecordStaleCompletion();
+                        return;
+                    }
+
                     elapsed.Stop();
                     if (result.IsOk)
                     {
@@ -90,8 +115,44 @@ namespace RimMind.Presentation.Api
             /// <summary>Unified async request entry (Task style)</summary>
             public static Task<Result<LlmResponse, RimMindError>> SendAsync(LlmRequestEnvelope envelope)
             {
-                var tcs = new TaskCompletionSource<Result<LlmResponse, RimMindError>>();
-                Send(envelope, result => tcs.SetResult(result));
+                var scope = RuntimeServiceHub.Shared.Capture();
+                var completionFence = scope.GetOptional<ICompletionFence>();
+                var tcs = new TaskCompletionSource<Result<LlmResponse, RimMindError>>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+                void CompleteCancelled() => tcs.TrySetResult(
+                    Result<LlmResponse, RimMindError>.Err(RimMindErrors.Cancelled()));
+
+                if (!RequestCancellationRegistrations.TryCreate(
+                        completionFence?.CancellationToken ?? CancellationToken.None,
+                        envelope.Ct,
+                        CompleteCancelled,
+                        out RequestCancellationRegistrations? cancellationRegistrations,
+                        out Exception? registrationFailure))
+                {
+                    RimMindError error = registrationFailure is ObjectDisposedException
+                        ? RimMindErrors.Cancelled()
+                        : RimMindErrors.Internal(
+                            "Failed to register request cancellation.",
+                            registrationFailure);
+                    return Task.FromResult(Result<LlmResponse, RimMindError>.Err(error));
+                }
+
+                try
+                {
+                    if (!tcs.Task.IsCompleted)
+                        Send(envelope, result => tcs.TrySetResult(result));
+                }
+                catch
+                {
+                    cancellationRegistrations.Dispose();
+                    throw;
+                }
+
+                _ = tcs.Task.ContinueWith(
+                    _ => cancellationRegistrations.Dispose(),
+                    CancellationToken.None,
+                    TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default);
                 return tcs.Task;
             }
 

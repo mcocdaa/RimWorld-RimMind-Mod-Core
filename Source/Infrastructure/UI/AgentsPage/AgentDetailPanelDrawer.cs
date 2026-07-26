@@ -5,6 +5,7 @@ using RimMind.Infrastructure.UI.DebugCenter;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
+using RimMind.Presentation.Runtime.Services;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -13,6 +14,9 @@ namespace RimMind.Infrastructure.UI.AgentsPage
 {
     public sealed class AgentDetailPanelDrawer
     {
+        private readonly RuntimeServiceRef<IAIRequestTraceLog> _traceLog =
+            RuntimeServiceRef<IAIRequestTraceLog>.Optional();
+
         public AgentPageViewModel? BuildViewModel(Pawn? selectedPawn)
         {
             if (selectedPawn == null)
@@ -147,9 +151,9 @@ namespace RimMind.Infrastructure.UI.AgentsPage
             agent.TransitionTo(target);
         }
 
-        private static System.Collections.Generic.IReadOnlyList<AgentRequestTraceRow> BuildTraceRows()
+        private System.Collections.Generic.IReadOnlyList<AgentRequestTraceRow> BuildTraceRows()
         {
-            var log = RimMindServiceLocator.TryGet<IAIRequestTraceLog>();
+            var log = _traceLog.ValueOrDefault;
             return AgentRequestTraceRowBuilder.BuildRecent(log?.Entries);
         }
     }

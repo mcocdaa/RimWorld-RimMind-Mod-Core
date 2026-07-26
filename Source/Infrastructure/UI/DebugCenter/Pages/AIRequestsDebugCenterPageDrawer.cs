@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces.Internal;
@@ -6,17 +7,19 @@ using RimMind.Infrastructure.UI.DebugTables;
 using RimMind.Infrastructure.UI.Framework;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
-    public sealed class AIRequestsDebugCenterPageDrawer : IDebugCenterPageDrawer
+    public sealed class AIRequestsDebugCenterPageDrawer : IRuntimeBoundDebugCenterPageDrawer
     {
         private readonly RimMindTableDrawer _tableDrawer = new();
-        private readonly IAIRequestTraceLog? _log;
+        private IAIRequestTraceLog? _log;
         private string? _selectedRequestId;
         private long _cachedRevision = long.MinValue;
+        private long _cachedGeneration = long.MinValue;
         private IReadOnlyList<AIRequestTraceEntry> _cachedEntries = System.Array.Empty<AIRequestTraceEntry>();
         private DebugTableModel? _cachedModel;
         private Vector2 _tableScrollPosition;
@@ -24,9 +27,23 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
         private sealed record DetailSection(string Title, string Body);
 
-        public AIRequestsDebugCenterPageDrawer(IAIRequestTraceLog? log)
+        public AIRequestsDebugCenterPageDrawer(IAIRequestTraceLog? log = null)
         {
             _log = log;
+        }
+
+        public IDisposable? Bind(RuntimeServiceScope scope)
+        {
+            IAIRequestTraceLog? log = scope.GetOptional<IAIRequestTraceLog>();
+            if (_cachedGeneration != scope.Generation || !ReferenceEquals(_log, log))
+            {
+                _log = log;
+                _cachedGeneration = scope.Generation;
+                _cachedRevision = long.MinValue;
+                _cachedEntries = Array.Empty<AIRequestTraceEntry>();
+                _cachedModel = null;
+            }
+            return null;
         }
 
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)

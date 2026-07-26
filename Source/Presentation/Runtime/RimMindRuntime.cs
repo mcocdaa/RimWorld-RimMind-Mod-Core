@@ -19,6 +19,7 @@ using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Registry;
+using RimMind.Presentation.Runtime.Composition;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
@@ -31,19 +32,13 @@ namespace RimMind.Presentation.Runtime
     /// </summary>
     public sealed class RimMindRuntime : IRimMindRuntime
     {
-        private static RimMindRuntime? _instance;
-        private static readonly object _initLock = new object();
-
-        public static RimMindRuntime Instance => _instance
-            ?? throw new InvalidOperationException("[RimMind-Core] RimMindRuntime not initialized. Call Initialize() first.");
-
         // Sub-managers (SRP decomposition)
         private readonly RimMindCompositionRoot.CompositionResult _composition;
         private readonly RimMindLifecycleManager _lifecycleManager;
         private readonly RimMindExtensionManager _extensionManager;
+        private readonly ExtensionRegistryCatalog _extensions;
 
         // Extension state (kept here for backward compatibility with public API)
-        private readonly ConcurrentDictionary<Type, object> _registries = new ConcurrentDictionary<Type, object>();
         private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners = new ConcurrentDictionary<string, IParameterTuner>();
 
         // Public properties — delegate to CompositionResult
@@ -73,69 +68,30 @@ namespace RimMind.Presentation.Runtime
         public IAgentActionBridge AgentActionBridge => _extensionManager.AgentActionBridge;
         public bool IsShutdown => _lifecycleManager.IsShutdown;
 
-        private RimMindRuntime(ISettingsProvider? settingsProvider, IOpenAISettings? openAISettings)
+        internal RimMindRuntime(
+            RimMindCompositionRoot.CompositionResult composition,
+            RimMindLifecycleManager lifecycleManager,
+            RimMindExtensionManager extensionManager,
+            ExtensionRegistryCatalog extensions)
         {
-            // Step 1: Compose all services (Composition Root)
-            var compositionRoot = new RimMindCompositionRoot();
-            _composition = compositionRoot.Compose(settingsProvider, openAISettings);
-
-            // Step 2: Create Lifecycle Manager
-            _lifecycleManager = new RimMindLifecycleManager(
-                _composition.Telemetry,
-                _composition.ContextEngine,
-                _composition.Player2Lifecycle,
-                _composition.AgentBus,
-                _composition.ContextKeyRegistry);
-
-            // Step 3: Create Extension Manager
-            _extensionManager = new RimMindExtensionManager(
-                _composition.LogSink,
-                _composition.TickProvider,
-                _composition.AgentBus);
-
-            // Step 4: Register runtime itself
-            RimMindServiceLocator.Register<IRimMindRuntime>(this);
-        }
-
-        public static void Initialize(ISettingsProvider? settingsProvider = null, IOpenAISettings? openAISettings = null)
-        {
-            lock (_initLock)
-            {
-                if (_instance != null) return;
-                _instance = new RimMindRuntime(settingsProvider, openAISettings);
-                _instance._extensionManager.RegisterBuiltinModes(_instance.GetExtensionRegistry<IAgentMode>());
-                Log.Message("[RimMind-Core] Runtime initialized");
-            }
+            _composition = composition ?? throw new ArgumentNullException(nameof(composition));
+            _lifecycleManager = lifecycleManager ?? throw new ArgumentNullException(nameof(lifecycleManager));
+            _extensionManager = extensionManager ?? throw new ArgumentNullException(nameof(extensionManager));
+            _extensions = extensions ?? throw new ArgumentNullException(nameof(extensions));
         }
 
         public void Shutdown() => _lifecycleManager.Shutdown();
 
+        public void Dispose() => Shutdown();
+
         public static void ResetInstance()
         {
-            lock (_initLock)
-            {
-                if (_instance != null)
-                {
-                    _instance._lifecycleManager.Shutdown();
-                    _instance._lifecycleManager.ResetState(
-                        _instance._registries,
-                        _instance._parameterTuners,
-                        _instance._extensionManager);
-                }
-                _instance = null;
-            }
+            RimMindRuntimeHost.Shutdown();
         }
 
         public IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension
         {
-            // Delegate to ServiceLocator to ensure single source of truth.
-            // Previously used _registries dict which created separate instances from CompositionRoot's SL,
-            // causing sub-Mod extensions to be invisible to Pipeline factories.
-            var existing = RimMindServiceLocator.TryGet<IExtensionRegistry<T>>();
-            if (existing != null) return existing;
-            var newRegistry = new ExtensionRegistry<T>();
-            RimMindServiceLocator.Register(newRegistry);
-            return newRegistry;
+            return _extensions.GetExtensionRegistry<T>();
         }
 
         public void AddMiddleware<TContext>(IMiddleware<TContext> middleware) where TContext : IPipelineContext
@@ -164,7 +120,5 @@ namespace RimMind.Presentation.Runtime
         public void InvalidateClientCache() => ClientManager.InvalidateCache();
         public IAIClient? GetPlayer2Client() => ClientManager.GetPlayer2Client();
         public ISettingsProvider? GetSettingsProvider() => _composition.SettingsProvider;
-
-        public T? GetService<T>() where T : class => RimMindServiceLocator.Get<T>();
     }
 }

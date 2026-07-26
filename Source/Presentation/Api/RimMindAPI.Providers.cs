@@ -1,6 +1,7 @@
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 using System.Collections.Generic;
 
@@ -10,14 +11,17 @@ namespace RimMind.Presentation.Api
     {
         public static class Providers
         {
+            private static readonly RuntimeServiceRef<IProviderRegistry> Registries =
+                RuntimeServiceRef<IProviderRegistry>.Required();
+
             public static Result<string?, RimMindError> GetProviderData(string category, Pawn pawn)
-                => RimMindRuntime.Instance.ProviderRegistry.GetProviderData(category, pawn);
+                => Registries.Value.GetProviderData(category, pawn);
 
             public static Result<string?, RimMindError> GetStaticProviderData(string category)
-                => RimMindRuntime.Instance.ProviderRegistry.GetStaticProviderData(category);
+                => Registries.Value.GetStaticProviderData(category);
 
             public static List<string> GetRegisteredCategories()
-                => RimMindRuntime.Instance.ProviderRegistry.GetRegisteredCategories();
+                => Registries.Value.GetRegisteredCategories();
         }
     }
 }

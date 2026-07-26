@@ -8,6 +8,7 @@ using RimMind.Infrastructure.UI;
 using RimMind.Presentation.Agent;
 using UnityEngine;
 using Verse;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Infrastructure.Verse
 {
@@ -26,6 +27,7 @@ namespace RimMind.Infrastructure.Verse
         private string? _registeredLoopKey;
         private int? _registeredPawnId;
         private long? _registeredLoopGeneration;
+        private long _agentRuntimeGeneration = -1;
 
         public IPawnAgentVerse? Agent
         {
@@ -41,24 +43,15 @@ namespace RimMind.Infrastructure.Verse
             }
         }
 
-        private IPawnAgentFactoryVerse? _cachedFactory;
-        private IAgentBus? _cachedAgentBus;
         private Texture2D? _agentIcon;
         private Texture2D? _agentDevIcon;
 
         private Pawn Pawn => (Pawn)parent;
 
-        // [Framework-Forced SL] Verse ThingComp requires parameterless constructor.
-        // Lazy-cached SL.Get is the only viable pattern; cannot use constructor injection.
-        private IPawnAgentFactoryVerse? GetFactory()
-            => _cachedFactory ??= RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
-
-        private IAgentBus? GetAgentBus()
-            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
-
         public override void CompTick()
         {
             base.CompTick();
+            EnsureCurrentAgent();
             EnsureAgentLoopRegistration();
         }
 
@@ -76,7 +69,7 @@ namespace RimMind.Infrastructure.Verse
                 return;
             }
 
-            var scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
+            var scheduler = RuntimeServiceHub.Shared.Capture().GetOptional<IAgentLoopScheduler>();
             if (scheduler == null)
             {
                 UnregisterFromAgentLoop();
@@ -131,12 +124,14 @@ namespace RimMind.Infrastructure.Verse
         public override void PostExposeData()
         {
             base.PostExposeData();
-            var factory = GetFactory();
+            var scope = RuntimeServiceHub.Shared.Capture();
+            var factory = scope.GetOptional<IPawnAgentFactoryVerse>();
             if (factory != null)
             {
                 IPawnAgent? pawnAgent = Agent;
                 factory.SerializeAgent(ref pawnAgent, "pawnAgent");
                 Agent = pawnAgent as IPawnAgentVerse;
+                _agentRuntimeGeneration = scope.Generation;
             }
 
             if (Agent != null && !Agent.IsPawnValid)
@@ -198,17 +193,27 @@ namespace RimMind.Infrastructure.Verse
 
         public bool EnsureAgentCreated()
         {
-            if (Agent != null) return true;
-            return CreateAgent();
+            EnsureCurrentAgent();
+            return Agent != null;
         }
 
-        private bool CreateAgent()
+        private void EnsureCurrentAgent()
         {
-            var factory = GetFactory();
-            var agentBus = GetAgentBus();
-            if (factory == null || agentBus == null) return false;
+            var scope = RuntimeServiceHub.Shared.Capture();
+            var factory = scope.GetOptional<IPawnAgentFactoryVerse>();
+            var agentBus = scope.GetOptional<IAgentBus>();
+            if (factory == null || agentBus == null) return;
+            if (Agent != null && _agentRuntimeGeneration == scope.Generation) return;
+
+            if (Agent != null)
+            {
+                UnregisterFromAgentLoop();
+                Agent.Destroy();
+                Agent = null;
+            }
+
             Agent = factory.Create(Pawn, agentBus) as IPawnAgentVerse;
-            return Agent != null;
+            _agentRuntimeGeneration = scope.Generation;
         }
 
     }

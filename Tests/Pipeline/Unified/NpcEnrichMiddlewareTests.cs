@@ -33,6 +33,12 @@ namespace RimMind.Tests.Pipeline.Unified
         public string GetMapNpcId(object map) => "";
     }
 
+    internal sealed class StubNpcManagerAccessor : INpcManagerAccessor
+    {
+        public StubNpcManagerAccessor(INpcManager current) => Current = current;
+        public INpcManager? Current { get; }
+    }
+
     public class NpcEnrichMiddlewareTests
     {
         [Fact]
@@ -68,7 +74,8 @@ namespace RimMind.Tests.Pipeline.Unified
                 IsAliveResult = false,
                 ProfileResult = profile,
             };
-            var middleware = new NpcEnrichMiddleware(npcManager: npcManager);
+            var middleware = new NpcEnrichMiddleware(
+                npcManagers: new StubNpcManagerAccessor(npcManager));
             var context = new LlmRequestContext
             {
                 Envelope = new LlmRequestEnvelope
@@ -93,7 +100,8 @@ namespace RimMind.Tests.Pipeline.Unified
                 IsAliveResult = false,
                 ProfileResult = null,
             };
-            var middleware = new NpcEnrichMiddleware(npcManager: npcManager);
+            var middleware = new NpcEnrichMiddleware(
+                npcManagers: new StubNpcManagerAccessor(npcManager));
             var context = new LlmRequestContext
             {
                 Envelope = new LlmRequestEnvelope
@@ -119,7 +127,8 @@ namespace RimMind.Tests.Pipeline.Unified
                 IsAliveResult = true,
                 ProfileResult = profile,
             };
-            var middleware = new NpcEnrichMiddleware(npcManager: npcManager);
+            var middleware = new NpcEnrichMiddleware(
+                npcManagers: new StubNpcManagerAccessor(npcManager));
             var context = new LlmRequestContext
             {
                 Envelope = new LlmRequestEnvelope

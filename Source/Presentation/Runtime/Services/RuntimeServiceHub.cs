@@ -72,7 +72,10 @@ namespace RimMind.Presentation.Runtime.Services
             return new RuntimeServiceScope(Volatile.Read(ref _state).Snapshot);
         }
 
-        public RuntimePublication Publish(RuntimeServiceSnapshot snapshot, RuntimeLifetime lifetime)
+        public RuntimePublication Publish(
+            RuntimeServiceSnapshot snapshot,
+            RuntimeLifetime lifetime,
+            bool retireReplacedLifetime = true)
         {
             if (snapshot == null)
             {
@@ -113,7 +116,10 @@ namespace RimMind.Presentation.Runtime.Services
                 Volatile.Write(ref _state, current);
             }
 
-            retired.Lifetime?.Retire();
+            if (retireReplacedLifetime)
+            {
+                retired.Lifetime?.Retire();
+            }
             return new RuntimePublication(
                 current.Snapshot,
                 current.Lifetime,
@@ -121,7 +127,7 @@ namespace RimMind.Presentation.Runtime.Services
                 retired.Lifetime);
         }
 
-        public RuntimePublication Stop()
+        public RuntimePublication Stop(bool retireReplacedLifetime = true)
         {
             RuntimeHubState retired;
             RuntimeHubState current;
@@ -142,7 +148,10 @@ namespace RimMind.Presentation.Runtime.Services
                 Volatile.Write(ref _state, current);
             }
 
-            retired.Lifetime?.Retire();
+            if (retireReplacedLifetime)
+            {
+                retired.Lifetime?.Retire();
+            }
             return new RuntimePublication(
                 current.Snapshot,
                 null,

@@ -3,6 +3,7 @@ using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Api
 {
@@ -15,6 +16,14 @@ namespace RimMind.Presentation.Api
         /// </summary>
         public static class Context
         {
+            private static readonly RuntimeServiceRef<IContextKeyRegistry> ContextKeyRegistries =
+                RuntimeServiceRef<IContextKeyRegistry>.Required();
+            private static readonly RuntimeServiceRef<IRelevanceTable> RelevanceTables =
+                RuntimeServiceRef<IRelevanceTable>.Required();
+            private static readonly RuntimeServiceRef<IRelevanceLearner> ContextLearners =
+                RuntimeServiceRef<IRelevanceLearner>.Required();
+            private static readonly RuntimeServiceRef<SchemaRegistry> SchemaRegistries =
+                RuntimeServiceRef<SchemaRegistry>.Required();
             // ── ScenarioIds ──
 
             public static string ScenarioDialogue => ScenarioIds.Dialogue;
@@ -39,14 +48,13 @@ namespace RimMind.Presentation.Api
 
             // ── ContextKeyRegistry (instance-based via RimMindRuntime) ──
 
-            public static IContextKeyRegistry ContextKeys => RimMindRuntime.Instance.ContextKeys;
-            public static IRelevanceTable RelevanceTable => RimMindRuntime.Instance.RelevanceTable;
-            public static IRelevanceLearner ContextLearner => RimMindRuntime.Instance.ContextLearner;
+            public static IContextKeyRegistry ContextKeys => ContextKeyRegistries.Value;
+            public static IRelevanceTable RelevanceTable => RelevanceTables.Value;
+            public static IRelevanceLearner ContextLearner => ContextLearners.Value;
 
             // ── SchemaRegistry ──
 
-            private static SchemaRegistry Schemas => RimMindRuntime.Instance.GetService<SchemaRegistry>()
-                ?? throw new System.InvalidOperationException("[RimMind-Core] SchemaRegistry is not registered.");
+            private static SchemaRegistry Schemas => SchemaRegistries.Value;
 
             public static string SchemaPersonalityOutput
                 => Schemas.PersonalityOutput;

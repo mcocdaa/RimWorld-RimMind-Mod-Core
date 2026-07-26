@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Helpers;
@@ -61,8 +62,8 @@ namespace RimMind.Application.Features.Queue
     {
         private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;
 
-        private readonly ConcurrentQueue<(Result<LlmResponse, RimMindError> result, Action<Result<LlmResponse, RimMindError>> callback)> _results
-            = new ConcurrentQueue<(Result<LlmResponse, RimMindError>, Action<Result<LlmResponse, RimMindError>>)>();
+        private readonly ConcurrentQueue<PendingCompletion> _results
+            = new ConcurrentQueue<PendingCompletion>();
         private readonly ConcurrentQueue<(string msg, bool isWarning)> _pendingLogs
             = new ConcurrentQueue<(string, bool)>();
 
@@ -77,6 +78,7 @@ namespace RimMind.Application.Features.Queue
         private readonly QueueCircuitBreaker _circuitBreaker;
 
         private readonly ILogSink? _logSink;
+        private readonly ICompletionFence _completionFence;
 
         private ILogSink? LogSink => _logSink;
 
@@ -96,10 +98,14 @@ namespace RimMind.Application.Features.Queue
 
         private int QueueProcessInterval => Settings.QueueProcessInterval;
 
-        public AIRequestQueueImpl(Func<ISettingsProvider?>? settingsFactory = null, ILogSink? logSink = null)
+        public AIRequestQueueImpl(
+            Func<ISettingsProvider?>? settingsFactory = null,
+            ILogSink? logSink = null,
+            ICompletionFence? completionFence = null)
         {
             _settingsFactory = settingsFactory;
             _logSink = logSink;
+            _completionFence = completionFence ?? UnboundedCompletionFence.Instance;
             _circuitBreaker = new QueueCircuitBreaker(Settings, logSink);
         }
 
@@ -108,7 +114,9 @@ namespace RimMind.Application.Features.Queue
             while (_pendingLogs.TryDequeue(out var log)) { LogHandler?.Invoke(log.msg, log.isWarning); }
             while (_results.TryDequeue(out var item))
             {
-                try { item.callback?.Invoke(item.result); }
+                var accepted = item.CompletionFence.TryAcceptCompletion();
+                if (!accepted || item.GenerationToken.IsCancellationRequested) continue;
+                try { item.Callback?.Invoke(item.Result); }
                 catch (Exception ex) { LogHandler?.Invoke($"[RimMind-Core] Callback exception: {ex}", true); }
             }
             CheckActiveRequestTimeouts();
@@ -125,7 +133,7 @@ namespace RimMind.Application.Features.Queue
                 {
                     var errResult = Result<LlmResponse, RimMindError>.Err(
                         new RimMindError(RimMindErrorCode.Cancelled, "Queue reset"));
-                    _results.Enqueue((errResult, kvp.Value.Callback));
+                    EnqueueCompletion(kvp.Value, errResult);
                 }
                 ClearAllQueues();
                 _activeRequests.Clear();
@@ -161,7 +169,11 @@ namespace RimMind.Application.Features.Queue
         }
 
         public void Enqueue(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> callback, IAIClient client)
-            => Enqueue(envelope, callback, _ => client.SendAsync(envelope), client.IsLocalEndpoint);
+            => Enqueue(
+                envelope,
+                callback,
+                ct => client.SendAsync(CloneWithCancellationToken(envelope, ct)),
+                client.IsLocalEndpoint);
 
         public void Enqueue(
             LlmRequestEnvelope envelope,
@@ -201,7 +213,8 @@ namespace RimMind.Application.Features.Queue
                 int trackingId = _nextTrackingId++;
                 var tracked = new TrackedRequest
                 {
-                    TrackingId = trackingId, Envelope = envelope, Callback = callback, Executor = _ => client.SendAsync(envelope), Client = client,
+                    TrackingId = trackingId, Envelope = envelope, Callback = callback,
+                    Executor = ct => client.SendAsync(CloneWithCancellationToken(envelope, ct)), Client = client,
                     IsLocalEndpointSnapshot = client.IsLocalEndpoint, State = AIRequestState.Processing,
                     EnqueuedAtTick = CurrentTick, StartedProcessingAtTick = CurrentTick, AttemptCount = 1, MaxAttempts = 1,
                 };
@@ -272,7 +285,10 @@ namespace RimMind.Application.Features.Queue
 
         private void FireRequest(TrackedRequest tracked)
         {
-            tracked.CancellationSource = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, tracked.Envelope.Ct);
+            tracked.CancellationSource = CancellationTokenSource.CreateLinkedTokenSource(
+                _cts.Token,
+                tracked.Envelope.Ct,
+                _completionFence.CancellationToken);
             var ct = tracked.CancellationSource.Token;
             Task.Run(async () =>
             {
@@ -301,13 +317,25 @@ namespace RimMind.Application.Features.Queue
         private void Complete(TrackedRequest tracked, Result<LlmResponse, RimMindError> result)
         {
             if (Interlocked.Exchange(ref tracked.CompletionQueued, 1) != 0) return;
+            if (!_completionFence.TryAcceptCompletion()) return;
             lock (_queueLock)
             {
                 if (_activeRequests.TryRemove(tracked.TrackingId, out _) && tracked.IsLocalEndpointSnapshot)
                     _isProcessingLocalRequest = false;
                 _requestIdToActive.TryRemove(tracked.Envelope.RequestId, out _);
             }
-            _results.Enqueue((result, tracked.Callback));
+            EnqueueCompletion(tracked, result);
+        }
+
+        private void EnqueueCompletion(
+            TrackedRequest tracked,
+            Result<LlmResponse, RimMindError> result)
+        {
+            _results.Enqueue(new PendingCompletion(
+                result,
+                tracked.Callback,
+                _completionFence,
+                _completionFence.CancellationToken));
         }
 
         private void CheckActiveRequestTimeouts()
@@ -374,5 +402,63 @@ namespace RimMind.Application.Features.Queue
         public void EnqueueLog(string msg, bool isWarning = false) => _pendingLogs.Enqueue((msg, isWarning));
         public void LogFromBackground(string msg, bool isWarning = false) => EnqueueLog(msg, isWarning);
         internal CancellationTokenSource GetCts() => _cts;
+
+        private static LlmRequestEnvelope CloneWithCancellationToken(
+            LlmRequestEnvelope envelope,
+            CancellationToken cancellationToken)
+        {
+            return new LlmRequestEnvelope
+            {
+                RequestId = envelope.RequestId,
+                TraceId = envelope.TraceId,
+                ScenarioId = envelope.ScenarioId,
+                ModId = envelope.ModId,
+                Messages = envelope.Messages,
+                SystemAugmentations = envelope.SystemAugmentations,
+                JsonSchema = envelope.JsonSchema,
+                Tools = envelope.Tools,
+                ToolDispatchMode = envelope.ToolDispatchMode,
+                Examples = envelope.Examples,
+                MaxTokens = envelope.MaxTokens,
+                Temperature = envelope.Temperature,
+                Priority = envelope.Priority,
+                ExpireAtTicks = envelope.ExpireAtTicks,
+                MaxRetryCount = envelope.MaxRetryCount,
+                IsStreaming = envelope.IsStreaming,
+                OnStreamChunk = envelope.OnStreamChunk,
+                Ct = cancellationToken,
+                NpcId = envelope.NpcId,
+                GameStateInfo = envelope.GameStateInfo
+            };
+        }
+
+        private readonly struct PendingCompletion
+        {
+            public PendingCompletion(
+                Result<LlmResponse, RimMindError> result,
+                Action<Result<LlmResponse, RimMindError>> callback,
+                ICompletionFence completionFence,
+                CancellationToken generationToken)
+            {
+                Result = result;
+                Callback = callback;
+                CompletionFence = completionFence;
+                GenerationToken = generationToken;
+            }
+
+            public Result<LlmResponse, RimMindError> Result { get; }
+            public Action<Result<LlmResponse, RimMindError>> Callback { get; }
+            public ICompletionFence CompletionFence { get; }
+            public CancellationToken GenerationToken { get; }
+        }
+
+        private sealed class UnboundedCompletionFence : ICompletionFence
+        {
+            public static readonly UnboundedCompletionFence Instance = new UnboundedCompletionFence();
+
+            public CancellationToken CancellationToken => CancellationToken.None;
+
+            public bool TryAcceptCompletion() => true;
+        }
     }
 }

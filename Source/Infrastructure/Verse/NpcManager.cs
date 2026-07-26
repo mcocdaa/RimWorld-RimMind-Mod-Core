@@ -6,6 +6,7 @@ using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.Events;
+using RimMind.Presentation.Runtime.Services;
 
 using Verse;
 
@@ -16,26 +17,22 @@ namespace RimMind.Infrastructure.Verse
         private ConcurrentDictionary<string, NpcProfile> _registry = new ConcurrentDictionary<string, NpcProfile>();
         private readonly ConcurrentDictionary<int, Pawn> _pawnIndex = new ConcurrentDictionary<int, Pawn>();
         private readonly HashSet<int> _activeAgentPawnIds = new HashSet<int>();
-        private IAgentBus? _cachedAgentBus;
+        private readonly RuntimeServiceRef<IAgentBus> _agentBus = RuntimeServiceRef<IAgentBus>.Optional();
+        private static readonly GameServiceRef<INpcManager> CurrentManager = GameServiceRef<INpcManager>.Optional();
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
         private IAgentBus? GetAgentBus()
-            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
+            => _agentBus.ValueOrDefault;
 
         // [Framework-Forced SL] Static accessor for Verse-instantiated GameComponent.
         public static INpcManager? Instance
         {
-            get => RimMindServiceLocator.Get<INpcManager>();
+            get => CurrentManager.ValueOrDefault;
         }
 
-        public NpcManager(Game game) : base()
-        {
-            RimMindServiceLocator.Register<INpcManager>(this);
-        }
+        public NpcManager(Game game) : base() { }
 
         public override void LoadedGame()
         {
-            RimMindServiceLocator.Register<INpcManager>(this);
             _pawnIndex.Clear();
         }
 
@@ -175,8 +172,6 @@ namespace RimMind.Infrastructure.Verse
                         _registry[kv.Key] = kv.Value;
             }
             _registry ??= new ConcurrentDictionary<string, NpcProfile>();
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                RimMindServiceLocator.Register<INpcManager>(this);
         }
     }
 }

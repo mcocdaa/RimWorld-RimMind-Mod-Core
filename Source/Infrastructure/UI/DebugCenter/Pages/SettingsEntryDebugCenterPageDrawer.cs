@@ -1,4 +1,6 @@
+using System;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
 using UnityEngine;
@@ -6,8 +8,16 @@ using Verse;
 
 namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
-    public sealed class SettingsEntryDebugCenterPageDrawer : IDebugCenterPageDrawer
+    public sealed class SettingsEntryDebugCenterPageDrawer : IRuntimeBoundDebugCenterPageDrawer
     {
+        private ISettingsProvider? _settingsProvider;
+
+        public IDisposable? Bind(RuntimeServiceScope scope)
+        {
+            _settingsProvider = scope.GetOptional<ISettingsProvider>();
+            return null;
+        }
+
         public void Draw(Rect rect, DebugCenterPageContext context, RimMindLayoutScope scope)
         {
             scope.Record(rect, "Hub:SettingsEntry");
@@ -30,12 +40,11 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             }
         }
 
-        private static void OpenSettings()
+        private void OpenSettings()
         {
-            var settingsProvider = RimMindServiceLocator.Get<ISettingsProvider>();
-            if (settingsProvider != null)
+            if (_settingsProvider != null)
             {
-                Find.WindowStack.Add(new Window_RimMindSettings(settingsProvider));
+                Find.WindowStack.Add(new Window_RimMindSettings(_settingsProvider));
             }
         }
     }

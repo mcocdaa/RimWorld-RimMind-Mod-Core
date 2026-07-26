@@ -8,13 +8,24 @@ namespace RimMind.Infrastructure.UI.DebugTables
 {
     public sealed class ToolCallsDebugTableModelBuilder : IDebugTableModelBuilder
     {
-        private readonly IAIRequestTraceLog? _log;
+        private IAIRequestTraceLog? _log;
+        private long _cachedGeneration = long.MinValue;
         private long _cachedRevision = long.MinValue;
         private DebugTableModel? _cachedModel;
 
-        public ToolCallsDebugTableModelBuilder(IAIRequestTraceLog? log)
+        public ToolCallsDebugTableModelBuilder(IAIRequestTraceLog? log = null)
         {
             _log = log;
+        }
+
+        public void Bind(IAIRequestTraceLog? log, long generation)
+        {
+            if (_cachedGeneration == generation && ReferenceEquals(_log, log))
+                return;
+            _log = log;
+            _cachedGeneration = generation;
+            _cachedRevision = long.MinValue;
+            _cachedModel = null;
         }
 
         public DebugTableModel Build()

@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;
@@ -13,24 +14,31 @@ namespace RimMind.Presentation.UI
 {
     public static class RimMindCoreSettingsUI
     {
-        private static IExtensionRegistry<ISettingsTab>? _cachedSettingsTabRegistry;
+        private static readonly RuntimeServiceRef<IExtensionRegistry<ISettingsTab>> SettingsTabRegistry =
+            RuntimeServiceRef<IExtensionRegistry<ISettingsTab>>.Optional();
 
         private static IExtensionRegistry<ISettingsTab>? GetSettingsTabRegistry()
-            => _cachedSettingsTabRegistry ??= RimMindRuntime.Instance.GetService<IExtensionRegistry<ISettingsTab>>();
+            => SettingsTabRegistry.ValueOrDefault;
 
         private static string _curTab = "api";
 
         public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
         {
-            var tabs = CollectTabs();
+            var settingsTabRegistry = GetSettingsTabRegistry();
+            EnsureCurrentTab(settingsTabRegistry);
+            var tabs = CollectTabs(settingsTabRegistry);
             var layout = TabbedPageLayout.Calculate(inRect, tabs);
             scope?.Record(layout.TabBar, "Settings:TabBar");
             scope?.Record(layout.Content, "Settings:Content");
             DrawTabBar(layout, tabs, scope);
-            DrawCurrentSettingsPage(layout.Content, settings, scope);
+            DrawCurrentSettingsPage(layout.Content, settings, settingsTabRegistry, scope);
         }
 
-        private static void DrawCurrentSettingsPage(Rect content, ISettingsProvider settings, RimMindLayoutScope? scope)
+        private static void DrawCurrentSettingsPage(
+            Rect content,
+            ISettingsProvider settings,
+            IExtensionRegistry<ISettingsTab>? settingsTabRegistry,
+            RimMindLayoutScope? scope)
         {
             switch (_curTab)
             {
@@ -39,7 +47,6 @@ namespace RimMind.Presentation.UI
                 case "context": ContextTabDrawer.Draw(content, settings, scope); break;
                 case "prompts": PromptsTabDrawer.Draw(content, settings, scope); break;
                 default:
-                    var settingsTabRegistry = GetSettingsTabRegistry();
                     if (settingsTabRegistry != null)
                         foreach (var tab in settingsTabRegistry.All)
                             if (tab.Id == _curTab) { tab.Draw(content); break; }
@@ -47,7 +54,8 @@ namespace RimMind.Presentation.UI
             }
         }
 
-        private static List<TabbedPageTabModel> CollectTabs()
+        private static List<TabbedPageTabModel> CollectTabs(
+            IExtensionRegistry<ISettingsTab>? settingsTabRegistry)
         {
             var tabs = new List<TabbedPageTabModel>
             {
@@ -56,11 +64,27 @@ namespace RimMind.Presentation.UI
                 CreateTab("prompts", "RimMind.Settings.Tab.Prompts"),
                 CreateTab("context", "RimMind.Settings.Tab.Context"),
             };
-            var settingsTabRegistry = GetSettingsTabRegistry();
             if (settingsTabRegistry != null)
                 foreach (var tab in settingsTabRegistry.All)
                     tabs.Add(new TabbedPageTabModel(tab.Id, tab.Label, tab.Id, _curTab == tab.Id, true, null));
             return tabs;
+        }
+
+        private static void EnsureCurrentTab(IExtensionRegistry<ISettingsTab>? settingsTabRegistry)
+        {
+            if (_curTab == "api" || _curTab == "queue" || _curTab == "prompts" || _curTab == "context")
+                return;
+
+            if (settingsTabRegistry != null)
+            {
+                foreach (var tab in settingsTabRegistry.All)
+                {
+                    if (tab.Id == _curTab)
+                        return;
+                }
+            }
+
+            _curTab = "api";
         }
 
         private static TabbedPageTabModel CreateTab(string id, string labelKey)

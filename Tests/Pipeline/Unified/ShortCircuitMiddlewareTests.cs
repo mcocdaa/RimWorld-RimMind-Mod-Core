@@ -13,9 +13,9 @@ namespace RimMind.Tests.Pipeline.Unified
     internal sealed class StubRuntime : IRimMindRuntime
     {
         public bool IsShutdown { get; set; }
-        public T? GetService<T>() where T : class => null;
         public void AddMiddleware<TContext>(IMiddleware<TContext> middleware) where TContext : IPipelineContext { }
         public IExtensionRegistry<T> GetExtensionRegistry<T>() where T : class, IExtension => throw new NotImplementedException();
+        public void Dispose() { }
     }
 
     public class ShortCircuitMiddlewareTests

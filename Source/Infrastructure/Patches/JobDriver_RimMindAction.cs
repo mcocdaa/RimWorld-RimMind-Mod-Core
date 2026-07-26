@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
+using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Agent;
@@ -10,22 +11,12 @@ using RimMind.Application.Common.Interfaces.Internal;
 using Verse;
 using Verse.AI;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Infrastructure.Patches
 {
     public class JobDriver_RimMindAction : JobDriver
     {
-        private static IAgentActionBridge? _cachedBridge;
-        private static IAgentBus? _cachedAgentBus;
-
-        // [Framework-Forced SL] Verse JobDriver requires parameterless constructor.
-        // Lazy-cached SL.Get is the only viable pattern; cannot use constructor injection.
-        private static IAgentActionBridge? GetBridge()
-            => _cachedBridge ??= RimMindServiceLocator.Get<IAgentActionBridge>();
-
-        private static IAgentBus? GetAgentBus()
-            => _cachedAgentBus ??= RimMindServiceLocator.Get<IAgentBus>();
-
         private string ActionId => job.def.defName == "RimMind_GenericAction" ? (job.GetTarget(TargetIndex.A).Thing as Pawn)?.LabelShortCap ?? "unknown" : job.def.defName;
         private string EventId => job.loadID.ToString("x8");
 
@@ -46,7 +37,10 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                var bridge = GetBridge();
+                var scope = RuntimeServiceHub.Shared.Capture();
+                var bridgeAccessor = scope.GetOptional<IAgentActionBridgeAccessor>();
+                var agentBus = scope.GetOptional<IAgentBus>();
+                var bridge = bridgeAccessor?.Current;
                 if (bridge == null)
                 {
                     EndJobWith(JobCondition.Incompletable);
@@ -75,7 +69,7 @@ namespace RimMind.Infrastructure.Patches
                     return;
                 }
 
-                GetAgentBus()?.Publish(new DecisionEvent(
+                agentBus?.Publish(new DecisionEvent(
                     $"NPC-{pawn.thingIDNumber}",
                     pawn.thingIDNumber,
                     "job_driven",

@@ -23,6 +23,7 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
 using RimMind.Infrastructure.UI.AgentFlow;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.Agent;
 using RimMind.Presentation.Api;
 using UnityEngine;
@@ -72,6 +73,7 @@ namespace RimMind.Infrastructure.UI
         private ContextSnapshot? _lastSnapshot;
         private readonly AgentFlowAsyncCoordinator _asyncCoordinator = new();
         private string _requestStatus = "";
+        private RuntimeGenerationToken? _liveRequestToken;
         private string _lastError = "";
         private string _lastDecisionInfo = "";
         private string _mappedMechanismsInfo = "";
@@ -142,6 +144,7 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            CompleteStaleLiveRequest();
             CompleteMechanismExecution();
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -302,8 +305,9 @@ namespace RimMind.Infrastructure.UI
 
             if (_scopedAgent == null)
             {
-                var manager = RimMindServiceLocator.Get<IScopedAgentManager>();
-                var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                var manager = runtimeScope.GetOptional<IScopedAgentManager>();
+                var agentBus = runtimeScope.GetOptional<IAgentBus>();
                 if (manager != null && agentBus != null)
                 {
                     string scopeType = _selectedScope.ToString();
@@ -458,8 +462,9 @@ namespace RimMind.Infrastructure.UI
                         }
                         else
                         {
-                            var factory = RimMindServiceLocator.Get<IPawnAgentFactoryVerse>();
-                            var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+                            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                            var factory = runtimeScope.GetOptional<IPawnAgentFactoryVerse>();
+                            var agentBus = runtimeScope.GetOptional<IAgentBus>();
                             if (factory != null && agentBus != null)
                             {
                                 var pawnAgent = factory.Create(_selectedPawn, agentBus);
@@ -510,14 +515,16 @@ namespace RimMind.Infrastructure.UI
                     try
                     {
                         SetStepStatus(FlowLabStep.BuildContext, StepStatus.Active);
-                        var contextEngine = RimMindServiceLocator.Get<IContextEngine>() as IContextBuilder;
+                        RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                        var contextEngine = runtimeScope.GetOptional<IContextEngine>() as IContextBuilder;
                         if (contextEngine != null)
                         {
                             string npcId = $"NPC-{_selectedPawn.thingIDNumber}";
                             _lastSnapshot = null;
                             _lastError = string.Empty;
                             _asyncCoordinator.BeginContextBuild(
-                                contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[AgentFlowLab] Build context"));
+                                contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[AgentFlowLab] Build context"),
+                                runtimeScope.Token);
                         }
                         else
                         {
@@ -582,7 +589,11 @@ namespace RimMind.Infrastructure.UI
                 return;
 
             Rect sendBtn = new Rect(Padding, y, 180f, BtnHeight);
-            if (Widgets.ButtonText(sendBtn, "RimMind.UI.AgentFlowLab.SendTestRequest".Translate()))
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = wasEnabled && !_liveRequestToken.HasValue;
+            bool sendClicked = Widgets.ButtonText(sendBtn, "RimMind.UI.AgentFlowLab.SendTestRequest".Translate());
+            GUI.enabled = wasEnabled;
+            if (sendClicked)
             {
                 if (_selectedPawn != null)
                 {
@@ -608,6 +619,7 @@ namespace RimMind.Infrastructure.UI
                     }
                     catch (Exception ex)
                     {
+                        _liveRequestToken = null;
                         _requestStatus = "Failed";
                         _lastError = $"SendRequest: {ex.Message}";
                         SetStepStatus(FlowLabStep.SendRequest, StepStatus.Failed);
@@ -668,7 +680,7 @@ namespace RimMind.Infrastructure.UI
 
             if (!string.IsNullOrEmpty(error))
             {
-                _lastError = $"BuildContext: {error}";
+                _lastError = $"BuildContext: {LocalizeAsyncError(error)}";
                 SetStepStatus(FlowLabStep.BuildContext, StepStatus.Failed);
                 return;
             }
@@ -686,7 +698,8 @@ namespace RimMind.Infrastructure.UI
 
         private void HandleLiveRequest()
         {
-            var settings = RimMindServiceLocator.Get<ISettingsProvider>();
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var settings = runtimeScope.GetOptional<ISettingsProvider>();
             if (settings == null || !settings.IsConfigured)
             {
                 _requestStatus = "NotConfigured";
@@ -695,6 +708,8 @@ namespace RimMind.Infrastructure.UI
                 return;
             }
 
+            RuntimeGenerationToken runtimeToken = runtimeScope.Token;
+            _liveRequestToken = runtimeToken;
             _requestStatus = "Pending";
 
             string npcId = $"NPC-{_selectedPawn!.thingIDNumber}";
@@ -714,6 +729,9 @@ namespace RimMind.Infrastructure.UI
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
+                    if (!TryAcceptLiveRequest(runtimeToken))
+                        return;
+                    _liveRequestToken = null;
                     if (result.IsOk)
                     {
                         _requestStatus = "Completed";
@@ -754,6 +772,30 @@ namespace RimMind.Infrastructure.UI
                     }
                 });
             });
+        }
+
+        private void CompleteStaleLiveRequest()
+        {
+            RuntimeGenerationToken? token = _liveRequestToken;
+            if (!token.HasValue || RuntimeServiceHub.Shared.IsCurrent(token.Value))
+                return;
+
+            _liveRequestToken = null;
+            RuntimeServiceHub.Shared.RecordStaleCompletion();
+            _requestStatus = "RimMind.UI.Lifecycle.StaleCompletion".Translate();
+            _lastError = _requestStatus;
+            SetStepStatus(FlowLabStep.SendRequest, StepStatus.Failed);
+        }
+
+        private bool TryAcceptLiveRequest(RuntimeGenerationToken token)
+        {
+            if (!_liveRequestToken.HasValue || _liveRequestToken.Value != token)
+                return false;
+            if (RuntimeServiceHub.Shared.IsCurrent(token))
+                return true;
+
+            CompleteStaleLiveRequest();
+            return false;
         }
 
         private void DrawDecisionParsing(ref float y, float w)
@@ -878,7 +920,8 @@ namespace RimMind.Infrastructure.UI
                                     return;
                                 }
 
-                                var mechanismRegistry = RimMindServiceLocator.Get<IGameMechanismRegistry>();
+                                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                                var mechanismRegistry = runtimeScope.GetOptional<IGameMechanismRegistry>();
                                 if (mechanismRegistry == null)
                                 {
                                     _lastError = "RimMind.UI.AgentFlowLab.ExecuteNoRegistry".Translate();
@@ -896,7 +939,8 @@ namespace RimMind.Infrastructure.UI
                                             _selectedScope.ToString(),
                                             GetCurrentTargetId(),
                                             targetMech.MechanismId,
-                                            _lastOperationType));
+                                            _lastOperationType),
+                                        runtimeScope.Token);
                                 }
                                 else
                                 {
@@ -938,7 +982,7 @@ namespace RimMind.Infrastructure.UI
 
             try
             {
-                var queue = RimMindServiceLocator.Get<IAIRequestQueue>();
+                var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IAIRequestQueue>();
                 if (queue != null)
                 {
                     var sb = new StringBuilder();
@@ -1063,9 +1107,10 @@ namespace RimMind.Infrastructure.UI
             _dryRunCompleted = false;
             _lastWriteArgs = null;
 
-            var mechanismRegistry = RimMindServiceLocator.Get<IGameMechanismRegistry>();
-            var toolRegistry = RimMindServiceLocator.Get<IToolRegistry>();
-            var approvalGate = RimMindServiceLocator.Get<IHumanApprovalGate>();
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var mechanismRegistry = runtimeScope.GetOptional<IGameMechanismRegistry>();
+            var toolRegistry = runtimeScope.GetOptional<IToolRegistry>();
+            var approvalGate = runtimeScope.GetOptional<IHumanApprovalGate>();
 
             if (mechanismRegistry == null)
             {
@@ -1160,7 +1205,7 @@ namespace RimMind.Infrastructure.UI
 
                 if (toolRegistry != null)
                 {
-                    var validator = RimMindServiceLocator.Get<IDecisionValidator>();
+                    var validator = RuntimeServiceHub.Shared.Capture().GetOptional<IDecisionValidator>();
                     if (validator != null)
                     {
                         var validationResult = validator.Validate(_lastDecision, toolRegistry);
@@ -1201,14 +1246,15 @@ namespace RimMind.Infrastructure.UI
             var execution = completion!;
             if (execution.Context.TargetGeneration != _targetGeneration)
             {
-                _lastError = $"Execute {execution.Context.Operation} result ignored for stale " +
-                    $"{execution.Context.Scope}:{execution.Context.TargetId}; target changed.";
+                _lastError = $"{ "RimMind.UI.Lifecycle.StaleCompletion".Translate()} " +
+                    $"({execution.Context.Scope}:{execution.Context.TargetId})";
+                SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
                 return;
             }
 
             if (!string.IsNullOrEmpty(execution.Error))
             {
-                _lastError = $"ExecuteMechanism: {execution.Error}";
+                _lastError = $"ExecuteMechanism: {LocalizeAsyncError(execution.Error)}";
                 SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
                 return;
             }
@@ -1223,6 +1269,11 @@ namespace RimMind.Infrastructure.UI
             _lastError = execution.Result.Value.Error.Message;
             SetStepStatus(FlowLabStep.Execute, StepStatus.Failed);
         }
+
+        private static string LocalizeAsyncError(string error)
+            => error == AgentFlowAsyncCoordinator.StaleCompletionTranslationKey
+                ? "RimMind.UI.Lifecycle.StaleCompletion".Translate()
+                : error;
 
         private void InvalidateCurrentTarget()
         {

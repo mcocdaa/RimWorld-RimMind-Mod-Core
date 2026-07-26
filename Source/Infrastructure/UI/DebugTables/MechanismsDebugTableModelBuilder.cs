@@ -7,15 +7,26 @@ namespace RimMind.Infrastructure.UI.DebugTables
 {
     public sealed class MechanismsDebugTableModelBuilder : IDebugTableModelBuilder
     {
-        private readonly IGameMechanismRegistry? _registry;
+        private IGameMechanismRegistry? _registry;
+        private long _cachedGeneration = long.MinValue;
+        private DebugTableModel? _cachedModel;
 
-        public MechanismsDebugTableModelBuilder(IGameMechanismRegistry? registry)
+        public MechanismsDebugTableModelBuilder(IGameMechanismRegistry? registry = null)
         {
             _registry = registry;
         }
 
+        public void Bind(IGameMechanismRegistry? registry, long generation)
+        {
+            if (_cachedGeneration == generation && ReferenceEquals(_registry, registry))
+                return;
+            _registry = registry;
+            _cachedGeneration = generation;
+            _cachedModel = null;
+        }
+
         public DebugTableModel Build()
-            => Build(_registry?.All ?? System.Array.Empty<IGameMechanism>());
+            => _cachedModel ??= Build(_registry?.All ?? System.Array.Empty<IGameMechanism>());
 
         public static DebugTableModel Build(IReadOnlyList<IGameMechanism> mechanisms)
         {

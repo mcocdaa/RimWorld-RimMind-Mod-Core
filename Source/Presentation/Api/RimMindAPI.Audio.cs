@@ -1,5 +1,6 @@
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Api
 {
@@ -7,7 +8,10 @@ namespace RimMind.Presentation.Api
     {
         public static class Audio
         {
-            public static IAudioPlayer AudioPlayer => RimMindRuntime.Instance.AudioPlayer;
+            private static readonly RuntimeServiceRef<IAudioPlayer> Players =
+                RuntimeServiceRef<IAudioPlayer>.Required();
+
+            public static IAudioPlayer AudioPlayer => Players.Value;
         }
     }
 }

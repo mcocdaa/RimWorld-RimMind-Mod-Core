@@ -16,6 +16,7 @@ using RimMind.Application.Features.Agent.Modes;
 using RimMind.Application.Features.Agent.Reflection;
 using RimMind.Application.Features.Agent.Planning;
 using Verse;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -28,20 +29,33 @@ namespace RimMind.Presentation.Runtime
         private readonly ILogSink? _logSink;
         private readonly ITickProvider? _tickProvider;
         private readonly IAgentBus _agentBus;
+        private readonly AgentActionBridgeSlot _actionBridge;
+        private readonly IPsychologyWatcher? _psychologyWatcher;
+        private readonly ISocialEventOrganizer? _socialEventOrganizer;
+        private readonly ITraitEvolutionEngine? _traitEvolutionEngine;
 
         private AgentBusCoreSubscriber? _coreSubscriber;
         private volatile Func<Pawn, AgentIdentity?>? _agentIdentityProvider;
-        private volatile IAgentActionBridge _agentActionBridge =
-            Application.Common.Defaults.NullAgentActionBridge.Instance;
 
         public Func<Pawn, AgentIdentity?>? AgentIdentityProvider => _agentIdentityProvider;
-        public IAgentActionBridge AgentActionBridge => _agentActionBridge;
+        public IAgentActionBridge AgentActionBridge => _actionBridge.Current;
 
-        public RimMindExtensionManager(ILogSink? logSink, ITickProvider? tickProvider, IAgentBus agentBus)
+        public RimMindExtensionManager(
+            ILogSink? logSink,
+            ITickProvider? tickProvider,
+            IAgentBus agentBus,
+            AgentActionBridgeSlot actionBridge,
+            IPsychologyWatcher? psychologyWatcher = null,
+            ISocialEventOrganizer? socialEventOrganizer = null,
+            ITraitEvolutionEngine? traitEvolutionEngine = null)
         {
             _logSink = logSink;
             _tickProvider = tickProvider;
             _agentBus = agentBus;
+            _actionBridge = actionBridge ?? throw new ArgumentNullException(nameof(actionBridge));
+            _psychologyWatcher = psychologyWatcher;
+            _socialEventOrganizer = socialEventOrganizer;
+            _traitEvolutionEngine = traitEvolutionEngine;
         }
 
         public void RegisterBuiltinModes(IExtensionRegistry<IAgentMode> modeRegistry)
@@ -50,11 +64,14 @@ namespace RimMind.Presentation.Runtime
                 ?? throw new InvalidOperationException("ITickProvider not registered");
             var reflectionStrategy = new DefaultReflectionStrategy(tickProvider);
             var dailyPlanner = new DefaultDailyPlanner(tickProvider);
-            var psychologyWatcher = RimMindServiceLocator.TryGet<IPsychologyWatcher>();
-            var socialEventOrganizer = RimMindServiceLocator.TryGet<ISocialEventOrganizer>();
-            var traitEvolutionEngine = RimMindServiceLocator.TryGet<ITraitEvolutionEngine>();
             modeRegistry.Register(new ReactiveAgentMode());
-            modeRegistry.Register(new ProactiveAgentMode(tickProvider, reflectionStrategy, dailyPlanner, psychologyWatcher, socialEventOrganizer, traitEvolutionEngine));
+            modeRegistry.Register(new ProactiveAgentMode(
+                tickProvider,
+                reflectionStrategy,
+                dailyPlanner,
+                _psychologyWatcher,
+                _socialEventOrganizer,
+                _traitEvolutionEngine));
         }
 
         public void RegisterCoreSubscribers()
@@ -71,11 +88,10 @@ namespace RimMind.Presentation.Runtime
 
         public void RegisterAgentActionBridge(IAgentActionBridge bridge)
         {
-            _agentActionBridge = bridge;
-            RimMindServiceLocator.Register(bridge);
+            _actionBridge.Replace(bridge);
         }
 
-        public IAgentActionBridge GetAgentActionBridge() => _agentActionBridge;
+        public IAgentActionBridge GetAgentActionBridge() => _actionBridge.Current;
 
         public void RegisterParameterTuner(IParameterTuner tuner,
             System.Collections.Concurrent.ConcurrentDictionary<string, IParameterTuner> tuners)
@@ -103,7 +119,6 @@ namespace RimMind.Presentation.Runtime
         public void Reset()
         {
             _agentIdentityProvider = null;
-            _agentActionBridge = Application.Common.Defaults.NullAgentActionBridge.Instance;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace RimMind.Presentation.Api
         public static class Ext
         {
             public static IExtensionRegistry<T> Get<T>() where T : class, IExtension
-                => RimMindRuntime.Instance.GetExtensionRegistry<T>();
+                => CurrentRuntime.GetExtensionRegistry<T>();
 
             public static int UnregisterByOwner<T>(string ownerModId) where T : class, IExtension
             {
@@ -62,22 +62,22 @@ namespace RimMind.Presentation.Api
                 => Get<IDialogueTrigger>()?.All.Any() == true;
 
             public static void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
-                => RimMindRuntime.Instance.RegisterAgentIdentityProvider(provider);
+                => CurrentRuntime.RegisterAgentIdentityProvider(provider);
 
             public static AgentIdentity? GetAgentIdentity(Pawn pawn)
-                => RimMindRuntime.Instance.GetAgentIdentity(pawn);
+                => CurrentRuntime.GetAgentIdentity(pawn);
 
             public static void RegisterAgentActionBridge(IAgentActionBridge bridge)
-                => RimMindRuntime.Instance.RegisterAgentActionBridge(bridge);
+                => CurrentRuntime.RegisterAgentActionBridge(bridge);
 
             public static IAgentActionBridge GetAgentActionBridge()
-                => RimMindRuntime.Instance.GetAgentActionBridge();
+                => CurrentRuntime.GetAgentActionBridge();
 
             public static void RegisterParameterTuner(IParameterTuner tuner)
-                => RimMindRuntime.Instance.RegisterParameterTuner(tuner);
+                => CurrentRuntime.RegisterParameterTuner(tuner);
 
             public static IReadOnlyList<IParameterTuner> ParameterTuners
-                => RimMindRuntime.Instance.ParameterTunersList;
+                => CurrentRuntime.ParameterTunersList;
 
         }
     }

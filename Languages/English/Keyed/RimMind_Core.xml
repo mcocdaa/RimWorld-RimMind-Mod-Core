@@ -271,6 +271,12 @@
   <RimMind.UI.AgentDialogue.PlayerLabel>Player</RimMind.UI.AgentDialogue.PlayerLabel>
   <RimMind.UI.AgentDialogue.AgentLabel>Agent</RimMind.UI.AgentDialogue.AgentLabel>
   <RimMind.UI.AgentDialogue.Thinking>(thinking...)</RimMind.UI.AgentDialogue.Thinking>
+  <RimMind.UI.AgentDialogue.RequestStatus>Request {0}: {1}</RimMind.UI.AgentDialogue.RequestStatus>
+  <RimMind.UI.AgentDialogue.State.Idle>Idle</RimMind.UI.AgentDialogue.State.Idle>
+  <RimMind.UI.AgentDialogue.State.Streaming>Streaming</RimMind.UI.AgentDialogue.State.Streaming>
+  <RimMind.UI.AgentDialogue.State.Completed>Completed</RimMind.UI.AgentDialogue.State.Completed>
+  <RimMind.UI.AgentDialogue.State.Failed>Failed</RimMind.UI.AgentDialogue.State.Failed>
+  <RimMind.UI.AgentDialogue.State.Discarded>Discarded (runtime changed)</RimMind.UI.AgentDialogue.State.Discarded>
   <!-- Task Instructions (npc_task_instruction) -->
   <RimMind.Prompt.TaskInstruction.Base>You are in the RimWorld game world.\n\nOutput constraints:\n- You must return valid JSON format\n- Do not wrap in markdown code blocks\n- If you cannot determine, return a default value or empty result\n\nBehavior constraints:\n- Do not break the fourth wall\n- Do not mention game mechanics, code, data structures, or the concept of "player"\n- Act naturally as your character</RimMind.Prompt.TaskInstruction.Base>
   <RimMind.Prompt.TaskInstruction.WorldOnly>You are in the RimWorld game world.</RimMind.Prompt.TaskInstruction.WorldOnly>
@@ -631,4 +637,22 @@
   <RimMind.UI.AIRequestsPage.State.Running>Running</RimMind.UI.AIRequestsPage.State.Running>
   <RimMind.UI.AIRequestsPage.State.Completed>Completed</RimMind.UI.AIRequestsPage.State.Completed>
   <RimMind.UI.AIRequestsPage.State.Failed>Failed</RimMind.UI.AIRequestsPage.State.Failed>
+  <!-- Runtime lifecycle diagnostics in the existing Debug Center overview -->
+  <RimMind.UI.Hub.Lifecycle.Title>Lifecycle</RimMind.UI.Hub.Lifecycle.Title>
+  <RimMind.UI.Hub.Lifecycle.RuntimeState>Runtime state</RimMind.UI.Hub.Lifecycle.RuntimeState>
+  <RimMind.UI.Hub.Lifecycle.GameState>Game state</RimMind.UI.Hub.Lifecycle.GameState>
+  <RimMind.UI.Hub.Lifecycle.Generation>Generation</RimMind.UI.Hub.Lifecycle.Generation>
+  <RimMind.UI.Hub.Lifecycle.ServiceCount>Services</RimMind.UI.Hub.Lifecycle.ServiceCount>
+  <RimMind.UI.Hub.Lifecycle.PublishedAt>Published (UTC)</RimMind.UI.Hub.Lifecycle.PublishedAt>
+  <RimMind.UI.Hub.Lifecycle.RuntimeId>Runtime ID</RimMind.UI.Hub.Lifecycle.RuntimeId>
+  <RimMind.UI.Hub.Lifecycle.LastFailure>Last build failure</RimMind.UI.Hub.Lifecycle.LastFailure>
+  <RimMind.UI.Hub.Lifecycle.StaleDiscards>Stale completions discarded</RimMind.UI.Hub.Lifecycle.StaleDiscards>
+  <RimMind.UI.Hub.Lifecycle.Never>Never</RimMind.UI.Hub.Lifecycle.Never>
+  <RimMind.UI.Hub.Lifecycle.None>None</RimMind.UI.Hub.Lifecycle.None>
+  <RimMind.UI.Lifecycle.Building>Building</RimMind.UI.Lifecycle.Building>
+  <RimMind.UI.Lifecycle.Running>Running</RimMind.UI.Lifecycle.Running>
+  <RimMind.UI.Lifecycle.Stopped>Stopped</RimMind.UI.Lifecycle.Stopped>
+  <RimMind.UI.Lifecycle.Failed>Failed</RimMind.UI.Lifecycle.Failed>
+  <RimMind.UI.Lifecycle.NeverPublished>Never published</RimMind.UI.Lifecycle.NeverPublished>
+  <RimMind.UI.Lifecycle.StaleCompletion>Discarded because the runtime changed.</RimMind.UI.Lifecycle.StaleCompletion>
 </LanguageData>

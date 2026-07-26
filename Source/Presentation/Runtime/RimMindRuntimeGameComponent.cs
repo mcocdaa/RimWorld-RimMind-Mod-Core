@@ -1,6 +1,10 @@
 using System;
+using System.Collections;
+using System.Reflection;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Interfaces.Npc;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 
 namespace RimMind.Presentation.Runtime
@@ -10,22 +14,26 @@ namespace RimMind.Presentation.Runtime
         private IAgentLoopScheduler? _scheduler;
         private IScopedAgentManager? _scopedAgentManager;
         private IOverlayService? _overlayService;
+        private readonly Game _game;
         private int _lastTick = -1;
         private bool _initialized;
 
-        public RimMindRuntimeGameComponent(Game game) : base() { }
+        public RimMindRuntimeGameComponent(Game game) : base()
+        {
+            _game = game ?? throw new ArgumentNullException(nameof(game));
+        }
 
         private void EnsureInitialized()
         {
             if (!_initialized)
             {
-                RimMindRuntime.Initialize();
                 _initialized = true;
             }
 
-            _scheduler = RimMindServiceLocator.TryGet<IAgentLoopScheduler>();
-            _scopedAgentManager = RimMindServiceLocator.TryGet<IScopedAgentManager>();
-            _overlayService = RimMindServiceLocator.TryGet<IOverlayService>();
+            var scope = RuntimeServiceHub.Shared.Capture();
+            _scheduler = scope.GetOptional<IAgentLoopScheduler>();
+            _scopedAgentManager = scope.GetOptional<IScopedAgentManager>();
+            _overlayService = scope.GetOptional<IOverlayService>();
         }
 
         public override void GameComponentTick()
@@ -43,6 +51,7 @@ namespace RimMind.Presentation.Runtime
         {
             base.StartedNewGame();
             EnsureInitialized();
+            PublishGameServices();
             ResetRuntimeAgents();
         }
 
@@ -50,7 +59,42 @@ namespace RimMind.Presentation.Runtime
         {
             base.LoadedGame();
             EnsureInitialized();
+            PublishGameServices();
             ResetRuntimeAgents();
+        }
+
+        private void PublishGameServices()
+        {
+            var npcManager = ResolveGameComponent<INpcManager>(_game);
+            var aiDebugLog = ResolveGameComponent<IAIDebugLog>(_game);
+            var builder = new GameServiceBuilder()
+                .Bind<INpcManager>(npcManager)
+                .Bind<IAIDebugLog>(aiDebugLog)
+                .Require<INpcManager>()
+                .Require<IAIDebugLog>();
+            GameServiceHub.Shared.Publish(builder.Build());
+        }
+
+        private static T ResolveGameComponent<T>(Game game)
+            where T : class
+        {
+            foreach (var field in typeof(Game).GetFields(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (!(field.GetValue(game) is IEnumerable values)) continue;
+                foreach (var value in values)
+                {
+                    if (value is T service) return service;
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"{typeof(T).Name} has not been created for the current game.");
+        }
+
+        internal static void StopGameServices()
+        {
+            GameServiceHub.Shared.Stop();
         }
 
         private void ResetRuntimeAgents()

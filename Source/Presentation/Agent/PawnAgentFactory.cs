@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Agent.Perception;
 using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Common.Interfaces.Agent.Social;
+using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Agent.InnerVoice;
@@ -25,6 +26,7 @@ namespace RimMind.Presentation.Agent
         private readonly IDreamGenerator _dreamGenerator;
         private readonly IDreamThoughtInjector? _dreamThoughtInjector;
         private readonly ITraitEvolver _traitEvolver;
+        private readonly ICompletionFence _completionFence;
 
         internal IAgentTickSettings? TickSettings => _tickSettings;
         internal IAgentBus AgentBus => _agentBus;
@@ -36,6 +38,7 @@ namespace RimMind.Presentation.Agent
         internal IDreamGenerator DreamGenerator => _dreamGenerator;
         internal IDreamThoughtInjector? DreamThoughtInjector => _dreamThoughtInjector;
         internal ITraitEvolver TraitEvolver => _traitEvolver;
+        internal ICompletionFence CompletionFence => _completionFence;
 
         internal PawnAgentFactory(
             IAgentTickSettings? tickSettings,
@@ -47,8 +50,9 @@ namespace RimMind.Presentation.Agent
             IDreamGenerator dreamGenerator,
             IDreamThoughtInjector? dreamThoughtInjector,
             ITraitEvolver traitEvolver,
-            ILogSink? log = null,
-            IExtensionRegistry<IPerceptionSource>? perceptionSourceRegistry = null)
+            ILogSink? log,
+            IExtensionRegistry<IPerceptionSource>? perceptionSourceRegistry,
+            ICompletionFence completionFence)
         {
             _tickSettings = tickSettings;
             _agentBus = agentBus;
@@ -61,6 +65,7 @@ namespace RimMind.Presentation.Agent
             _traitEvolver = traitEvolver ?? throw new ArgumentNullException(nameof(traitEvolver));
             _log = log;
             _perceptionSourceRegistry = perceptionSourceRegistry;
+            _completionFence = completionFence ?? throw new ArgumentNullException(nameof(completionFence));
         }
 
         public IPawnAgent Create(Pawn pawn, IAgentBus agentBus)
@@ -68,7 +73,7 @@ namespace RimMind.Presentation.Agent
             var agent = new PawnAgent(pawn, _tickSettings!, agentBus, log: _log);
             agent.RebuildCollaborators(
                 new PawnPerceiver(agent, agentBus, _perceptionSourceRegistry),
-                new PawnThinker(agent, _tickSettings!, agentBus, _innerVoiceHandler, _psychologyWatcher, _tickProvider, _dreamGenerator, _dreamThoughtInjector, _traitEvolver, _log),
+                new PawnThinker(agent, _tickSettings!, agentBus, _innerVoiceHandler, _psychologyWatcher, _tickProvider, _dreamGenerator, _dreamThoughtInjector, _traitEvolver, _log, _completionFence),
                 new PawnActor(agent, _actionExecutor),
                 new PawnRecorder(agent, agentBus));
             return agent;

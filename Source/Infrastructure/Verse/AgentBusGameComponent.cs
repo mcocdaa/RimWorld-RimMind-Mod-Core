@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Defaults;
 using RimMind.Application.Features.Queue;
+using RimMind.Presentation.Runtime.Services;
 
 using Verse;
 
@@ -14,106 +15,93 @@ namespace RimMind.Infrastructure.Verse
 {
     public class AgentBusGameComponent : GameComponent
     {
-        private IAgentBus? _agentBus;
-        private IAgentBus? _subscribersRegisteredBus;
-        private readonly List<IDisposable> _coreSubscribers = new();
-        private IAIRequestQueueTickable? _requestQueue;
+        private readonly RuntimeBinding _binding = new RuntimeBinding();
         private AgentBusQueueTickCoordinator? _tickCoordinator;
-        private ILogSink? _logSink;
-        private IContextCacheManager? _cacheManager;
-        private IFlywheelParameterStore? _parameterStore;
-        private bool _lifecycleStarted;
 
         public AgentBusGameComponent(Game game) : base() { }
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless construction.
-        // Reconcile the tick pair because the composition root can replace either service.
-        private void EnsureCached()
+        private void Refresh()
         {
-            IAgentBus? agentBus = RimMindServiceLocator.TryGet<IAgentBus>();
-            IAIRequestQueueTickable? requestQueue = RimMindServiceLocator.TryGet<IAIRequestQueueTickable>();
-            bool agentBusChanged = !ReferenceEquals(_agentBus, agentBus);
-
-            if (agentBusChanged)
-                DisposeCoreSubscribers();
-
-            if (agentBusChanged || !ReferenceEquals(_requestQueue, requestQueue))
-            {
-                _agentBus = agentBus;
-                _requestQueue = requestQueue;
-                _tickCoordinator = agentBus != null && requestQueue != null
-                    ? new AgentBusQueueTickCoordinator(agentBus, requestQueue)
-                    : null;
-            }
-
-            if (_requestQueue != null)
-                AIRequestQueueGameComponent.Configure(_requestQueue);
-
-            _logSink ??= RimMindServiceLocator.TryGet<ILogSink>();
-            _cacheManager ??= RimMindServiceLocator.TryGet<IContextCacheManager>();
-            _parameterStore ??= RimMindServiceLocator.TryGet<IFlywheelParameterStore>();
-
-            if (_lifecycleStarted
-                && _agentBus != null
-                && _logSink != null
-                && !ReferenceEquals(_subscribersRegisteredBus, _agentBus))
-            {
-                ReRegisterCoreSubscribers();
-            }
+            _binding.Refresh(Bind);
         }
 
         public override void StartedNewGame()
         {
-            EnsureCached();
-            ReRegisterCoreSubscribers();
-            _lifecycleStarted = true;
+            Refresh();
         }
 
         public override void LoadedGame()
         {
-            EnsureCached();
-            ReRegisterCoreSubscribers();
-            _lifecycleStarted = true;
+            Refresh();
         }
 
         public override void GameComponentTick()
         {
-            EnsureCached();
+            Refresh();
             _tickCoordinator?.Tick(Find.TickManager.TicksGame);
         }
 
-        private void ReRegisterCoreSubscribers()
+        private IDisposable? Bind(RuntimeServiceScope scope)
         {
-            DisposeCoreSubscribers();
-            if (_agentBus != null && _logSink != null)
+            var agentBus = scope.GetOptional<IAgentBus>();
+            var requestQueue = scope.GetOptional<IAIRequestQueueTickable>();
+            var logSink = scope.GetOptional<ILogSink>();
+            var cacheManager = scope.GetOptional<IContextCacheManager>();
+            var parameterStore = scope.GetOptional<IFlywheelParameterStore>();
+            _tickCoordinator = agentBus != null && requestQueue != null
+                ? new AgentBusQueueTickCoordinator(agentBus, requestQueue)
+                : null;
+
+            if (requestQueue != null)
+                AIRequestQueueGameComponent.Configure(requestQueue);
+
+            if (agentBus == null || logSink == null)
+                return null;
+
+            var subscribers = new List<IDisposable>
             {
-                _coreSubscribers.Add(new AgentBusCoreSubscriber(_agentBus, _logSink));
-
-                if (_cacheManager != null)
-                    _coreSubscribers.Add(new ContextInvalidationSubscriber(_agentBus, _cacheManager, _logSink));
-
-                if (_parameterStore != null)
-                    _coreSubscribers.Add(new FlywheelCalibrationSubscriber(_agentBus, _parameterStore, _logSink));
-
-                if (_cacheManager != null)
-                    _coreSubscribers.Add(new NpcCleanupSubscriber(_agentBus, _cacheManager, _logSink));
-
-                _coreSubscribers.Add(new GoalOptimizationSubscriber(_agentBus, _logSink));
-
-                if (_parameterStore != null)
-                    _coreSubscribers.Add(new DecisionTrackingSubscriber(_agentBus, _parameterStore, _logSink));
-
-                _subscribersRegisteredBus = _agentBus;
+                new AgentBusCoreSubscriber(agentBus, logSink),
+                new GoalOptimizationSubscriber(agentBus, logSink)
+            };
+            if (cacheManager != null)
+            {
+                subscribers.Add(new ContextInvalidationSubscriber(agentBus, cacheManager, logSink));
+                subscribers.Add(new NpcCleanupSubscriber(agentBus, cacheManager, logSink));
             }
+            if (parameterStore != null)
+            {
+                subscribers.Add(new FlywheelCalibrationSubscriber(agentBus, parameterStore, logSink));
+                subscribers.Add(new DecisionTrackingSubscriber(agentBus, parameterStore, logSink));
+            }
+
+            return new SubscriberLease(subscribers);
         }
 
-        private void DisposeCoreSubscribers()
+        public void Dispose()
         {
-            for (int index = _coreSubscribers.Count - 1; index >= 0; index--)
-                _coreSubscribers[index].Dispose();
+            _binding.Dispose();
+            _tickCoordinator = null;
+        }
 
-            _coreSubscribers.Clear();
-            _subscribersRegisteredBus = null;
+        private sealed class SubscriberLease : IDisposable
+        {
+            private readonly List<IDisposable> _subscribers;
+            private bool _disposed;
+
+            public SubscriberLease(List<IDisposable> subscribers)
+            {
+                _subscribers = subscribers;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed) return;
+                _disposed = true;
+                for (var index = _subscribers.Count - 1; index >= 0; index--)
+                    _subscribers[index].Dispose();
+
+                _subscribers.Clear();
+            }
         }
     }
 }

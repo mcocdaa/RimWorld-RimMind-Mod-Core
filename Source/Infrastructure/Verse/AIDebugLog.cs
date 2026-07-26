@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Llm;
+using RimMind.Presentation.Runtime.Services;
 
 using System.Collections.Generic;
 using System.Linq;
@@ -16,25 +17,17 @@ namespace RimMind.Infrastructure.Verse
 
         private readonly Queue<AIDebugEntry> _entries = new Queue<AIDebugEntry>(MaxEntries);
         private readonly ConcurrentQueue<AIDebugEntry> _pendingEntries = new ConcurrentQueue<AIDebugEntry>();
-        private IAIModelSettings? _cachedModelSettings;
+        private readonly RuntimeServiceRef<IAIModelSettings> _modelSettings =
+            RuntimeServiceRef<IAIModelSettings>.Optional();
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
         private IAIModelSettings? GetModelSettings()
-            => _cachedModelSettings ??= RimMindServiceLocator.Get<IAIModelSettings>();
+            => _modelSettings.ValueOrDefault;
 
-        // NOTE: AIDebugLog.Instance static accessor removed (v8 audit: zero external callers).
-        // Use IAIDebugLog via constructor injection or RimMindServiceLocator.Get<IAIDebugLog>().
-
-        public AIDebugLog(Game game)
-        {
-            RimMindServiceLocator.Register<IAIDebugLog>(this);
-        }
+        public AIDebugLog(Game game) { }
 
         public override void ExposeData()
         {
             base.ExposeData();
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                RimMindServiceLocator.Register<IAIDebugLog>(this);
         }
 
         public IReadOnlyList<AIDebugEntry> Entries => _entries.ToList();

@@ -9,6 +9,7 @@ using RimMind.Application.Features.Agent.InnerVoice;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.Interfaces;
 using RimMind.Presentation.Context;
+using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime.Composition
 {
@@ -30,25 +31,26 @@ namespace RimMind.Presentation.Runtime.Composition
 
     internal static class ContextComposition
     {
-        public static ContextCompositionServices Register(
+        public static ContextCompositionServices Compose(
+            RuntimeServiceBuilder services,
             ISettingsProvider resolvedSettings,
             IAgentBus agentBus,
             ITickProvider tickProvider,
             ILogSink logSink,
-            INpcManager? npcManager,
+            INpcManagerAccessor npcManagers,
             ITranslationService translationService,
             IFlywheelParameterStore flywheelParameterStore,
             IEmbedCache embedCache)
         {
             var providerRegistry = new ProviderRegistry();
-            RimMindServiceLocator.Register<IProviderRegistry>(providerRegistry);
+            services.Bind<IProviderRegistry>(providerRegistry);
 
             var historyManager = new HistoryManager(tickProvider);
-            RimMindServiceLocator.Register<IHistoryManager>(historyManager);
+            services.Bind<IHistoryManager>(historyManager);
 
             var innerVoiceHandler = new InnerVoiceHandler(agentBus, tickProvider, logSink);
             innerVoiceHandler.StartListening();
-            RimMindServiceLocator.Register(innerVoiceHandler);
+            services.Bind(innerVoiceHandler);
 
             var cacheManager = new ContextCacheManager(logSink, embedCache);
             var diffTracker = new ContextDiffTracker(logSink);
@@ -56,25 +58,30 @@ namespace RimMind.Presentation.Runtime.Composition
             var layerBuilder = new ContextLayerBuilder(keyProvider, logSink);
             var providerCache = new ProviderCache(agentBus, logSink, tickProvider);
             var keyRegistryImpl = new ContextKeyRegistryImpl(logSink, providerCache);
+            CoreContextProviders.RegisterAll(
+                keyRegistryImpl,
+                translationService,
+                keyProvider,
+                npcManagers);
             var relevanceTableImpl = new RelevanceTableImpl();
             var relevanceLearner = new RelevanceLearner(tickProvider);
             var budgetScheduler = new BudgetScheduler(relevanceTableImpl, relevanceLearner, tickProvider, cacheManager.EmbedCache);
             var schemaRegistry = new SchemaRegistry(logSink);
             var buildServices = new ContextBuildServices(cacheManager, diffTracker, layerBuilder, budgetScheduler);
 
-            RimMindServiceLocator.Register<IBudgetScheduler>(budgetScheduler);
-            RimMindServiceLocator.Register<IContextCacheManager>(cacheManager);
-            RimMindServiceLocator.Register<IContextDiffTracker>(diffTracker);
-            RimMindServiceLocator.Register<IContextLayerBuilder>(layerBuilder);
-            RimMindServiceLocator.Register<IContextKeyRegistry>(keyRegistryImpl);
-            RimMindServiceLocator.Register<IRelevanceTable>(relevanceTableImpl);
-            RimMindServiceLocator.Register<IRelevanceLearner>(relevanceLearner);
-            RimMindServiceLocator.Register(schemaRegistry);
+            services.Bind<IBudgetScheduler>(budgetScheduler);
+            services.Bind<IContextCacheManager>(cacheManager);
+            services.Bind<IContextDiffTracker>(diffTracker);
+            services.Bind<IContextLayerBuilder>(layerBuilder);
+            services.Bind<IContextKeyRegistry>(keyRegistryImpl);
+            services.Bind<IRelevanceTable>(relevanceTableImpl);
+            services.Bind<IRelevanceLearner>(relevanceLearner);
+            services.Bind(schemaRegistry);
 
             var embeddingSnapshotStore = new EmbeddingSnapshotStore();
             var contextEngine = new ContextOrchestrator(
                 historyManager,
-                npcManager,
+                npcManagers,
                 buildServices,
                 resolvedSettings,
                 translationService,
@@ -86,10 +93,10 @@ namespace RimMind.Presentation.Runtime.Composition
                 providerCache,
                 tickProvider);
 
-            RimMindServiceLocator.Register<IContextEngine>(contextEngine);
-            RimMindServiceLocator.Register<IContextKeyProvider>(keyProvider);
-            RimMindServiceLocator.Register<IContextBuilder>(contextEngine);
-            RimMindServiceLocator.Register<IContextCache>(contextEngine);
+            services.Bind<IContextEngine>(contextEngine);
+            services.Bind<IContextKeyProvider>(keyProvider);
+            services.Bind<IContextBuilder>(contextEngine);
+            services.Bind<IContextCache>(contextEngine);
 
             return new ContextCompositionServices
             {

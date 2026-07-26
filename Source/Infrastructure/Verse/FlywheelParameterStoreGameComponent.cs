@@ -2,20 +2,20 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 
 namespace RimMind.Infrastructure.Verse
 {
     public class FlywheelParameterStoreGameComponent : GameComponent
     {
-        private IFlywheelParameterStore? _store;
+        private readonly RuntimeServiceRef<IFlywheelParameterStore> _store =
+            RuntimeServiceRef<IFlywheelParameterStore>.Required();
 
         public FlywheelParameterStoreGameComponent() : base() { }
         public FlywheelParameterStoreGameComponent(global::Verse.Game game) : base() { }
 
-        // [Framework-Forced SL] Verse GameComponent requires parameterless constructor.
-        // Lazy-cached SL.Get is the only viable pattern.
-        public IFlywheelParameterStore Store => _store ??= RimMindServiceLocator.Get<IFlywheelParameterStore>()!;
+        public IFlywheelParameterStore Store => _store.Value;
 
         public override void ExposeData()
         {

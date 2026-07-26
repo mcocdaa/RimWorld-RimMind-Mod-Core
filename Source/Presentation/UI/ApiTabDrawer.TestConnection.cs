@@ -11,6 +11,7 @@ using RimMind.Domain.Enums;
 using RimMind.Domain.Llm;
 using DomainChatMessage = RimMind.Domain.Llm.ChatMessage;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.Settings;
 using UnityEngine;
 using Verse;
@@ -19,30 +20,38 @@ namespace RimMind.Presentation.UI
 {
     internal static partial class ApiTabDrawer
     {
+        private static ConnectionTestOperation? _activeConnectionTest;
+
         private static void RunConnectionTest(ISettingsProvider s)
         {
+            if (_testPending)
+                return;
+
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            IClientManager? clientManager = runtimeScope.GetOptional<IClientManager>();
             NormalizeConnectionSettings(s);
             s.Persist();
-            GetClientManager()?.InvalidateCache();
+            clientManager?.InvalidateCache();
             Log.Message(BuildConnectionDebugLine("start", s, null, null));
 
             if (!AIProviderRegistry.RequiresApiKey(s.Provider))
             {
-                _testStatus = "RimMind.Settings.Status.Testing".Translate();
-                _testStatusColor = Color.yellow;
+                ConnectionTestOperation operation = BeginConnectionTest(runtimeScope.Token);
 
                 Task.Run(async () =>
                 {
                     try
                     {
-                        var client = GetClientManager()?.GetPlayer2Client();
+                        var client = clientManager?.GetPlayer2Client();
                         LogFromBackground(BuildConnectionDebugLine("player2-client", s, client, client?.IsConfigured()));
                         if (client == null)
                         {
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus = "RimMind.Settings.Player2.NotAvailable".Translate();
-                                _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                                TryPublishConnectionTest(
+                                    operation,
+                                    "RimMind.Settings.Player2.NotAvailable".Translate(),
+                                    new Color(0.9f, 0.4f, 0.4f));
                             });
                             return;
                         }
@@ -63,8 +72,10 @@ namespace RimMind.Presentation.UI
                             var tok = response.TokensUsed;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus = $"OK {content} ({tok} tok)";
-                                _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
+                                TryPublishConnectionTest(
+                                    operation,
+                                    $"OK {content} ({tok} tok)",
+                                    new Color(0.4f, 0.9f, 0.4f));
                             });
                         }
                         else
@@ -72,8 +83,10 @@ namespace RimMind.Presentation.UI
                             var error = result.Error.Message;
                             LongEventHandler.ExecuteWhenFinished(() =>
                             {
-                                _testStatus = $"FAIL {error}";
-                                _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                                TryPublishConnectionTest(
+                                    operation,
+                                    $"FAIL {error}",
+                                    new Color(0.9f, 0.4f, 0.4f));
                             });
                         }
                     }
@@ -82,8 +95,10 @@ namespace RimMind.Presentation.UI
                         var msg = ex.Message;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = $"FAIL {msg}";
-                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                            TryPublishConnectionTest(
+                                operation,
+                                $"FAIL {msg}",
+                                new Color(0.9f, 0.4f, 0.4f));
                         });
                     }
                 });
@@ -98,21 +113,22 @@ namespace RimMind.Presentation.UI
                 return;
             }
 
-            _testStatus = "RimMind.Settings.Status.Testing".Translate();
-            _testStatusColor = Color.yellow;
+            ConnectionTestOperation openAiOperation = BeginConnectionTest(runtimeScope.Token);
 
             Task.Run(async () =>
             {
                 try
                 {
-                    var client = GetClientManager()?.GetClient();
+                    var client = clientManager?.GetClient();
                     LogFromBackground(BuildConnectionDebugLine("openai-client", s, client, client?.IsConfigured()));
                     if (client == null)
                     {
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = "RimMind.Settings.Status.NotConfigured".Translate();
-                            _testStatusColor = Color.yellow;
+                            TryPublishConnectionTest(
+                                openAiOperation,
+                                "RimMind.Settings.Status.NotConfigured".Translate(),
+                                Color.yellow);
                         });
                         return;
                     }
@@ -133,8 +149,10 @@ namespace RimMind.Presentation.UI
                         var tok = response2.TokensUsed;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = $"OK {content} ({tok} tok)";
-                            _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
+                            TryPublishConnectionTest(
+                                openAiOperation,
+                                $"OK {content} ({tok} tok)",
+                                new Color(0.4f, 0.9f, 0.4f));
                         });
                     }
                     else
@@ -142,8 +160,10 @@ namespace RimMind.Presentation.UI
                         var error = result2.Error.Message;
                         LongEventHandler.ExecuteWhenFinished(() =>
                         {
-                            _testStatus = $"FAIL {error}";
-                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                            TryPublishConnectionTest(
+                                openAiOperation,
+                                $"FAIL {error}",
+                                new Color(0.9f, 0.4f, 0.4f));
                         });
                     }
                 }
@@ -152,11 +172,68 @@ namespace RimMind.Presentation.UI
                     var msg = ex.Message;
                     LongEventHandler.ExecuteWhenFinished(() =>
                     {
-                        _testStatus = $"FAIL {msg}";
-                        _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                        TryPublishConnectionTest(
+                            openAiOperation,
+                            $"FAIL {msg}",
+                            new Color(0.9f, 0.4f, 0.4f));
                     });
                 }
             });
+        }
+
+        private static ConnectionTestOperation BeginConnectionTest(RuntimeGenerationToken token)
+        {
+            var operation = new ConnectionTestOperation(token);
+            _activeConnectionTest = operation;
+            _testPending = true;
+            _testStatus = "RimMind.Settings.Status.Testing".Translate();
+            _testStatusColor = Color.yellow;
+            return operation;
+        }
+
+        private static bool TryPublishConnectionTest(
+            ConnectionTestOperation operation,
+            string status,
+            Color color)
+        {
+            if (!ReferenceEquals(_activeConnectionTest, operation))
+                return false;
+
+            if (!RuntimeServiceHub.Shared.IsCurrent(operation.RuntimeToken))
+            {
+                operation.RecordStaleOnce(RuntimeServiceHub.Shared);
+                _activeConnectionTest = null;
+                _testPending = false;
+                _testStatus = "RimMind.UI.Lifecycle.StaleCompletion".Translate();
+                _testStatusColor = Color.yellow;
+                return false;
+            }
+
+            _activeConnectionTest = null;
+            _testPending = false;
+            _testStatus = status;
+            _testStatusColor = color;
+            return true;
+        }
+
+        private sealed class ConnectionTestOperation
+        {
+            private bool _staleRecorded;
+
+            public ConnectionTestOperation(RuntimeGenerationToken runtimeToken)
+            {
+                RuntimeToken = runtimeToken;
+            }
+
+            public RuntimeGenerationToken RuntimeToken { get; }
+
+            public void RecordStaleOnce(RuntimeServiceHub runtimeHub)
+            {
+                if (_staleRecorded)
+                    return;
+                _staleRecorded = true;
+                runtimeHub.RecordStaleCompletion();
+            }
         }
 
         private static void NormalizeConnectionSettings(ISettingsProvider s)

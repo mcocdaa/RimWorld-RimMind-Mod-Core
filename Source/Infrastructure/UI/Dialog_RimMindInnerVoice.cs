@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Domain.Events;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -11,6 +12,7 @@ namespace RimMind.Infrastructure.UI
 {
     public class Dialog_RimMindInnerVoice : Window
     {
+        private readonly RuntimeServiceRef<IAgentBus> _agentBus = RuntimeServiceRef<IAgentBus>.Optional();
         private readonly Pawn _pawn;
         private readonly AgentIdentity _identity;
         private string _inputText = "";
@@ -52,7 +54,7 @@ namespace RimMind.Infrastructure.UI
         {
             if (string.IsNullOrWhiteSpace(_inputText)) return;
 
-            var agentBus = RimMindServiceLocator.Get<IAgentBus>();
+            var agentBus = _agentBus.ValueOrDefault;
             if (agentBus == null)
             {
                 Log.Warning("[RimMind] InnerVoice: IAgentBus not available");

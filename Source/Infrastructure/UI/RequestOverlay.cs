@@ -4,6 +4,7 @@ using RimMind.Application.Common.Models.UI;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.UI;
+using RimMind.Presentation.Runtime.Services;
 using UnityEngine;
 using Verse;
 
@@ -11,19 +12,21 @@ namespace RimMind.Infrastructure.UI
 {
     public static class RequestOverlay
     {
-        private static IOverlaySettings? _cachedOverlaySettings;
-        private static IWindowService? _cachedWindowService;
-        private static IOverlayService? _cachedOverlayService;
+        private static readonly RuntimeServiceRef<IOverlaySettings> OverlaySettings =
+            RuntimeServiceRef<IOverlaySettings>.Optional();
+        private static readonly RuntimeServiceRef<IWindowService> WindowService =
+            RuntimeServiceRef<IWindowService>.Optional();
+        private static readonly RuntimeServiceRef<IOverlayService> OverlayService =
+            RuntimeServiceRef<IOverlayService>.Optional();
 
-        // Route through ServiceLocator (Application layer) instead of RimMindRuntime (Presentation layer)
         private static IOverlaySettings? GetOverlaySettings()
-            => _cachedOverlaySettings ??= RimMindServiceLocator.Get<IOverlaySettings>();
+            => OverlaySettings.ValueOrDefault;
 
         private static IWindowService? GetWindowService()
-            => _cachedWindowService ??= RimMindServiceLocator.Get<IWindowService>();
+            => WindowService.ValueOrDefault;
 
         private static IOverlayService? GetOverlayService()
-            => _cachedOverlayService ??= RimMindServiceLocator.Get<IOverlayService>();
+            => OverlayService.ValueOrDefault;
 
         private static readonly IReadOnlyList<RequestEntry> EmptyPending = Array.Empty<RequestEntry>();
         private static Vector2 _scrollPos = Vector2.zero;

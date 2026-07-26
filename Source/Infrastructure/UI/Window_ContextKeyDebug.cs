@@ -4,6 +4,7 @@ using RimMind.Application.Common.Extensions;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Domain.ValueObjects;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Api;
@@ -21,6 +22,7 @@ namespace RimMind.Infrastructure.UI
 
         private string _duplicateResult = "";
         private string _selectedKeyDetail = "";
+        private long _selectionGeneration = long.MinValue;
 
         private ContextLayer? _layerFilter;
         private string? _ownerFilter;
@@ -40,6 +42,10 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            RefreshGeneration(runtimeScope.Generation);
+            var registry = runtimeScope.GetOptional<IContextKeyRegistry>();
+
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
@@ -56,12 +62,11 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            DrawFilters(filterRect, scope);
+            DrawFilters(filterRect, registry, scope);
 
             Rect bodyRect = table.Body;
             scope.Record(bodyRect, "Body");
 
-            var registry = RimMindAPI.Context.ContextKeys;
             if (registry == null)
             {
                 DrawEmptyState(bodyRect);
@@ -94,7 +99,18 @@ namespace RimMind.Infrastructure.UI
 
             DrawKeyList(leftRect, filtered, scope);
             DrawKeyDetail(rightRect, filtered, scope);
-            DrawTestButton(btnRect, scope);
+            DrawTestButton(btnRect, registry, scope);
+        }
+
+        private void RefreshGeneration(long generation)
+        {
+            if (_selectionGeneration == generation)
+                return;
+
+            _selectionGeneration = generation;
+            _selectedKeyDetail = string.Empty;
+            _duplicateResult = string.Empty;
+            _ownerFilter = null;
         }
 
         private List<KeyMeta> ApplyFilters(IReadOnlyList<KeyMeta> keys)
@@ -107,7 +123,10 @@ namespace RimMind.Infrastructure.UI
             return result.ToList();
         }
 
-        private void DrawFilters(Rect rect, RimMindLayoutScope scope)
+        private void DrawFilters(
+            Rect rect,
+            IContextKeyRegistry? registry,
+            RimMindLayoutScope scope)
         {
             float btnW = 140f;
             float gap = 8f;
@@ -126,7 +145,7 @@ namespace RimMind.Infrastructure.UI
                 ? "RimMind.UI.ContextKeyDebug.OwnerMod".Translate(_ownerFilter)
                 : "RimMind.UI.ContextKeyDebug.FilterOwner".Translate();
             if (Widgets.ButtonText(ownerBtnRect, ownerLabel))
-                CycleOwnerFilter();
+                CycleOwnerFilter(registry);
         }
 
         private void CycleLayerFilter()
@@ -144,9 +163,8 @@ namespace RimMind.Infrastructure.UI
                 _layerFilter = AllLayers[idx + 1];
         }
 
-        private void CycleOwnerFilter()
+        private void CycleOwnerFilter(IContextKeyRegistry? registry)
         {
-            var registry = RimMindAPI.Context.ContextKeys;
             if (registry == null) return;
 
             var owners = registry.GetAll()
@@ -375,20 +393,16 @@ namespace RimMind.Infrastructure.UI
             }
         }
 
-        private void DrawTestButton(Rect rect, RimMindLayoutScope scope)
+        private void DrawTestButton(
+            Rect rect,
+            IContextKeyRegistry registry,
+            RimMindLayoutScope scope)
         {
             float btnW = 160f;
             Rect testBtn = new Rect(rect.x, rect.y, btnW, BtnHeight);
             scope.Record(testBtn, "Button:TestDuplicates");
             if (Widgets.ButtonText(testBtn, "RimMind.UI.ContextKeyDebug.TestDuplicates".Translate()))
             {
-                var registry = RimMindAPI.Context.ContextKeys;
-                if (registry == null)
-                {
-                    _duplicateResult = "RimMind.UI.ContextKeyDebug.Empty".Translate();
-                    return;
-                }
-
                 var keys = registry.GetAll();
                 var keyCounts = new Dictionary<string, List<string>>();
                 foreach (var key in keys)

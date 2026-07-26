@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Prompt;
@@ -29,10 +30,12 @@ namespace RimMind.Presentation.Agent
         private const int MaxHealthTagDisplay = 5;
 
         private readonly IContextSettings? _contextSettings;
+        private readonly ILogSink? _logSink;
 
-        public PawnContextBuilder(IContextSettings? contextSettings = null)
+        public PawnContextBuilder(IContextSettings? contextSettings = null, ILogSink? logSink = null)
         {
             _contextSettings = contextSettings;
+            _logSink = logSink;
         }
 
         private IPawnIncludeSettings? PawnSettings => _contextSettings;
@@ -41,7 +44,7 @@ namespace RimMind.Presentation.Agent
         {
             if (pawn == null) return string.Empty;
 
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             var ctx = PawnSettings;
             var sb = new StringBuilder();
             sb.Append("RimMind.Prompt.PawnStatusHeader".Translate(data.Name) + "  ");
@@ -193,7 +196,7 @@ namespace RimMind.Presentation.Agent
         {
             if (pawn == null) return string.Empty;
 
-            var data = PawnDataExtractor.Extract(pawn);
+            var data = PawnDataExtractor.Extract(pawn, _logSink);
             var sb = new StringBuilder();
             sb.Append(data.Name + "  ");
 

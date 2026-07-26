@@ -61,6 +61,10 @@ namespace RimMind.Application.Features.Storage
 
                 return Result<string?, RimMindError>.Ok(null);
             }
+            catch (OperationCanceledException)
+            {
+                return Result<string?, RimMindError>.Err(RimMindErrors.Cancelled());
+            }
             catch (Exception ex)
             {
                 _log?.Warning($"[RemoteSync] Pull failed for {key}: {ex.Message}");
@@ -96,6 +100,10 @@ namespace RimMind.Application.Features.Storage
                 if (result.IsOk && result.Value)
                     _log?.Message($"[RemoteSync] Pushed {key} v{localVersion}");
                 return result;
+            }
+            catch (OperationCanceledException)
+            {
+                return Result<bool, RimMindError>.Err(RimMindErrors.Cancelled());
             }
             catch (Exception ex)
             {

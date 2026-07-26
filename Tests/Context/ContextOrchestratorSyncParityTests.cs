@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Npc;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
@@ -132,7 +133,7 @@ namespace RimMind.Tests.Context
 
             return new ContextOrchestrator(
                 new EmptyHistoryManager(),
-                npcManager: null,
+                npcManagers: new EmptyNpcManagerAccessor(),
                 services,
                 settingsProvider: null!,
                 translationService: null!,
@@ -144,14 +145,23 @@ namespace RimMind.Tests.Context
                 providerCache);
         }
 
+        private sealed class EmptyNpcManagerAccessor : INpcManagerAccessor
+        {
+            public INpcManager? Current => null;
+        }
+
         private sealed class EmptyHistoryManager : IHistoryManager
         {
             public void AddTurn(string npcId, string userMessage, string assistantMessage, string? scenario = null) { }
+            public void AddPendingTurn(string npcId, string turnId, string userMessage, string assistantPlaceholder, string? scenario = null) { }
             public List<(string role, string content)> GetHistory(string npcId, int maxRounds, string? scenario = null) => new();
+            public List<(string role, string content)> GetHistoryForDisplay(string npcId, int maxRounds, string? scenario = null) => new();
             public int GetHistoryCount(string npcId) => 0;
             public void ClearHistory(string npcId) { }
             public void CompressIfNeeded(string npcId) { }
             public void ReplaceLastAssistantTurn(string npcId, string content) { }
+            public bool ReplaceAssistantTurn(string npcId, string turnId, string content) => false;
+            public bool RemoveTurn(string npcId, string turnId) => false;
             public string GetAllForSave() => string.Empty;
             public Dictionary<string, List<HistoryEntry>> GetAllForSaveDict() => new();
         }

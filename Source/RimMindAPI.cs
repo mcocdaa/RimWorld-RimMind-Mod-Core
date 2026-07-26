@@ -21,6 +21,7 @@ using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Presentation.Runtime;
+using RimMind.Presentation.Runtime.Services;
 using Verse;
 using System;
 using System.Collections.Generic;
@@ -33,12 +34,20 @@ namespace RimMind.Presentation.Api
 {
     public static partial class RimMindAPI
     {
+        private static readonly RuntimeServiceRef<RimMindRuntime> RuntimeRef =
+            RuntimeServiceRef<RimMindRuntime>.Optional();
+
+        private static RimMindRuntime CurrentRuntime =>
+            RuntimeRef.ValueOrDefault
+            ?? throw new InvalidOperationException("[RimMind-Core] Runtime is not running.");
+
         [Obsolete("No code consumers in Core or any sub-mod. Scheduled for removal in a future version.")]
         public static void Shutdown()
         {
-            if (RimMindRuntime.Instance.IsShutdown) return;
-            RimMindRuntime.Instance.Shutdown();
-            RimMindRuntime.Instance.Queue?.CancelAllRequests();
+            var runtime = RuntimeRef.ValueOrDefault;
+            if (runtime == null || runtime.IsShutdown) return;
+            runtime.Queue.CancelAllRequests();
+            RimMindRuntimeHost.Shutdown();
         }
 
         internal static void ResetForNewGame() => RimMindRuntime.ResetInstance();
@@ -112,16 +121,16 @@ namespace RimMind.Presentation.Api
         public static IAIClient? GetPlayer2Client() => Bus.GetPlayer2Client();
 
         public static string? GetNpcForMap(Map map)
-            => RimMindRuntime.Instance.GetService<INpcManager>()?.GetNpcForMap(map);
+            => GameServiceRef<INpcManager>.Optional().ValueOrDefault?.GetNpcForMap(map);
 
         public static bool IsAgentActive(string thingId)
-            => RimMindRuntime.Instance.GetService<IAgentActiveChecker>()?.IsAgentActive(thingId) == true;
+            => RuntimeServiceRef<IAgentActiveChecker>.Optional().ValueOrDefault?.IsAgentActive(thingId) == true;
 
         /// <summary>
         /// Add a middleware to the corresponding pipeline based on TContext type.
         /// Supported context types: AIRequestContext, NpcChatContext, ContextBuildContext, BusPublishContext.
         /// </summary>
         public static void AddMiddleware<TContext>(IMiddleware<TContext> middleware) where TContext : IPipelineContext
-            => RimMindRuntime.Instance.AddMiddleware(middleware);
+            => CurrentRuntime.AddMiddleware(middleware);
     }
 }
