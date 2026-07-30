@@ -781,7 +781,7 @@ namespace RimMind.Infrastructure.UI
                 return;
 
             _liveRequestToken = null;
-            RuntimeServiceHub.Shared.RecordStaleCompletion();
+            RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.AgentFlowLab);
             _requestStatus = "RimMind.UI.Lifecycle.StaleCompletion".Translate();
             _lastError = _requestStatus;
             SetStepStatus(FlowLabStep.SendRequest, StepStatus.Failed);

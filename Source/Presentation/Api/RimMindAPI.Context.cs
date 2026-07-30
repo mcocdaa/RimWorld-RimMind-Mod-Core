@@ -1,4 +1,5 @@
 using RimMind.Application.Common.Interfaces.Context;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Models.Context;
 using RimMind.Application.Features.Context;
 using RimMind.Domain.ValueObjects;
@@ -37,8 +38,12 @@ namespace RimMind.Presentation.Api
             public static void RegisterScenario(string scenarioId, int defaultBaseRounds, string description,
                 float[]? defaultEmbedding = null, float defaultBudget = 0.6f,
                 L4Mode l4Mode = L4Mode.BudgetControlled, string[]? defaultExcludeKeys = null)
-                => ScenarioRegistry.Register(scenarioId, defaultBaseRounds, description,
-                    defaultEmbedding, defaultBudget, l4Mode, defaultExcludeKeys);
+            {
+                var scope = RuntimeServiceHub.Shared.Capture();
+                ScenarioRegistry.Register(scenarioId, defaultBaseRounds, description,
+                    defaultEmbedding, defaultBudget, l4Mode, defaultExcludeKeys,
+                    scope.GetRequired<ILogSink>());
+            }
 
             public static bool UnregisterScenario(string scenarioId)
                 => ScenarioRegistry.Unregister(scenarioId);

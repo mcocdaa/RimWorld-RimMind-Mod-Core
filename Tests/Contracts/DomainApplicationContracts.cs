@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Features.Agent;
 using RimMind.Application.Features.Agent.Modes;
+using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Llm;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Common;
@@ -256,7 +258,30 @@ namespace RimMind.Tests.Contracts
                 ("new value omits an empty old value", () =>
                     Assert.Equal("[health] 80", new ContextDiff { Key = "health", OldValue = "", NewValue = "80" }.Format())),
                 ("changed value exposes the transition", () =>
-                    Assert.Equal("[health] 100 -> 80", new ContextDiff { Key = "health", OldValue = "100", NewValue = "80" }.Format())));
+                    Assert.Equal("[health] 100 -> 80", new ContextDiff { Key = "health", OldValue = "100", NewValue = "80" }.Format())),
+                ("scenario registry uses only operation-scoped services", ScenarioRegistryUsesOperationScopedServices));
+        }
+
+        private static void ScenarioRegistryUsesOperationScopedServices()
+        {
+            ScenarioRegistry.Clear();
+            var oldLog = new CapturingLogSink();
+            var currentLog = new CapturingLogSink();
+            var oldTranslation = new PrefixTranslationService("old:");
+
+            ScenarioRegistry.RegisterCoreScenarios(oldTranslation, oldLog);
+            Assert.StartsWith("old:", ScenarioRegistry.Get(ScenarioIds.Dialogue)!.Description, StringComparison.Ordinal);
+            ScenarioRegistry.Clear();
+            ScenarioRegistry.RegisterCoreScenarios();
+            Assert.Equal("RimMind.Application.Scenario.Dialogue", ScenarioRegistry.Get(ScenarioIds.Dialogue)!.Description);
+
+            ScenarioRegistry.Register("duplicate", 1, "first", logSink: oldLog);
+            ScenarioRegistry.Register("duplicate", 2, "second", logSink: currentLog);
+            ScenarioRegistry.Register("duplicate", 3, "third");
+
+            Assert.Empty(oldLog.Warnings);
+            Assert.Single(currentLog.Warnings);
+            ScenarioRegistry.Clear();
         }
 
         [Fact]
@@ -320,6 +345,25 @@ namespace RimMind.Tests.Contracts
                 Priority = AIRequestPriority.Normal,
                 ProcessingMs = 200
             };
+        }
+
+        private sealed class CapturingLogSink : ILogSink
+        {
+            public List<string> Warnings { get; } = new();
+            public void Message(string msg) { }
+            public void Warning(string msg) => Warnings.Add(msg);
+            public void Error(string msg) { }
+            public void LogFromBackground(string msg, bool isWarning = false) { }
+        }
+
+        private sealed class PrefixTranslationService : ITranslationService
+        {
+            private readonly string _prefix;
+            public PrefixTranslationService(string prefix) => _prefix = prefix;
+            public string Translate(string key) => _prefix + key;
+            public string Translate(string key, object arg0) => Translate(key);
+            public string Translate(string key, object arg0, object arg1) => Translate(key);
+            public string Translate(string key, object arg0, object arg1, object arg2) => Translate(key);
         }
     }
 }

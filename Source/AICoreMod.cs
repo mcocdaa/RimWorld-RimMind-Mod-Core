@@ -33,6 +33,7 @@ namespace RimMind.Presentation
             Settings = GetSettings<RimMindCoreSettings>();
             var sp = new SettingsProvider(Settings);
 
+            ProcessLifecycleEvents.Publisher.Configure(VerseLifecycleEventSink.Instance);
             RimMindRuntimeHost.Initialize(sp, Settings);
             var scope = RuntimeServiceHub.Shared.Capture();
             var runtime = scope.GetRequired<RimMindRuntime>();
@@ -58,7 +59,7 @@ namespace RimMind.Presentation
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
 
             ScenarioRegistry.RegisterCoreScenarios(
-                null,
+                scope.GetRequired<ITranslationService>(),
                 scope.GetRequired<ILogSink>());
 
             // L3: Use instance-based RelevanceTable

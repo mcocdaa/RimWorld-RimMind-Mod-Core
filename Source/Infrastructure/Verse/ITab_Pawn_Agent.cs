@@ -160,7 +160,7 @@ namespace RimMind.Infrastructure.Verse
                     }
                     else if (createdAgent != null)
                     {
-                        RuntimeServiceHub.Shared.RecordStaleCompletion();
+                        RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.PawnAgentTab);
                         Messages.Message("RimMind.Agent.ITab.CreateFailed".Translate(),
                             MessageTypeDefOf.RejectInput, false);
                     }

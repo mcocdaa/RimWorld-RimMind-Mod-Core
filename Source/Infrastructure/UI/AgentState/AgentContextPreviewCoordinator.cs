@@ -75,7 +75,7 @@ namespace RimMind.Infrastructure.UI.AgentStatePreview
             _token = null;
             if (token.HasValue && !_runtimeHub.IsCurrent(token.Value))
             {
-                _runtimeHub.RecordStaleCompletion();
+                _runtimeHub.RecordStaleCompletion(LifecycleEventSources.AgentContextPreview);
                 Summary = unavailableSummary ?? string.Empty;
                 State = AgentContextPreviewState.Discarded;
                 return;

@@ -36,7 +36,10 @@ namespace RimMind.Tests.Contracts
                 ("runtime optional diagnostics are observable once per type generation and bounded", RuntimeOptionalDiagnosticsAreBounded),
                 ("game optional diagnostics are observable once per type generation and bounded", GameOptionalDiagnosticsAreBounded),
                 ("runtime and game generations advance independently", RuntimeAndGameGenerationsAreIndependent),
-                ("game stop publishes an unavailable stopped generation", GameStopPublishesStoppedGeneration));
+                ("game stop publishes an unavailable stopped generation", GameStopPublishesStoppedGeneration),
+                ("runtime lifecycle events are ordered safe and preserve publication on failure", RuntimeLifecycleEventsAreSafe),
+                ("stale completion events are counted and use approved sources", StaleCompletionEventsAreCounted),
+                ("game publication emits a safe lifecycle event", GamePublicationEmitsLifecycleEvent));
         }
 
         private static void DuplicateBindIsRejected()
@@ -505,6 +508,71 @@ namespace RimMind.Tests.Contracts
             Assert.Throws<GameServiceUnavailableException>(() => hub.Capture().GetRequired<IGameValue>());
         }
 
+        private static void RuntimeLifecycleEventsAreSafe()
+        {
+            var events = new ConcurrentQueue<LifecycleEvent>();
+            var hub = new RuntimeServiceHub(lifecycleEventSink: new CapturingLifecycleEventSink(events));
+            var firstBuilder = CreateRuntimeBuilder(4);
+            hub.RecordBuildStarted(firstBuilder.RuntimeId);
+            var publication = PublishRuntime(hub, firstBuilder);
+            var rejectedBuilder = new RuntimeServiceBuilder();
+            rejectedBuilder.Require<ILeft>();
+            hub.RecordBuildStarted(rejectedBuilder.RuntimeId);
+            var failure = Assert.Throws<InvalidOperationException>(() => rejectedBuilder.Build());
+            hub.RecordBuildFailure(rejectedBuilder.RuntimeId, failure);
+            hub.RecordRuntimeRetired(publication.CurrentSnapshot.RuntimeId, publication.CurrentSnapshot.Generation);
+
+            Assert.Same(publication.CurrentSnapshot, hub.Capture().Snapshot);
+            Assert.Equal(
+                new[]
+                {
+                    LifecycleEventKind.RuntimeBuildStarted,
+                    LifecycleEventKind.RuntimePublished,
+                    LifecycleEventKind.RuntimeBuildStarted,
+                    LifecycleEventKind.RuntimeBuildRejected,
+                    LifecycleEventKind.RuntimeRetired
+                },
+                events.Select(item => item.Kind));
+            var rejected = events.Single(item => item.Kind == LifecycleEventKind.RuntimeBuildRejected);
+            Assert.Equal(nameof(InvalidOperationException), rejected.ExceptionType);
+            Assert.Null(rejected.Source);
+            Assert.DoesNotContain("missing", LifecycleEventFormatter.Format(rejected), StringComparison.OrdinalIgnoreCase);
+            Assert.All(
+                events.Where(item => item.Kind == LifecycleEventKind.RuntimeBuildStarted),
+                item => Assert.Equal(RuntimeLifecycleState.Building.ToString(), item.LifecycleState));
+        }
+
+        private static void StaleCompletionEventsAreCounted()
+        {
+            var events = new ConcurrentQueue<LifecycleEvent>();
+            var hub = new RuntimeServiceHub(lifecycleEventSink: new CapturingLifecycleEventSink(events));
+            var publication = PublishRuntime(hub, CreateRuntimeBuilder(1));
+
+            hub.RecordStaleCompletion("api_request");
+            hub.RecordStaleCompletion("secret-user-input");
+
+            Assert.Equal(2, hub.GetDiagnostics().StaleCompletionDiscardCount);
+            var staleEvents = events.Where(item => item.Kind == LifecycleEventKind.StaleCompletionDiscarded).ToArray();
+            Assert.Equal(2, staleEvents.Length);
+            Assert.Equal("api_request", staleEvents[0].Source);
+            Assert.Equal(LifecycleEventSources.Unknown, staleEvents[1].Source);
+            Assert.All(staleEvents, item => Assert.Equal(publication.CurrentSnapshot.RuntimeId, item.RuntimeId));
+        }
+
+        private static void GamePublicationEmitsLifecycleEvent()
+        {
+            var events = new ConcurrentQueue<LifecycleEvent>();
+            var hub = new GameServiceHub(lifecycleEventSink: new CapturingLifecycleEventSink(events));
+
+            var publication = hub.Publish(CreateGameBuilder(9).Build());
+
+            var published = Assert.Single(events);
+            Assert.Equal(LifecycleEventKind.GameServicesPublished, published.Kind);
+            Assert.Equal(publication.CurrentSnapshot.Generation, published.GameGeneration);
+            Assert.Equal(publication.CurrentSnapshot.ServiceCount, published.ServiceCount);
+            Assert.Equal(GameLifecycleState.Running.ToString(), published.LifecycleState);
+        }
+
         private static RuntimeServiceBuilder CreateRuntimeBuilder(int version)
         {
             var builder = new RuntimeServiceBuilder();
@@ -584,6 +652,15 @@ namespace RimMind.Tests.Contracts
             private int _disposeCount;
             public int DisposeCount => Volatile.Read(ref _disposeCount);
             public void Dispose() => Interlocked.Increment(ref _disposeCount);
+        }
+
+        private sealed class CapturingLifecycleEventSink : ILifecycleEventSink
+        {
+            private readonly ConcurrentQueue<LifecycleEvent> _events;
+
+            public CapturingLifecycleEventSink(ConcurrentQueue<LifecycleEvent> events) => _events = events;
+
+            public void Emit(LifecycleEvent lifecycleEvent) => _events.Enqueue(lifecycleEvent);
         }
     }
 }

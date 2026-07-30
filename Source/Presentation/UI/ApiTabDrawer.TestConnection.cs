@@ -232,7 +232,7 @@ namespace RimMind.Presentation.UI
                 if (_staleRecorded)
                     return;
                 _staleRecorded = true;
-                runtimeHub.RecordStaleCompletion();
+                runtimeHub.RecordStaleCompletion(LifecycleEventSources.TestConnection);
             }
         }
 

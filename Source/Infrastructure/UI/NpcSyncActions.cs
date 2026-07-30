@@ -314,7 +314,7 @@ namespace RimMind.Infrastructure.UI
                 if (_staleRecorded)
                     return;
                 _staleRecorded = true;
-                runtimeHub.RecordStaleCompletion();
+                runtimeHub.RecordStaleCompletion(LifecycleEventSources.NpcSync);
             }
 
             public void Dispose()

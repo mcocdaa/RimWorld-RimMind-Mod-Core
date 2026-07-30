@@ -35,12 +35,16 @@ namespace RimMind.Presentation.Runtime.Services
         private readonly object _publicationLock = new object();
         private readonly Dictionary<Type, long> _optionalMissingGenerations = new Dictionary<Type, long>();
         private readonly Action<string> _optionalMissingDiagnosticSink;
+        private readonly ILifecycleEventSink _lifecycleEventSink;
         private RuntimeHubState _state;
 
-        internal RuntimeServiceHub(Action<string>? optionalMissingDiagnosticSink = null)
+        internal RuntimeServiceHub(
+            Action<string>? optionalMissingDiagnosticSink = null,
+            ILifecycleEventSink? lifecycleEventSink = null)
         {
             _optionalMissingDiagnosticSink = optionalMissingDiagnosticSink
                 ?? (message => Trace.TraceWarning(message));
+            _lifecycleEventSink = lifecycleEventSink ?? ProcessLifecycleEvents.Publisher;
             _state = new RuntimeHubState(
                 RuntimeServiceSnapshot.CreateEmpty(
                     Guid.Empty,
@@ -120,6 +124,12 @@ namespace RimMind.Presentation.Runtime.Services
             {
                 retired.Lifetime?.Retire();
             }
+            Emit(new LifecycleEvent(
+                LifecycleEventKind.RuntimePublished,
+                current.Snapshot.RuntimeId,
+                runtimeGeneration: current.Snapshot.Generation,
+                serviceCount: current.Snapshot.ServiceCount,
+                lifecycleState: current.Snapshot.State.ToString()));
             return new RuntimePublication(
                 current.Snapshot,
                 current.Lifetime,
@@ -167,7 +177,21 @@ namespace RimMind.Presentation.Runtime.Services
                 && state.Snapshot.Generation == token.Generation;
         }
 
+        public void RecordBuildStarted(Guid runtimeId)
+        {
+            Emit(new LifecycleEvent(
+                LifecycleEventKind.RuntimeBuildStarted,
+                runtimeId,
+                runtimeGeneration: Generation,
+                lifecycleState: RuntimeLifecycleState.Building.ToString()));
+        }
+
         public void RecordBuildFailure(Exception failure)
+        {
+            RecordBuildFailure(Capture().Snapshot.RuntimeId, failure);
+        }
+
+        public void RecordBuildFailure(Guid runtimeId, Exception failure)
         {
             if (failure == null)
             {
@@ -186,13 +210,28 @@ namespace RimMind.Presentation.Runtime.Services
                         summary,
                         state.StaleCompletionDiscardCount));
             }
+            var snapshot = Capture().Snapshot;
+            Emit(new LifecycleEvent(
+                LifecycleEventKind.RuntimeBuildRejected,
+                runtimeId,
+                runtimeGeneration: snapshot.Generation,
+                serviceCount: snapshot.ServiceCount,
+                lifecycleState: snapshot.State.ToString(),
+                exceptionType: failure.GetType().Name));
         }
 
         public void RecordStaleCompletion()
         {
+            RecordStaleCompletion(LifecycleEventSources.Unknown);
+        }
+
+        public void RecordStaleCompletion(string? source)
+        {
+            RuntimeServiceSnapshot snapshot;
             lock (_publicationLock)
             {
                 var state = _state;
+                snapshot = state.Snapshot;
                 Volatile.Write(
                     ref _state,
                     new RuntimeHubState(
@@ -201,6 +240,22 @@ namespace RimMind.Presentation.Runtime.Services
                         state.LastBuildFailureSummary,
                         checked(state.StaleCompletionDiscardCount + 1)));
             }
+            Emit(new LifecycleEvent(
+                LifecycleEventKind.StaleCompletionDiscarded,
+                snapshot.RuntimeId,
+                runtimeGeneration: snapshot.Generation,
+                serviceCount: snapshot.ServiceCount,
+                lifecycleState: snapshot.State.ToString(),
+                source: LifecycleEventSources.Normalize(source)));
+        }
+
+        public void RecordRuntimeRetired(Guid runtimeId, long generation)
+        {
+            Emit(new LifecycleEvent(
+                LifecycleEventKind.RuntimeRetired,
+                runtimeId,
+                runtimeGeneration: generation,
+                lifecycleState: RuntimeLifecycleState.Stopped.ToString()));
         }
 
         public RuntimeLifecycleDiagnostics GetDiagnostics()
@@ -247,6 +302,18 @@ namespace RimMind.Presentation.Runtime.Services
             }
 
             return true;
+        }
+
+        private void Emit(LifecycleEvent lifecycleEvent)
+        {
+            try
+            {
+                _lifecycleEventSink.Emit(lifecycleEvent);
+            }
+            catch (Exception)
+            {
+                // Diagnostics must never affect publication or completion fencing.
+            }
         }
 
         private sealed class RuntimeHubState

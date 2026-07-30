@@ -93,7 +93,7 @@ namespace RimMind.Presentation.Api
                 {
                     if (!RuntimeServiceHub.Shared.IsCurrent(scope.Token))
                     {
-                        RuntimeServiceHub.Shared.RecordStaleCompletion();
+                        RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.ApiRequest);
                         return;
                     }
 

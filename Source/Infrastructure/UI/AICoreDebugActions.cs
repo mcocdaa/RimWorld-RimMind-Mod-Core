@@ -169,7 +169,7 @@ namespace RimMind.Infrastructure.UI
                 {
                     if (!RuntimeServiceHub.Shared.IsCurrent(token))
                     {
-                        RuntimeServiceHub.Shared.RecordStaleCompletion();
+                        RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.DebugAction);
                         return;
                     }
                     LogContextSnapshot(pawn, npcId, snapshot);
@@ -181,7 +181,7 @@ namespace RimMind.Infrastructure.UI
                 {
                     if (!RuntimeServiceHub.Shared.IsCurrent(token))
                     {
-                        RuntimeServiceHub.Shared.RecordStaleCompletion();
+                        RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.DebugAction);
                         return;
                     }
                     RimMindErrors.Warn($"[RimMind-Core] Context preview failed: {ex.Message}");

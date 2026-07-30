@@ -73,7 +73,7 @@ namespace RimMind.Infrastructure.UI.AgentFlow
             _contextBuildToken = null;
             if (token.HasValue && !_runtimeHub.IsCurrent(token.Value))
             {
-                _runtimeHub.RecordStaleCompletion();
+                _runtimeHub.RecordStaleCompletion(LifecycleEventSources.AgentFlow);
                 error = StaleCompletionTranslationKey;
                 return true;
             }
@@ -147,7 +147,7 @@ namespace RimMind.Infrastructure.UI.AgentFlow
                 _pendingMechanismExecutions.RemoveAt(index);
                 if (pending.Token.HasValue && !_runtimeHub.IsCurrent(pending.Token.Value))
                 {
-                    _runtimeHub.RecordStaleCompletion();
+                    _runtimeHub.RecordStaleCompletion(LifecycleEventSources.AgentFlow);
                     completion = new AgentFlowMechanismExecutionCompletion(
                         pending.Context,
                         null,

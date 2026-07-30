@@ -87,6 +87,7 @@ namespace RimMind.Presentation.Runtime
         }
 
         public RuntimeComposition Compose(
+            Guid runtimeId,
             ISettingsProvider? settingsProvider,
             IOpenAISettings? openAISettings,
             ExtensionRegistryCatalog extensions,
@@ -95,11 +96,12 @@ namespace RimMind.Presentation.Runtime
             if (extensions == null) throw new ArgumentNullException(nameof(extensions));
             if (actionBridge == null) throw new ArgumentNullException(nameof(actionBridge));
 
-            var services = new RuntimeServiceBuilder();
+            var services = new RuntimeServiceBuilder(runtimeId);
             var lifetime = new RuntimeLifetime(
                 services.RuntimeId,
                 RuntimeServiceHub.Shared.IsCurrent,
-                RuntimeServiceHub.Shared.RecordStaleCompletion);
+                () => RuntimeServiceHub.Shared.RecordStaleCompletion(
+                    LifecycleEventSources.RuntimeLifetime));
             var owned = new List<IDisposable>();
             RimMindRuntime? runtime = null;
 

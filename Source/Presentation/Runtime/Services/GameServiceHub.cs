@@ -25,12 +25,16 @@ namespace RimMind.Presentation.Runtime.Services
         private readonly object _publicationLock = new object();
         private readonly Dictionary<Type, long> _optionalMissingGenerations = new Dictionary<Type, long>();
         private readonly Action<string> _optionalMissingDiagnosticSink;
+        private readonly ILifecycleEventSink _lifecycleEventSink;
         private GameServiceSnapshot _snapshot;
 
-        internal GameServiceHub(Action<string>? optionalMissingDiagnosticSink = null)
+        internal GameServiceHub(
+            Action<string>? optionalMissingDiagnosticSink = null,
+            ILifecycleEventSink? lifecycleEventSink = null)
         {
             _optionalMissingDiagnosticSink = optionalMissingDiagnosticSink
                 ?? (message => Trace.TraceWarning(message));
+            _lifecycleEventSink = lifecycleEventSink ?? ProcessLifecycleEvents.Publisher;
             _snapshot = GameServiceSnapshot.CreateEmpty(0, GameLifecycleState.NeverPublished, null);
         }
 
@@ -78,6 +82,11 @@ namespace RimMind.Presentation.Runtime.Services
                 Volatile.Write(ref _snapshot, current);
             }
 
+            Emit(new LifecycleEvent(
+                LifecycleEventKind.GameServicesPublished,
+                gameGeneration: current.Generation,
+                serviceCount: current.ServiceCount,
+                lifecycleState: current.State.ToString()));
             return new GamePublication(current, retired);
         }
 
@@ -135,6 +144,18 @@ namespace RimMind.Presentation.Runtime.Services
             }
 
             return true;
+        }
+
+        private void Emit(LifecycleEvent lifecycleEvent)
+        {
+            try
+            {
+                _lifecycleEventSink.Emit(lifecycleEvent);
+            }
+            catch (Exception)
+            {
+                // Diagnostics must never affect game service publication.
+            }
         }
     }
 }

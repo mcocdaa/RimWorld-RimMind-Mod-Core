@@ -29,21 +29,15 @@ namespace RimMind.Application.Features.Context
     {
         private static readonly ConcurrentDictionary<string, ScenarioMeta> _scenarios = new ConcurrentDictionary<string, ScenarioMeta>();
         private static bool _coreRegistered = false;
-        private static ITranslationService? _translationService;
-        private static ILogSink? _logSink;
-
-        private static string? T(string key, params object[] args)
-        {
-            return _translationService?.Translate(key, args);
-        }
 
         public static void Register(string scenarioId, int defaultBaseRounds, string description,
             float[]? defaultEmbedding = null, float defaultBudget = 0.6f,
-            L4Mode l4Mode = L4Mode.BudgetControlled, string[]? defaultExcludeKeys = null)
+            L4Mode l4Mode = L4Mode.BudgetControlled, string[]? defaultExcludeKeys = null,
+            ILogSink? logSink = null)
         {
             if (_scenarios.ContainsKey(scenarioId))
             {
-                _logSink?.Warning($"[RimMind-Core] Scenario '{scenarioId}' already registered, overwriting.");
+                logSink?.Warning($"[RimMind-Core] Scenario '{scenarioId}' already registered, overwriting.");
             }
             _scenarios[scenarioId] = new ScenarioMeta
             {
@@ -76,26 +70,29 @@ namespace RimMind.Application.Features.Context
         {
             if (_coreRegistered) return;
             _coreRegistered = true;
-            _translationService = translationService;
-            _logSink = logSink;
-            Register(ScenarioIds.Dialogue, 10, T("RimMind.Application.Scenario.Dialogue") ?? "RimMind.Application.Scenario.Dialogue",
+            Register(ScenarioIds.Dialogue, 10, Translate(translationService, "RimMind.Application.Scenario.Dialogue"),
                 defaultBudget: 0.6f, l4Mode: L4Mode.BudgetControlled,
-                defaultExcludeKeys: new[] { "combat_status", "task_progress" });
-            Register(ScenarioIds.Decision, 0, T("RimMind.Application.Scenario.Decision") ?? "RimMind.Application.Scenario.Decision",
+                defaultExcludeKeys: new[] { "combat_status", "task_progress" }, logSink: logSink);
+            Register(ScenarioIds.Decision, 0, Translate(translationService, "RimMind.Application.Scenario.Decision"),
                 defaultBudget: 0.5f, l4Mode: L4Mode.None,
-                defaultExcludeKeys: new string[0]);
-            Register(ScenarioIds.Personality, 3, T("RimMind.Application.Scenario.Personality") ?? "RimMind.Application.Scenario.Personality",
+                defaultExcludeKeys: new string[0], logSink: logSink);
+            Register(ScenarioIds.Personality, 3, Translate(translationService, "RimMind.Application.Scenario.Personality"),
                 defaultBudget: 0.4f, l4Mode: L4Mode.MemoryOnly,
-                defaultExcludeKeys: new[] { "combat_status" });
-            Register(ScenarioIds.Storyteller, 8, T("RimMind.Application.Scenario.Storyteller") ?? "RimMind.Application.Scenario.Storyteller",
+                defaultExcludeKeys: new[] { "combat_status" }, logSink: logSink);
+            Register(ScenarioIds.Storyteller, 8, Translate(translationService, "RimMind.Application.Scenario.Storyteller"),
                 defaultBudget: 0.7f, l4Mode: L4Mode.NarrativeMemory,
                 defaultExcludeKeys: new[] { "npc_identity", "pawn_base_info", "fixed_relations",
                     "ideology", "skills_summary", "health", "mood", "current_job",
-                    "combat_status", "target_info", "task_progress", "npc_commands" });
-            Register(ScenarioIds.Memory, 0, T("RimMind.Application.Scenario.Memory") ?? "RimMind.Application.Scenario.Memory",
+                    "combat_status", "target_info", "task_progress", "npc_commands" }, logSink: logSink);
+            Register(ScenarioIds.Memory, 0, Translate(translationService, "RimMind.Application.Scenario.Memory"),
                 defaultBudget: 0.4f, l4Mode: L4Mode.None,
                 defaultExcludeKeys: new[] { "combat_status", "current_job", "mood",
-                    "task_progress", "npc_commands", "target_info" });
+                    "task_progress", "npc_commands", "target_info" }, logSink: logSink);
+        }
+
+        private static string Translate(ITranslationService? translationService, string key)
+        {
+            return translationService?.Translate(key) ?? key;
         }
 
         public static int GetBaseRounds(string scenarioId)

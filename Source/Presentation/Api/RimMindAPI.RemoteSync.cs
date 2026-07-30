@@ -69,7 +69,7 @@ namespace RimMind.Presentation.Api
                     return result;
                 }
 
-                RuntimeServiceHub.Shared.RecordStaleCompletion();
+                RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.RemoteSync);
                 return Result<T, RimMindError>.Err(
                     RimMindErrors.PipelineShortCircuited("runtime generation retired"));
             }

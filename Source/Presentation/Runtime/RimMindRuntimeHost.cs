@@ -3,7 +3,6 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Presentation.Runtime.Composition;
 using RimMind.Presentation.Runtime.Services;
-using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -38,9 +37,6 @@ namespace RimMind.Presentation.Runtime
             RuntimeLifetime? retiredLifetime = null;
             RuntimeComposition? rejectedCandidate = null;
             long retiredGeneration = 0;
-            Guid publishedRuntimeId = Guid.Empty;
-            long publishedGeneration = 0;
-            int publishedServiceCount = 0;
             var published = false;
 
             lock (Sync)
@@ -52,16 +48,18 @@ namespace RimMind.Presentation.Runtime
                 }
 
                 RuntimeComposition? candidate = null;
+                var runtimeId = Guid.NewGuid();
                 try
                 {
+                    RuntimeServiceHub.Shared.RecordBuildStarted(runtimeId);
                     var root = new RimMindCompositionRoot();
                     candidate = root.Compose(
+                        runtimeId,
                         settingsProvider,
                         openAiSettings,
                         _extensions.Fork(),
                         ActionBridge);
                     var snapshot = candidate.Services.Build();
-                    Log.Message($"[RimMind-Core] RuntimeBuildStarted runtimeId={snapshot.RuntimeId}");
                     var publication = RuntimeServiceHub.Shared.Publish(
                         snapshot,
                         candidate.Lifetime,
@@ -71,9 +69,6 @@ namespace RimMind.Presentation.Runtime
                     retiredGeneration = publication.RetiredSnapshot.Generation;
                     _current = candidate;
                     _extensions = candidate.Extensions;
-                    publishedRuntimeId = publication.CurrentSnapshot.RuntimeId;
-                    publishedGeneration = publication.CurrentSnapshot.Generation;
-                    publishedServiceCount = publication.CurrentSnapshot.ServiceCount;
                     published = true;
                     candidate = null;
                     error = null;
@@ -81,7 +76,7 @@ namespace RimMind.Presentation.Runtime
                 catch (Exception ex)
                 {
                     rejectedCandidate = candidate;
-                    RuntimeServiceHub.Shared.RecordBuildFailure(ex);
+                    RuntimeServiceHub.Shared.RecordBuildFailure(runtimeId, ex);
                     error = ex;
                 }
             }
@@ -89,11 +84,9 @@ namespace RimMind.Presentation.Runtime
             rejectedCandidate?.Dispose();
             if (!published)
             {
-                Log.Warning($"[RimMind-Core] RuntimeBuildRejected errorType={error?.GetType().Name}");
                 return false;
             }
 
-            Log.Message($"[RimMind-Core] RuntimePublished runtimeId={publishedRuntimeId} generation={publishedGeneration} services={publishedServiceCount}");
             Retire(retiredLifetime, retiredComposition, retiredGeneration);
             return true;
         }
@@ -129,7 +122,7 @@ namespace RimMind.Presentation.Runtime
             if (composition == null) return;
             var runtimeId = composition.Services.RuntimeId;
             composition.Dispose();
-            Log.Message($"[RimMind-Core] RuntimeRetired runtimeId={runtimeId} generation={generation}");
+            RuntimeServiceHub.Shared.RecordRuntimeRetired(runtimeId, generation);
         }
     }
 }
