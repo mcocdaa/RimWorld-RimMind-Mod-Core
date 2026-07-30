@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Common.Models.UI;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
@@ -13,17 +16,18 @@ namespace RimMind.Infrastructure.UI
 {
     public class Window_RequestLog : RimMindWindowBase
     {
-        private readonly RuntimeServiceRef<IAIRequestQueue> _requestQueue =
-            RuntimeServiceRef<IAIRequestQueue>.Optional();
-        private readonly RuntimeServiceRef<IApiCredentialSettings> _apiCredentials =
-            RuntimeServiceRef<IApiCredentialSettings>.Optional();
-        private readonly RuntimeServiceRef<IOverlayService> _overlayService =
-            RuntimeServiceRef<IOverlayService>.Optional();
+        private static readonly IReadOnlyList<RequestEntry> EmptyPending = Array.Empty<RequestEntry>();
         private Vector2 _scrollPos = Vector2.zero;
         private const float Padding = 6f;
         private const float EntryLineH = 22f;
         private const float BtnHeight = 24f;
         private const float BtnPadding = 4f;
+
+        private sealed record RequestLogOperationContext(
+            IOverlayService? Overlay,
+            IAIRequestQueue? Queue,
+            IApiCredentialSettings? Credentials,
+            IReadOnlyList<RequestEntry> Pending);
 
         public override Vector2 InitialSize => new Vector2(520f, 460f);
 
@@ -42,10 +46,13 @@ namespace RimMind.Infrastructure.UI
 
         public void DrawEmbedded(Rect inRect, RimMindLayoutScope? scope = null)
         {
+            GenerationFencedOperation<RequestLogOperationContext> operation = CaptureOperation();
+            RequestLogOperationContext context = operation.State;
+
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            TablePageLayoutResult table = TablePageLayout.Calculate(inRect, RequestOverlay.Pending.Count, 2);
+            TablePageLayoutResult table = TablePageLayout.Calculate(inRect, context.Pending.Count, 2);
             Rect headerRect = table.Toolbar;
             Rect contentRect = table.Body;
             Rect bottomRect = table.BottomBar;
@@ -61,16 +68,33 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
-            DrawContent(contentRect, scope);
-            DrawBottomBar(bottomRect, scope);
+            DrawContent(contentRect, operation, scope);
+            DrawBottomBar(bottomRect, operation, scope);
         }
 
-        private void DrawContent(Rect rect, RimMindLayoutScope? scope = null)
+        private static GenerationFencedOperation<RequestLogOperationContext> CaptureOperation()
+            => GenerationFencedOperation<RequestLogOperationContext>.Capture(
+                RuntimeServiceHub.Shared,
+                LifecycleEventSources.RequestLog,
+                runtimeScope =>
+                {
+                    IOverlayService? overlay = runtimeScope.GetOptional<IOverlayService>();
+                    return new RequestLogOperationContext(
+                        overlay,
+                        runtimeScope.GetOptional<IAIRequestQueue>(),
+                        runtimeScope.GetOptional<IApiCredentialSettings>(),
+                        overlay?.GetPendingRequests() ?? EmptyPending);
+                });
+
+        private void DrawContent(
+            Rect rect,
+            GenerationFencedOperation<RequestLogOperationContext> operation,
+            RimMindLayoutScope? scope = null)
         {
-            var pending = RequestOverlay.Pending;
+            IReadOnlyList<RequestEntry> pending = operation.State.Pending;
             if (pending.Count == 0)
             {
-                DrawEmptyState(rect);
+                DrawEmptyState(rect, operation.State);
                 return;
             }
 
@@ -132,7 +156,8 @@ namespace RimMind.Infrastructure.UI
                     Rect btnRect = new Rect(entryRect.x + Padding + j * (btnW + BtnPadding), btnY, btnW, BtnHeight);
                     if (Widgets.ButtonText(btnRect, entry.options[j]))
                     {
-                        RequestOverlay.Resolve(entry, entry.options[j]);
+                        if (operation.CanPublish())
+                            operation.State.Overlay?.TryResolve(entry, entry.options[j]);
                         break;
                     }
                 }
@@ -143,7 +168,7 @@ namespace RimMind.Infrastructure.UI
             Widgets.EndScrollView();
         }
 
-        private void DrawEmptyState(Rect rect)
+        private void DrawEmptyState(Rect rect, RequestLogOperationContext context)
         {
             float centerX = rect.x + rect.width / 2f;
             float centerY = rect.y + rect.height / 2f;
@@ -154,11 +179,11 @@ namespace RimMind.Infrastructure.UI
                 "RimMind.UI.RequestOverlay.Empty".Translate());
 
             var sb = new StringBuilder();
-            var queue = _requestQueue.ValueOrDefault;
+            var queue = context.Queue;
             if (queue != null && queue.IsPaused)
                 sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.QueuePaused".Translate());
 
-            var apiCred = _apiCredentials.ValueOrDefault;
+            var apiCred = context.Credentials;
             if (apiCred != null && apiCred.ApiKey.NullOrEmpty())
                 sb.AppendLine("RimMind.UI.RequestLog.EmptyReason.NoApiKey".Translate());
 
@@ -193,19 +218,23 @@ namespace RimMind.Infrastructure.UI
             GUI.color = Color.white;
         }
 
-        private void DrawBottomBar(Rect rect, RimMindLayoutScope? scope = null)
+        private void DrawBottomBar(
+            Rect rect,
+            GenerationFencedOperation<RequestLogOperationContext> operation,
+            RimMindLayoutScope? scope = null)
         {
             var clearRect = new Rect(rect.xMax - 100f, rect.y, 96f, rect.height - 4f);
             scope?.Record(clearRect, "Button:ClearAll");
             if (Widgets.ButtonText(clearRect, "RimMind.UI.RequestLog.ClearAll".Translate()))
             {
-                _overlayService.ValueOrDefault?.Clear();
+                if (operation.CanPublish())
+                    operation.State.Overlay?.Clear();
             }
 
             var countRect = new Rect(rect.x, rect.y, 200f, rect.height);
             GUI.color = Color.grey;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(countRect, "RimMind.UI.RequestLog.Count".Translate(RequestOverlay.Pending.Count));
+            Widgets.Label(countRect, "RimMind.UI.RequestLog.Count".Translate(operation.State.Pending.Count));
             Text.Anchor = TextAnchor.UpperLeft;
             GUI.color = Color.white;
         }

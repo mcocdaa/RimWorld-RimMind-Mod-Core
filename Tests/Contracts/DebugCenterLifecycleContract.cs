@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using RimMind.Presentation.Runtime.Services;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Testing;
 using Xunit;
 
@@ -45,8 +47,27 @@ namespace RimMind.Tests.Contracts
                 {
                     var actions = ReadSource("Infrastructure/UI/AICoreDebugActions.cs");
                     Assert.Contains("RuntimeServiceHub.Shared.Capture", actions, StringComparison.Ordinal);
+                    Assert.DoesNotContain("CurrentRuntime<", actions, StringComparison.Ordinal);
+                    Assert.DoesNotContain("CurrentGame<", actions, StringComparison.Ordinal);
                     Assert.DoesNotContain("private static IContextBuilder", actions, StringComparison.Ordinal);
                     Assert.DoesNotContain("private static IAgentBus", actions, StringComparison.Ordinal);
+                }),
+                ("runtime operation scope keeps one coherent generation and fences publication", () =>
+                {
+                    var hub = new RuntimeServiceHub();
+                    Publish(hub, 1);
+                    GenerationFencedOperation<IOperationValue> operation =
+                        GenerationFencedOperation<IOperationValue>.Capture(
+                        hub,
+                        LifecycleEventSources.DebugAction,
+                        scope => scope.GetRequired<IOperationValue>());
+
+                    Publish(hub, 2);
+
+                    Assert.Equal(1, operation.State.Value);
+                    Assert.False(operation.CanPublish());
+                    Assert.False(operation.CanPublish());
+                    Assert.Equal(1, hub.GetDiagnostics().StaleCompletionDiscardCount);
                 }),
                 ("new lifecycle labels are localized in both languages", () =>
                 {
@@ -77,6 +98,29 @@ namespace RimMind.Tests.Contracts
             }
 
             return count;
+        }
+
+        private static void Publish(RuntimeServiceHub hub, int value)
+        {
+            var builder = new RuntimeServiceBuilder();
+            builder.Bind<IOperationValue>(new OperationValue(value));
+            builder.Require<IOperationValue>();
+            var snapshot = builder.Build();
+            hub.Publish(
+                snapshot,
+                new RuntimeLifetime(snapshot.RuntimeId, hub.IsCurrent, hub.RecordStaleCompletion));
+        }
+
+        private interface IOperationValue
+        {
+            int Value { get; }
+        }
+
+        private sealed class OperationValue : IOperationValue
+        {
+            public OperationValue(int value) => Value = value;
+
+            public int Value { get; }
         }
 
         private static string ReadSource(string relativePath) =>

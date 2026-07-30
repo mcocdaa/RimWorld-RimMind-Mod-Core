@@ -27,6 +27,7 @@ namespace RimMind.Presentation.Runtime.Services
         public const string AgentFlowLab = "agent_flow_lab";
         public const string AgentDialogue = "agent_dialogue";
         public const string NpcSync = "npc_sync";
+        public const string RequestLog = "request_log";
         public const string DebugAction = "debug_action";
         public const string AgentFlow = "agent_flow";
         public const string AgentContextPreview = "agent_context_preview";
@@ -42,6 +43,7 @@ namespace RimMind.Presentation.Runtime.Services
             AgentFlowLab,
             AgentDialogue,
             NpcSync,
+            RequestLog,
             DebugAction,
             AgentFlow,
             AgentContextPreview,

@@ -38,6 +38,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             if (_cachedGeneration != scope.Generation || !ReferenceEquals(_log, log))
             {
                 _log = log;
+                _selectedRequestId = null;
                 _cachedGeneration = scope.Generation;
                 _cachedRevision = long.MinValue;
                 _cachedEntries = Array.Empty<AIRequestTraceEntry>();

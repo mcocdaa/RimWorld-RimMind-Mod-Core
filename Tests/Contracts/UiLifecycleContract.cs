@@ -43,6 +43,22 @@ namespace RimMind.Tests.Contracts
                     Assert.Contains("_tableScrollPosition", requests, StringComparison.Ordinal);
                     Assert.Contains("_detailScrollPosition", requests, StringComparison.Ordinal);
                 }),
+                ("ai request selection resets by generation while scroll remains visual state", () =>
+                {
+                    var state = new GenerationSelectionState<string>();
+                    var tableScroll = 19f;
+                    var detailScroll = 23f;
+
+                    Assert.True(state.Refresh(4));
+                    state.Select("request-a");
+                    Assert.Equal("request-a", state.Selection);
+                    Assert.False(state.Refresh(4));
+
+                    Assert.True(state.Refresh(5));
+                    Assert.Null(state.Selection);
+                    Assert.Equal(19f, tableScroll);
+                    Assert.Equal(23f, detailScroll);
+                }),
                 ("generation state invalidates derived values without touching visual state", () =>
                 {
                     var state = new GenerationUiState();

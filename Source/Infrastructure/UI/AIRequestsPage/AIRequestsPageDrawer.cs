@@ -12,9 +12,10 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 {
     public sealed class AIRequestsPageDrawer
     {
-        private readonly RuntimeServiceRef<IAIRequestTraceLog> _traceLog =
-            RuntimeServiceRef<IAIRequestTraceLog>.Optional();
-        private int _selectedIndex;
+        private readonly GenerationSelectionState<string> _selectionState = new();
+        private IReadOnlyList<AIRequestTraceEntry> _cachedEntries = System.Array.Empty<AIRequestTraceEntry>();
+        private long _cachedRevision = long.MinValue;
+        private string? _selectedRequestId;
         private Vector2 _scrollPosition;
         private Vector2 _detailScrollPosition;
         private const float RowHeight = 48f;
@@ -25,17 +26,31 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
 
         public void Draw(Rect rect, RimMindLayoutScope? scope = null)
         {
-            var log = _traceLog.ValueOrDefault;
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            if (_selectionState.Refresh(runtimeScope.Generation))
+            {
+                _selectedRequestId = null;
+                _cachedRevision = long.MinValue;
+                _cachedEntries = System.Array.Empty<AIRequestTraceEntry>();
+            }
+
+            var log = runtimeScope.GetOptional<IAIRequestTraceLog>();
             if (log == null)
             {
                 Widgets.Label(rect, "RimMind.UI.AIRequestsPage.TraceUnavailable".Translate());
                 return;
             }
 
-            IReadOnlyList<AIRequestTraceEntry> entries = log.Entries;
+            if (_cachedRevision != log.Revision)
+            {
+                _cachedEntries = log.Entries;
+                _cachedRevision = log.Revision;
+            }
+            IReadOnlyList<AIRequestTraceEntry> entries = _cachedEntries;
 
             if (entries.Count == 0)
             {
+                SetSelection(null);
                 Widgets.Label(rect, "RimMind.UI.AIRequestsPage.Empty".Translate());
                 return;
             }
@@ -48,8 +63,9 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
             scope?.Record(table.BottomBar, "AIRequests:ListBottom");
             scope?.Record(split.Detail, "AIRequests:Detail");
 
+            AIRequestTraceEntry selected = ResolveSelectedEntry(entries);
             DrawList(table.Body, entries);
-            DrawDetail(split.Detail, entries[Mathf.Clamp(_selectedIndex, 0, entries.Count - 1)]);
+            DrawDetail(split.Detail, selected);
         }
 
         private void DrawList(Rect rect, IReadOnlyList<AIRequestTraceEntry> entries)
@@ -63,18 +79,35 @@ namespace RimMind.Infrastructure.UI.AIRequestsPage
                 var entry = entries[i];
                 Rect row = new(viewRect.x, viewRect.y + i * RowHeight, viewRect.width, RowContentHeight);
 
-                if (i == _selectedIndex)
+                if (entry.RequestId == _selectedRequestId)
                     Widgets.DrawHighlight(row);
 
                 Widgets.DrawBoxSolid(new Rect(row.x, row.y, 4f, row.height), ColorFor(entry.State));
                 if (Widgets.ButtonInvisible(row))
-                    _selectedIndex = i;
+                    SetSelection(entry.RequestId);
                 Widgets.Label(new Rect(row.x + 8f, row.y + 2f, row.width - 12f, 22f), entry.Source);
                 Widgets.Label(new Rect(row.x + 8f, row.y + 22f, row.width - 12f, 22f), TruncateForRow(entry.UserPrompt));
                 if (entry.State == AIRequestTraceState.Failed && !string.IsNullOrWhiteSpace(entry.Error))
                     TooltipHandler.TipRegion(row, entry.Error);
             }
             Widgets.EndScrollView();
+        }
+
+        private AIRequestTraceEntry ResolveSelectedEntry(IReadOnlyList<AIRequestTraceEntry> entries)
+        {
+            AIRequestTraceEntry? selected = entries.FirstOrDefault(e => e.RequestId == _selectedRequestId);
+            if (selected != null)
+                return selected;
+
+            selected = entries[0];
+            SetSelection(selected.RequestId);
+            return selected;
+        }
+
+        private void SetSelection(string? requestId)
+        {
+            _selectedRequestId = requestId;
+            _selectionState.Select(requestId);
         }
 
         private void DrawDetail(Rect rect, AIRequestTraceEntry entry)

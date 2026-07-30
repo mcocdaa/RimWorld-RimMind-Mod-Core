@@ -50,4 +50,27 @@ namespace RimMind.Presentation.UI.Framework
             HasActiveInteraction = false;
         }
     }
+
+    public sealed class GenerationSelectionState<T>
+        where T : class
+    {
+        public long BoundGeneration { get; private set; } = -1;
+
+        public T? Selection { get; private set; }
+
+        public bool Refresh(long generation)
+        {
+            if (generation == BoundGeneration)
+                return false;
+
+            BoundGeneration = generation;
+            Selection = null;
+            return true;
+        }
+
+        public void Select(T? selection)
+        {
+            Selection = selection;
+        }
+    }
 }
