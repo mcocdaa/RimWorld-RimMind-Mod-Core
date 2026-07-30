@@ -18,12 +18,13 @@ namespace RimMind.Presentation.UI
         private static readonly RuntimeServiceRef<IAIRequestQueue> RequestQueue =
             RuntimeServiceRef<IAIRequestQueue>.Optional();
 
-        private static IAIRequestQueue? GetRequestQueue()
-            => RequestQueue.ValueOrDefault;
-
-        public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
+        public static void Draw(
+            Rect inRect,
+            ISettingsProvider settings,
+            RuntimeServiceScope runtimeScope,
+            RimMindLayoutScope? scope = null)
         {
-            var queue = GetRequestQueue();
+            var queue = RequestQueue.ResolveOptional(runtimeScope);
             if (queue == null)
             {
                 var listing0 = new Listing_Standard();

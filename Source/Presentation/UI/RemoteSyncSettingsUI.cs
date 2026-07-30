@@ -1,8 +1,12 @@
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 using RimMind.Application.Common.Constants;
 using RimMind.Application.Common.Interfaces.Storage;
 using RimMind.Domain.Settings;
+using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.Settings;
+using RimMind.Presentation.UI.Framework;
 using UnityEngine;
 using Verse;
 
@@ -14,21 +18,34 @@ namespace RimMind.Presentation.UI
         public string OwnerModId => RimMindOwnerConsts.CoreModId;
         public string Label => "RimMind.Settings.Tab.RemoteSync".Translate();
 
-        private readonly RemoteSyncSettings _settings;
-        private readonly IRemoteSyncService _syncService;
-
-        private static Vector2 _scrollPos = Vector2.zero;
-        private static string _statusText = "";
-        private static Color _statusColor = Color.white;
+        private readonly RuntimeServiceRef<RemoteSyncSettings> _settings =
+            RuntimeServiceRef<RemoteSyncSettings>.Required();
+        private readonly RuntimeServiceRef<IRemoteSyncService> _syncService =
+            RuntimeServiceRef<IRemoteSyncService>.Required();
+        private readonly GenerationUiState _generationState = new GenerationUiState();
+        private Vector2 _scrollPos = Vector2.zero;
+        private string _statusText = "";
+        private Color _statusColor = Color.white;
+        private GenerationUiOperation? _activeOperation;
 
         public RemoteSyncSettingsUI(RemoteSyncSettings settings, IRemoteSyncService syncService)
         {
-            _settings = settings;
-            _syncService = syncService;
+            _ = settings ?? throw new ArgumentNullException(nameof(settings));
+            _ = syncService ?? throw new ArgumentNullException(nameof(syncService));
         }
 
         public void Draw(Rect inRect)
         {
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            RemoteSyncSettings settings = _settings.Resolve(runtimeScope);
+            IRemoteSyncService syncService = _syncService.Resolve(runtimeScope);
+            if (_generationState.Refresh(runtimeScope.Generation))
+            {
+                _activeOperation = null;
+                _statusText = string.Empty;
+                _statusColor = Color.white;
+            }
+
             float contentH = EstimateHeight();
             Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, contentH);
             Widgets.BeginScrollView(inRect, ref _scrollPos, viewRect);
@@ -37,11 +54,11 @@ namespace RimMind.Presentation.UI
             listing.Begin(viewRect);
 
             // Copy to local for CheckboxLabeled ref parameters
-            bool autoPull = _settings.AutoPull;
-            bool autoPush = _settings.AutoPush;
-            bool syncMemory = _settings.SyncMemory;
-            bool syncSettings = _settings.SyncSettings;
-            bool syncAgentIdentity = _settings.SyncAgentIdentity;
+            bool autoPull = settings.AutoPull;
+            bool autoPush = settings.AutoPush;
+            bool syncMemory = settings.SyncMemory;
+            bool syncSettings = settings.SyncSettings;
+            bool syncAgentIdentity = settings.SyncAgentIdentity;
 
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.RemoteSync.Section.AutoSync".Translate());
 
@@ -73,15 +90,15 @@ namespace RimMind.Presentation.UI
                 "RimMind.Settings.RemoteSync.SyncAgentIdentity.Desc".Translate());
 
             // Write back from locals to properties
-            _settings.AutoPull = autoPull;
-            _settings.AutoPush = autoPush;
-            _settings.SyncMemory = syncMemory;
-            _settings.SyncSettings = syncSettings;
-            _settings.SyncAgentIdentity = syncAgentIdentity;
+            settings.AutoPull = autoPull;
+            settings.AutoPush = autoPush;
+            settings.SyncMemory = syncMemory;
+            settings.SyncSettings = syncSettings;
+            settings.SyncAgentIdentity = syncAgentIdentity;
 
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.RemoteSync.Section.Manual".Translate());
 
-            bool isConfigured = _syncService.IsConfigured;
+            bool isConfigured = syncService.IsConfigured;
 
             if (!isConfigured)
             {
@@ -95,30 +112,7 @@ namespace RimMind.Presentation.UI
             {
                 if (isConfigured)
                 {
-                    _statusText = "RimMind.Settings.RemoteSync.Pulling".Translate();
-                    _statusColor = Color.cyan;
-                    _ = System.Threading.Tasks.Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var result = await _syncService.ManualPullAsync("all", CancellationToken.None);
-                            LongEventHandler.ExecuteWhenFinished(() =>
-                            {
-                                _statusText = result.IsOk
-                                    ? "RimMind.Settings.RemoteSync.PullSuccess".Translate()
-                                    : "RimMind.Settings.RemoteSync.PullFailed".Translate(result.Error?.Message ?? "");
-                                _statusColor = result.IsOk ? Color.green : Color.red;
-                            });
-                        }
-                        catch (System.Exception ex)
-                        {
-                            LongEventHandler.ExecuteWhenFinished(() =>
-                            {
-                                _statusText = "RimMind.Settings.RemoteSync.PullFailed".Translate(ex.Message);
-                                _statusColor = Color.red;
-                            });
-                        }
-                    });
+                    BeginPull(syncService, runtimeScope.Token);
                 }
             }
 
@@ -127,30 +121,7 @@ namespace RimMind.Presentation.UI
             {
                 if (isConfigured)
                 {
-                    _statusText = "RimMind.Settings.RemoteSync.Pushing".Translate();
-                    _statusColor = Color.cyan;
-                    _ = System.Threading.Tasks.Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var result = await _syncService.ManualPushAsync("all", "{}", 0, CancellationToken.None);
-                            LongEventHandler.ExecuteWhenFinished(() =>
-                            {
-                                _statusText = result.IsOk
-                                    ? "RimMind.Settings.RemoteSync.PushSuccess".Translate()
-                                    : "RimMind.Settings.RemoteSync.PushFailed".Translate(result.Error?.Message ?? "");
-                                _statusColor = result.IsOk ? Color.green : Color.red;
-                            });
-                        }
-                        catch (System.Exception ex)
-                        {
-                            LongEventHandler.ExecuteWhenFinished(() =>
-                            {
-                                _statusText = "RimMind.Settings.RemoteSync.PushFailed".Translate(ex.Message);
-                                _statusColor = Color.red;
-                            });
-                        }
-                    });
+                    BeginPush(syncService, runtimeScope.Token);
                 }
             }
 
@@ -163,6 +134,86 @@ namespace RimMind.Presentation.UI
 
             listing.End();
             Widgets.EndScrollView();
+        }
+
+        private void BeginPull(IRemoteSyncService syncService, RuntimeGenerationToken token)
+        {
+            var operation = BeginOperation(token, "RimMind.Settings.RemoteSync.Pulling".Translate());
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var result = await syncService.ManualPullAsync("all", CancellationToken.None);
+                    LongEventHandler.ExecuteWhenFinished(() => TryPublish(
+                        operation,
+                        result.IsOk
+                            ? "RimMind.Settings.RemoteSync.PullSuccess".Translate()
+                            : "RimMind.Settings.RemoteSync.PullFailed".Translate(result.Error?.Message ?? ""),
+                        result.IsOk ? Color.green : Color.red));
+                }
+                catch (Exception ex)
+                {
+                    LongEventHandler.ExecuteWhenFinished(() => TryPublish(
+                        operation,
+                        "RimMind.Settings.RemoteSync.PullFailed".Translate(ex.Message),
+                        Color.red));
+                }
+            });
+        }
+
+        private void BeginPush(IRemoteSyncService syncService, RuntimeGenerationToken token)
+        {
+            var operation = BeginOperation(token, "RimMind.Settings.RemoteSync.Pushing".Translate());
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var result = await syncService.ManualPushAsync("all", "{}", 0, CancellationToken.None);
+                    LongEventHandler.ExecuteWhenFinished(() => TryPublish(
+                        operation,
+                        result.IsOk
+                            ? "RimMind.Settings.RemoteSync.PushSuccess".Translate()
+                            : "RimMind.Settings.RemoteSync.PushFailed".Translate(result.Error?.Message ?? ""),
+                        result.IsOk ? Color.green : Color.red));
+                }
+                catch (Exception ex)
+                {
+                    LongEventHandler.ExecuteWhenFinished(() => TryPublish(
+                        operation,
+                        "RimMind.Settings.RemoteSync.PushFailed".Translate(ex.Message),
+                        Color.red));
+                }
+            });
+        }
+
+        private GenerationUiOperation BeginOperation(RuntimeGenerationToken token, string status)
+        {
+            var operation = new GenerationUiOperation(
+                RuntimeServiceHub.Shared,
+                token,
+                LifecycleEventSources.RemoteSync);
+            _activeOperation = operation;
+            _statusText = status;
+            _statusColor = Color.cyan;
+            return operation;
+        }
+
+        private bool TryPublish(GenerationUiOperation operation, string status, Color color)
+        {
+            if (!operation.CanPublish())
+            {
+                if (ReferenceEquals(_activeOperation, operation))
+                    _activeOperation = null;
+                return false;
+            }
+
+            if (!ReferenceEquals(_activeOperation, operation))
+                return false;
+
+            _activeOperation = null;
+            _statusText = status;
+            _statusColor = color;
+            return true;
         }
 
         private static float EstimateHeight()

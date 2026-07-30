@@ -7,6 +7,7 @@ using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.UI.AgentFlow;
 using RimMind.Infrastructure.UI.AgentStatePreview;
 using RimMind.Presentation.Runtime.Services;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Testing;
 using Xunit;
 
@@ -41,6 +42,41 @@ namespace RimMind.Tests.Contracts
                     Assert.Contains("scope.Generation", requests, StringComparison.Ordinal);
                     Assert.Contains("_tableScrollPosition", requests, StringComparison.Ordinal);
                     Assert.Contains("_detailScrollPosition", requests, StringComparison.Ordinal);
+                }),
+                ("generation state invalidates derived values without touching visual state", () =>
+                {
+                    var state = new GenerationUiState();
+                    var scroll = 37f;
+                    var selectedTab = "queue";
+                    var explicitlyVisible = true;
+                    var temporarilyClosed = true;
+
+                    Assert.True(state.Refresh(1));
+                    state.MarkDerivedState();
+                    state.MarkInteractionActive();
+                    Assert.False(state.Refresh(1));
+                    Assert.True(state.HasDerivedState);
+                    Assert.True(state.HasActiveInteraction);
+
+                    Assert.True(state.Refresh(2));
+                    Assert.False(state.HasDerivedState);
+                    Assert.False(state.HasActiveInteraction);
+                    Assert.Equal(37f, scroll);
+                    Assert.Equal("queue", selectedTab);
+                    Assert.True(explicitlyVisible);
+                    Assert.True(temporarilyClosed);
+                }),
+                ("stale ui operation rejects every publication and records one discard", () =>
+                {
+                    var hub = new RuntimeServiceHub();
+                    var operation = new GenerationUiOperation(
+                        hub,
+                        new RuntimeGenerationToken(Guid.NewGuid(), 4),
+                        LifecycleEventSources.TestConnection);
+
+                    Assert.False(operation.CanPublish());
+                    Assert.False(operation.CanPublish());
+                    Assert.Equal(1, hub.GetDiagnostics().StaleCompletionDiscardCount);
                 }),
                 ("async ui completions carry and validate runtime tokens", () =>
                 {
@@ -160,12 +196,33 @@ namespace RimMind.Tests.Contracts
                 ("connection tests fence both success and failure publication", () =>
                 {
                     var connection = ReadSource("Presentation/UI/ApiTabDrawer.TestConnection.cs");
-                    Assert.Contains("RuntimeServiceScope runtimeScope", connection, StringComparison.Ordinal);
                     Assert.Contains("ConnectionTestOperation", connection, StringComparison.Ordinal);
                     Assert.Contains("runtimeScope.Token", connection, StringComparison.Ordinal);
                     Assert.Contains("TryPublishConnectionTest", connection, StringComparison.Ordinal);
-                    Assert.Contains("RecordStaleOnce", connection, StringComparison.Ordinal);
+                    Assert.Contains("GenerationUiOperation", connection, StringComparison.Ordinal);
+                    Assert.Contains("operation.CanPublish()", connection, StringComparison.Ordinal);
                     Assert.Contains("_testPending = false", connection, StringComparison.Ordinal);
+                    Assert.DoesNotContain(
+                        "_testStatus = \"RimMind.UI.Lifecycle.StaleCompletion\"",
+                        connection,
+                        StringComparison.Ordinal);
+                }),
+                ("api drawer resolves one required provider registry per draw", () =>
+                {
+                    var api = ReadSource("Presentation/UI/ApiTabDrawer.cs");
+                    Assert.Contains(
+                        "RuntimeServiceRef<IExtensionRegistry<IAIClientFactory>>",
+                        api,
+                        StringComparison.Ordinal);
+                    Assert.Contains("ProviderRegistry.Resolve(runtimeScope)", api, StringComparison.Ordinal);
+                    Assert.Contains(
+                        "AIProviderRegistry.GetAllProviderIds(providerRegistry)",
+                        api,
+                        StringComparison.Ordinal);
+                    Assert.Contains(
+                        "AIProviderRegistry.RequiresApiKey(s.Provider, providerRegistry)",
+                        api,
+                        StringComparison.Ordinal);
                 }),
                 ("settings window follows the current settings provider", () =>
                 {

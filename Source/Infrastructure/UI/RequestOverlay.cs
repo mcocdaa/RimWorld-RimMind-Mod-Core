@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.UI;
 using RimMind.Presentation.Runtime.Services;
+using RimMind.Presentation.UI.Framework;
 using UnityEngine;
 using Verse;
 
@@ -37,6 +38,7 @@ namespace RimMind.Infrastructure.UI
         private static bool _positionLoaded;
         private static bool _temporarilyClosed;
         private static bool _lastEnabledState;
+        private static readonly GenerationUiState GenerationState = new GenerationUiState();
 
         private const float OptionsBarHeight = 24f;
         private const float ResizeHandleSize = 24f;
@@ -65,8 +67,17 @@ namespace RimMind.Infrastructure.UI
         {
             if (Current.ProgramState != ProgramState.Playing) return;
 
-            var settings = GetOverlaySettings();
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var settings = OverlaySettings.ResolveOptional(runtimeScope);
             if (settings == null) return;
+
+            if (GenerationState.Refresh(runtimeScope.Generation))
+            {
+                LoadPositionFromSettings(settings);
+                _isDragging = false;
+                _isResizing = false;
+                _lastEnabledState = settings.RequestOverlayEnabled;
+            }
 
             bool currentlyEnabled = settings.RequestOverlayEnabled;
             if (currentlyEnabled && !_lastEnabledState)
@@ -85,17 +96,19 @@ namespace RimMind.Infrastructure.UI
             HandleInput();
 
             bool isMouseOver = Mouse.IsOver(_windowRect);
+            var pending = OverlayService.ResolveOptional(runtimeScope)?.GetPendingRequests() ?? EmptyPending;
+            var windowService = WindowService.ResolveOptional(runtimeScope);
 
             GUI.BeginGroup(_windowRect);
             var inRect = new Rect(Vector2.zero, _windowRect.size);
 
             Widgets.DrawBoxSolid(inRect, new Color(0.08f, 0.08f, 0.12f, 0.85f));
 
-            DrawEntries(inRect);
+            DrawEntries(inRect, pending);
 
             if (isMouseOver)
             {
-                DrawOptionsBar(inRect);
+                DrawOptionsBar(inRect, windowService);
 
                 var resizeRect = new Rect(inRect.width - ResizeHandleSize, inRect.height - ResizeHandleSize,
                     ResizeHandleSize, ResizeHandleSize);
@@ -105,10 +118,21 @@ namespace RimMind.Infrastructure.UI
 
             GUI.EndGroup();
 
-            SavePositionToSettings();
+            SavePositionToSettings(settings);
         }
 
-        private static void DrawEntries(Rect inRect)
+        private static void LoadPositionFromSettings(IOverlaySettings settings)
+        {
+            _windowRect = new Rect(
+                settings.RequestOverlayX,
+                settings.RequestOverlayY,
+                settings.RequestOverlayW,
+                settings.RequestOverlayH);
+            _positionLoaded = true;
+            GenerationState.MarkDerivedState();
+        }
+
+        private static void DrawEntries(Rect inRect, IReadOnlyList<RequestEntry> pending)
         {
             var contentRect = inRect.ContractedBy(TextPadding);
             contentRect.yMin += OptionsBarHeight;
@@ -116,7 +140,6 @@ namespace RimMind.Infrastructure.UI
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
-            var pending = Pending;
             if (pending.Count == 0)
             {
                 GUI.color = Color.grey;
@@ -193,7 +216,7 @@ namespace RimMind.Infrastructure.UI
             Text.Anchor = TextAnchor.UpperLeft;
         }
 
-        private static void DrawOptionsBar(Rect inRect)
+        private static void DrawOptionsBar(Rect inRect, IWindowService? windowService)
         {
             var barRect = new Rect(inRect.x, inRect.y, inRect.width, OptionsBarHeight);
             Widgets.DrawBoxSolid(barRect, new Color(0.05f, 0.05f, 0.08f, 0.8f));
@@ -215,7 +238,7 @@ namespace RimMind.Infrastructure.UI
             }
             if (Widgets.ButtonText(openBtnRect, "RimMind.UI.RequestOverlay.Details".Translate()))
             {
-                GetWindowService()?.OpenRequestLog();
+                windowService?.OpenRequestLog();
             }
         }
 
@@ -238,6 +261,7 @@ namespace RimMind.Infrastructure.UI
                 if (resizeScreenRect.Contains(currentEvent.mousePosition))
                 {
                     _isResizing = true;
+                    GenerationState.MarkInteractionActive();
                     currentEvent.Use();
                 }
                 else if (!openBtnScreenRect.Contains(currentEvent.mousePosition)
@@ -247,6 +271,7 @@ namespace RimMind.Infrastructure.UI
                     if (dragRect.Contains(currentEvent.mousePosition))
                     {
                         _isDragging = true;
+                        GenerationState.MarkInteractionActive();
                         _dragStartOffset = currentEvent.mousePosition - _windowRect.position;
                         currentEvent.Use();
                     }
@@ -256,6 +281,7 @@ namespace RimMind.Infrastructure.UI
             {
                 _isDragging = false;
                 _isResizing = false;
+                GenerationState.ClearInteraction();
             }
             else if (currentEvent.type == EventType.MouseDrag)
             {
@@ -281,11 +307,8 @@ namespace RimMind.Infrastructure.UI
             }
         }
 
-        private static void SavePositionToSettings()
+        private static void SavePositionToSettings(IOverlaySettings s)
         {
-            var s = GetOverlaySettings();
-            if (s == null) return;
-
             bool changed = Mathf.Abs(s.RequestOverlayX - _windowRect.x) > 0.1f
                 || Mathf.Abs(s.RequestOverlayY - _windowRect.y) > 0.1f
                 || Mathf.Abs(s.RequestOverlayW - _windowRect.width) > 0.1f

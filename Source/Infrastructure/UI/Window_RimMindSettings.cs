@@ -14,7 +14,7 @@ namespace RimMind.Infrastructure.UI
 
         public override Vector2 InitialSize => new Vector2(800f, 600f);
 
-        public Window_RimMindSettings(ISettingsProvider settingsProvider)
+        public Window_RimMindSettings()
         {
             forcePause = false;
             closeOnClickedOutside = true;

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models;
@@ -13,6 +14,7 @@ using DomainChatMessage = RimMind.Domain.Llm.ChatMessage;
 using RimMind.Presentation.Runtime;
 using RimMind.Presentation.Runtime.Services;
 using RimMind.Presentation.Settings;
+using RimMind.Presentation.UI.Framework;
 using UnityEngine;
 using Verse;
 
@@ -22,19 +24,21 @@ namespace RimMind.Presentation.UI
     {
         private static ConnectionTestOperation? _activeConnectionTest;
 
-        private static void RunConnectionTest(ISettingsProvider s)
+        private static void RunConnectionTest(
+            ISettingsProvider s,
+            RuntimeServiceScope runtimeScope,
+            IExtensionRegistry<IAIClientFactory> providerRegistry)
         {
             if (_testPending)
                 return;
 
-            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
             IClientManager? clientManager = runtimeScope.GetOptional<IClientManager>();
             NormalizeConnectionSettings(s);
             s.Persist();
             clientManager?.InvalidateCache();
-            Log.Message(BuildConnectionDebugLine("start", s, null, null));
+            Log.Message(BuildConnectionDebugLine("start", s, providerRegistry, null, null));
 
-            if (!AIProviderRegistry.RequiresApiKey(s.Provider))
+            if (!AIProviderRegistry.RequiresApiKey(s.Provider, providerRegistry))
             {
                 ConnectionTestOperation operation = BeginConnectionTest(runtimeScope.Token);
 
@@ -43,7 +47,7 @@ namespace RimMind.Presentation.UI
                     try
                     {
                         var client = clientManager?.GetPlayer2Client();
-                        LogFromBackground(BuildConnectionDebugLine("player2-client", s, client, client?.IsConfigured()));
+                        LogFromBackground(BuildConnectionDebugLine("player2-client", s, providerRegistry, client, client?.IsConfigured()));
                         if (client == null)
                         {
                             LongEventHandler.ExecuteWhenFinished(() =>
@@ -107,7 +111,12 @@ namespace RimMind.Presentation.UI
 
             if (!s.IsOpenAIConfigured())
             {
-                Log.Message(BuildConnectionDebugLine("openai-settings-not-configured", s, null, null));
+                Log.Message(BuildConnectionDebugLine(
+                    "openai-settings-not-configured",
+                    s,
+                    providerRegistry,
+                    null,
+                    null));
                 _testStatus = "RimMind.Settings.Status.NotConfigured".Translate();
                 _testStatusColor = Color.yellow;
                 return;
@@ -120,7 +129,7 @@ namespace RimMind.Presentation.UI
                 try
                 {
                     var client = clientManager?.GetClient();
-                    LogFromBackground(BuildConnectionDebugLine("openai-client", s, client, client?.IsConfigured()));
+                    LogFromBackground(BuildConnectionDebugLine("openai-client", s, providerRegistry, client, client?.IsConfigured()));
                     if (client == null)
                     {
                         LongEventHandler.ExecuteWhenFinished(() =>
@@ -196,18 +205,18 @@ namespace RimMind.Presentation.UI
             string status,
             Color color)
         {
-            if (!ReferenceEquals(_activeConnectionTest, operation))
-                return false;
-
-            if (!RuntimeServiceHub.Shared.IsCurrent(operation.RuntimeToken))
+            if (!operation.CanPublish())
             {
-                operation.RecordStaleOnce(RuntimeServiceHub.Shared);
-                _activeConnectionTest = null;
-                _testPending = false;
-                _testStatus = "RimMind.UI.Lifecycle.StaleCompletion".Translate();
-                _testStatusColor = Color.yellow;
+                if (ReferenceEquals(_activeConnectionTest, operation))
+                {
+                    _activeConnectionTest = null;
+                    _testPending = false;
+                }
                 return false;
             }
+
+            if (!ReferenceEquals(_activeConnectionTest, operation))
+                return false;
 
             _activeConnectionTest = null;
             _testPending = false;
@@ -218,22 +227,17 @@ namespace RimMind.Presentation.UI
 
         private sealed class ConnectionTestOperation
         {
-            private bool _staleRecorded;
+            private readonly GenerationUiOperation _generationOperation;
 
             public ConnectionTestOperation(RuntimeGenerationToken runtimeToken)
             {
-                RuntimeToken = runtimeToken;
+                _generationOperation = new GenerationUiOperation(
+                    RuntimeServiceHub.Shared,
+                    runtimeToken,
+                    LifecycleEventSources.TestConnection);
             }
 
-            public RuntimeGenerationToken RuntimeToken { get; }
-
-            public void RecordStaleOnce(RuntimeServiceHub runtimeHub)
-            {
-                if (_staleRecorded)
-                    return;
-                _staleRecorded = true;
-                runtimeHub.RecordStaleCompletion(LifecycleEventSources.TestConnection);
-            }
+            public bool CanPublish() => _generationOperation.CanPublish();
         }
 
         private static void NormalizeConnectionSettings(ISettingsProvider s)
@@ -244,11 +248,16 @@ namespace RimMind.Presentation.UI
             s.Player2RemoteUrl = (s.Player2RemoteUrl ?? string.Empty).Trim();
         }
 
-        private static string BuildConnectionDebugLine(string stage, ISettingsProvider s, IAIClient? client, bool? configured)
+        private static string BuildConnectionDebugLine(
+            string stage,
+            ISettingsProvider s,
+            IExtensionRegistry<IAIClientFactory> providerRegistry,
+            IAIClient? client,
+            bool? configured)
         {
             string clientType = client == null ? "(null)" : client.GetType().Name;
             string configuredText = configured.HasValue ? configured.Value.ToString() : "(n/a)";
-            return $"[RimMind-Core] TestConnection {stage}: provider={s.Provider}, requiresKey={AIProviderRegistry.RequiresApiKey(s.Provider)}, keyLen={(s.ApiKey ?? string.Empty).Length}, endpointLen={(s.ApiEndpoint ?? string.Empty).Length}, model={s.ModelName}, client={clientType}, clientConfigured={configuredText}";
+            return $"[RimMind-Core] TestConnection {stage}: provider={s.Provider}, requiresKey={AIProviderRegistry.RequiresApiKey(s.Provider, providerRegistry)}, keyLen={(s.ApiKey ?? string.Empty).Length}, endpointLen={(s.ApiEndpoint ?? string.Empty).Length}, model={s.ModelName}, client={clientType}, clientConfigured={configuredText}";
         }
 
         private static void LogFromBackground(string message)

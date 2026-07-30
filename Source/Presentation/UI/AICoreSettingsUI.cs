@@ -17,33 +17,32 @@ namespace RimMind.Presentation.UI
         private static readonly RuntimeServiceRef<IExtensionRegistry<ISettingsTab>> SettingsTabRegistry =
             RuntimeServiceRef<IExtensionRegistry<ISettingsTab>>.Optional();
 
-        private static IExtensionRegistry<ISettingsTab>? GetSettingsTabRegistry()
-            => SettingsTabRegistry.ValueOrDefault;
-
         private static string _curTab = "api";
 
         public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
         {
-            var settingsTabRegistry = GetSettingsTabRegistry();
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var settingsTabRegistry = SettingsTabRegistry.ResolveOptional(runtimeScope);
             EnsureCurrentTab(settingsTabRegistry);
             var tabs = CollectTabs(settingsTabRegistry);
             var layout = TabbedPageLayout.Calculate(inRect, tabs);
             scope?.Record(layout.TabBar, "Settings:TabBar");
             scope?.Record(layout.Content, "Settings:Content");
             DrawTabBar(layout, tabs, scope);
-            DrawCurrentSettingsPage(layout.Content, settings, settingsTabRegistry, scope);
+            DrawCurrentSettingsPage(layout.Content, settings, settingsTabRegistry, runtimeScope, scope);
         }
 
         private static void DrawCurrentSettingsPage(
             Rect content,
             ISettingsProvider settings,
             IExtensionRegistry<ISettingsTab>? settingsTabRegistry,
+            RuntimeServiceScope runtimeScope,
             RimMindLayoutScope? scope)
         {
             switch (_curTab)
             {
-                case "api": ApiTabDrawer.Draw(content, settings, scope); break;
-                case "queue": QueueTabDrawer.Draw(content, settings, scope); break;
+                case "api": ApiTabDrawer.Draw(content, settings, runtimeScope, scope); break;
+                case "queue": QueueTabDrawer.Draw(content, settings, runtimeScope, scope); break;
                 case "context": ContextTabDrawer.Draw(content, settings, scope); break;
                 case "prompts": PromptsTabDrawer.Draw(content, settings, scope); break;
                 default:

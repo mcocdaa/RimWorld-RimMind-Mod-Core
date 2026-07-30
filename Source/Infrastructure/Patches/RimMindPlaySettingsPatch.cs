@@ -27,10 +27,12 @@ namespace RimMind.Infrastructure.Patches
         {
             if (worldView || row == null) return;
 
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var toggleRegistry = ToggleRegistry.ResolveOptional(runtimeScope);
             // Sync icon visual state from toggle registry before rendering.
             // ToggleableIcon flips _iconState via ref on click, so we compare
             // prev vs post to detect user interaction, then route by modifier.
-            _iconState = IsAnyToggleActive();
+            _iconState = IsAnyToggleActive(toggleRegistry);
 
             bool prev = _iconState;
             row.ToggleableIcon(
@@ -50,20 +52,19 @@ namespace RimMind.Infrastructure.Patches
             }
             else if (shift)
             {
-                OpenSettings();
+                OpenSettings(runtimeScope);
             }
             else
             {
-                ToggleCoreOverlay();
+                ToggleCoreOverlay(toggleRegistry);
             }
 
             // Reset visual state to match actual toggle state (not the widget flip)
-            _iconState = IsAnyToggleActive();
+            _iconState = IsAnyToggleActive(toggleRegistry);
         }
 
-        private static bool IsAnyToggleActive()
+        private static bool IsAnyToggleActive(IExtensionRegistry<IToggleBehavior>? registry)
         {
-            var registry = ToggleRegistry.ValueOrDefault;
             if (registry == null) return false;
             foreach (var toggle in registry.All)
             {
@@ -72,9 +73,8 @@ namespace RimMind.Infrastructure.Patches
             return false;
         }
 
-        private static void ToggleCoreOverlay()
+        private static void ToggleCoreOverlay(IExtensionRegistry<IToggleBehavior>? registry)
         {
-            var registry = ToggleRegistry.ValueOrDefault;
             if (registry == null) return;
             foreach (var toggle in registry.All)
             {
@@ -86,12 +86,12 @@ namespace RimMind.Infrastructure.Patches
             }
         }
 
-        private static void OpenSettings()
+        private static void OpenSettings(RuntimeServiceScope runtimeScope)
         {
-            var sp = SettingsProvider.ValueOrDefault;
+            var sp = SettingsProvider.ResolveOptional(runtimeScope);
             if (sp != null)
             {
-                Find.WindowStack.Add(new Window_RimMindSettings(sp));
+                Find.WindowStack.Add(new Window_RimMindSettings());
             }
         }
     }

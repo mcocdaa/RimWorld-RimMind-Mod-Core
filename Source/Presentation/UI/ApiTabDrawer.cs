@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Client;
+using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
@@ -24,27 +25,35 @@ namespace RimMind.Presentation.UI
         private static Color _testStatusColor = Color.white;
         private static bool _testPending;
         private static Vector2 _apiScroll;
+        private static readonly GenerationUiState GenerationState = new GenerationUiState();
 
+        private static readonly RuntimeServiceRef<IExtensionRegistry<IAIClientFactory>> ProviderRegistry =
+            RuntimeServiceRef<IExtensionRegistry<IAIClientFactory>>.Required();
+        private static readonly RuntimeServiceRef<ISettingsProvider> SettingsProvider =
+            RuntimeServiceRef<ISettingsProvider>.Required();
         private static readonly RuntimeServiceRef<IPlayer2Lifecycle> Player2Lifecycle =
             RuntimeServiceRef<IPlayer2Lifecycle>.Optional();
         private static readonly RuntimeServiceRef<IClientManager> ClientManager =
             RuntimeServiceRef<IClientManager>.Optional();
-        private static readonly RuntimeServiceRef<IOpenAISettings> OpenAISettings =
-            RuntimeServiceRef<IOpenAISettings>.Optional();
         private static readonly RuntimeServiceRef<IAIRequestQueue> RequestQueue =
             RuntimeServiceRef<IAIRequestQueue>.Optional();
 
-        private static IPlayer2Lifecycle? GetPlayer2Lifecycle()
-            => Player2Lifecycle.ValueOrDefault;
-
-        private static IClientManager? GetClientManager()
-            => ClientManager.ValueOrDefault;
-
-        private static IOpenAISettings? GetOpenAISettings()
-            => OpenAISettings.ValueOrDefault;
-
-        public static void Draw(Rect inRect, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        public static void Draw(
+            Rect inRect,
+            ISettingsProvider s,
+            RuntimeServiceScope runtimeScope,
+            RimMindLayoutScope? scope = null)
         {
+            var providerRegistry = ProviderRegistry.Resolve(runtimeScope);
+            var player2Lifecycle = Player2Lifecycle.ResolveOptional(runtimeScope);
+            if (GenerationState.Refresh(runtimeScope.Generation))
+            {
+                _activeConnectionTest = null;
+                _testPending = false;
+                _testStatus = string.Empty;
+                _testStatusColor = Color.white;
+            }
+
             FormPageLayoutResult formLayout = FormPageLayout.Calculate(inRect, sectionCount: 5, rowsPerSection: 4);
             float contentH = Mathf.Max(EstimateApiHeight(), formLayout.ContentHeight);
             Rect viewRect = new Rect(0f, 0f, formLayout.Viewport.width - RimMindUiMetrics.ScrollBarWidth, contentH);
@@ -66,18 +75,23 @@ namespace RimMind.Presentation.UI
                 if (Widgets.ButtonText(row, GetProviderLabel(s.Provider)))
                 {
                     var options = new List<FloatMenuOption>();
-                    var allProviders = AIProviderRegistry.GetAllProviderIds();
+                    var allProviders = AIProviderRegistry.GetAllProviderIds(providerRegistry);
                     foreach (var p in allProviders)
                     {
                         var label = GetProviderLabel(p);
                         options.Add(new FloatMenuOption(label, () =>
                         {
-                            var prev = s.Provider;
-                            s.Provider = p;
-                            if (!AIProviderRegistry.RequiresApiKey(p))
-                                GetPlayer2Lifecycle()?.CheckStatusAndNotify();
+                            RuntimeServiceScope operationScope = RuntimeServiceHub.Shared.Capture();
+                            var currentSettings = SettingsProvider.Resolve(operationScope);
+                            var currentRegistry = ProviderRegistry.Resolve(operationScope);
+                            var currentPlayer2Lifecycle = Player2Lifecycle.ResolveOptional(operationScope);
+                            var currentClientManager = ClientManager.ResolveOptional(operationScope);
+                            var prev = currentSettings.Provider;
+                            currentSettings.Provider = p;
+                            if (!AIProviderRegistry.RequiresApiKey(p, currentRegistry))
+                                currentPlayer2Lifecycle?.CheckStatusAndNotify();
                             if (prev != p)
-                                GetClientManager()?.InvalidateCache();
+                                currentClientManager?.InvalidateCache();
                         }));
                     }
                     Find.WindowStack.Add(new FloatMenu(options));
@@ -86,24 +100,24 @@ namespace RimMind.Presentation.UI
 
             listing.Gap(6f);
 
-            if (AIProviderRegistry.RequiresApiKey(s.Provider))
+            if (AIProviderRegistry.RequiresApiKey(s.Provider, providerRegistry))
             {
                 DrawApiKeySection(listing, s, scope);
             }
 
-            if (!AIProviderRegistry.RequiresApiKey(s.Provider))
+            if (!AIProviderRegistry.RequiresApiKey(s.Provider, providerRegistry))
             {
-                DrawPlayer2Section(listing, s, scope);
+                DrawPlayer2Section(listing, s, player2Lifecycle, scope);
             }
 
             listing.Gap(10f);
 
-            DrawConnectionTestButton(listing, s);
+            DrawConnectionTestButton(listing, s, runtimeScope, providerRegistry);
 
             listing.Gap(6f);
 
             DrawModelBehaviorSection(listing, s, scope);
-            DrawRequestSection(listing, s, scope);
+            DrawRequestSection(listing, s, runtimeScope, scope);
             DrawDebugSection(listing, s, scope);
             DrawFlywheelSection(listing, s, scope);
 
@@ -154,7 +168,11 @@ namespace RimMind.Presentation.UI
             s.ModelName = listing.TextEntry(s.ModelName);
         }
 
-        private static void DrawPlayer2Section(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        private static void DrawPlayer2Section(
+            Listing_Standard listing,
+            ISettingsProvider s,
+            IPlayer2Lifecycle? player2Lifecycle,
+            RimMindLayoutScope? scope = null)
         {
             GUI.color = Color.gray;
             listing.Label("RimMind.Settings.Player2.Desc".Translate());
@@ -191,7 +209,7 @@ namespace RimMind.Presentation.UI
             {
                 Rect checkBtnRow = listing.GetRect(28f);
                 if (Widgets.ButtonText(checkBtnRow, "RimMind.Settings.Player2.CheckLocal".Translate()))
-                    GetPlayer2Lifecycle()?.CheckStatusAndNotify();
+                    player2Lifecycle?.CheckStatusAndNotify();
             }
 
             listing.Gap(4f);
@@ -203,7 +221,7 @@ namespace RimMind.Presentation.UI
 
             listing.Gap(4f);
             {
-                float balance = GetPlayer2Lifecycle()?.CachedBalance ?? -1;
+                float balance = player2Lifecycle?.CachedBalance ?? -1;
                 string balanceText = balance >= 0
                     ? $"Joules: {balance:F2}"
                     : "RimMind.Settings.Player2.BalanceUnknown".Translate();
@@ -211,11 +229,15 @@ namespace RimMind.Presentation.UI
 
                 Rect refreshRow = listing.GetRect(28f);
                 if (Widgets.ButtonText(refreshRow, "RimMind.Settings.Player2.RefreshBalance".Translate()))
-                    GetPlayer2Lifecycle()?.RefreshBalance();
+                    player2Lifecycle?.RefreshBalance();
             }
         }
 
-        private static void DrawConnectionTestButton(Listing_Standard listing, ISettingsProvider s)
+        private static void DrawConnectionTestButton(
+            Listing_Standard listing,
+            ISettingsProvider s,
+            RuntimeServiceScope runtimeScope,
+            IExtensionRegistry<IAIClientFactory> providerRegistry)
         {
             Rect row = listing.GetRect(28f);
             Rect btn = new Rect(row.x, row.y, 110f, row.height);
@@ -225,7 +247,7 @@ namespace RimMind.Presentation.UI
             bool testClicked = Widgets.ButtonText(btn, "RimMind.Settings.TestConnection".Translate());
             GUI.enabled = wasEnabled;
             if (testClicked)
-                RunConnectionTest(s);
+                RunConnectionTest(s, runtimeScope, providerRegistry);
             GUI.color = _testStatusColor;
             Widgets.Label(status, _testStatus);
             GUI.color = Color.white;
@@ -242,7 +264,11 @@ namespace RimMind.Presentation.UI
             s.ForceJsonMode = forceJsonMode;
         }
 
-        private static void DrawRequestSection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        private static void DrawRequestSection(
+            Listing_Standard listing,
+            ISettingsProvider s,
+            RuntimeServiceScope runtimeScope,
+            RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.Request".Translate());
             scope?.Record(listing.GetRect(0f), "Section:Request");
@@ -251,7 +277,7 @@ namespace RimMind.Presentation.UI
             listing.Gap(8f);
             DrawNetworkRetrySubsection(listing, s, scope);
             listing.Gap(8f);
-            DrawAgentCadenceSubsection(listing, s, scope);
+            DrawAgentCadenceSubsection(listing, s, runtimeScope, scope);
         }
 
         private static void DrawModelOutputSubsection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
@@ -302,7 +328,11 @@ namespace RimMind.Presentation.UI
             s.RequestExpireTicks = (int)listing.Slider(s.RequestExpireTicks, 6000f, 120000f);
         }
 
-        private static void DrawAgentCadenceSubsection(Listing_Standard listing, ISettingsProvider s, RimMindLayoutScope? scope = null)
+        private static void DrawAgentCadenceSubsection(
+            Listing_Standard listing,
+            ISettingsProvider s,
+            RuntimeServiceScope runtimeScope,
+            RimMindLayoutScope? scope = null)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Section.AgentCadence".Translate());
             scope?.Record(listing.GetRect(0f), "Section:AgentCadence");
@@ -325,7 +355,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
             s.DefaultModCooldownTicks = (int)listing.Slider(s.DefaultModCooldownTicks, 600f, 36000f);
 
-            var queue = RequestQueue.ValueOrDefault;
+            var queue = RequestQueue.ResolveOptional(runtimeScope);
             if (queue != null)
             {
                 listing.Gap(4f);

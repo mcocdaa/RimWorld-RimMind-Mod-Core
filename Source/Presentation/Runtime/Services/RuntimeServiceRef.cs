@@ -90,14 +90,46 @@ namespace RimMind.Presentation.Runtime.Services
             }
         }
 
+        public T Resolve(RuntimeServiceScope scope)
+        {
+            if (!_required)
+                throw new InvalidOperationException("Resolve is only valid for a required runtime service reference.");
+            if (scope == null)
+                throw new ArgumentNullException(nameof(scope));
+
+            T value = scope.GetRequired<T>();
+            Cache(scope, value);
+            return value;
+        }
+
+        public T? ResolveOptional(RuntimeServiceScope scope)
+        {
+            if (_required)
+                throw new InvalidOperationException("ResolveOptional is only valid for an optional runtime service reference.");
+            if (scope == null)
+                throw new ArgumentNullException(nameof(scope));
+
+            T? value = scope.GetOptional<T>();
+            Cache(scope, value);
+            if (value == null)
+                _hub.RecordOptionalMissing(typeof(T), scope.Generation, scope.Snapshot.State);
+            return value;
+        }
+
         private void RefreshCache()
         {
             var scope = _hub.Capture();
+            T? value = scope.GetOptional<T>();
+            Cache(scope, value);
+        }
+
+        private void Cache(RuntimeServiceScope scope, T? value)
+        {
             lock (_cacheLock)
             {
                 if (scope.Generation > _boundGeneration)
                 {
-                    _cached = scope.GetOptional<T>();
+                    _cached = value;
                     _boundGeneration = scope.Generation;
                     _boundState = scope.Snapshot.State;
                 }

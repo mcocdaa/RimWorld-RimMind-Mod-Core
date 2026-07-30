@@ -44,7 +44,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         {
             if (_settingsProvider != null)
             {
-                Find.WindowStack.Add(new Window_RimMindSettings(_settingsProvider));
+                Find.WindowStack.Add(new Window_RimMindSettings());
             }
         }
     }
