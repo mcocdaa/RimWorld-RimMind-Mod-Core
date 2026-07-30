@@ -132,6 +132,33 @@ namespace RimMind.Tests.Contracts
                     Assert.False(coordinator.HasPendingMechanismExecution);
                     Assert.Equal(2, hub.GetDiagnostics().StaleCompletionDiscardCount);
                 }),
+                ("stable agent identity resolves the replacement current agent", () =>
+                {
+                    object currentAgent = new object();
+                    var binding = new CurrentAgentBinding<object>(() => currentAgent);
+                    object firstAgent = binding.Resolve()!;
+
+                    currentAgent = new object();
+
+                    Assert.NotSame(firstAgent, binding.Resolve());
+                    Assert.Same(currentAgent, binding.Resolve());
+                }),
+                ("agent flow publication requires runtime and target generation and resets derived state", () =>
+                {
+                    var currentToken = new RuntimeGenerationToken(Guid.NewGuid(), 1);
+                    var state = new AgentFlowGenerationState();
+
+                    Assert.True(state.Refresh(currentToken, 3));
+                    state.MarkDerivedState();
+                    Assert.True(state.CanPublish(currentToken, 3, token => token == currentToken));
+                    Assert.False(state.CanPublish(currentToken, 4, token => token == currentToken));
+
+                    var replacementToken = new RuntimeGenerationToken(Guid.NewGuid(), 2);
+                    Assert.False(state.CanPublish(currentToken, 3, token => token == replacementToken));
+
+                    Assert.True(state.Refresh(replacementToken, 3));
+                    Assert.False(state.HasDerivedState);
+                }),
                 ("live agent flow request polls its runtime fence into a localized terminal state", () =>
                 {
                     var flowLab = ReadSource("Infrastructure/UI/Window_AgentFlowLab.cs");

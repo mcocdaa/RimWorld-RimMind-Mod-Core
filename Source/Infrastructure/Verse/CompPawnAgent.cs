@@ -200,6 +200,20 @@ namespace RimMind.Infrastructure.Verse
         private void EnsureCurrentAgent()
         {
             var scope = RuntimeServiceHub.Shared.Capture();
+            EnsureCurrentAgent(scope);
+        }
+
+        internal IPawnAgentVerse? ResolveCurrentAgent(RuntimeServiceScope scope)
+        {
+            if (scope == null || !RuntimeServiceHub.Shared.IsCurrent(scope.Token))
+                return null;
+
+            EnsureCurrentAgent(scope);
+            return Agent;
+        }
+
+        private void EnsureCurrentAgent(RuntimeServiceScope scope)
+        {
             var factory = scope.GetOptional<IPawnAgentFactoryVerse>();
             var agentBus = scope.GetOptional<IAgentBus>();
             if (factory == null || agentBus == null) return;

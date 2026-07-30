@@ -1,5 +1,21 @@
 namespace RimMind.Presentation.UI.Framework
 {
+    public sealed class CurrentAgentBinding<TAgent>
+        where TAgent : class
+    {
+        private readonly System.Func<TAgent?> _resolveCurrent;
+
+        public CurrentAgentBinding(System.Func<TAgent?> resolveCurrent)
+        {
+            _resolveCurrent = resolveCurrent ?? throw new System.ArgumentNullException(nameof(resolveCurrent));
+        }
+
+        public TAgent? Resolve()
+        {
+            return _resolveCurrent();
+        }
+    }
+
     public sealed class GenerationUiState
     {
         public long BoundGeneration { get; private set; } = -1;

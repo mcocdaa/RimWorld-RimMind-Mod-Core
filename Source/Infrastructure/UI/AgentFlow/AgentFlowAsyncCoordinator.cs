@@ -9,6 +9,43 @@ using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Infrastructure.UI.AgentFlow
 {
+    internal sealed class AgentFlowGenerationState
+    {
+        private RuntimeGenerationToken? _runtimeToken;
+        private int _targetGeneration = -1;
+
+        public bool HasDerivedState { get; private set; }
+
+        public bool Refresh(RuntimeGenerationToken runtimeToken, int targetGeneration)
+        {
+            if (_runtimeToken == runtimeToken && _targetGeneration == targetGeneration)
+                return false;
+
+            _runtimeToken = runtimeToken;
+            _targetGeneration = targetGeneration;
+            HasDerivedState = false;
+            return true;
+        }
+
+        public void MarkDerivedState()
+        {
+            HasDerivedState = true;
+        }
+
+        public bool CanPublish(
+            RuntimeGenerationToken runtimeToken,
+            int targetGeneration,
+            Func<RuntimeGenerationToken, bool> isCurrent)
+        {
+            if (isCurrent == null)
+                throw new ArgumentNullException(nameof(isCurrent));
+
+            return _runtimeToken == runtimeToken
+                && _targetGeneration == targetGeneration
+                && isCurrent(runtimeToken);
+        }
+    }
+
     /// <summary>
     /// Owns the pending async work initiated by Agent Flow Lab.
     /// The window polls this coordinator while drawing, so it never waits for an
@@ -20,6 +57,7 @@ namespace RimMind.Infrastructure.UI.AgentFlow
 
         private Task<ContextSnapshot?>? _contextBuildTask;
         private RuntimeGenerationToken? _contextBuildToken;
+        private int? _contextBuildTargetGeneration;
         private readonly List<PendingMechanismExecution> _pendingMechanismExecutions = new();
         private readonly RuntimeServiceHub _runtimeHub;
 
@@ -50,6 +88,7 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         {
             _contextBuildTask = contextBuildTask ?? throw new ArgumentNullException(nameof(contextBuildTask));
             _contextBuildToken = null;
+            _contextBuildTargetGeneration = null;
         }
 
         public void BeginContextBuild(
@@ -58,9 +97,32 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         {
             _contextBuildTask = contextBuildTask ?? throw new ArgumentNullException(nameof(contextBuildTask));
             _contextBuildToken = token;
+            _contextBuildTargetGeneration = null;
         }
 
         public bool PollContextBuild(out ContextSnapshot? snapshot, out string? error)
+            => PollContextBuildCore(currentTargetGeneration: null, out snapshot, out error);
+
+        public void BeginContextBuild(
+            Task<ContextSnapshot?> contextBuildTask,
+            RuntimeGenerationToken token,
+            int targetGeneration)
+        {
+            _contextBuildTask = contextBuildTask ?? throw new ArgumentNullException(nameof(contextBuildTask));
+            _contextBuildToken = token;
+            _contextBuildTargetGeneration = targetGeneration;
+        }
+
+        public bool PollContextBuild(
+            int currentTargetGeneration,
+            out ContextSnapshot? snapshot,
+            out string? error)
+            => PollContextBuildCore(currentTargetGeneration, out snapshot, out error);
+
+        private bool PollContextBuildCore(
+            int? currentTargetGeneration,
+            out ContextSnapshot? snapshot,
+            out string? error)
         {
             snapshot = null;
             error = null;
@@ -71,7 +133,13 @@ namespace RimMind.Infrastructure.UI.AgentFlow
             _contextBuildTask = null;
             RuntimeGenerationToken? token = _contextBuildToken;
             _contextBuildToken = null;
-            if (token.HasValue && !_runtimeHub.IsCurrent(token.Value))
+            int? targetGeneration = _contextBuildTargetGeneration;
+            _contextBuildTargetGeneration = null;
+            bool staleRuntime = token.HasValue && !_runtimeHub.IsCurrent(token.Value);
+            bool staleTarget = currentTargetGeneration.HasValue
+                && targetGeneration.HasValue
+                && targetGeneration.Value != currentTargetGeneration.Value;
+            if (staleRuntime || staleTarget)
             {
                 _runtimeHub.RecordStaleCompletion(LifecycleEventSources.AgentFlow);
                 error = StaleCompletionTranslationKey;
@@ -110,7 +178,10 @@ namespace RimMind.Infrastructure.UI.AgentFlow
             Task<Result<bool, RimMindError>> mechanismExecutionTask,
             AgentFlowExecutionContext context,
             RuntimeGenerationToken token)
-            => BeginMechanismExecution(mechanismExecutionTask, context, (RuntimeGenerationToken?)token);
+            => BeginMechanismExecution(
+                mechanismExecutionTask,
+                context.WithRuntimeToken(token),
+                (RuntimeGenerationToken?)token);
 
         private void BeginMechanismExecution(
             Task<Result<bool, RimMindError>> mechanismExecutionTask,
@@ -136,6 +207,16 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         }
 
         public bool PollMechanismExecution(out AgentFlowMechanismExecutionCompletion? completion)
+            => PollMechanismExecutionCore(currentTargetGeneration: null, out completion);
+
+        public bool PollMechanismExecution(
+            int currentTargetGeneration,
+            out AgentFlowMechanismExecutionCompletion? completion)
+            => PollMechanismExecutionCore(currentTargetGeneration, out completion);
+
+        private bool PollMechanismExecutionCore(
+            int? currentTargetGeneration,
+            out AgentFlowMechanismExecutionCompletion? completion)
         {
             completion = null;
             for (int index = 0; index < _pendingMechanismExecutions.Count; index++)
@@ -145,7 +226,11 @@ namespace RimMind.Infrastructure.UI.AgentFlow
                     continue;
 
                 _pendingMechanismExecutions.RemoveAt(index);
-                if (pending.Token.HasValue && !_runtimeHub.IsCurrent(pending.Token.Value))
+                bool staleRuntime = pending.Token.HasValue
+                    && !_runtimeHub.IsCurrent(pending.Context.RuntimeToken);
+                bool staleTarget = currentTargetGeneration.HasValue
+                    && pending.Context.TargetGeneration != currentTargetGeneration.Value;
+                if (staleRuntime || staleTarget)
                 {
                     _runtimeHub.RecordStaleCompletion(LifecycleEventSources.AgentFlow);
                     completion = new AgentFlowMechanismExecutionCompletion(
@@ -185,6 +270,13 @@ namespace RimMind.Infrastructure.UI.AgentFlow
         {
             _contextBuildTask = null;
             _contextBuildToken = null;
+            _contextBuildTargetGeneration = null;
+        }
+
+        public void ResetAll()
+        {
+            ResetContextBuild();
+            _pendingMechanismExecutions.Clear();
         }
 
         private sealed class PendingMechanismExecution
@@ -213,7 +305,25 @@ namespace RimMind.Infrastructure.UI.AgentFlow
             string targetId,
             string mechanismId,
             MechanismOperationType operation)
+            : this(
+                default,
+                targetGeneration,
+                scope,
+                targetId,
+                mechanismId,
+                operation)
         {
+        }
+
+        public AgentFlowExecutionContext(
+            RuntimeGenerationToken runtimeToken,
+            int targetGeneration,
+            string scope,
+            string targetId,
+            string mechanismId,
+            MechanismOperationType operation)
+        {
+            RuntimeToken = runtimeToken;
             TargetGeneration = targetGeneration;
             Scope = scope ?? string.Empty;
             TargetId = targetId ?? string.Empty;
@@ -221,11 +331,21 @@ namespace RimMind.Infrastructure.UI.AgentFlow
             Operation = operation;
         }
 
+        public RuntimeGenerationToken RuntimeToken { get; }
         public int TargetGeneration { get; }
         public string Scope { get; }
         public string TargetId { get; }
         public string MechanismId { get; }
         public MechanismOperationType Operation { get; }
+
+        public AgentFlowExecutionContext WithRuntimeToken(RuntimeGenerationToken runtimeToken)
+            => new AgentFlowExecutionContext(
+                runtimeToken,
+                TargetGeneration,
+                Scope,
+                TargetId,
+                MechanismId,
+                Operation);
     }
 
     internal sealed class AgentFlowMechanismExecutionCompletion

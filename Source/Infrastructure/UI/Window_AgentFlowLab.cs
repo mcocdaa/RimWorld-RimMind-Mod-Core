@@ -72,8 +72,10 @@ namespace RimMind.Infrastructure.UI
         private IScopedAgent? _scopedAgent;
         private ContextSnapshot? _lastSnapshot;
         private readonly AgentFlowAsyncCoordinator _asyncCoordinator = new();
+        private readonly AgentFlowGenerationState _generationState = new();
         private string _requestStatus = "";
         private RuntimeGenerationToken? _liveRequestToken;
+        private int? _liveRequestTargetGeneration;
         private string _lastError = "";
         private string _lastDecisionInfo = "";
         private string _mappedMechanismsInfo = "";
@@ -146,6 +148,7 @@ namespace RimMind.Infrastructure.UI
         {
             CompleteStaleLiveRequest();
             CompleteMechanismExecution();
+            RefreshGenerationState();
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
@@ -417,7 +420,8 @@ namespace RimMind.Infrastructure.UI
             if (_selectedPawn != null)
             {
                 var comp = CompPawnAgent.GetComp(_selectedPawn);
-                _agent = comp?.Agent;
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                _agent = comp?.ResolveCurrentAgent(runtimeScope);
 
                 if (_agent != null)
                 {
@@ -455,36 +459,17 @@ namespace RimMind.Infrastructure.UI
                     {
                         SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Active);
                         var comp = CompPawnAgent.GetComp(_selectedPawn);
-                        if (comp != null && comp.Agent != null)
+                        RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                        IAgentControl? currentAgent = comp?.ResolveCurrentAgent(runtimeScope);
+                        if (currentAgent != null)
                         {
-                            _agent = comp.Agent;
+                            _agent = currentAgent;
                             SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Completed);
                         }
                         else
                         {
-                            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
-                            var factory = runtimeScope.GetOptional<IPawnAgentFactoryVerse>();
-                            var agentBus = runtimeScope.GetOptional<IAgentBus>();
-                            if (factory != null && agentBus != null)
-                            {
-                                var pawnAgent = factory.Create(_selectedPawn, agentBus);
-                                if (pawnAgent != null)
-                                {
-                                    pawnAgent.TransitionTo(AgentState.Active);
-                                    _agent = pawnAgent as IAgentControl;
-                                    SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Completed);
-                                }
-                                else
-                                {
-                                    _lastError = "IPawnAgentFactory.Create returned null";
-                                    SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Failed);
-                                }
-                            }
-                            else
-                            {
-                                _lastError = "IPawnAgentFactoryVerse or IAgentBus not available";
-                                SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Failed);
-                            }
+                            _lastError = "IPawnAgentFactoryVerse or IAgentBus not available";
+                            SetStepStatus(FlowLabStep.CreateAgent, StepStatus.Failed);
                         }
                     }
                     catch (Exception ex)
@@ -524,7 +509,8 @@ namespace RimMind.Infrastructure.UI
                             _lastError = string.Empty;
                             _asyncCoordinator.BeginContextBuild(
                                 contextEngine.BuildSnapshotFromEnvelopeAsync(npcId, "[AgentFlowLab] Build context"),
-                                runtimeScope.Token);
+                                runtimeScope.Token,
+                                _targetGeneration);
                         }
                         else
                         {
@@ -660,6 +646,7 @@ namespace RimMind.Infrastructure.UI
                     ActionIntent: "pawn.job.force_rest",
                     Reason: "stub: offline test response",
                     Param: null);
+                _generationState.MarkDerivedState();
                 _parsedDecisionInfo = FormatDecision(_lastDecision);
                 SetStepStatus(FlowLabStep.SendRequest, StepStatus.Completed);
                 SetStepStatus(FlowLabStep.ParseDecision, StepStatus.Completed);
@@ -675,7 +662,7 @@ namespace RimMind.Infrastructure.UI
 
         private void CompleteContextBuild()
         {
-            if (!_asyncCoordinator.PollContextBuild(out var snapshot, out var error))
+            if (!_asyncCoordinator.PollContextBuild(_targetGeneration, out var snapshot, out var error))
                 return;
 
             if (!string.IsNullOrEmpty(error))
@@ -693,6 +680,7 @@ namespace RimMind.Infrastructure.UI
                 return;
             }
 
+            _generationState.MarkDerivedState();
             SetStepStatus(FlowLabStep.BuildContext, StepStatus.Completed);
         }
 
@@ -709,7 +697,9 @@ namespace RimMind.Infrastructure.UI
             }
 
             RuntimeGenerationToken runtimeToken = runtimeScope.Token;
+            int targetGeneration = _targetGeneration;
             _liveRequestToken = runtimeToken;
+            _liveRequestTargetGeneration = targetGeneration;
             _requestStatus = "Pending";
 
             string npcId = $"NPC-{_selectedPawn!.thingIDNumber}";
@@ -729,9 +719,10 @@ namespace RimMind.Infrastructure.UI
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
-                    if (!TryAcceptLiveRequest(runtimeToken))
+                    if (!TryAcceptLiveRequest(runtimeToken, targetGeneration))
                         return;
                     _liveRequestToken = null;
+                    _liveRequestTargetGeneration = null;
                     if (result.IsOk)
                     {
                         _requestStatus = "Completed";
@@ -748,6 +739,7 @@ namespace RimMind.Infrastructure.UI
                             if (parseResult.IsOk)
                             {
                                 _lastDecision = parseResult.Value;
+                                _generationState.MarkDerivedState();
                                 _parsedDecisionInfo = FormatDecision(_lastDecision);
                                 SetStepStatus(FlowLabStep.ParseDecision, StepStatus.Completed);
                                 AutoDryRun();
@@ -777,21 +769,29 @@ namespace RimMind.Infrastructure.UI
         private void CompleteStaleLiveRequest()
         {
             RuntimeGenerationToken? token = _liveRequestToken;
-            if (!token.HasValue || RuntimeServiceHub.Shared.IsCurrent(token.Value))
+            bool staleRuntime = token.HasValue && !RuntimeServiceHub.Shared.IsCurrent(token.Value);
+            bool staleTarget = _liveRequestTargetGeneration.HasValue
+                && _liveRequestTargetGeneration.Value != _targetGeneration;
+            if (!token.HasValue || (!staleRuntime && !staleTarget))
                 return;
 
             _liveRequestToken = null;
+            _liveRequestTargetGeneration = null;
             RuntimeServiceHub.Shared.RecordStaleCompletion(LifecycleEventSources.AgentFlowLab);
             _requestStatus = "RimMind.UI.Lifecycle.StaleCompletion".Translate();
             _lastError = _requestStatus;
             SetStepStatus(FlowLabStep.SendRequest, StepStatus.Failed);
         }
 
-        private bool TryAcceptLiveRequest(RuntimeGenerationToken token)
+        private bool TryAcceptLiveRequest(RuntimeGenerationToken token, int targetGeneration)
         {
             if (!_liveRequestToken.HasValue || _liveRequestToken.Value != token)
                 return false;
-            if (RuntimeServiceHub.Shared.IsCurrent(token))
+            if (_liveRequestTargetGeneration == targetGeneration
+                && _generationState.CanPublish(
+                    token,
+                    targetGeneration,
+                    RuntimeServiceHub.Shared.IsCurrent))
                 return true;
 
             CompleteStaleLiveRequest();
@@ -935,6 +935,7 @@ namespace RimMind.Infrastructure.UI
                                     _asyncCoordinator.BeginMechanismExecution(
                                         ExecuteMappedMechanism(targetMech, _lastWriteArgs, _lastOperationType),
                                         new AgentFlowExecutionContext(
+                                            runtimeScope.Token,
                                             _targetGeneration,
                                             _selectedScope.ToString(),
                                             GetCurrentTargetId(),
@@ -1240,7 +1241,7 @@ namespace RimMind.Infrastructure.UI
 
         private void CompleteMechanismExecution()
         {
-            if (!_asyncCoordinator.PollMechanismExecution(out var completion))
+            if (!_asyncCoordinator.PollMechanismExecution(_targetGeneration, out var completion))
                 return;
 
             var execution = completion!;
@@ -1279,6 +1280,30 @@ namespace RimMind.Infrastructure.UI
         {
             _targetGeneration++;
             _asyncCoordinator.ResetContextBuild();
+        }
+
+        private void RefreshGenerationState()
+        {
+            RuntimeGenerationToken runtimeToken = RuntimeServiceHub.Shared.Capture().Token;
+            if (!_generationState.Refresh(runtimeToken, _targetGeneration))
+                return;
+
+            _agent = null;
+            _scopedAgent = null;
+            _lastSnapshot = null;
+            _lastDecision = null;
+            _lastWriteArgs = null;
+            _lastDecisionInfo = "";
+            _mappedMechanismsInfo = "";
+            _parsedDecisionInfo = "";
+            _validationInfo = "";
+            _dryRunCompleted = false;
+            _dryRunResult = "";
+            _requestStatus = "";
+            _liveRequestToken = null;
+            _liveRequestTargetGeneration = null;
+            _asyncCoordinator.ResetAll();
+            ResetStepStatuses();
         }
 
         private string GetCurrentTargetId()

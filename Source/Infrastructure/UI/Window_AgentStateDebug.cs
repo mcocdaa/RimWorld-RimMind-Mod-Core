@@ -22,7 +22,7 @@ namespace RimMind.Infrastructure.UI
 
         private readonly AgentContextPreviewCoordinator _contextPreview = new AgentContextPreviewCoordinator();
         private Pawn? _targetPawn;
-        private IAgentControl? _targetAgent;
+        private ScopedAgentIdentity? _targetScopedAgent;
 
         public override Vector2 InitialSize => new Vector2(640f, 560f);
 
@@ -37,7 +37,14 @@ namespace RimMind.Infrastructure.UI
         private Window_AgentStateDebug(Pawn? pawn, IAgentControl? agent)
         {
             _targetPawn = pawn;
-            _targetAgent = agent;
+            if (agent != null)
+            {
+                if (!(agent is IScopedAgent scopedAgent))
+                    throw new System.ArgumentException(
+                        "Pawn agents must be opened with the Pawn constructor so they can rebind.",
+                        nameof(agent));
+                _targetScopedAgent = new ScopedAgentIdentity(scopedAgent.ScopeType, scopedAgent.ScopeId);
+            }
             forcePause = false;
             closeOnClickedOutside = true;
             absorbInputAroundWindow = false;
@@ -54,9 +61,17 @@ namespace RimMind.Infrastructure.UI
             Rect bodyRect = new Rect(inRect.x, y, inRect.width, inRect.height - y + inRect.y);
             scope.Record(bodyRect, "Body");
 
-            if (_targetAgent is IScopedAgent scopedAgent)
+            if (_targetScopedAgent.HasValue)
             {
-                DrawScopedAgentDetail(bodyRect, scopedAgent, scope);
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                ScopedAgentIdentity identity = _targetScopedAgent.Value;
+                IScopedAgent? scopedAgent = runtimeScope
+                    .GetOptional<IScopedAgentManager>()
+                    ?.Find(identity.ScopeType, identity.ScopeId);
+                if (scopedAgent != null)
+                    DrawScopedAgentDetail(bodyRect, scopedAgent, scope);
+                else
+                    DrawNoPawnState(bodyRect, scope);
                 return;
             }
 
@@ -284,16 +299,15 @@ namespace RimMind.Infrastructure.UI
         private void DrawPawnDetail(Rect rect, Pawn pawn, RimMindLayoutScope scope)
         {
             CompleteContextSnapshotBuild();
-            float contentH = CalculatePawnContentHeight(pawn, rect.width);
+            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            IPawnAgentVerse? agent = CompPawnAgent.GetComp(pawn)?.ResolveCurrentAgent(runtimeScope);
+            float contentH = CalculatePawnContentHeight(agent, rect.width);
             Rect viewRect = new Rect(rect.x, rect.y, rect.width - 16f, contentH);
             Widgets.BeginScrollView(rect, ref _scrollPos, viewRect);
             scope.Record(rect, "ScrollView:PawnOuter");
             scope.Record(viewRect, "ScrollView:PawnContent");
 
             float y = viewRect.y + RimMindUI.Padding;
-
-            CompPawnAgent? comp = CompPawnAgent.GetComp(pawn);
-            var agent = comp?.Agent;
 
             // ── Section: Pawn Info ──
             y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.SectionPawnInfo".Translate()) + viewRect.y;
@@ -384,12 +398,9 @@ namespace RimMind.Infrastructure.UI
             Widgets.EndScrollView();
         }
 
-        private float CalculatePawnContentHeight(Pawn pawn, float width)
+        private float CalculatePawnContentHeight(IPawnAgentVerse? agent, float width)
         {
             float h = RimMindUI.Padding;
-
-            CompPawnAgent? comp = CompPawnAgent.GetComp(pawn);
-            var agent = comp?.Agent;
 
             // Pawn Info section
             h += RimMindUI.LineHeight + RimMindUI.SectionGap * 0.5f; // header
@@ -478,9 +489,8 @@ namespace RimMind.Infrastructure.UI
             scope.Record(testThinkBtn, "Button:SendTestRequest");
             if (Widgets.ButtonText(testThinkBtn, "RimMind.UI.AgentStateDebug.SendTestRequest".Translate()))
             {
-                var comp = CompPawnAgent.GetComp(pawn);
-                if (comp?.Agent != null)
-                    comp.Agent.ForceThink();
+                RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+                CompPawnAgent.GetComp(pawn)?.ResolveCurrentAgent(runtimeScope)?.ForceThink();
             }
 
             Rect requestLogBtn = new Rect(x + btnW + RimMindUI.Padding, y, btnW, RimMindUI.BtnHeight);
@@ -526,5 +536,17 @@ namespace RimMind.Infrastructure.UI
         }
 
         #endregion
+
+        private readonly struct ScopedAgentIdentity
+        {
+            public ScopedAgentIdentity(string scopeType, string scopeId)
+            {
+                ScopeType = scopeType;
+                ScopeId = scopeId;
+            }
+
+            public string ScopeType { get; }
+            public string ScopeId { get; }
+        }
     }
 }

@@ -12,6 +12,7 @@ using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Presentation.UI.Layout;
+using RimMind.Presentation.UI.Framework;
 using RimMind.Infrastructure.Verse;
 using RimMind.Presentation.Runtime.Services;
 
@@ -23,33 +24,25 @@ namespace RimMind.Infrastructure.UI
     public class Window_AgentDialogue : RimMindWindowBase
     {
         private readonly Pawn _pawn;
-        private readonly IAgentControl? _agent;
         private readonly string _npcId;
+        private readonly RuntimeBinding _runtimeBinding = new RuntimeBinding();
+        private DialogueRuntimeLease? _runtimeLease;
         private string _inputText = "";
         private Vector2 _scrollPosition;
         private float _lastContentHeight;
         private const int MaxHistoryRounds = RimMindDefaults.MaxHistoryRounds;
 
-        private readonly RuntimeServiceRef<IHistoryManager> _historyManager =
-            RuntimeServiceRef<IHistoryManager>.Optional();
-        private readonly RuntimeServiceRef<ISettingsProvider> _settingsProvider =
-            RuntimeServiceRef<ISettingsProvider>.Optional();
-        private readonly RuntimeServiceRef<IContextBuilder> _contextEngine =
-            RuntimeServiceRef<IContextBuilder>.Optional();
-        private readonly RuntimeServiceRef<IRemoteSyncService> _syncService =
-            RuntimeServiceRef<IRemoteSyncService>.Optional();
-
         private IHistoryManager? GetHistoryManager()
-            => _historyManager.ValueOrDefault;
+            => _runtimeLease?.HistoryManager;
 
         private ISettingsProvider? GetSettingsProvider()
-            => _settingsProvider.ValueOrDefault;
+            => _runtimeLease?.SettingsProvider;
 
         private IContextBuilder? GetContextEngine()
-            => _contextEngine.ValueOrDefault;
+            => _runtimeLease?.ContextEngine;
 
         private IRemoteSyncService? GetSyncService()
-            => _syncService.ValueOrDefault;
+            => _runtimeLease?.SyncService;
 
         private string _streamingText = "";
         private bool _isStreaming;
@@ -64,7 +57,6 @@ namespace RimMind.Infrastructure.UI
         public Window_AgentDialogue(Pawn pawn) : base()
         {
             _pawn = pawn;
-            _agent = CompPawnAgent.GetComp(pawn)?.Agent;
             _npcId = $"NPC-{pawn.thingIDNumber}";
             forcePause = false;
             closeOnClickedOutside = true;
@@ -73,6 +65,7 @@ namespace RimMind.Infrastructure.UI
 
         protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
         {
+            RefreshRuntimeBinding();
             RefreshActiveRequest();
             Text.Font = GameFont.Medium;
             string title = $"{_pawn.LabelShortCap} - {"RimMind.UI.AgentDialogue.Title".Translate()}";
@@ -198,10 +191,12 @@ namespace RimMind.Infrastructure.UI
 
         private void SendMessage()
         {
+            RefreshRuntimeBinding();
             RefreshActiveRequest();
             if (_activeRequest != null) return;
             if (string.IsNullOrWhiteSpace(_inputText)) return;
-            if (_agent == null || !_agent.IsActive) return;
+            IAgentControl? agent = _runtimeLease?.Agent.Resolve();
+            if (agent == null || !agent.IsActive) return;
 
             string message = _inputText.Trim();
             _inputText = "";
@@ -209,7 +204,7 @@ namespace RimMind.Infrastructure.UI
             _thinkingText = "RimMind.UI.AgentDialogue.Thinking".Translate();
             _streamingText = "";
             _isStreaming = true;
-            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            RuntimeServiceScope runtimeScope = _runtimeLease!.Scope;
             RuntimeGenerationToken runtimeToken = runtimeScope.Token;
             var turnId = new DialogueTurnId(
                 _npcId,
@@ -228,12 +223,12 @@ namespace RimMind.Infrastructure.UI
                 placeholder,
                 "Dialogue");
 
-            _agent.ForceThink();
+            agent.ForceThink();
 
             var settings = runtimeScope.GetOptional<ISettingsProvider>();
 
             var envelope = LlmRequestEnvelopeBuilder
-                .ForNpc(_agent?.NpcId ?? $"NPC-{_pawn.thingIDNumber}", gameStateInfo: new GameStateInfo().AddSection("dialogue_input", message))
+                .ForNpc(agent.NpcId ?? $"NPC-{_pawn.thingIDNumber}", gameStateInfo: new GameStateInfo().AddSection("dialogue_input", message))
                 .ForScenarioId(ScenarioIds.Dialogue)
                 .WithModId("RimMind.Dialogue")
                 .WithMaxTokens(settings?.MaxTokens ?? RimMindDefaults.MaxTokens)
@@ -294,6 +289,29 @@ namespace RimMind.Infrastructure.UI
                     RimMindErrors.Warn($"[RimMind-Core] AgentDialogue chat failed: {ex.Message}");
                 }
             });
+        }
+
+        private void RefreshRuntimeBinding()
+        {
+            DialogueRuntimeLease? candidate = null;
+            _runtimeBinding.Refresh(scope =>
+            {
+                candidate = new DialogueRuntimeLease(_pawn, scope);
+                return candidate;
+            });
+            if (candidate != null
+                && !candidate.IsDisposed
+                && _runtimeBinding.BoundGeneration == candidate.Scope.Generation)
+            {
+                _runtimeLease = candidate;
+            }
+        }
+
+        public override void PreClose()
+        {
+            _runtimeBinding.Dispose();
+            _runtimeLease = null;
+            base.PreClose();
         }
 
         private void RefreshActiveRequest()
@@ -383,6 +401,37 @@ namespace RimMind.Infrastructure.UI
                     return;
                 _staleRecorded = true;
                 runtimeHub.RecordStaleCompletion(LifecycleEventSources.AgentDialogue);
+            }
+        }
+
+        private sealed class DialogueRuntimeLease : IDisposable
+        {
+            private bool _disposed;
+
+            public DialogueRuntimeLease(Pawn pawn, RuntimeServiceScope scope)
+            {
+                Scope = scope;
+                Agent = new CurrentAgentBinding<IAgentControl>(
+                    () => _disposed
+                        ? null
+                        : CompPawnAgent.GetComp(pawn)?.ResolveCurrentAgent(scope));
+                HistoryManager = scope.GetOptional<IHistoryManager>();
+                SettingsProvider = scope.GetOptional<ISettingsProvider>();
+                ContextEngine = scope.GetOptional<IContextBuilder>();
+                SyncService = scope.GetOptional<IRemoteSyncService>();
+            }
+
+            public RuntimeServiceScope Scope { get; }
+            public bool IsDisposed => _disposed;
+            public CurrentAgentBinding<IAgentControl> Agent { get; }
+            public IHistoryManager? HistoryManager { get; }
+            public ISettingsProvider? SettingsProvider { get; }
+            public IContextBuilder? ContextEngine { get; }
+            public IRemoteSyncService? SyncService { get; }
+
+            public void Dispose()
+            {
+                _disposed = true;
             }
         }
 
