@@ -71,8 +71,7 @@ namespace RimMind.Presentation
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
-            var scope = RuntimeServiceHub.Shared.Capture();
-            RimMindCoreSettingsUI.Draw(inRect, scope.GetRequired<ISettingsProvider>());
+            RimMindCoreSettingsUI.Draw(inRect);
         }
     }
 

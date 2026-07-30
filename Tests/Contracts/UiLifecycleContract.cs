@@ -94,6 +94,33 @@ namespace RimMind.Tests.Contracts
                     Assert.False(operation.CanPublish());
                     Assert.Equal(1, hub.GetDiagnostics().StaleCompletionDiscardCount);
                 }),
+                ("settings operation resolves every service from one captured scope", () =>
+                {
+                    var hub = new RuntimeServiceHub();
+                    PublishUiProbe(hub, 1);
+                    var operation = GenerationUiOperation.Capture(
+                        hub,
+                        LifecycleEventSources.SettingsUi);
+
+                    PublishUiProbe(hub, 2);
+
+                    Assert.Equal(1, operation.Scope.GetRequired<IUiGenerationProbe>().Generation);
+                    Assert.False(operation.CanPublish());
+                }),
+                ("old rendered overlay operation is rejected once after replacement", () =>
+                {
+                    var hub = new RuntimeServiceHub();
+                    PublishUiProbe(hub, 1);
+                    var operation = GenerationUiOperation.Capture(
+                        hub,
+                        LifecycleEventSources.RequestOverlay);
+
+                    PublishUiProbe(hub, 2);
+
+                    Assert.False(operation.CanPublish());
+                    Assert.False(operation.CanPublish());
+                    Assert.Equal(1, hub.GetDiagnostics().StaleCompletionDiscardCount);
+                }),
                 ("async ui completions carry and validate runtime tokens", () =>
                 {
                     AssertAsyncFence("Infrastructure/UI/AgentFlow/AgentFlowAsyncCoordinator.cs");
@@ -365,6 +392,31 @@ namespace RimMind.Tests.Contracts
             Assert.Contains("RuntimeGenerationToken", source, StringComparison.Ordinal);
             Assert.Contains("IsCurrent", source, StringComparison.Ordinal);
             Assert.Contains("RecordStaleCompletion", source, StringComparison.Ordinal);
+        }
+
+        private static void PublishUiProbe(RuntimeServiceHub hub, int generation)
+        {
+            var builder = new RuntimeServiceBuilder();
+            builder.Bind<IUiGenerationProbe>(new UiGenerationProbe(generation));
+            builder.Require<IUiGenerationProbe>();
+            var snapshot = builder.Build();
+            var lifetime = new RuntimeLifetime(snapshot.RuntimeId, hub.IsCurrent, hub.RecordStaleCompletion);
+            hub.Publish(snapshot, lifetime);
+        }
+
+        private interface IUiGenerationProbe
+        {
+            int Generation { get; }
+        }
+
+        private sealed class UiGenerationProbe : IUiGenerationProbe
+        {
+            public UiGenerationProbe(int generation)
+            {
+                Generation = generation;
+            }
+
+            public int Generation { get; }
         }
 
         private static string ReadSource(string relativePath) =>

@@ -14,14 +14,17 @@ namespace RimMind.Presentation.UI
 {
     public static class RimMindCoreSettingsUI
     {
+        private static readonly RuntimeServiceRef<ISettingsProvider> SettingsProvider =
+            RuntimeServiceRef<ISettingsProvider>.Required();
         private static readonly RuntimeServiceRef<IExtensionRegistry<ISettingsTab>> SettingsTabRegistry =
             RuntimeServiceRef<IExtensionRegistry<ISettingsTab>>.Optional();
 
         private static string _curTab = "api";
 
-        public static void Draw(Rect inRect, ISettingsProvider settings, RimMindLayoutScope? scope = null)
+        public static void Draw(Rect inRect, RimMindLayoutScope? scope = null)
         {
             RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            var settings = SettingsProvider.Resolve(runtimeScope);
             var settingsTabRegistry = SettingsTabRegistry.ResolveOptional(runtimeScope);
             EnsureCurrentTab(settingsTabRegistry);
             var tabs = CollectTabs(settingsTabRegistry);
@@ -48,7 +51,14 @@ namespace RimMind.Presentation.UI
                 default:
                     if (settingsTabRegistry != null)
                         foreach (var tab in settingsTabRegistry.All)
-                            if (tab.Id == _curTab) { tab.Draw(content); break; }
+                            if (tab.Id == _curTab)
+                            {
+                                if (tab is IRuntimeScopedSettingsTab runtimeScopedTab)
+                                    runtimeScopedTab.Draw(content, runtimeScope);
+                                else
+                                    tab.Draw(content);
+                                break;
+                            }
                     break;
             }
         }
@@ -106,5 +116,10 @@ namespace RimMind.Presentation.UI
             }
             GUI.color = Color.white;
         }
+    }
+
+    internal interface IRuntimeScopedSettingsTab
+    {
+        void Draw(Rect rect, RuntimeServiceScope runtimeScope);
     }
 }

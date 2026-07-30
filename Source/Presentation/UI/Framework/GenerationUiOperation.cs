@@ -7,6 +7,7 @@ namespace RimMind.Presentation.UI.Framework
     {
         private readonly RuntimeServiceHub _runtimeHub;
         private readonly string _eventSource;
+        private readonly RuntimeServiceScope? _scope;
         private bool _staleRecorded;
 
         public GenerationUiOperation(
@@ -19,7 +20,30 @@ namespace RimMind.Presentation.UI.Framework
             _eventSource = eventSource ?? throw new ArgumentNullException(nameof(eventSource));
         }
 
+        private GenerationUiOperation(
+            RuntimeServiceHub runtimeHub,
+            RuntimeServiceScope scope,
+            string eventSource)
+            : this(runtimeHub, scope.Token, eventSource)
+        {
+            _scope = scope;
+        }
+
         public RuntimeGenerationToken RuntimeToken { get; }
+
+        public RuntimeServiceScope Scope =>
+            _scope ?? throw new InvalidOperationException(
+                "This operation was created from a token and has no captured service scope.");
+
+        public static GenerationUiOperation Capture(
+            RuntimeServiceHub runtimeHub,
+            string eventSource)
+        {
+            if (runtimeHub == null)
+                throw new ArgumentNullException(nameof(runtimeHub));
+
+            return new GenerationUiOperation(runtimeHub, runtimeHub.Capture(), eventSource);
+        }
 
         public bool CanPublish()
         {

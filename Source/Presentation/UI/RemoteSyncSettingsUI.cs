@@ -12,7 +12,7 @@ using Verse;
 
 namespace RimMind.Presentation.UI
 {
-    public class RemoteSyncSettingsUI : ISettingsTab
+    public class RemoteSyncSettingsUI : ISettingsTab, IRuntimeScopedSettingsTab
     {
         public string Id => "remotesync";
         public string OwnerModId => RimMindOwnerConsts.CoreModId;
@@ -37,6 +37,11 @@ namespace RimMind.Presentation.UI
         public void Draw(Rect inRect)
         {
             RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            Draw(inRect, runtimeScope);
+        }
+
+        public void Draw(Rect inRect, RuntimeServiceScope runtimeScope)
+        {
             RemoteSyncSettings settings = _settings.Resolve(runtimeScope);
             IRemoteSyncService syncService = _syncService.Resolve(runtimeScope);
             if (_generationState.Refresh(runtimeScope.Generation))

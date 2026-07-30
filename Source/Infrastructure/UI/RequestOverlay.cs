@@ -20,15 +20,6 @@ namespace RimMind.Infrastructure.UI
         private static readonly RuntimeServiceRef<IOverlayService> OverlayService =
             RuntimeServiceRef<IOverlayService>.Optional();
 
-        private static IOverlaySettings? GetOverlaySettings()
-            => OverlaySettings.ValueOrDefault;
-
-        private static IWindowService? GetWindowService()
-            => WindowService.ValueOrDefault;
-
-        private static IOverlayService? GetOverlayService()
-            => OverlayService.ValueOrDefault;
-
         private static readonly IReadOnlyList<RequestEntry> EmptyPending = Array.Empty<RequestEntry>();
         private static Vector2 _scrollPos = Vector2.zero;
         private static bool _isDragging;
@@ -51,25 +42,43 @@ namespace RimMind.Infrastructure.UI
 
         public static void Register(RequestEntry entry)
         {
-            GetOverlayService()?.RegisterPendingRequest(entry);
+            RuntimeServiceScope scope = RuntimeServiceHub.Shared.Capture();
+            OverlayService.ResolveOptional(scope)?.RegisterPendingRequest(entry);
         }
 
-        public static IReadOnlyList<RequestEntry> Pending =>
-            GetOverlayService()?.GetPendingRequests() ?? EmptyPending;
+        public static IReadOnlyList<RequestEntry> Pending
+        {
+            get
+            {
+                RuntimeServiceScope scope = RuntimeServiceHub.Shared.Capture();
+                return OverlayService.ResolveOptional(scope)?.GetPendingRequests() ?? EmptyPending;
+            }
+        }
 
-        public static bool Remove(RequestEntry entry) =>
-            GetOverlayService()?.TryDismiss(entry) == true;
+        public static bool Remove(RequestEntry entry)
+        {
+            RuntimeServiceScope scope = RuntimeServiceHub.Shared.Capture();
+            return OverlayService.ResolveOptional(scope)?.TryDismiss(entry) == true;
+        }
 
-        public static bool Resolve(RequestEntry entry, string choice) =>
-            GetOverlayService()?.TryResolve(entry, choice) == true;
+        public static bool Resolve(RequestEntry entry, string choice)
+        {
+            RuntimeServiceScope scope = RuntimeServiceHub.Shared.Capture();
+            return OverlayService.ResolveOptional(scope)?.TryResolve(entry, choice) == true;
+        }
 
         public static void OnGUI()
         {
             if (Current.ProgramState != ProgramState.Playing) return;
 
-            RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
+            GenerationUiOperation operation = GenerationUiOperation.Capture(
+                RuntimeServiceHub.Shared,
+                LifecycleEventSources.RequestOverlay);
+            RuntimeServiceScope runtimeScope = operation.Scope;
             var settings = OverlaySettings.ResolveOptional(runtimeScope);
             if (settings == null) return;
+            var overlayService = OverlayService.ResolveOptional(runtimeScope);
+            var windowService = WindowService.ResolveOptional(runtimeScope);
 
             if (GenerationState.Refresh(runtimeScope.Generation))
             {
@@ -96,15 +105,14 @@ namespace RimMind.Infrastructure.UI
             HandleInput();
 
             bool isMouseOver = Mouse.IsOver(_windowRect);
-            var pending = OverlayService.ResolveOptional(runtimeScope)?.GetPendingRequests() ?? EmptyPending;
-            var windowService = WindowService.ResolveOptional(runtimeScope);
+            var pending = overlayService?.GetPendingRequests() ?? EmptyPending;
 
             GUI.BeginGroup(_windowRect);
             var inRect = new Rect(Vector2.zero, _windowRect.size);
 
             Widgets.DrawBoxSolid(inRect, new Color(0.08f, 0.08f, 0.12f, 0.85f));
 
-            DrawEntries(inRect, pending);
+            DrawEntries(inRect, pending, overlayService, operation);
 
             if (isMouseOver)
             {
@@ -132,7 +140,11 @@ namespace RimMind.Infrastructure.UI
             GenerationState.MarkDerivedState();
         }
 
-        private static void DrawEntries(Rect inRect, IReadOnlyList<RequestEntry> pending)
+        private static void DrawEntries(
+            Rect inRect,
+            IReadOnlyList<RequestEntry> pending,
+            IOverlayService? overlayService,
+            GenerationUiOperation operation)
         {
             var contentRect = inRect.ContractedBy(TextPadding);
             contentRect.yMin += OptionsBarHeight;
@@ -201,7 +213,8 @@ namespace RimMind.Infrastructure.UI
                     Rect btnRect = new Rect(entryRect.x + TextPadding + j * (btnW + BtnPadding), btnY, btnW, BtnHeight);
                     if (Widgets.ButtonText(btnRect, entry.options[j]))
                     {
-                        Resolve(entry, entry.options[j]);
+                        if (operation.CanPublish())
+                            overlayService?.TryResolve(entry, entry.options[j]);
                         break;
                     }
                     if (entry.optionTooltips != null && j < entry.optionTooltips.Length && !entry.optionTooltips[j].NullOrEmpty())
