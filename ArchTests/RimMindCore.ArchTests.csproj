@@ -25,25 +25,8 @@
 
   <ItemGroup>
     <Compile Include="ArchTestExtensions.cs" />
-    <Compile Include="PhaseA\**\*.cs" />
-    <Compile Include="PhaseB\**\*.cs" />
-    <Compile Include="PhaseC\**\*.cs" />
-    <Compile Include="PhaseD\**\*.cs" />
-    <Compile Include="PhaseE\**\*.cs" />
-    <Compile Include="PhaseG\**\*.cs" />
-    <Compile Include="PhaseJ\**\*.cs" />
-    <Compile Include="PhaseK\**\*.cs" />
-    <Compile Include="PhaseL\**\*.cs" />
-    <Compile Include="PhaseM\**\*.cs" />
-    <Compile Include="PhaseN\**\*.cs" />
-    <Compile Include="PhaseUI\**\*.cs" />
-    <Compile Include="PhaseH1\**\*.cs" />
-    <Compile Include="PhaseH2\**\*.cs" />
-    <Compile Include="PhaseI\**\*.cs" />
-    <Compile Remove="PhaseI\R_I1_I4_AgentModeArchTests.cs" />
-    <Compile Include="PhaseStructure\**\*.cs" />
-    <Compile Include="General\**\*.cs" />
-    <Compile Include="../Tests/VerseStubs.cs" Link="VerseStubs.cs" />
+    <Compile Include="Contracts\**\*.cs" />
+    <Compile Include="..\TestSupport\ContractCaseRunner.cs" Link="Support\ContractCaseRunner.cs" />
   </ItemGroup>
 
   <ItemGroup>
