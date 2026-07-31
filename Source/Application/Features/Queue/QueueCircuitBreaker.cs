@@ -1,0 +1,54 @@
+using System.Collections.Generic;
+using RimMind.Application.Common.Interfaces.Abstractions;
+using RimMind.Application.Common.Interfaces.Internal;
+
+namespace RimMind.Application.Features.Queue
+{
+    /// <summary>
+    /// Encapsulates cooldown tracking and circuit breaker state management for the request queue.
+    /// Delegates low-level cooldown storage to <see cref="CooldownTable"/>.
+    /// </summary>
+    internal sealed class QueueCircuitBreaker
+    {
+        private readonly CooldownTable _cooldowns;
+        private readonly ISettingsProvider _settings;
+
+        public QueueCircuitBreaker(ISettingsProvider settings, ILogSink? logSink = null)
+        {
+            _settings = settings;
+            _cooldowns = new CooldownTable(logSink);
+        }
+
+        public CooldownTable Cooldowns => _cooldowns;
+
+        public bool IsOnCooldown(string modId, int currentTick)
+            => _cooldowns.IsOnCooldown(modId, currentTick);
+
+        public int GetCooldownTicksLeft(string modId, int currentTick)
+            => _cooldowns.GetCooldownTicksLeft(modId, currentTick);
+
+        public int GetModCooldownTicks(string modId)
+            => _cooldowns.GetModCooldownTicks(modId);
+
+        public void SetCooldown(string modId, int ticksRemaining)
+            => _cooldowns.Set(modId, ticksRemaining);
+
+        public IReadOnlyDictionary<string, int> GetCooldownSnapshot()
+            => _cooldowns.GetSnapshot();
+
+        public IReadOnlyDictionary<string, int> GetAllCooldowns()
+            => _cooldowns.GetAll();
+
+        public void ClearCooldown(string modId)
+            => _cooldowns.Clear(modId);
+
+        public void ClearAllCooldowns()
+            => _cooldowns.ClearAll();
+
+        public void TickCooldowns()
+            => _cooldowns.Tick();
+
+        public int FailureThreshold => _settings.CircuitBreakerFailureThreshold;
+        public int OpenDurationSec => _settings.CircuitBreakerOpenDurationSec;
+    }
+}
