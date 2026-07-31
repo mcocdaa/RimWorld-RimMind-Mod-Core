@@ -17,7 +17,7 @@
   <RimMind.Settings.ApiEndpoint>API 端点</RimMind.Settings.ApiEndpoint>
   <RimMind.Settings.ApiEndpoint.Desc>AI 服务的 API 地址。支持 OpenAI 兼容接口（如 DeepSeek、本地 Ollama 等）。</RimMind.Settings.ApiEndpoint.Desc>
   <RimMind.Settings.ModelName>模型名称</RimMind.Settings.ModelName>
-  <RimMind.Settings.ModelName.Desc>要使用的模型 ID，如 gpt-4o-mini、deepseek-chat 等。</RimMind.Settings.ModelName.Desc>
+  <RimMind.Settings.ModelName.Desc>要使用的模型 ID，如 deepseek-v4-flash、gpt-4o-mini 等。</RimMind.Settings.ModelName.Desc>
   <RimMind.Settings.ForceJsonMode>强制 JSON 模式（response_format）</RimMind.Settings.ForceJsonMode>
   <RimMind.Settings.ForceJsonModeDesc>向 API 追加 response_format=json_object，强制模型返回 JSON。不支持该参数的本地模型请关闭。</RimMind.Settings.ForceJsonModeDesc>
   <RimMind.Settings.MaxTokens>最大 Token 数</RimMind.Settings.MaxTokens>

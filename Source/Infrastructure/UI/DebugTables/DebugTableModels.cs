@@ -127,10 +127,10 @@ namespace RimMind.Infrastructure.UI.DebugTables
                 "AI Requests",
                 new[]
                 {
-                    DebugTableRow.Create("req-001", DebugTableStatus.Waiting, "10:00", "Pawn", "Nickie", "chat", "deepseek-chat", "Queued for context build", "0ms"),
+                    DebugTableRow.Create("req-001", DebugTableStatus.Waiting, "10:00", "Pawn", "Nickie", "chat", "deepseek-v4-flash", "Queued for context build", "0ms"),
                     DebugTableRow.Create("req-002", DebugTableStatus.Streaming, "10:01", "Pawn", "Tynan", "advisor", "gpt-4.1-mini", "Streaming 3 chunks", "1.2s"),
-                    DebugTableRow.Create("req-003", DebugTableStatus.Completed, "10:02", "Colony", "Workbench", "memory", "deepseek-chat", "Completed ToolCall summary: choose_repair_target", "2.4s"),
-                    DebugTableRow.Create("req-004", DebugTableStatus.Failed, "10:03", "Pawn", "Maya", "chat", "deepseek-chat", "HTTP timeout after retry", "5s")
+                    DebugTableRow.Create("req-003", DebugTableStatus.Completed, "10:02", "Colony", "Workbench", "memory", "deepseek-v4-flash", "Completed ToolCall summary: choose_repair_target", "2.4s"),
+                    DebugTableRow.Create("req-004", DebugTableStatus.Failed, "10:03", "Pawn", "Maya", "chat", "deepseek-v4-flash", "HTTP timeout after retry", "5s")
                 });
         }
 

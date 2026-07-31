@@ -17,7 +17,7 @@
   <RimMind.Settings.ApiEndpoint>API Endpoint</RimMind.Settings.ApiEndpoint>
   <RimMind.Settings.ApiEndpoint.Desc>AI service API address. Supports OpenAI-compatible interfaces (e.g. DeepSeek, local Ollama).</RimMind.Settings.ApiEndpoint.Desc>
   <RimMind.Settings.ModelName>Model Name</RimMind.Settings.ModelName>
-  <RimMind.Settings.ModelName.Desc>The model ID to use, e.g. gpt-4o-mini, deepseek-chat.</RimMind.Settings.ModelName.Desc>
+  <RimMind.Settings.ModelName.Desc>The model ID to use, e.g. deepseek-v4-flash or gpt-4o-mini.</RimMind.Settings.ModelName.Desc>
   <RimMind.Settings.ForceJsonMode>Force JSON Mode (response_format)</RimMind.Settings.ForceJsonMode>
   <RimMind.Settings.ForceJsonModeDesc>Append response_format=json_object to the API request, forcing the model to return JSON. Disable this for local models that don't support this parameter.</RimMind.Settings.ForceJsonModeDesc>
   <RimMind.Settings.MaxTokens>Max Tokens</RimMind.Settings.MaxTokens>

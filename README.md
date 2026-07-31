@@ -63,7 +63,7 @@ cd RimWorld-RimMind-Mod-Core
 4. 如果选择 OpenAI 兼容模式：
    - 填写你的 **API Key**
    - 填写 **API 端点**（见下方支持的端点列表）
-   - 填写 **模型名称**（如 `gpt-4o-mini`、`deepseek-chat`）
+   - 填写 **模型名称**（如 `deepseek-v4-flash`、`gpt-4o-mini`）
 5. 如果选择 Player2 模式：
    - 安装 Player2 本地应用后可自动检测，无需手动配置
    - 也可手动填写 Player2 API Key 使用远程服务
@@ -75,7 +75,7 @@ cd RimWorld-RimMind-Mod-Core
 
 | 服务 | 端点 | 说明 |
 |------|------|------|
-| DeepSeek | `https://api.deepseek.com/v1` | deepseek-chat 等模型（默认） |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-v4-flash`（默认） |
 | OpenAI | `https://api.openai.com/v1` | GPT-4o-mini 等模型 |
 | Ollama (本地) | `http://localhost:11434/v1` | 本地部署的模型 |
 | Player2 | 自动检测 / 手动配置 | Player2 本地应用或远程 API |
@@ -142,7 +142,7 @@ ContextEngine 采用 L0-L5 分层构建上下文，支持 Diff 注入与 Tick �
 | AI Provider | OpenAI | 选择 OpenAI 兼容 API 或 Player2 |
 | API Key | - | 你的 API 密钥（Player2 模式可选） |
 | API 端点 | `https://api.deepseek.com/v1` | OpenAI 兼容端点 |
-| 模型名称 | `deepseek-chat` | 任意模型 ID |
+| 模型名称 | `deepseek-v4-flash` | 任意模型 ID |
 | 强制 JSON 模式 | 开启 | 不支持的本地模型请关闭 |
 | 最大 Token | 800 | 响应长度上限（200-2000） |
 | 默认温度 | 0.7 | 控制输出随机性（0.0-2.0） |
@@ -174,7 +174,7 @@ A: API Key 仅存储在本地 RimWorld 设置文件中，不会上传到任何�
 A: Core 本身不会报错，但所有依赖 AI 的子模组功能将无法工作。
 
 **Q: 推荐用什么模型？**
-A: 推荐使用 `gpt-4o-mini` 或 `deepseek-chat`，性价比高且响应速度快。本地 Ollama 用户可使用 `qwen2.5:7b` 等模型。
+A: 默认推荐 `deepseek-v4-flash`，兼顾价格与响应速度。本地 Ollama 用户可使用 `qwen2.5:7b` 等模型。
 
 ## 致谢
 
@@ -247,7 +247,7 @@ cd RimWorld-RimMind-Mod-Core
 4. If using OpenAI-compatible mode:
    - Enter your **API Key**
    - Enter your **API Endpoint** (see supported endpoints below)
-   - Enter your **Model Name** (e.g., `gpt-4o-mini`, `deepseek-chat`)
+   - Enter your **Model Name** (e.g., `deepseek-v4-flash`, `gpt-4o-mini`)
 5. If using Player2 mode:
    - Install Player2 local app for automatic detection, no manual configuration needed
    - Or manually enter a Player2 API Key for remote service
@@ -257,7 +257,7 @@ cd RimWorld-RimMind-Mod-Core
 
 | Service | Endpoint | Notes |
 |---------|----------|-------|
-| DeepSeek | `https://api.deepseek.com/v1` | deepseek-chat etc. (default) |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-v4-flash` (default) |
 | OpenAI | `https://api.openai.com/v1` | GPT-4o-mini etc. |
 | Ollama (local) | `http://localhost:11434/v1` | Locally deployed models |
 | Player2 | Auto-detect / Manual | Player2 local app or remote API |
@@ -289,7 +289,7 @@ A: The API Key is stored locally in RimWorld settings files and never uploaded t
 A: Core itself won't error, but all AI-dependent sub-module features will be unavailable.
 
 **Q: What model do you recommend?**
-A: `gpt-4o-mini` or `deepseek-chat` for good balance of cost and speed. Ollama users can try `qwen2.5:7b`.
+A: `deepseek-v4-flash` is the default recommendation for a good balance of cost and speed. Ollama users can try `qwen2.5:7b`.
 
 ## Acknowledgments
 

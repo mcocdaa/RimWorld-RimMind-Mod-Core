@@ -10,13 +10,16 @@ namespace RimMind.Presentation.Settings
 {
     public class RimMindCoreSettings : ModSettings, IOpenAISettings
     {
+        public const string DefaultApiEndpoint = "https://api.deepseek.com/v1";
+        public const string DefaultModelName = "deepseek-v4-flash";
+
         public string? SavedModVersion;
 
         public string provider = AIProviderRegistry.GetDefaultProviderId();
 
         public string apiKey = string.Empty;
-        public string apiEndpoint = "https://api.deepseek.com/v1";
-        public string modelName = "deepseek-chat";
+        public string apiEndpoint = DefaultApiEndpoint;
+        public string modelName = DefaultModelName;
         public string player2RemoteUrl = "https://api.player2.game";
 
         public bool forceJsonMode = true;
@@ -91,8 +94,8 @@ namespace RimMind.Presentation.Settings
             string storedKey = ApiKeyObfuscator.Obfuscate(apiKey);
             Scribe_Values.Look(ref storedKey, "apiKey", string.Empty);
             apiKey = ApiKeyObfuscator.Deobfuscate(storedKey);
-            Scribe_Values.Look(ref apiEndpoint, "apiEndpoint", "https://api.deepseek.com/v1");
-            Scribe_Values.Look(ref modelName, "modelName", "deepseek-chat");
+            Scribe_Values.Look(ref apiEndpoint, "apiEndpoint", DefaultApiEndpoint);
+            Scribe_Values.Look(ref modelName, "modelName", DefaultModelName);
             Scribe_Values.Look(ref player2RemoteUrl, "player2RemoteUrl", "https://api.player2.game");
             Scribe_Values.Look(ref forceJsonMode, "forceJsonMode", true);
             Scribe_Values.Look(ref maxTokens, "maxTokens", RimMindDefaults.MaxTokens);
