@@ -102,9 +102,12 @@ namespace Verse
 
     public class GameComponent
     {
+        public GameComponent() { }
+        public GameComponent(Game game) { }
         public virtual void GameComponentTick() { }
         public virtual void StartedNewGame() { }
         public virtual void LoadedGame() { }
+        public virtual void ExposeData() { }
     }
 
     /// <summary>Stub for RimWorld Verse.Pawn used in test compilation.</summary>
@@ -312,6 +315,23 @@ namespace Verse
     /// <summary>Stub for Verse.Scribe_Values used in test compilation.</summary>
     public static class Scribe_Values
     {
+        public static string? NextString { get; set; }
+        public static string? LastString { get; private set; }
+
+        public static void Look(ref string value, string label, string defaultValue = "")
+        {
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+                value = NextString ?? defaultValue;
+            else if (Scribe.mode == LoadSaveMode.Saving)
+                LastString = value;
+        }
+
+        public static void Reset()
+        {
+            NextString = null;
+            LastString = null;
+        }
+
         public static void Look<T>(ref T value, string label, T defaultValue = default!) { }
         public static void Look<T>(ref T value, string label, bool saveDestroyedThings) { }
     }

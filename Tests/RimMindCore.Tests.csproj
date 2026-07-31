@@ -31,13 +31,16 @@
     <Compile Include="../Source/Application/**/*.cs" Exclude="../Source/Application/**/obj/**;../Source/Application/DependencyInjection.cs;../Source/Application/Common/IsExternalInit.cs" />
     <Compile Include="../Source/Infrastructure/Verse/CompPawnAgent.cs" />
     <Compile Include="../Source/Infrastructure/Verse/AIRequestTraceLog.cs" />
+    <Compile Include="../Source/Infrastructure/Verse/HistoryManagerGameComponent.cs" />
     <Compile Include="../Source/Infrastructure/Cache/EmbedCache.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgent.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgentFactory.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedAgentManager.cs" />
     <Compile Include="../Source/Presentation/Agent/ScopedThinkStrategy.cs" />
     <Compile Include="../Source/Presentation/Runtime/RimMindRuntimeGameComponent.cs" />
+    <Compile Include="../Source/Presentation/Runtime/RimMindExtensionManager.cs" />
     <Compile Include="../Source/Presentation/Runtime/OverlayService.cs" />
+    <Compile Include="../Source/Presentation/Runtime/ProviderRegistry.cs" />
     <Compile Include="../Source/Presentation/Runtime/Services/*.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListBuilder.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />

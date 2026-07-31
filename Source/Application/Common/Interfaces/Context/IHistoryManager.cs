@@ -22,5 +22,6 @@ namespace RimMind.Application.Common.Interfaces.Context
         bool RemoveTurn(string npcId, string turnId);
         string GetAllForSave();
         Dictionary<string, List<HistoryEntry>> GetAllForSaveDict();
+        void LoadFromSave(Dictionary<string, List<HistoryEntry>> data);
     }
 }

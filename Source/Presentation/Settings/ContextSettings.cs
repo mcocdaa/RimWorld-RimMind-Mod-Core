@@ -1,4 +1,3 @@
-using System;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
@@ -40,12 +39,8 @@ namespace RimMind.Presentation.Settings
         public bool IncludeThreats = true;
 
         public float ContextBudget = RimMindDefaults.DefaultContextBudget;
-#pragma warning disable CS0618
-        [Obsolete("Use FlywheelParameterStore w1/w2 instead. This field is only kept for savegame compatibility.")]
-        public float BudgetW1 = RimMindDefaults.ReserveBudgetWeight;
-        [Obsolete("Use FlywheelParameterStore w1/w2 instead. This field is only kept for savegame compatibility.")]
-        public float BudgetW2 = RimMindDefaults.ContextBudgetWeight;
-#pragma warning restore CS0618
+        private float _legacyBudgetW1 = RimMindDefaults.ReserveBudgetWeight;
+        private float _legacyBudgetW2 = RimMindDefaults.ContextBudgetWeight;
 
         public int maxCacheEntries = RimMindDefaults.MaxCacheEntries;
         public int contextBriefLimit = RimMindDefaults.DefaultBriefLimit;
@@ -218,19 +213,6 @@ namespace RimMind.Presentation.Settings
             set => IncludeThreats = value;
         }
 
-#pragma warning disable CS0618
-        float IContextBudgetSettings.BudgetW1
-        {
-            get => BudgetW1;
-            set => BudgetW1 = value;
-        }
-        float IContextBudgetSettings.BudgetW2
-        {
-            get => BudgetW2;
-            set => BudgetW2 = value;
-        }
-#pragma warning restore CS0618
-
         public void ExposeData()
         {
             Scribe_Values.Look(ref IncludeRace, "IncludeRace", true);
@@ -263,10 +245,11 @@ namespace RimMind.Presentation.Settings
             Scribe_Values.Look(ref IncludeWeather, "IncludeWeather", true);
             Scribe_Values.Look(ref IncludeThreats, "IncludeThreats", true);
             Scribe_Values.Look(ref ContextBudget, "ContextBudget", RimMindDefaults.DefaultContextBudget);
-#pragma warning disable CS0618
-            Scribe_Values.Look(ref BudgetW1, "BudgetW1", RimMindDefaults.ReserveBudgetWeight);
-            Scribe_Values.Look(ref BudgetW2, "BudgetW2", RimMindDefaults.ContextBudgetWeight);
-#pragma warning restore CS0618
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                Scribe_Values.Look(ref _legacyBudgetW1, "BudgetW1", RimMindDefaults.ReserveBudgetWeight);
+                Scribe_Values.Look(ref _legacyBudgetW2, "BudgetW2", RimMindDefaults.ContextBudgetWeight);
+            }
             Scribe_Values.Look(ref maxCacheEntries, "maxCacheEntries", RimMindDefaults.MaxCacheEntries);
             Scribe_Values.Look(ref contextBriefLimit, "contextBriefLimit", RimMindDefaults.DefaultBriefLimit);
             Scribe_Values.Look(ref moodDiffThreshold, "moodDiffThreshold", 5f);
@@ -343,9 +326,6 @@ namespace RimMind.Presentation.Settings
             IncludeWealth = true; IncludeFood = true; IncludeSeason = true;
             IncludeWeather = true; IncludeThreats = true;
             ContextBudget = RimMindDefaults.DefaultContextBudget;
-#pragma warning disable CS0618
-            BudgetW1 = RimMindDefaults.ReserveBudgetWeight; BudgetW2 = RimMindDefaults.ContextBudgetWeight;
-#pragma warning restore CS0618
         }
     }
 }

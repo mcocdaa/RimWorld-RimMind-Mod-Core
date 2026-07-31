@@ -35,6 +35,7 @@ namespace RimMind.Presentation.Context
             {
                 entries.Add(new HistoryEntry("user", userMessage, tick, scenario));
                 entries.Add(new HistoryEntry("assistant", assistantMessage, tick, scenario));
+                EnforceCapacity(entries);
             }
         }
 
@@ -55,24 +56,56 @@ namespace RimMind.Presentation.Context
         }
 
         public List<(string role, string content)> GetHistory(string npcId, int maxRounds, string? scenario = null)
-            => GetHistorySnapshot(npcId, includePending: false);
+            => GetHistorySnapshot(npcId, maxRounds, scenario, includePending: false);
 
         public List<(string role, string content)> GetHistoryForDisplay(
             string npcId,
             int maxRounds,
             string? scenario = null)
-            => GetHistorySnapshot(npcId, includePending: true);
+            => GetHistorySnapshot(npcId, maxRounds, scenario, includePending: true);
 
-        private List<(string role, string content)> GetHistorySnapshot(string npcId, bool includePending)
+        private List<(string role, string content)> GetHistorySnapshot(
+            string npcId,
+            int maxRounds,
+            string? scenario,
+            bool includePending)
         {
+            if (maxRounds <= 0)
+                return new List<(string, string)>();
             if (!_histories.TryGetValue(npcId, out var entries) || entries.Count == 0)
                 return new List<(string, string)>();
             List<HistoryEntry> snapshot;
             lock (_listLock) { snapshot = entries.ToList(); }
-            return snapshot
-                .Where(entry => includePending || !entry.IsPending)
-                .Select(entry => (entry.Role, entry.Content))
+
+            var candidates = snapshot
+                .Where(entry => (includePending || !entry.IsPending)
+                    && (scenario == null
+                        || string.Equals(entry.Scenario, scenario, StringComparison.Ordinal)))
                 .ToList();
+            var rounds = new List<(HistoryEntry user, HistoryEntry assistant)>();
+            for (int index = 0; index + 1 < candidates.Count;)
+            {
+                HistoryEntry user = candidates[index];
+                HistoryEntry assistant = candidates[index + 1];
+                if (user.Role == "user" && assistant.Role == "assistant")
+                {
+                    rounds.Add((user, assistant));
+                    index += 2;
+                }
+                else
+                {
+                    index++;
+                }
+            }
+
+            int firstRound = Math.Max(0, rounds.Count - maxRounds);
+            var result = new List<(string, string)>((rounds.Count - firstRound) * 2);
+            for (int index = firstRound; index < rounds.Count; index++)
+            {
+                result.Add((rounds[index].user.Role, rounds[index].user.Content));
+                result.Add((rounds[index].assistant.Role, rounds[index].assistant.Content));
+            }
+            return result;
         }
 
         public int GetHistoryCount(string npcId)
@@ -91,13 +124,18 @@ namespace RimMind.Presentation.Context
             if (!_histories.TryGetValue(npcId, out var entries)) return;
             lock (_listLock)
             {
-                if (entries.Count > MaxEntriesPerNpc)
-                {
-                    var kept = entries.Skip(entries.Count - CompressThreshold).ToList();
-                    entries.Clear();
-                    entries.AddRange(kept);
-                }
+                EnforceCapacity(entries);
             }
+        }
+
+        private static void EnforceCapacity(List<HistoryEntry> entries)
+        {
+            if (entries.Count <= MaxEntriesPerNpc)
+                return;
+
+            var kept = entries.Skip(entries.Count - CompressThreshold).ToList();
+            entries.Clear();
+            entries.AddRange(kept);
         }
 
         public void ReplaceLastAssistantTurn(string npcId, string content)
@@ -145,6 +183,7 @@ namespace RimMind.Presentation.Context
                     assistant.Scenario,
                     turnId: null,
                     isPending: false);
+                EnforceCapacity(entries);
                 return true;
             }
         }
@@ -182,23 +221,18 @@ namespace RimMind.Presentation.Context
             return result;
         }
 
-        internal void LoadFromSave(Dictionary<string, List<HistoryEntry>> data)
+        public void LoadFromSave(Dictionary<string, List<HistoryEntry>> data)
         {
-            _histories.Clear();
-            if (data == null) return;
-            foreach (var kvp in data)
+            lock (_listLock)
             {
-                _histories[kvp.Key] = kvp.Value;
-            }
-        }
-
-        public void ExposeData()
-        {
-            var dict = GetAllForSaveDict();
-            global::Verse.Scribe_Collections.Look(ref dict, "histories", Verse.LookMode.Value, Verse.LookMode.Deep);
-            if (Verse.Scribe.mode == Verse.LoadSaveMode.LoadingVars)
-            {
-                LoadFromSave(dict ?? new Dictionary<string, List<HistoryEntry>>());
+                _histories.Clear();
+                if (data == null) return;
+                foreach (var kvp in data)
+                {
+                    _histories[kvp.Key] = (kvp.Value ?? new List<HistoryEntry>())
+                        .Where(entry => entry != null && !entry.IsPending)
+                        .ToList();
+                }
             }
         }
     }

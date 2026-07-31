@@ -22,6 +22,9 @@ namespace RimMind.Presentation.Api
 
             public static List<string> GetRegisteredCategories()
                 => Registries.Value.GetRegisteredCategories();
+
+            public static int UnregisterByOwner(string ownerModId)
+                => Registries.Value.UnregisterByOwner(ownerModId);
         }
     }
 }

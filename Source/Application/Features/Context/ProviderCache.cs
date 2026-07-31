@@ -21,7 +21,8 @@ namespace RimMind.Application.Features.Context
         private readonly IAgentBus? _bus;
         private readonly ILogSink? _log;
         private readonly ITickProvider? _tickProvider;
-        private readonly ConcurrentDictionary<InvalidationSubscriptionKey, byte> _invalidationSubscriptions = new();
+        private readonly object _subscriptionSync = new object();
+        private readonly ConcurrentDictionary<InvalidationSubscriptionKey, string> _invalidationSubscriptions = new();
 
         private readonly record struct CacheKey(string Key, CacheScope Scope, string ScopeIdentity);
 
@@ -42,16 +43,48 @@ namespace RimMind.Application.Features.Context
         /// </summary>
         public void SubscribeInvalidation(ContextProviderDef def)
         {
+            lock (_subscriptionSync)
+                SubscribeInvalidationUnsafe(def);
+        }
+
+        private void SubscribeInvalidationUnsafe(ContextProviderDef def)
+        {
             if (_bus == null || def.InvalidationTriggers == null) return;
             foreach (var eventName in def.InvalidationTriggers)
             {
                 if (string.IsNullOrWhiteSpace(eventName)) continue;
 
                 var subscriptionKey = new InvalidationSubscriptionKey(def.Key, eventName);
-                if (_invalidationSubscriptions.TryAdd(subscriptionKey, 0))
-                {
-                    _bus.SubscribeByName(eventName, _ => InvalidateKey(def.Key));
-                }
+                var busSubscriptionKey = _bus.SubscribeByName(eventName, _ => InvalidateKey(def.Key));
+                if (!_invalidationSubscriptions.TryAdd(subscriptionKey, busSubscriptionKey))
+                    _bus.Unsubscribe(busSubscriptionKey);
+            }
+        }
+
+        public void ReplaceInvalidation(ContextProviderDef def)
+        {
+            lock (_subscriptionSync)
+            {
+                UnsubscribeInvalidationUnsafe(def.Key);
+                SubscribeInvalidationUnsafe(def);
+            }
+        }
+
+        public void UnsubscribeInvalidation(string providerKey)
+        {
+            lock (_subscriptionSync)
+                UnsubscribeInvalidationUnsafe(providerKey);
+        }
+
+        private void UnsubscribeInvalidationUnsafe(string providerKey)
+        {
+            if (_bus == null) return;
+
+            foreach (var subscription in _invalidationSubscriptions)
+            {
+                if (!string.Equals(subscription.Key.ProviderKey, providerKey, StringComparison.Ordinal)) continue;
+                if (_invalidationSubscriptions.TryRemove(subscription.Key, out var busSubscriptionKey))
+                    _bus.Unsubscribe(busSubscriptionKey);
             }
         }
 
@@ -145,7 +178,24 @@ namespace RimMind.Application.Features.Context
                 _entries.TryRemove(k, out _);
         }
 
-        public void Clear() => _entries.Clear();
+        public void Clear()
+        {
+            _entries.Clear();
+            lock (_subscriptionSync)
+            {
+                if (_bus == null)
+                {
+                    _invalidationSubscriptions.Clear();
+                    return;
+                }
+
+                foreach (var subscription in _invalidationSubscriptions)
+                {
+                    if (_invalidationSubscriptions.TryRemove(subscription.Key, out var busSubscriptionKey))
+                        _bus.Unsubscribe(busSubscriptionKey);
+                }
+            }
+        }
 
         public int Count => _entries.Count;
 

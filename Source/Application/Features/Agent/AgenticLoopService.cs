@@ -1,10 +1,16 @@
+using RimMind.Application.Common.Models;
 using RimMind.Domain.Agent.Modes;
 
 namespace RimMind.Application.Features.Agent
 {
     public class AgenticLoopService : IAgenticLoopService
     {
-        public int MaxDepth => 3;
+        public AgenticLoopService(int maxDepth = RimMindDefaults.DefaultMaxToolCallDepth)
+        {
+            MaxDepth = maxDepth;
+        }
+
+        public int MaxDepth { get; }
 
         public bool ShouldContinue(AgentDecision decision, int currentDepth)
         {

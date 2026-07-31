@@ -38,8 +38,6 @@ namespace RimMind.Presentation.Settings
         float IContextBudgetSettings.ContextBudget { get => Context.ContextBudget; set => Context.ContextBudget = value; }
         int IContextBudgetSettings.ContextBriefLimit => Context.ContextBriefLimit;
         int IContextBudgetSettings.MaxCacheEntries => Context.MaxCacheEntries;
-        float IContextBudgetSettings.BudgetW1 { get => Context.BudgetW1; set => Context.BudgetW1 = value; }
-        float IContextBudgetSettings.BudgetW2 { get => Context.BudgetW2; set => Context.BudgetW2 = value; }
 
         int IContextEnvironmentSettings.EnvironmentScanRadius => Context.EnvironmentScanRadius;
         int IContextEnvironmentSettings.EnvironmentMaxItems => Context.EnvironmentMaxItems;

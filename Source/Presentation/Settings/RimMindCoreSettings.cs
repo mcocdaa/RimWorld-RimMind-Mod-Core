@@ -57,7 +57,7 @@ namespace RimMind.Presentation.Settings
 
         public int thinkCooldownTicks = RimMindDefaults.ThinkCooldownTicks;
         public int agentTickInterval = RimMindDefaults.AgentTickInterval;
-        public int maxToolCallDepth = 3;
+        public int maxToolCallDepth = RimMindDefaults.DefaultMaxToolCallDepth;
         public int requestExpireTicks = RimMindDefaults.RequestExpireTicks;
         public int behaviorHistoryMax = RimMindDefaults.BehaviorHistoryMax;
         public int queueProcessInterval = RimMindDefaults.QueueProcessInterval;
@@ -122,7 +122,7 @@ namespace RimMind.Presentation.Settings
             Scribe_Values.Look(ref autoApplyConfidenceThreshold, "autoApplyConfidenceThreshold", RimMindDefaults.AutoApplyConfidenceThreshold);
             Scribe_Values.Look(ref thinkCooldownTicks, "thinkCooldownTicks", RimMindDefaults.ThinkCooldownTicks);
             Scribe_Values.Look(ref agentTickInterval, "agentTickInterval", RimMindDefaults.AgentTickInterval);
-            Scribe_Values.Look(ref maxToolCallDepth, "maxToolCallDepth", 3);
+            Scribe_Values.Look(ref maxToolCallDepth, "maxToolCallDepth", RimMindDefaults.DefaultMaxToolCallDepth);
             Scribe_Values.Look(ref requestExpireTicks, "requestExpireTicks", RimMindDefaults.RequestExpireTicks);
             Scribe_Values.Look(ref behaviorHistoryMax, "behaviorHistoryMax", RimMindDefaults.BehaviorHistoryMax);
             Scribe_Values.Look(ref queueProcessInterval, "queueProcessInterval", RimMindDefaults.QueueProcessInterval);

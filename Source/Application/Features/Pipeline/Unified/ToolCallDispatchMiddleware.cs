@@ -26,18 +26,15 @@ namespace RimMind.Application.Features.Pipeline.Unified
         private readonly IToolRegistry _toolRegistry;
         private readonly ILogSink? _log;
         private readonly IAIRequestTraceLog? _traceLog;
-        private readonly int _maxDepth;
 
         public ToolCallDispatchMiddleware(
             IToolRegistry toolRegistry,
             ILogSink? log = null,
-            IAIRequestTraceLog? traceLog = null,
-            int maxDepth = RimMindDefaults.DefaultMaxToolCallDepth)
+            IAIRequestTraceLog? traceLog = null)
         {
             _toolRegistry = toolRegistry;
             _log = log;
             _traceLog = traceLog;
-            _maxDepth = maxDepth;
         }
 
         public async Task InvokeAsync(LlmRequestContext context, MiddlewareDelegate<LlmRequestContext> next)

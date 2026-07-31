@@ -134,6 +134,17 @@ namespace RimMind.Application.Features.AgentBus
             }
         }
 
+        public void Unsubscribe(string key)
+        {
+            foreach (var handlers in _handlers.Values)
+            {
+                lock (handlers)
+                {
+                    handlers.RemoveAll(entry => entry.Key == key);
+                }
+            }
+        }
+
         /// <summary>
         /// Obsolete: action-based unsubscribe is unreliable because subscriptions wrap the original handler in a lambda.
         /// Use <see cref="Unsubscribe{T}(string)"/> with the key returned from <see cref="Subscribe{T}(Action{T})"/>.

@@ -78,46 +78,26 @@ RimMindAPI.RegisterPendingRequest(entry)
 - AgentBus：Publish主线程同步，PublishFromBackground后台入队主线程消费
 - **严禁**后台线程调用任何RimWorld/Unity API
 
-## 已知问题（r6 审查 2026-04-29）
+## 审查状态（2026-07-31）
 
-### P2 — 中等优先级
+### 本轮关闭
 
-1. OpenAIClient._formatCapabilityCache 并发读写（static Dictionary）
-2. LocalStorageDriver.KvStore 非线程安全（Dictionary，可从后台线程访问）
-3. AICoreAPI.Chat 后台线程调用 RimWorld/Unity API（违反线程规则）
-4. OpenAI 路径 Task.Run 无 try-catch（请求可能静默丢失）
-5. ✅ RegisterIncidentExecutedCallback/Unregister key 生成不稳定 — 已重构为 IExtensionRegistry<IIncidentExecutedListener>,无 lambda key 问题
-6. 单实例替换型 API 无覆盖警告（_dialogueTriggerFn 等 6 个字段）
-7. ScenarioRegistry 硬编码中文（违反 UI 文本本地化规则）
-8. ✅ PawnAgent/AgentGoalStack/NpcManager/PerceptionBridge 直接调用静态 AgentBus — 已改为实例注入 AgentBusImpl
-9. HistoryManager 无持久化集成（存档/读档后对话历史丢失）
-10. LocalStorageDriver.SupportsStreaming 返回 true 但实际假流式
+- ProviderRegistry 保存 owner/priority，按优先级确定性选择，支持 `UnregisterModProviders(owner)` 与低优先级回退；同类型 provider 覆盖会记录结构化警告。
+- HistoryManager 按完整轮次与 scenario 读取，自动执行 200→150 容量收敛，并由 GameComponent 持久化；pending turn 不写入存档。
+- Context provider 注册、覆盖、按 owner 注销和 runtime shutdown 均释放 AgentBus 失效订阅；注册项与订阅替换使用同一串行化生命周期。
+- Agent Loop 的 `MaxToolCallDepth` 已从设置注入，Core 内重复/无效深度状态已移除。
+- ContextSettings 的 BudgetW1/BudgetW2 双源 UI/API 已移除；旧 Scribe key 仅在读档阶段读取并丢弃，FlywheelParameterStore 继续作为 W1/W2 唯一来源。
+- Agent identity、action bridge、parameter tuner 与 typed provider 的替换均具有可发现警告；parameter tuner UI 读取复用只读快照，不再每次分配 List。
+- 旧 r6 清单中的 LocalStorageDriver、StorageDriverFactory 与旧 AICoreAPI.Chat 路径已随架构硬切删除；OpenAI capability cache、EmbedCache 和现行注册表均使用线程安全实现。
+- 依赖边界扫描不再发现子 Mod 直接访问 `RimMind.Core.Internal`、`RimMindCoreMod.Settings` 或 `AIRequestQueue.Instance`。
 
-### P3 — 低优先级
+### 仍保留的优化项
 
-11. GameContextBuilder 威胁阈值不考虑难度缩放
-12. ContextEngine.BuildL1 ContainsKey+索引器非原子
-13. EmbedCache/SemanticEmbedding 非线程安全（独立使用时）
-14. PawnAgent GUID 截断（32位熵，高频可能碰撞）
-15. HybridStorageDriver 降级策略不完善（不处理超时/部分失败）
-16. AgentBus 强引用存储 handler（可能内存泄漏）
-17. ScenarioRegistry._scenarios 非线程安全
-18. ContextKeyRegistry._coreRegistered 不可重置
-19. StorageDriverFactory 无线程安全保护
-
-### 设置项缺口（高优先级）
-
-- ContextSnapshot/ContextRequest/AIRequest 默认 MaxTokens=400 与 Settings.maxTokens=800 不一致
-- BudgetW1/BudgetW2 双源定义冲突（ContextSettings vs FlywheelParameterStore）
-- PawnAgent 核心参数硬编码（ThinkCooldownTicks、DefaultTickInterval、MaxToolCallDepth）
-- 感知管线参数硬编码（缓冲区容量、冷却时间、重要性阈值）
-
-### Mod 结合度
-
-- 3 个子 mod 直接访问 RimMindCoreMod.Settings
-- 2 个子 mod 直接访问 AIRequestQueue.Instance
-- 3 个子 mod 直接访问 RimMind.Core.Internal 命名空间
-- Memory mod 复用其他 mod 的 ScenarioId
+- `ScenarioRegistry.Register` 的重复注册告警仍是 `ContainsKey` 后赋值，且 `_coreRegistered` 不是原子状态；运行期动态并发注册前应改为 CAS/实例化注册表。
+- Advisor 有独立反馈会话深度 `AdvisorTaskDriver.MaxToolCallDepth = 3`；它不属于 Core Agent Loop，后续若需要统一配置应通过 Advisor 自身设置端口接入。
+- `HybridAIClient` 的超时、部分失败和降级可观测策略仍可继续细化。
+- 感知容量与重要性阈值已集中到 `RimMindDefaults`，但尚未暴露为用户设置；在确认玩法需求前保持为代码级策略常量。
+- History 游戏内存档恢复需要 Autotester 资源补齐后做 E2E；当前只具备纯逻辑/Verse seam 契约，不能宣称游戏内验证通过。
 
 ### 死代码（r6 → r10 清理记录）
 

@@ -302,6 +302,53 @@ namespace RimMind.Tests.Contracts
                     Assert.Contains("_settingsProvider.Value", window, StringComparison.Ordinal);
                     Assert.DoesNotContain("private readonly ISettingsProvider _settingsProvider", window, StringComparison.Ordinal);
                 }),
+                ("context budget exposes only the effective setting, reads legacy weight keys, and drops orphaned labels", () =>
+                {
+                    var budgetContract = ReadSource("Application/Common/Interfaces/Internal/IContextBudgetSettings.cs");
+                    var contextSettings = ReadSource("Presentation/Settings/ContextSettings.cs");
+                    var settingsProvider = ReadSource("Presentation/Settings/SettingsProvider.ContextInclude.cs");
+                    var queueDefaults = ReadSource("Application/Features/Queue/QueueDefaultSettings.cs");
+                    var contextDrawer = ReadSource("Presentation/UI/ContextTabDrawer.cs");
+                    var englishKeyed = ReadCoreFile("Languages/English/Keyed/RimMind_Core.xml");
+                    var chineseKeyed = ReadCoreFile("Languages/ChineseSimplified/Keyed/RimMind_Core.xml");
+
+                    Assert.DoesNotContain("BudgetW1", budgetContract, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW2", budgetContract, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW1", settingsProvider, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW2", settingsProvider, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW1", queueDefaults, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW2", queueDefaults, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW1", contextDrawer, StringComparison.Ordinal);
+                    Assert.DoesNotContain("BudgetW2", contextDrawer, StringComparison.Ordinal);
+                    Assert.DoesNotContain("RimMind.Context.BudgetW1", englishKeyed, StringComparison.Ordinal);
+                    Assert.DoesNotContain("RimMind.Context.BudgetW2", englishKeyed, StringComparison.Ordinal);
+                    Assert.DoesNotContain("RimMind.Context.BudgetW1", chineseKeyed, StringComparison.Ordinal);
+                    Assert.DoesNotContain("RimMind.Context.BudgetW2", chineseKeyed, StringComparison.Ordinal);
+                    Assert.DoesNotContain("public float BudgetW1", contextSettings, StringComparison.Ordinal);
+                    Assert.DoesNotContain("public float BudgetW2", contextSettings, StringComparison.Ordinal);
+                    Assert.Contains("private float _legacyBudgetW1", contextSettings, StringComparison.Ordinal);
+                    Assert.Contains("private float _legacyBudgetW2", contextSettings, StringComparison.Ordinal);
+
+                    int loadingGuard = contextSettings.IndexOf(
+                        "if (Scribe.mode == LoadSaveMode.LoadingVars)",
+                        StringComparison.Ordinal);
+                    int legacyW1Read = contextSettings.IndexOf(
+                        "Scribe_Values.Look(ref _legacyBudgetW1, \"BudgetW1\"",
+                        StringComparison.Ordinal);
+                    int legacyW2Read = contextSettings.IndexOf(
+                        "Scribe_Values.Look(ref _legacyBudgetW2, \"BudgetW2\"",
+                        StringComparison.Ordinal);
+
+                    Assert.True(loadingGuard >= 0);
+                    Assert.True(legacyW1Read > loadingGuard);
+                    Assert.True(legacyW2Read > legacyW1Read);
+                    Assert.Equal(
+                        contextSettings.IndexOf("\"BudgetW1\"", StringComparison.Ordinal),
+                        contextSettings.LastIndexOf("\"BudgetW1\"", StringComparison.Ordinal));
+                    Assert.Equal(
+                        contextSettings.IndexOf("\"BudgetW2\"", StringComparison.Ordinal),
+                        contextSettings.LastIndexOf("\"BudgetW2\"", StringComparison.Ordinal));
+                }),
                 ("missing replacement settings tab falls back to api", () =>
                 {
                     var settings = ReadSource("Presentation/UI/AICoreSettingsUI.cs");
@@ -421,6 +468,11 @@ namespace RimMind.Tests.Contracts
 
         private static string ReadSource(string relativePath) =>
             File.ReadAllText(Path.Combine(SourceRoot(), relativePath.Replace('/', Path.DirectorySeparatorChar)));
+
+        private static string ReadCoreFile(string relativePath) =>
+            File.ReadAllText(Path.Combine(
+                Directory.GetParent(SourceRoot())?.FullName ?? throw new InvalidOperationException("Core root not found."),
+                relativePath.Replace('/', Path.DirectorySeparatorChar)));
 
         private static string SourceRoot()
         {

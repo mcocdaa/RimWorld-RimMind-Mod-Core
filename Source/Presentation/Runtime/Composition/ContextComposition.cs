@@ -42,7 +42,7 @@ namespace RimMind.Presentation.Runtime.Composition
             IFlywheelParameterStore flywheelParameterStore,
             IEmbedCache embedCache)
         {
-            var providerRegistry = new ProviderRegistry();
+            var providerRegistry = new ProviderRegistry(logSink);
             services.Bind<IProviderRegistry>(providerRegistry);
 
             var historyManager = new HistoryManager(tickProvider);

@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
@@ -38,9 +36,6 @@ namespace RimMind.Presentation.Runtime
         private readonly RimMindExtensionManager _extensionManager;
         private readonly ExtensionRegistryCatalog _extensions;
 
-        // Extension state (kept here for backward compatibility with public API)
-        private readonly ConcurrentDictionary<string, IParameterTuner> _parameterTuners = new ConcurrentDictionary<string, IParameterTuner>();
-
         // Public properties — delegate to CompositionResult
         public IAgentBus AgentBus => _composition.AgentBus;
         public IContextEngine ContextEngine => _composition.ContextEngine;
@@ -54,7 +49,6 @@ namespace RimMind.Presentation.Runtime
         public IToolRegistry ToolRegistry => _composition.ToolRegistry;
         public IGameMechanismRegistry MechanismRegistry => _composition.MechanismRegistry;
         public IWindowService? WindowService => _composition.WindowService;
-        public int MaxToolCallDepth { get; set; } = 3;
         public IContextKeyRegistry ContextKeys => _composition.ContextKeyRegistry;
         public IRelevanceTable RelevanceTable => _composition.RelevanceTable;
         public IRelevanceLearner ContextLearner => _composition.RelevanceLearner;
@@ -63,7 +57,7 @@ namespace RimMind.Presentation.Runtime
         public IPipeline<BusPublishContext> BusPublishPipeline => _composition.BusPublishPipeline;
         public IPipeline<LlmRequestContext> UnifiedPipeline => _composition.UnifiedPipeline;
 
-        public IReadOnlyList<IParameterTuner> ParameterTunersList => _parameterTuners.Values.ToList();
+        public IReadOnlyList<IParameterTuner> ParameterTunersList => _extensionManager.ParameterTuners;
         public Func<Pawn, AgentIdentity?>? AgentIdentityProvider => _extensionManager.AgentIdentityProvider;
         public IAgentActionBridge AgentActionBridge => _extensionManager.AgentActionBridge;
         public bool IsShutdown => _lifecycleManager.IsShutdown;
@@ -80,7 +74,11 @@ namespace RimMind.Presentation.Runtime
             _extensions = extensions ?? throw new ArgumentNullException(nameof(extensions));
         }
 
-        public void Shutdown() => _lifecycleManager.Shutdown();
+        public void Shutdown()
+        {
+            _lifecycleManager.Shutdown();
+            _extensionManager.ResetRuntimeLocalState();
+        }
 
         public void Dispose() => Shutdown();
 
@@ -114,7 +112,7 @@ namespace RimMind.Presentation.Runtime
         public IAgentActionBridge GetAgentActionBridge() => _extensionManager.GetAgentActionBridge();
 
         public void RegisterParameterTuner(IParameterTuner tuner)
-            => _extensionManager.RegisterParameterTuner(tuner, _parameterTuners);
+            => _extensionManager.RegisterParameterTuner(tuner);
 
         public IAIClient? GetClient() => ClientManager.GetClient();
         public void InvalidateClientCache() => ClientManager.InvalidateCache();

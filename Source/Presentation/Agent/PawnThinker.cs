@@ -96,7 +96,8 @@ namespace RimMind.Presentation.Agent
                 RequestFollowUpThink, ResetThinkingState,
                 phase => agent.TransitionWorkflow(phase),
                 decision => agent.ExecuteDecision(decision),
-                () => agent.Pawn?.thingIDNumber ?? -1, log);
+                () => agent.Pawn?.thingIDNumber ?? -1, log,
+                loopService: new AgenticLoopService(tickSettings.MaxToolCallDepth));
         }
 
         public bool IsThinking => _thinking;

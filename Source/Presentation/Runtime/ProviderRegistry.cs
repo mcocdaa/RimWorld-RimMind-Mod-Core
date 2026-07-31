@@ -1,17 +1,23 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Domain.ValueObjects;
-using Verse;
 
 namespace RimMind.Presentation.Runtime
 {
     public class ProviderRegistry : IProviderRegistry
     {
-        private readonly ConcurrentDictionary<string, Func<object, string?>> _pawnProviders = new ConcurrentDictionary<string, Func<object, string?>>();
-        private readonly ConcurrentDictionary<string, Func<string?>> _staticProviders = new ConcurrentDictionary<string, Func<string?>>();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, OwnedProvider<Func<object, string?>>>> _pawnProviders = new ConcurrentDictionary<string, ConcurrentDictionary<string, OwnedProvider<Func<object, string?>>>>();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, OwnedProvider<Func<string?>>>> _staticProviders = new ConcurrentDictionary<string, ConcurrentDictionary<string, OwnedProvider<Func<string?>>>>();
         private readonly ConcurrentDictionary<Type, object> _typedProviders = new ConcurrentDictionary<Type, object>();
+        private readonly ILogSink? _logSink;
+
+        public ProviderRegistry(ILogSink? logSink = null)
+        {
+            _logSink = logSink;
+        }
 
         public T? GetProvider<T>() where T : class
         {
@@ -20,7 +26,22 @@ namespace RimMind.Presentation.Runtime
 
         public void RegisterProvider<T>(T provider) where T : class
         {
-            if (provider != null) _typedProviders[typeof(T)] = provider;
+            if (provider == null) return;
+
+            var serviceType = typeof(T);
+            while (true)
+            {
+                if (_typedProviders.TryAdd(serviceType, provider)) return;
+                if (!_typedProviders.TryGetValue(serviceType, out var previous)) continue;
+                if (!_typedProviders.TryUpdate(serviceType, provider, previous)) continue;
+
+                _logSink?.Warning(
+                    $"[ProviderRegistry] event=typed_provider_replaced " +
+                    $"service_type={serviceType.FullName ?? serviceType.Name} " +
+                    $"previous_type={previous.GetType().FullName ?? previous.GetType().Name} " +
+                    $"replacement_type={provider.GetType().FullName ?? provider.GetType().Name}");
+                return;
+            }
         }
 
         public IReadOnlyList<string> GetRegisteredProviderNames()
@@ -33,17 +54,27 @@ namespace RimMind.Presentation.Runtime
 
         public void RegisterPawnProvider(string category, string modId, Func<object, string?> provider, int priority, bool overrideExisting)
         {
+            ValidateOwnerModId(modId, nameof(modId));
             if (string.IsNullOrEmpty(category) || provider == null) return;
+            var registrations = _pawnProviders.GetOrAdd(
+                category,
+                _ => new ConcurrentDictionary<string, OwnedProvider<Func<object, string?>>>(StringComparer.Ordinal));
+            var registration = new OwnedProvider<Func<object, string?>>(modId, priority, provider);
             if (overrideExisting)
-                _pawnProviders[category] = provider;
+                registrations.AddOrUpdate(modId, registration, (_, __) => registration);
             else
-                _pawnProviders.TryAdd(category, provider);
+                registrations.TryAdd(modId, registration);
         }
 
         public void RegisterStaticProvider(string category, string modId, Func<string?> provider, int priority)
         {
+            ValidateOwnerModId(modId, nameof(modId));
             if (string.IsNullOrEmpty(category) || provider == null) return;
-            _staticProviders[category] = provider;
+            var registrations = _staticProviders.GetOrAdd(
+                category,
+                _ => new ConcurrentDictionary<string, OwnedProvider<Func<string?>>>(StringComparer.Ordinal));
+            var registration = new OwnedProvider<Func<string?>>(modId, priority, provider);
+            registrations.AddOrUpdate(modId, registration, (_, __) => registration);
         }
 
         public Result<string?, RimMindError> GetProviderData(string category, object pawn)
@@ -51,18 +82,9 @@ namespace RimMind.Presentation.Runtime
             if (string.IsNullOrEmpty(category))
                 return Result<string?, RimMindError>.Err(RimMindErrors.Internal("Category is empty"));
 
-            if (_pawnProviders.TryGetValue(category, out var provider))
-            {
-                try
-                {
-                    var data = provider(pawn);
-                    return Result<string?, RimMindError>.Ok(data);
-                }
-                catch (Exception ex)
-                {
-                    return Result<string?, RimMindError>.Err(RimMindErrors.Internal(ex.Message, ex));
-                }
-            }
+            if (_pawnProviders.TryGetValue(category, out var registrations)
+                && TrySelectProvider(registrations, out var provider))
+                return ExecuteProvider(() => provider(pawn));
 
             return Result<string?, RimMindError>.Err(RimMindErrors.Internal($"No provider registered for category: {category}"));
         }
@@ -72,27 +94,66 @@ namespace RimMind.Presentation.Runtime
             if (string.IsNullOrEmpty(category))
                 return Result<string?, RimMindError>.Err(RimMindErrors.Internal("Category is empty"));
 
-            if (_staticProviders.TryGetValue(category, out var provider))
-            {
-                try
-                {
-                    var data = provider();
-                    return Result<string?, RimMindError>.Ok(data);
-                }
-                catch (Exception ex)
-                {
-                    return Result<string?, RimMindError>.Err(RimMindErrors.Internal(ex.Message, ex));
-                }
-            }
+            if (_staticProviders.TryGetValue(category, out var registrations)
+                && TrySelectProvider(registrations, out var provider))
+                return ExecuteProvider(provider);
 
             return Result<string?, RimMindError>.Err(RimMindErrors.Internal($"No static provider registered for category: {category}"));
         }
 
+        private static Result<string?, RimMindError> ExecuteProvider(Func<string?> provider)
+        {
+            try
+            {
+                return Result<string?, RimMindError>.Ok(provider());
+            }
+            catch (Exception ex)
+            {
+                return Result<string?, RimMindError>.Err(RimMindErrors.Internal(ex.Message, ex));
+            }
+        }
+
         public List<string> GetRegisteredCategories()
         {
-            var categories = new List<string>(_pawnProviders.Keys);
-            categories.AddRange(_staticProviders.Keys);
+            var categorySet = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var entry in _pawnProviders)
+            {
+                if (!entry.Value.IsEmpty)
+                    categorySet.Add(entry.Key);
+            }
+            foreach (var entry in _staticProviders)
+            {
+                if (!entry.Value.IsEmpty)
+                    categorySet.Add(entry.Key);
+            }
+
+            var categories = new List<string>(categorySet);
+            categories.Sort(StringComparer.Ordinal);
             return categories;
+        }
+
+        public int UnregisterByOwner(string ownerModId)
+        {
+            ValidateOwnerModId(ownerModId, nameof(ownerModId));
+
+            var removed = 0;
+            foreach (var registrations in _pawnProviders.Values)
+            {
+                if (registrations.TryRemove(ownerModId, out _))
+                    removed++;
+            }
+            foreach (var registrations in _staticProviders.Values)
+            {
+                if (registrations.TryRemove(ownerModId, out _))
+                    removed++;
+            }
+            return removed;
+        }
+
+        private static void ValidateOwnerModId(string ownerModId, string parameterName)
+        {
+            if (string.IsNullOrWhiteSpace(ownerModId))
+                throw new ArgumentException("Owner mod ID cannot be empty or whitespace.", parameterName);
         }
 
         public void Reset()
@@ -100,6 +161,42 @@ namespace RimMind.Presentation.Runtime
             _pawnProviders.Clear();
             _staticProviders.Clear();
             _typedProviders.Clear();
+        }
+
+        private static bool TrySelectProvider<TProvider>(
+            ConcurrentDictionary<string, OwnedProvider<TProvider>> registrations,
+            out TProvider provider)
+            where TProvider : class
+        {
+            OwnedProvider<TProvider>? selected = null;
+            foreach (var candidate in registrations.Values)
+            {
+                if (selected == null
+                    || candidate.Priority > selected.Priority
+                    || (candidate.Priority == selected.Priority
+                        && string.CompareOrdinal(candidate.OwnerModId, selected.OwnerModId) < 0))
+                {
+                    selected = candidate;
+                }
+            }
+
+            provider = selected?.Provider!;
+            return selected != null;
+        }
+
+        private sealed class OwnedProvider<TProvider>
+            where TProvider : class
+        {
+            public OwnedProvider(string ownerModId, int priority, TProvider provider)
+            {
+                OwnerModId = ownerModId;
+                Priority = priority;
+                Provider = provider;
+            }
+
+            public string OwnerModId { get; }
+            public int Priority { get; }
+            public TProvider Provider { get; }
         }
     }
 }

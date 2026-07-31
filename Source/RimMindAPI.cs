@@ -97,6 +97,7 @@ namespace RimMind.Presentation.Api
         public static Result<string?, RimMindError> GetProviderData(string category, Pawn pawn) => Providers.GetProviderData(category, pawn);
         public static Result<string?, RimMindError> GetStaticProviderData(string category) => Providers.GetStaticProviderData(category);
         public static List<string> GetRegisteredCategories() => Providers.GetRegisteredCategories();
+        public static int UnregisterModProviders(string modId) => Providers.UnregisterByOwner(modId);
 
         public static bool IsConfigured() => Settings.IsConfigured();
         internal static IHistoryManager GetHistoryManager() => Settings.GetHistoryManager();

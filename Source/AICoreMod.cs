@@ -20,6 +20,15 @@ using Verse;
 
 namespace RimMind.Presentation
 {
+    internal static class BootstrapConstants
+    {
+        internal const string CurrentModVersion = "2.0.0";
+        internal const string HarmonyId = "mcocdaa.RimMindCore";
+        internal const string DomainAssemblyName = "0_RimMindDomain";
+        internal const string ApplicationAssemblyName = "1_RimMindApplication";
+        internal const string CoreAssemblyName = "2_RimMindCore";
+    }
+
     public class RimMindCoreMod : Mod
     {
         public static RimMindCoreMod Instance { get; private set; } = null!;
@@ -38,21 +47,23 @@ namespace RimMind.Presentation
             var scope = RuntimeServiceHub.Shared.Capture();
             var runtime = scope.GetRequired<RimMindRuntime>();
 
-            if (Settings.SavedModVersion != null && Settings.SavedModVersion != "2.0.0")
+            if (Settings.SavedModVersion != null &&
+                Settings.SavedModVersion != BootstrapConstants.CurrentModVersion)
             {
                 LongEventHandler.ExecuteWhenFinished(() =>
                 {
-                    RimMindErrors.Warn("[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v2.0.");
+                    RimMindErrors.Warn(
+                        $"[RimMind-Core] Saved mod version mismatch. Old saves may not be fully compatible with v{BootstrapConstants.CurrentModVersion}.");
                     RuntimeServiceHub.Shared.Capture()
                         .GetOptional<RimMindRuntime>()?
                         .WindowService?
                         .OpenUpgradeWarning();
                 });
             }
-            Settings.SavedModVersion = "2.0.0";
+            Settings.SavedModVersion = BootstrapConstants.CurrentModVersion;
 
             JsonTagExtractor.OnWarning = msg => RimMindErrors.Warn(msg);
-            new Harmony("mcocdaa.RimMindCore").PatchAll();
+            new Harmony(BootstrapConstants.HarmonyId).PatchAll();
 
             RimMindAPI.Extensions<IToggleBehavior>().Register(new CoreOverlayToggle());
 
@@ -103,30 +114,45 @@ namespace RimMind.Presentation
         public static void AssertAssembliesLoaded()
         {
             var loaded = AppDomain.CurrentDomain.GetAssemblies();
-            var domain = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "0_RimMindDomain");
-            var application = System.Linq.Enumerable.FirstOrDefault(loaded, a => a.GetName().Name == "1_RimMindApplication");
+            var domain = System.Linq.Enumerable.FirstOrDefault(
+                loaded,
+                a => a.GetName().Name == BootstrapConstants.DomainAssemblyName);
+            var application = System.Linq.Enumerable.FirstOrDefault(
+                loaded,
+                a => a.GetName().Name == BootstrapConstants.ApplicationAssemblyName);
+            var core = System.Linq.Enumerable.FirstOrDefault(
+                loaded,
+                a => a.GetName().Name == BootstrapConstants.CoreAssemblyName);
 
             if (domain == null)
             {
-                var msg = "[RimMind-Core] FATAL: 0_RimMindDomain.dll not loaded. " +
+                var msg = $"[RimMind-Core] FATAL: {BootstrapConstants.DomainAssemblyName}.dll not loaded. " +
                           "Check that the dll exists in Assemblies/ folder. " +
-                          "If you upgraded from v1.x, please subscribe to the new mod files.";
+                          "If you upgraded from an earlier version, please subscribe to the new mod files.";
                 RimMindErrors.Error(msg);
                 throw new System.InvalidOperationException(msg);
             }
 
             if (application == null)
             {
-                var msg = "[RimMind-Core] FATAL: 1_RimMindApplication.dll not loaded. " +
+                var msg = $"[RimMind-Core] FATAL: {BootstrapConstants.ApplicationAssemblyName}.dll not loaded. " +
                           "Check that the dll exists in Assemblies/ folder.";
                 RimMindErrors.Error(msg);
                 throw new System.InvalidOperationException(msg);
             }
 
-            Log.Message($"[RimMind-Core] Assemblies loaded: " +
+            if (core == null)
+            {
+                var msg = $"[RimMind-Core] FATAL: {BootstrapConstants.CoreAssemblyName}.dll not loaded. " +
+                          "Check that the dll exists in Assemblies/ folder.";
+                RimMindErrors.Error(msg);
+                throw new System.InvalidOperationException(msg);
+            }
+
+            Log.Message($"[RimMind-Core] Assemblies loaded for v{BootstrapConstants.CurrentModVersion}: " +
                         $"Domain={domain.GetName().Version} " +
                         $"Application={application.GetName().Version} " +
-                        $"Core={typeof(RimMindCoreMod).Assembly.GetName().Version}");
+                        $"Core={core.GetName().Version}");
         }
     }
 }

@@ -178,10 +178,6 @@
   <RimMind.Context.IncludeThreats.Desc>将当前地图的威胁等级注入 AI 上下文。</RimMind.Context.IncludeThreats.Desc>
   <RimMind.Context.ContextBudget>上下文预算</RimMind.Context.ContextBudget>
   <RimMind.Context.ContextBudget.Desc>控制 AI 请求中包含的上下文信息量。更高的值提供更多细节，但会消耗更多 token。</RimMind.Context.ContextBudget.Desc>
-  <RimMind.Context.BudgetW1>小人预算权重</RimMind.Context.BudgetW1>
-  <RimMind.Context.BudgetW1.Desc>预算调度器中小人相关上下文的权重。值越高，分配给小人信息的 token 越多。</RimMind.Context.BudgetW1.Desc>
-  <RimMind.Context.BudgetW2>地图预算权重</RimMind.Context.BudgetW2>
-  <RimMind.Context.BudgetW2.Desc>预算调度器中地图/环境上下文的权重。值越高，分配给环境信息的 token 越多。</RimMind.Context.BudgetW2.Desc>
   <RimMind.Settings.ContextDiffLifetime>上下文变更保留时长</RimMind.Settings.ContextDiffLifetime>
   <RimMind.Settings.ContextDiffLifetime.Desc>上下文变更差异保留的时长（tick）。较低的值使上下文保持更及时，较高的值保留更长的变更历史。</RimMind.Settings.ContextDiffLifetime.Desc>
   <RimMind.Settings.CalibrateInterval>上下文校准间隔</RimMind.Settings.CalibrateInterval>

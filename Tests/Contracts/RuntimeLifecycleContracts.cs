@@ -60,6 +60,21 @@ namespace RimMind.Tests.Contracts
                     Assert.DoesNotContain("RimMindRuntime.Initialize(", production, StringComparison.Ordinal);
                     Assert.Equal(1, CountOccurrences(production, "RimMindRuntimeHost.Initialize("));
                 }),
+                ("AICoreMod startup identifiers have one exact contract", () =>
+                {
+                    var mod = ReadSource("AICoreMod.cs");
+                    Assert.Contains("const string CurrentModVersion = \"2.0.0\"", mod, StringComparison.Ordinal);
+                    Assert.Equal(1, CountOccurrences(mod, "\"2.0.0\""));
+                    Assert.Contains("const string HarmonyId = \"mcocdaa.RimMindCore\"", mod, StringComparison.Ordinal);
+                    Assert.Contains("const string DomainAssemblyName = \"0_RimMindDomain\"", mod, StringComparison.Ordinal);
+                    Assert.Contains("const string ApplicationAssemblyName = \"1_RimMindApplication\"", mod, StringComparison.Ordinal);
+                    Assert.Contains("const string CoreAssemblyName = \"2_RimMindCore\"", mod, StringComparison.Ordinal);
+                    Assert.Contains("new Harmony(BootstrapConstants.HarmonyId)", mod, StringComparison.Ordinal);
+                    Assert.Contains("a.GetName().Name == BootstrapConstants.DomainAssemblyName", mod, StringComparison.Ordinal);
+                    Assert.Contains("a.GetName().Name == BootstrapConstants.ApplicationAssemblyName", mod, StringComparison.Ordinal);
+                    Assert.Contains("a.GetName().Name == BootstrapConstants.CoreAssemblyName", mod, StringComparison.Ordinal);
+                    Assert.Contains("throw new System.InvalidOperationException(msg)", mod, StringComparison.Ordinal);
+                }),
                 ("runtime backend has no legacy global lookup", () =>
                 {
                     var runtime = ReadTree("Presentation/Runtime");

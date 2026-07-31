@@ -87,8 +87,6 @@ namespace RimMind.Application.Features.Queue
         float IContextBudgetSettings.ContextBudget { get => Context.ContextBudget; set => Context.ContextBudget = value; }
         int IContextBudgetSettings.ContextBriefLimit => Context.ContextBriefLimit;
         int IContextBudgetSettings.MaxCacheEntries => Context.MaxCacheEntries;
-        float IContextBudgetSettings.BudgetW1 { get => Context.BudgetW1; set => Context.BudgetW1 = value; }
-        float IContextBudgetSettings.BudgetW2 { get => Context.BudgetW2; set => Context.BudgetW2 = value; }
 
         int IContextEnvironmentSettings.EnvironmentScanRadius => Context.EnvironmentScanRadius;
         int IContextEnvironmentSettings.EnvironmentMaxItems => Context.EnvironmentMaxItems;
@@ -147,8 +145,6 @@ namespace RimMind.Application.Features.Queue
         public bool IncludeSeason { get => true; set { } }
         public bool IncludeWeather { get => true; set { } }
         public bool IncludeThreats { get => true; set { } }
-        public float BudgetW1 { get => RimMindDefaults.ReserveBudgetWeight; set { } }
-        public float BudgetW2 { get => RimMindDefaults.ContextBudgetWeight; set { } }
         public void ApplyPreset(ContextPreset preset) { /* Intentionally empty: Null Object pattern — defaults are immutable */ }
         public void ResetToDefault() { /* Intentionally empty: Null Object pattern — defaults are immutable */ }
     }

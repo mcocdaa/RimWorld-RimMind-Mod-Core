@@ -1,15 +1,8 @@
 using System;
-using System.Collections.Concurrent;
 using RimMind.Application.Common.Interfaces;
-using RimMind.Application.Common.Interfaces.Abstractions;
-using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Context;
-using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Flywheel;
-using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Features.AgentBus;
-using RimMind.Presentation.Agent;
 
 namespace RimMind.Presentation.Runtime
 {
@@ -48,22 +41,10 @@ namespace RimMind.Presentation.Runtime
             _isShutdown = true;
             (_telemetry as IDisposable)?.Dispose();
             _contextEngine.Dispose();
+            _keyRegistry?.Clear();
+            _agentBus.ClearAllSubscribers();
             _player2Lifecycle?.StopHealthCheck();
         }
 
-        public void ResetState(
-            System.Collections.Concurrent.ConcurrentDictionary<Type, object> registries,
-            System.Collections.Concurrent.ConcurrentDictionary<string, IParameterTuner> parameterTuners,
-            RimMindExtensionManager extensionManager)
-        {
-            if (_agentBus is AgentBusImpl busImpl)
-                busImpl.ClearAllSubscribers();
-            parameterTuners.Clear();
-            registries.Clear();
-            extensionManager.Reset();
-            _keyRegistry?.Clear();
-            // L3: Static ContextKeyRegistry.ResetCache() and Clear() are no longer needed
-            // as the instance-based ContextKeyRegistryImpl.Clear() is called above.
-        }
     }
 }

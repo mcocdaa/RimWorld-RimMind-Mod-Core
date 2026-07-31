@@ -12,6 +12,7 @@ namespace RimMind.Application.Features.Context
     public sealed class ContextKeyRegistryImpl : IContextKeyRegistry, IOwnedRegistry
     {
         private readonly ConcurrentDictionary<string, KeyMeta> _keys = new ConcurrentDictionary<string, KeyMeta>();
+        private readonly object _mutationSync = new object();
         private readonly ILogSink? _logSink;
         private readonly ProviderCache? _providerCache;
 
@@ -23,14 +24,24 @@ namespace RimMind.Application.Features.Context
 
         public void Register(KeyMeta meta)
         {
-            if (_keys.ContainsKey(meta.Key))
+            KeyMeta? old;
+            lock (_mutationSync)
             {
-                var old = _keys[meta.Key];
+                _keys.TryGetValue(meta.Key, out old);
+                if (old != null)
+                    meta.OverrideSource = old.OwnerMod ?? "Unknown";
+
+                if (meta.Def is ContextProviderDef def)
+                    _providerCache?.ReplaceInvalidation(def);
+                else
+                    _providerCache?.UnsubscribeInvalidation(meta.Key);
+
+                _keys[meta.Key] = meta;
+            }
+
+            if (old != null)
                 _logSink?.Warning($"[RimMind-Core] ContextKey '{meta.Key}' registered by '{old.OwnerMod}' " +
                     $"overwritten by '{meta.OwnerMod}'.");
-                meta.OverrideSource = old.OwnerMod ?? "Unknown";
-            }
-            _keys[meta.Key] = meta;
         }
 
         public void Register(ContextProviderDef def)
@@ -41,12 +52,18 @@ namespace RimMind.Application.Features.Context
                 Def = def
             };
             Register(meta);
-            _providerCache?.SubscribeInvalidation(def);
         }
 
         public bool Unregister(string key)
         {
-            return _keys.TryRemove(key, out _);
+            lock (_mutationSync)
+            {
+                if (!_keys.TryRemove(key, out _))
+                    return false;
+
+                _providerCache?.UnsubscribeInvalidation(key);
+                return true;
+            }
         }
 
         /// <inheritdoc/>
@@ -56,15 +73,23 @@ namespace RimMind.Application.Features.Context
         public int UnregisterByOwner(string ownerModId)
         {
             if (ownerModId == null) throw new ArgumentNullException(nameof(ownerModId));
-            var toRemove = _keys.Values
-                .Where(k => k.OwnerMod == ownerModId)
-                .Select(k => k.Key)
-                .ToList();
-            foreach (var key in toRemove)
+            lock (_mutationSync)
             {
-                _keys.TryRemove(key, out _);
+                var toRemove = _keys.Values
+                    .Where(k => k.OwnerMod == ownerModId)
+                    .Select(k => k.Key)
+                    .ToList();
+                var removed = 0;
+                foreach (var key in toRemove)
+                {
+                    if (!_keys.TryRemove(key, out _))
+                        continue;
+
+                    _providerCache?.UnsubscribeInvalidation(key);
+                    removed++;
+                }
+                return removed;
             }
-            return toRemove.Count;
         }
 
         public IReadOnlyList<KeyMeta> GetAll()
@@ -79,7 +104,11 @@ namespace RimMind.Application.Features.Context
 
         public void Clear()
         {
-            _keys.Clear();
+            lock (_mutationSync)
+            {
+                _keys.Clear();
+                _providerCache?.Clear();
+            }
         }
     }
 }

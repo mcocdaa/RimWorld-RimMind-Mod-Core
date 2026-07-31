@@ -1,5 +1,6 @@
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 using RimMind.Application.Common.Behaviours;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Abstractions;
@@ -33,12 +34,17 @@ namespace RimMind.Presentation.Runtime
         private readonly IPsychologyWatcher? _psychologyWatcher;
         private readonly ISocialEventOrganizer? _socialEventOrganizer;
         private readonly ITraitEvolutionEngine? _traitEvolutionEngine;
+        private readonly object _parameterTunerSync = new object();
+        private readonly Dictionary<string, IParameterTuner> _parameterTuners =
+            new Dictionary<string, IParameterTuner>(StringComparer.Ordinal);
 
         private AgentBusCoreSubscriber? _coreSubscriber;
         private volatile Func<Pawn, AgentIdentity?>? _agentIdentityProvider;
+        private IReadOnlyList<IParameterTuner> _parameterTunerSnapshot = Array.Empty<IParameterTuner>();
 
         public Func<Pawn, AgentIdentity?>? AgentIdentityProvider => _agentIdentityProvider;
         public IAgentActionBridge AgentActionBridge => _actionBridge.Current;
+        public IReadOnlyList<IParameterTuner> ParameterTuners => Volatile.Read(ref _parameterTunerSnapshot);
 
         public RimMindExtensionManager(
             ILogSink? logSink,
@@ -81,21 +87,51 @@ namespace RimMind.Presentation.Runtime
         }
 
         public void RegisterAgentIdentityProvider(Func<Pawn, AgentIdentity?> provider)
-            => _agentIdentityProvider = provider;
+        {
+            if (provider == null) throw new ArgumentNullException(nameof(provider));
+
+            var previous = Interlocked.Exchange(ref _agentIdentityProvider, provider);
+            if (previous != null)
+            {
+                _logSink?.Warning(
+                    $"[RimMindExtensionManager] event=agent_identity_provider_replaced " +
+                    $"previous_method={DescribeProvider(previous)} " +
+                    $"replacement_method={DescribeProvider(provider)}");
+            }
+        }
 
         public AgentIdentity? GetAgentIdentity(Pawn pawn)
             => _agentIdentityProvider?.Invoke(pawn);
 
         public void RegisterAgentActionBridge(IAgentActionBridge bridge)
         {
-            _actionBridge.Replace(bridge);
+            _actionBridge.Replace(bridge, _logSink);
         }
 
         public IAgentActionBridge GetAgentActionBridge() => _actionBridge.Current;
 
-        public void RegisterParameterTuner(IParameterTuner tuner,
-            System.Collections.Concurrent.ConcurrentDictionary<string, IParameterTuner> tuners)
-            => tuners[tuner.TunerId] = tuner;
+        public void RegisterParameterTuner(IParameterTuner tuner)
+        {
+            if (tuner == null) throw new ArgumentNullException(nameof(tuner));
+
+            IParameterTuner? previous;
+            lock (_parameterTunerSync)
+            {
+                _parameterTuners.TryGetValue(tuner.TunerId, out previous);
+                _parameterTuners[tuner.TunerId] = tuner;
+                var snapshot = new IParameterTuner[_parameterTuners.Count];
+                _parameterTuners.Values.CopyTo(snapshot, 0);
+                Volatile.Write(ref _parameterTunerSnapshot, Array.AsReadOnly(snapshot));
+            }
+
+            if (previous != null)
+            {
+                _logSink?.Warning(
+                    $"[RimMindExtensionManager] event=parameter_tuner_replaced " +
+                    $"tuner_id={tuner.TunerId} previous_owner={previous.OwnerModId} " +
+                    $"replacement_owner={tuner.OwnerModId}");
+            }
+        }
 
         public void AddMiddleware<TContext>(
             IMiddleware<TContext> middleware,
@@ -118,7 +154,24 @@ namespace RimMind.Presentation.Runtime
 
         public void Reset()
         {
-            _agentIdentityProvider = null;
+            ResetRuntimeLocalState();
+            _actionBridge.Reset();
+        }
+
+        public void ResetRuntimeLocalState()
+        {
+            Interlocked.Exchange(ref _agentIdentityProvider, null);
+            lock (_parameterTunerSync)
+            {
+                _parameterTuners.Clear();
+                Volatile.Write(ref _parameterTunerSnapshot, Array.Empty<IParameterTuner>());
+            }
+        }
+
+        private static string DescribeProvider(Delegate provider)
+        {
+            var declaringType = provider.Method.DeclaringType;
+            return $"{declaringType?.FullName ?? "unknown"}.{provider.Method.Name}";
         }
     }
 }

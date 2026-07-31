@@ -178,10 +178,6 @@
   <RimMind.Context.IncludeThreats.Desc>Inject the current map threat level into AI context.</RimMind.Context.IncludeThreats.Desc>
   <RimMind.Context.ContextBudget>Context Budget</RimMind.Context.ContextBudget>
   <RimMind.Context.ContextBudget.Desc>Controls how much context information is included in AI requests. Higher values provide more detail but use more tokens.</RimMind.Context.ContextBudget.Desc>
-  <RimMind.Context.BudgetW1>Pawn Budget Weight</RimMind.Context.BudgetW1>
-  <RimMind.Context.BudgetW1.Desc>Weight for pawn-related context in the budget scheduler. Higher values allocate more tokens to pawn information.</RimMind.Context.BudgetW1.Desc>
-  <RimMind.Context.BudgetW2>Map Budget Weight</RimMind.Context.BudgetW2>
-  <RimMind.Context.BudgetW2.Desc>Weight for map/environment context in the budget scheduler. Higher values allocate more tokens to environmental information.</RimMind.Context.BudgetW2.Desc>
   <RimMind.Settings.ContextDiffLifetime>Context Diff Lifetime</RimMind.Settings.ContextDiffLifetime>
   <RimMind.Settings.ContextDiffLifetime.Desc>How long (in ticks) context change diffs remain before expiring. Lower values keep context more current; higher values preserve change history longer.</RimMind.Settings.ContextDiffLifetime.Desc>
   <RimMind.Settings.CalibrateInterval>Context Calibrate Interval</RimMind.Settings.CalibrateInterval>

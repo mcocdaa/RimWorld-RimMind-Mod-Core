@@ -150,20 +150,6 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
             ctx.ContextBudget = listing.Slider(ctx.ContextBudget, 0.1f, 2.0f);
 
-#pragma warning disable CS0618
-            listing.Label($"{"RimMind.Context.BudgetW1".Translate()}: {ctx.BudgetW1:F2}");
-            GUI.color = Color.gray;
-            listing.Label("  " + "RimMind.Context.BudgetW1.Desc".Translate());
-            GUI.color = Color.white;
-            ctx.BudgetW1 = Mathf.Round(listing.Slider(ctx.BudgetW1, 0f, 1f) * 20f) / 20f;
-
-            listing.Label($"{"RimMind.Context.BudgetW2".Translate()}: {ctx.BudgetW2:F2}");
-            GUI.color = Color.gray;
-            listing.Label("  " + "RimMind.Context.BudgetW2.Desc".Translate());
-            GUI.color = Color.white;
-            ctx.BudgetW2 = Mathf.Round(listing.Slider(ctx.BudgetW2, 0f, 1f) * 20f) / 20f;
-#pragma warning restore CS0618
-
             listing.Gap(8f);
 
             listing.Label($"{"RimMind.Settings.ContextDiffLifetime".Translate()}: {s.ContextDiffLifetimeTicks / 60f:F0}s ({s.ContextDiffLifetimeTicks} ticks)");
