@@ -69,9 +69,17 @@ namespace RimMind.Presentation
 
             RimMindAPI.RegisterParameterTuner(new FlywheelBuiltinTuner());
 
-            ScenarioRegistry.RegisterCoreScenarios(
-                scope.GetRequired<ITranslationService>(),
-                scope.GetRequired<ILogSink>());
+            // Mod constructors run before RimWorld activates LoadedLanguage. Translating here
+            // emits "No active language" errors and leaves scenario descriptions as raw keys.
+            // The registry is not consumed until play-data loading has completed, so defer only
+            // the language-dependent registration to the main-thread completion queue.
+            LongEventHandler.ExecuteWhenFinished(() =>
+            {
+                var currentScope = RuntimeServiceHub.Shared.Capture();
+                ScenarioRegistry.RegisterCoreScenarios(
+                    currentScope.GetRequired<ITranslationService>(),
+                    currentScope.GetRequired<ILogSink>());
+            });
 
             // L3: Use instance-based RelevanceTable
             runtime.RelevanceTable.RegisterCoreRelevance();
