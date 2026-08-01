@@ -7,8 +7,8 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
         public DebugCenterOverviewModel(
             int activeAgents,
             int pausedAgents,
-            int pendingAgents,
-            int errorAgents,
+            int dormantAgents,
+            int terminatedAgents,
             int pendingRequests,
             string queueState,
             string selectedObject,
@@ -21,8 +21,8 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
         {
             ActiveAgents = activeAgents;
             PausedAgents = pausedAgents;
-            PendingAgents = pendingAgents;
-            ErrorAgents = errorAgents;
+            DormantAgents = dormantAgents;
+            TerminatedAgents = terminatedAgents;
             PendingRequests = pendingRequests;
             QueueState = queueState ?? string.Empty;
             SelectedObject = selectedObject ?? string.Empty;
@@ -38,9 +38,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
 
         public int PausedAgents { get; }
 
-        public int PendingAgents { get; }
+        public int DormantAgents { get; }
 
-        public int ErrorAgents { get; }
+        public int TerminatedAgents { get; }
 
         public int PendingRequests { get; }
 
@@ -86,16 +86,14 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Overview
 
         public System.DateTimeOffset? GamePublishedAtUtc => GameDiagnostics?.PublishedAtUtc;
 
-        public string AgentSummary => $"{ActiveAgents} active / {PausedAgents} paused / {PendingAgents} pending / {ErrorAgents} error";
-
         public string AgentLoopSummary => $"{RegisteredPawnAgents} pawn / {RegisteredScopedAgents} scoped";
 
         public static DebugCenterOverviewModel SnapshotFixture()
             => new(
                 activeAgents: 3,
                 pausedAgents: 1,
-                pendingAgents: 2,
-                errorAgents: 0,
+                dormantAgents: 2,
+                terminatedAgents: 0,
                 pendingRequests: 4,
                 queueState: "Queue: Running",
                 selectedObject: "Nickie",

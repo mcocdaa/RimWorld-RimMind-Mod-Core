@@ -13,8 +13,11 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class OverviewDebugCenterPageDrawer : IRuntimeBoundDebugCenterPageDrawer
     {
+        private const float OverviewContentHeight = 540f;
+
         private IAgentLoopScheduler? _agentLoopScheduler;
         private IAIRequestQueue? _requestQueue;
+        private Vector2 _scrollPosition;
 
         public IDisposable? Bind(RuntimeServiceScope scope)
         {
@@ -28,36 +31,49 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             Pawn? selectedPawn = context.SelectedPawn ?? Find.Selector.SingleSelectedThing as Pawn;
             DebugCenterOverviewModel model = BuildModel(selectedPawn);
 
+            scope.Record(rect, "Hub:Overview:ScrollViewport");
+            Rect viewRect = new Rect(
+                rect.x,
+                rect.y,
+                Mathf.Max(1f, rect.width - 16f),
+                Mathf.Max(rect.height + 1f, OverviewContentHeight));
+            Widgets.BeginScrollView(rect, ref _scrollPosition, viewRect);
+            DrawOverviewContent(viewRect, context, selectedPawn, model);
+            Widgets.EndScrollView();
+        }
+
+        private static void DrawOverviewContent(
+            Rect rect,
+            DebugCenterPageContext context,
+            Pawn? selectedPawn,
+            DebugCenterOverviewModel model)
+        {
             Rect[] cards = CalculateCardRects(rect);
             DrawOverviewCard(cards[0], "RimMind.Context.IncludeHealth".Translate(), BuildHealthText(model), ResolveHealthColor(model));
-            scope.Record(cards[0], "Hub:Overview:Health");
 
-            DrawOverviewCard(cards[1], "RimMind.UI.Hub.AgentSummary".Translate(), model.AgentSummary, model.ActiveAgents > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted);
-            scope.Record(cards[1], "Hub:Overview:Agents");
+            DrawOverviewCard(cards[1], "RimMind.UI.Hub.AgentSummary".Translate(), BuildAgentStateSummary(model), model.ActiveAgents > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted);
 
             bool isQueueRunning = model.QueueState == "RimMind.Settings.QueueRunning".Translate();
             DrawOverviewCard(cards[2], "RimMind.UI.Hub.QueueState".Translate(), model.QueueState, isQueueRunning ? RimMindUI.ColorActive : RimMindUI.ColorPaused);
-            scope.Record(cards[2], "Hub:Overview:Queue");
 
             DrawOverviewCard(cards[3], "RimMind.UI.Hub.SelectedPawn".Translate(), model.SelectedObject, selectedPawn == null ? RimMindUI.ColorMuted : RimMindUI.ColorValue);
-            scope.Record(cards[3], "Hub:Overview:Selection");
 
             float y = cards[3].yMax + RimMindUI.SectionGap;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.PendingRequests".Translate(), model.PendingRequests.ToString()) + rect.y;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoop".Translate(), BuildAgentLoopSummary(model)) + rect.y;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), BuildLastAgentLoopTick(model)) + rect.y;
-            y = RimMindUI.DrawKeyValueRow(rect, y - rect.y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString()) + rect.y;
+            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.PendingRequests".Translate(), model.PendingRequests.ToString());
+            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.AgentLoop".Translate(), BuildAgentLoopSummary(model));
+            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), BuildLastAgentLoopTick(model));
+            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString());
 
             y += RimMindUI.SectionGap;
-            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.Lifecycle.Title".Translate()) + rect.y;
-            y = DrawLifecycleDiagnostics(rect, y, model, scope);
+            y = RimMindUI.DrawSectionHeader(rect, y, "RimMind.UI.Hub.Lifecycle.Title".Translate());
+            y = DrawLifecycleDiagnostics(rect, y, model);
 
             y += RimMindUI.SectionGap;
-            y = RimMindUI.DrawSectionHeader(rect, y - rect.y, "RimMind.UI.Hub.QuickActions".Translate()) + rect.y;
+            y = RimMindUI.DrawSectionHeader(rect, y, "RimMind.UI.Hub.QuickActions".Translate());
 
             DebugCenterToolGrid.Draw(
                 new Rect(rect.x, y, rect.width, RimMindUI.BtnHeight * 2f + RimMindUI.Padding),
-                scope,
+                scope: null,
                 ("RimMind.UI.Hub.Tab.Agents", () => context.Navigation.GoTo("agents")),
                 ("RimMind.UI.Hub.Tab.AIRequests", () => context.Navigation.GoTo("ai_requests")),
                 ("RimMind.UI.Hub.Tab.ToolCalls", () => context.Navigation.GoTo("tool_calls")),
@@ -77,7 +93,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             var model = new DebugCenterOverviewModel(
                 loop.ActiveAgents,
                 loop.PausedAgents,
-                loop.PendingAgents,
+                loop.DormantAgents,
                 loop.TerminatedAgents,
                 RequestOverlay.Pending.Count,
                 queueText,
@@ -95,18 +111,17 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         private static float DrawLifecycleDiagnostics(
             Rect rect,
             float y,
-            DebugCenterOverviewModel model,
-            RimMindLayoutScope scope)
+            DebugCenterOverviewModel model)
         {
             float gap = RimMindUI.Padding;
             float columnWidth = (rect.width - gap) / 2f;
-            const float diagnosticsHeight = 116f;
+            const float diagnosticsHeight = 124f;
             Rect runtimeRect = new Rect(rect.x, y, columnWidth, diagnosticsHeight);
             Rect gameRect = new Rect(runtimeRect.xMax + gap, y, columnWidth, diagnosticsHeight);
-            scope.Record(runtimeRect, "Hub:Overview:RuntimeLifecycle");
-            scope.Record(gameRect, "Hub:Overview:GameLifecycle");
+            Widgets.DrawBoxSolid(runtimeRect, RimMindUI.ColorCardBg);
+            Widgets.DrawBoxSolid(gameRect, RimMindUI.ColorCardBg);
 
-            float runtimeY = 0f;
+            float runtimeY = RimMindUI.Padding;
             runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.RuntimeState", LocalizeLifecycleState(model.RuntimeDiagnostics?.State));
             runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.Generation", model.RuntimeGeneration.ToString());
             runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.ServiceCount", model.RuntimeServiceCount.ToString());
@@ -115,7 +130,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             runtimeY = DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.LastFailure", FormatFailure(model.LastBuildFailureSummary));
             DrawLifecycleRow(runtimeRect, runtimeY, "RimMind.UI.Hub.Lifecycle.StaleDiscards", model.StaleCompletionDiscardCount.ToString());
 
-            float gameY = 0f;
+            float gameY = RimMindUI.Padding;
             gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.GameState", LocalizeLifecycleState(model.GameDiagnostics?.State));
             gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.Generation", model.GameGeneration.ToString());
             gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.ServiceCount", model.GameServiceCount.ToString());
@@ -167,7 +182,7 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         private static Rect[] CalculateCardRects(Rect rect)
         {
             float cardW = (rect.width - RimMindUI.Padding) / 2f;
-            const float cardH = 72f;
+            const float cardH = 76f;
             return new[]
             {
                 new Rect(rect.x, rect.y, cardW, cardH),
@@ -179,14 +194,20 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
         private static string BuildHealthText(DebugCenterOverviewModel model)
         {
-            if (model.ErrorAgents > 0)
-                return $"{model.ErrorAgents} {"RimMind.UI.AgentsPage.Trace.Error".Translate()}";
-            if (model.PendingAgents > 0)
-                return $"{model.PendingAgents} {"RimMind.UI.Hub.PendingRequests".Translate()}";
+            if (model.AgentLoopFaults > 0)
+                return $"{model.AgentLoopFaults} {"RimMind.UI.AgentsPage.Trace.Error".Translate()}";
+            if (model.PausedAgents > 0)
+                return $"{model.PausedAgents} {"RimMind.Agent.State.Paused".Translate()}";
             return model.ActiveAgents > 0
                 ? "RimMind.Agent.State.Active".Translate()
                 : "RimMind.Prompt.Health.Healthy".Translate();
         }
+
+        private static string BuildAgentStateSummary(DebugCenterOverviewModel model)
+            => $"{model.ActiveAgents} {"RimMind.Agent.State.Active".Translate()} / "
+                + $"{model.PausedAgents} {"RimMind.Agent.State.Paused".Translate()} / "
+                + $"{model.DormantAgents} {"RimMind.Agent.State.Dormant".Translate()} / "
+                + $"{model.TerminatedAgents} {"RimMind.Agent.State.Terminated".Translate()}";
 
         private static string BuildAgentLoopSummary(DebugCenterOverviewModel model)
             => $"{model.RegisteredPawnAgents} {"RimMind.UI.Hub.AgentLoopPawn".Translate()} / "
@@ -199,9 +220,9 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 
         private static Color ResolveHealthColor(DebugCenterOverviewModel model)
         {
-            if (model.ErrorAgents > 0)
+            if (model.AgentLoopFaults > 0)
                 return RimMindUI.ColorError;
-            if (model.PendingAgents > 0 || model.PausedAgents > 0)
+            if (model.PausedAgents > 0)
                 return RimMindUI.ColorPaused;
             return model.ActiveAgents > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted;
         }
@@ -215,10 +236,10 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             Widgets.Label(
                 new Rect(card.x + RimMindUI.Padding, innerY, card.width - RimMindUI.Padding * 2, RimMindUI.LineHeight),
                 title);
-            Text.Font = GameFont.Medium;
+            Text.Font = GameFont.Small;
             GUI.color = valueColor;
             Widgets.Label(
-                new Rect(card.x + RimMindUI.Padding, innerY + RimMindUI.LineHeight, card.width - RimMindUI.Padding * 2, RimMindUI.LineHeight),
+                new Rect(card.x + RimMindUI.Padding, innerY + RimMindUI.LineHeight, card.width - RimMindUI.Padding * 2, card.height - RimMindUI.LineHeight - RimMindUI.Padding * 2f),
                 value);
             Text.Font = GameFont.Small;
             GUI.color = Color.white;

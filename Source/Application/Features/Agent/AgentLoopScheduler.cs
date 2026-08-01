@@ -236,7 +236,7 @@ namespace RimMind.Application.Features.Agent
             var registeredScopedAgents = 0;
             var activeAgents = 0;
             var pausedAgents = 0;
-            var pendingAgents = 0;
+            var dormantAgents = 0;
             var terminatedAgents = 0;
 
             foreach (var entry in entries)
@@ -257,8 +257,8 @@ namespace RimMind.Application.Features.Agent
                     case AgentState.Terminated:
                         terminatedAgents++;
                         break;
-                    default:
-                        pendingAgents++;
+                    case AgentState.Dormant:
+                        dormantAgents++;
                         break;
                 }
             }
@@ -268,7 +268,7 @@ namespace RimMind.Application.Features.Agent
                 registeredScopedAgents,
                 activeAgents,
                 pausedAgents,
-                pendingAgents,
+                dormantAgents,
                 terminatedAgents,
                 lastTick,
                 tickedAgents,

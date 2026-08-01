@@ -43,8 +43,9 @@ namespace RimMind.Presentation.UI.Framework
         {
             Rect body = rect.InsetSafe(RimMindUiMetrics.WindowInset);
             int count = tabs.Count;
-            int perRow = CalculateMaxPerRow(body.width, count);
-            int rows = count == 0 ? 1 : (int)System.Math.Ceiling((float)count / perRow);
+            int maxPerRow = CalculateMaxPerRow(body.width, count);
+            int rows = count == 0 ? 1 : (int)System.Math.Ceiling((float)count / maxPerRow);
+            int perRow = count == 0 ? 1 : (int)System.Math.Ceiling((float)count / rows);
             float idealTabBarHeight = rows * RimMindUiMetrics.TabHeight + (rows - 1) * RimMindUiMetrics.TabGap;
             float tabBarHeight = Mathf.Min(Mathf.Max(0f, idealTabBarHeight), body.height);
             float rowGap = rows <= 1 ? 0f : Mathf.Min(RimMindUiMetrics.TabGap, tabBarHeight / (rows - 1));
@@ -63,10 +64,8 @@ namespace RimMind.Presentation.UI.Framework
             {
                 int row = i / perRow;
                 int col = i % perRow;
-                int firstIndexInRow = row * perRow;
-                int colsInRow = System.Math.Min(perRow, count - firstIndexInRow);
-                float colGap = colsInRow <= 1 ? 0f : Mathf.Min(RimMindUiMetrics.TabGap, body.width / (colsInRow - 1));
-                float tabWidth = Mathf.Max(0f, (body.width - (colsInRow - 1) * colGap) / colsInRow);
+                float colGap = perRow <= 1 ? 0f : Mathf.Min(RimMindUiMetrics.TabGap, body.width / (perRow - 1));
+                float tabWidth = Mathf.Max(0f, (body.width - (perRow - 1) * colGap) / perRow);
                 Rect tabRect = new Rect(
                     body.x + col * (tabWidth + colGap),
                     body.y + row * (rowHeight + rowGap),

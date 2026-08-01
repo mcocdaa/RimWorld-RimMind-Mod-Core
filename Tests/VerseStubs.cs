@@ -248,6 +248,7 @@ namespace Verse
     /// <summary>Stub for Verse.Window used in Gizmo/UI tests.</summary>
     public class Window
     {
+        public bool IsOpen { get; set; } = true;
         public virtual UnityEngine.Vector2 InitialSize => new UnityEngine.Vector2(400f, 300f);
         public virtual void DoWindowContents(UnityEngine.Rect inRect) { }
     }

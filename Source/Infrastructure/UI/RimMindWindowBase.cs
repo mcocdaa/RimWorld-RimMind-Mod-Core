@@ -15,6 +15,11 @@ namespace RimMind.Infrastructure.UI
     {
         public override sealed void DoWindowContents(Rect inRect)
         {
+            // RimWorld draws a snapshot of WindowStack. A window closed earlier in the
+            // same OnGUI pass can therefore receive one final draw after PreClose.
+            if (!IsOpen)
+                return;
+
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
             using (var scope = RimMindLayoutScope.Begin(GetType().Name, inRect))

@@ -909,6 +909,7 @@ namespace RimMind.Infrastructure.UI
                 new Window_AgentModeDebug(),
                 new Window_AgentFlowLab(),
                 new Window_AgentProgressFloat(),
+                new Window_RimMindHub(),
             };
 
             foreach (var w in windows)

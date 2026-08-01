@@ -7,7 +7,7 @@ namespace RimMind.Application.Common.Models.Agent
             int registeredScopedAgents,
             int activeAgents,
             int pausedAgents,
-            int pendingAgents,
+            int dormantAgents,
             int terminatedAgents,
             int lastTick,
             int tickedAgents,
@@ -17,7 +17,7 @@ namespace RimMind.Application.Common.Models.Agent
             RegisteredScopedAgents = registeredScopedAgents;
             ActiveAgents = activeAgents;
             PausedAgents = pausedAgents;
-            PendingAgents = pendingAgents;
+            DormantAgents = dormantAgents;
             TerminatedAgents = terminatedAgents;
             LastTick = lastTick;
             TickedAgents = tickedAgents;
@@ -29,7 +29,7 @@ namespace RimMind.Application.Common.Models.Agent
             registeredScopedAgents: 0,
             activeAgents: 0,
             pausedAgents: 0,
-            pendingAgents: 0,
+            dormantAgents: 0,
             terminatedAgents: 0,
             lastTick: -1,
             tickedAgents: 0,
@@ -39,7 +39,7 @@ namespace RimMind.Application.Common.Models.Agent
         public int RegisteredScopedAgents { get; }
         public int ActiveAgents { get; }
         public int PausedAgents { get; }
-        public int PendingAgents { get; }
+        public int DormantAgents { get; }
         public int TerminatedAgents { get; }
         public int LastTick { get; }
         public int TickedAgents { get; }
