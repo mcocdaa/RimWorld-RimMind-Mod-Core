@@ -432,6 +432,7 @@
   <RimMind.UI.DebugTable.Header.Model>模型</RimMind.UI.DebugTable.Header.Model>
   <RimMind.UI.DebugTable.Header.Summary>摘要</RimMind.UI.DebugTable.Header.Summary>
   <RimMind.UI.DebugTable.Header.Request>请求</RimMind.UI.DebugTable.Header.Request>
+  <RimMind.UI.DebugTable.Empty>暂无调试记录。</RimMind.UI.DebugTable.Empty>
   <RimMind.UI.DebugTable.Status.Waiting>等待中</RimMind.UI.DebugTable.Status.Waiting>
   <RimMind.UI.DebugTable.Status.Streaming>流式返回中</RimMind.UI.DebugTable.Status.Streaming>
   <RimMind.UI.DebugTable.Status.Completed>已完成</RimMind.UI.DebugTable.Status.Completed>

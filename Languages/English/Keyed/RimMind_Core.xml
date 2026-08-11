@@ -432,6 +432,7 @@
   <RimMind.UI.DebugTable.Header.Model>Model</RimMind.UI.DebugTable.Header.Model>
   <RimMind.UI.DebugTable.Header.Summary>Summary</RimMind.UI.DebugTable.Header.Summary>
   <RimMind.UI.DebugTable.Header.Request>Request</RimMind.UI.DebugTable.Header.Request>
+  <RimMind.UI.DebugTable.Empty>No debug records are available.</RimMind.UI.DebugTable.Empty>
   <RimMind.UI.DebugTable.Status.Waiting>Waiting</RimMind.UI.DebugTable.Status.Waiting>
   <RimMind.UI.DebugTable.Status.Streaming>Streaming</RimMind.UI.DebugTable.Status.Streaming>
   <RimMind.UI.DebugTable.Status.Completed>Completed</RimMind.UI.DebugTable.Status.Completed>

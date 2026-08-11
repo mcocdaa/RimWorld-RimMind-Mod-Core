@@ -99,6 +99,23 @@ namespace RimMind.Tests.Contracts
                     Assert.DoesNotContain(" active / ", model, StringComparison.Ordinal);
                     Assert.DoesNotContain(" pending / ", model, StringComparison.Ordinal);
                 }),
+                ("empty debug tables render one localized state without a zero-height scroll", () =>
+                {
+                    string drawer = ReadSource("Infrastructure/UI/Framework/RimMindTableDrawer.cs");
+                    Assert.Contains("DrawEmptyTableBody", drawer, StringComparison.Ordinal);
+                    Assert.Contains("RimMind.UI.DebugTable.Empty", drawer, StringComparison.Ordinal);
+
+                    foreach (string language in new[] { "English", "ChineseSimplified" })
+                    {
+                        string keyed = File.ReadAllText(Path.Combine(
+                            CoreRoot(),
+                            "Languages",
+                            language,
+                            "Keyed",
+                            "RimMind_Core.xml"));
+                        Assert.Contains("RimMind.UI.DebugTable.Empty", keyed, StringComparison.Ordinal);
+                    }
+                }),
                 ("layout autotest opens the complete debug hub", () =>
                 {
                     string actions = ReadSource("Infrastructure/UI/AICoreDebugActions.cs");

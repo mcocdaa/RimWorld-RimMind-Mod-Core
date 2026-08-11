@@ -41,6 +41,13 @@ namespace RimMind.Infrastructure.UI.Framework
             scope.Record(layout.BottomBar, "Table:BottomBar");
 
             DrawToolbar(layout.Toolbar, model.Title);
+            if (model.Rows.Count == 0)
+            {
+                DrawEmptyTableBody(layout.Body);
+                DrawDebugHeaders(layout, scroll.x);
+                return;
+            }
+
             DrawDebugRows(layout, model.Rows, ref scroll);
             DrawDebugHeaders(layout, scroll.x);
         }
@@ -54,6 +61,13 @@ namespace RimMind.Infrastructure.UI.Framework
             scope.Record(layout.BottomBar, "Table:BottomBar");
 
             DrawToolbar(layout.Toolbar, model.Title);
+            if (model.Rows.Count == 0)
+            {
+                DrawEmptyTableBody(layout.Body);
+                DrawDebugHeaders(layout, scroll.x);
+                return null;
+            }
+
             string? nextSelectedId = DrawSelectableDebugRows(layout, model.Rows, selectedId, ref scroll);
             DrawDebugHeaders(layout, scroll.x);
             return nextSelectedId;
@@ -76,6 +90,13 @@ namespace RimMind.Infrastructure.UI.Framework
             scope.Record(layout.BottomBar, "Table:BottomBar");
 
             DrawToolbar(layout.Toolbar, model.Title);
+            if (model.Rows.Count == 0)
+            {
+                DrawEmptyTableBody(layout.Body);
+                DrawHeaders(layout, CompactListHeaderKeys, scroll.x);
+                return null;
+            }
+
             string? nextSelectedId = DrawSelectableCompactRows(
                 layout,
                 model.Rows,
@@ -131,6 +152,9 @@ namespace RimMind.Infrastructure.UI.Framework
             Widgets.Label(rect, title);
             GUI.color = oldColor;
         }
+
+        private static void DrawEmptyTableBody(Rect body)
+            => RimMindUI.DrawEmptyState(body, "RimMind.UI.DebugTable.Empty".Translate());
 
         private static void DrawDebugHeaders(TablePageLayoutResult layout, float horizontalScroll)
         {
