@@ -88,6 +88,10 @@ namespace RimMind.Tests.Contracts
                     string drawer = ReadSource("Infrastructure/UI/DebugCenter/Pages/OverviewDebugCenterPageDrawer.cs");
                     Assert.Contains("BeginScrollView", drawer, StringComparison.Ordinal);
                     Assert.Contains("_scrollPosition", drawer, StringComparison.Ordinal);
+                    Assert.Contains("DebugCenterOverviewLayout.Calculate", drawer, StringComparison.Ordinal);
+                    Assert.Contains("layout.ViewRect", drawer, StringComparison.Ordinal);
+                    Assert.DoesNotContain("OverviewContentHeight", drawer, StringComparison.Ordinal);
+                    Assert.DoesNotContain("new Rect(rect.x, rect.y", drawer, StringComparison.Ordinal);
                     Assert.DoesNotContain("y - rect.y", drawer, StringComparison.Ordinal);
                     Assert.DoesNotContain("model.AgentSummary", drawer, StringComparison.Ordinal);
 

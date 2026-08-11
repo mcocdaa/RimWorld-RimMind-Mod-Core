@@ -13,8 +13,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
 {
     public sealed class OverviewDebugCenterPageDrawer : IRuntimeBoundDebugCenterPageDrawer
     {
-        private const float OverviewContentHeight = 540f;
-
         private IAgentLoopScheduler? _agentLoopScheduler;
         private IAIRequestQueue? _requestQueue;
         private Vector2 _scrollPosition;
@@ -30,49 +28,54 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
         {
             Pawn? selectedPawn = context.SelectedPawn ?? Find.Selector.SingleSelectedThing as Pawn;
             DebugCenterOverviewModel model = BuildModel(selectedPawn);
+            DebugCenterOverviewLayoutResult layout = DebugCenterOverviewLayout.Calculate(rect);
 
-            scope.Record(rect, "Hub:Overview:ScrollViewport");
-            Rect viewRect = new Rect(
-                rect.x,
-                rect.y,
-                Mathf.Max(1f, rect.width - 16f),
-                Mathf.Max(rect.height + 1f, OverviewContentHeight));
-            Widgets.BeginScrollView(rect, ref _scrollPosition, viewRect);
-            DrawOverviewContent(viewRect, context, selectedPawn, model);
-            Widgets.EndScrollView();
+            scope.Record(layout.Viewport, "Hub:Overview:ScrollViewport");
+            Widgets.BeginScrollView(layout.Viewport, ref _scrollPosition, layout.ViewRect);
+            try
+            {
+                DrawOverviewContent(layout, context, selectedPawn, model);
+            }
+            finally
+            {
+                Widgets.EndScrollView();
+            }
         }
 
         private static void DrawOverviewContent(
-            Rect rect,
+            DebugCenterOverviewLayoutResult layout,
             DebugCenterPageContext context,
             Pawn? selectedPawn,
             DebugCenterOverviewModel model)
         {
-            Rect[] cards = CalculateCardRects(rect);
-            DrawOverviewCard(cards[0], "RimMind.Context.IncludeHealth".Translate(), BuildHealthText(model), ResolveHealthColor(model));
+            DrawOverviewCard(layout.Cards[0], "RimMind.Context.IncludeHealth".Translate(), BuildHealthText(model), ResolveHealthColor(model));
 
-            DrawOverviewCard(cards[1], "RimMind.UI.Hub.AgentSummary".Translate(), BuildAgentStateSummary(model), model.ActiveAgents > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted);
+            DrawOverviewCard(layout.Cards[1], "RimMind.UI.Hub.AgentSummary".Translate(), BuildAgentStateSummary(model), model.ActiveAgents > 0 ? RimMindUI.ColorActive : RimMindUI.ColorMuted);
 
             bool isQueueRunning = model.QueueState == "RimMind.Settings.QueueRunning".Translate();
-            DrawOverviewCard(cards[2], "RimMind.UI.Hub.QueueState".Translate(), model.QueueState, isQueueRunning ? RimMindUI.ColorActive : RimMindUI.ColorPaused);
+            DrawOverviewCard(layout.Cards[2], "RimMind.UI.Hub.QueueState".Translate(), model.QueueState, isQueueRunning ? RimMindUI.ColorActive : RimMindUI.ColorPaused);
 
-            DrawOverviewCard(cards[3], "RimMind.UI.Hub.SelectedPawn".Translate(), model.SelectedObject, selectedPawn == null ? RimMindUI.ColorMuted : RimMindUI.ColorValue);
+            DrawOverviewCard(layout.Cards[3], "RimMind.UI.Hub.SelectedPawn".Translate(), model.SelectedObject, selectedPawn == null ? RimMindUI.ColorMuted : RimMindUI.ColorValue);
 
-            float y = cards[3].yMax + RimMindUI.SectionGap;
-            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.PendingRequests".Translate(), model.PendingRequests.ToString());
-            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.AgentLoop".Translate(), BuildAgentLoopSummary(model));
-            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), BuildLastAgentLoopTick(model));
-            y = RimMindUI.DrawKeyValueRow(rect, y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString());
+            float y = layout.Summary.y;
+            y = RimMindUI.DrawKeyValueRow(layout.Summary, y, "RimMind.UI.Hub.PendingRequests".Translate(), model.PendingRequests.ToString());
+            y = RimMindUI.DrawKeyValueRow(layout.Summary, y, "RimMind.UI.Hub.AgentLoop".Translate(), BuildAgentLoopSummary(model));
+            y = RimMindUI.DrawKeyValueRow(layout.Summary, y, "RimMind.UI.Hub.AgentLoopLastTick".Translate(), BuildLastAgentLoopTick(model));
+            RimMindUI.DrawKeyValueRow(layout.Summary, y, "RimMind.UI.Hub.AgentLoopFaults".Translate(), model.AgentLoopFaults.ToString());
 
-            y += RimMindUI.SectionGap;
-            y = RimMindUI.DrawSectionHeader(rect, y, "RimMind.UI.Hub.Lifecycle.Title".Translate());
-            y = DrawLifecycleDiagnostics(rect, y, model);
+            RimMindUI.DrawSectionHeader(
+                layout.LifecycleHeader,
+                layout.LifecycleHeader.y,
+                "RimMind.UI.Hub.Lifecycle.Title".Translate());
+            DrawLifecycleDiagnostics(layout.LifecycleRuntime, layout.LifecycleGame, model);
 
-            y += RimMindUI.SectionGap;
-            y = RimMindUI.DrawSectionHeader(rect, y, "RimMind.UI.Hub.QuickActions".Translate());
+            RimMindUI.DrawSectionHeader(
+                layout.QuickActionsHeader,
+                layout.QuickActionsHeader.y,
+                "RimMind.UI.Hub.QuickActions".Translate());
 
             DebugCenterToolGrid.Draw(
-                new Rect(rect.x, y, rect.width, RimMindUI.BtnHeight * 2f + RimMindUI.Padding),
+                layout.QuickActions,
                 scope: null,
                 ("RimMind.UI.Hub.Tab.Agents", () => context.Navigation.GoTo("agents")),
                 ("RimMind.UI.Hub.Tab.AIRequests", () => context.Navigation.GoTo("ai_requests")),
@@ -108,16 +111,11 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             return model;
         }
 
-        private static float DrawLifecycleDiagnostics(
-            Rect rect,
-            float y,
+        private static void DrawLifecycleDiagnostics(
+            Rect runtimeRect,
+            Rect gameRect,
             DebugCenterOverviewModel model)
         {
-            float gap = RimMindUI.Padding;
-            float columnWidth = (rect.width - gap) / 2f;
-            const float diagnosticsHeight = 124f;
-            Rect runtimeRect = new Rect(rect.x, y, columnWidth, diagnosticsHeight);
-            Rect gameRect = new Rect(runtimeRect.xMax + gap, y, columnWidth, diagnosticsHeight);
             Widgets.DrawBoxSolid(runtimeRect, RimMindUI.ColorCardBg);
             Widgets.DrawBoxSolid(gameRect, RimMindUI.ColorCardBg);
 
@@ -135,7 +133,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
             gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.Generation", model.GameGeneration.ToString());
             gameY = DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.ServiceCount", model.GameServiceCount.ToString());
             DrawLifecycleRow(gameRect, gameY, "RimMind.UI.Hub.Lifecycle.PublishedAt", FormatPublished(model.GamePublishedAtUtc));
-            return y + diagnosticsHeight;
         }
 
         private static float DrawLifecycleRow(Rect column, float y, string labelKey, string value)
@@ -178,19 +175,6 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
                 GameLifecycleState.Failed => "RimMind.UI.Lifecycle.Failed".Translate(),
                 _ => string.Empty
             };
-
-        private static Rect[] CalculateCardRects(Rect rect)
-        {
-            float cardW = (rect.width - RimMindUI.Padding) / 2f;
-            const float cardH = 76f;
-            return new[]
-            {
-                new Rect(rect.x, rect.y, cardW, cardH),
-                new Rect(rect.x + cardW + RimMindUI.Padding, rect.y, cardW, cardH),
-                new Rect(rect.x, rect.y + cardH + RimMindUI.Padding, cardW, cardH),
-                new Rect(rect.x + cardW + RimMindUI.Padding, rect.y + cardH + RimMindUI.Padding, cardW, cardH)
-            };
-        }
 
         private static string BuildHealthText(DebugCenterOverviewModel model)
         {
