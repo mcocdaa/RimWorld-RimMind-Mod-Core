@@ -8,10 +8,12 @@ using RimMind.Application.Features.Agent;
 using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Enums;
 using RimMind.Infrastructure.UI;
+using RimMind.Infrastructure.UI.DebugCenter.Overview;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Testing;
 using UnityEngine;
+using Verse;
 using Xunit;
 
 namespace RimMind.Tests.Contracts
@@ -56,6 +58,31 @@ namespace RimMind.Tests.Contracts
 
                     Assert.Equal(0, window.DrawCount);
                 }),
+                ("overview geometry is local and covers its final action row", () =>
+                {
+                    DebugCenterOverviewLayoutResult layout = DebugCenterOverviewLayout.Calculate(
+                        new Rect(120f, 80f, 716f, 398f));
+
+                    Assert.Equal(0f, layout.ViewRect.x);
+                    Assert.Equal(0f, layout.ViewRect.y);
+                    Assert.True(layout.Cards[2].y > layout.Cards[0].yMax);
+                    Assert.True(layout.Summary.y > layout.Cards[2].yMax);
+                    Assert.True(layout.LifecycleRuntime.y > layout.LifecycleHeader.yMax);
+                    Assert.True(layout.QuickActions.y > layout.LifecycleRuntime.yMax);
+                    Assert.True(layout.ViewRect.height >= layout.QuickActions.yMax);
+                }),
+                ("window drawing restores shared IMGUI state", () =>
+                {
+                    GUI.color = new Color(0.2f, 0.3f, 0.4f, 0.5f);
+                    Text.Font = GameFont.Tiny;
+                    Text.Anchor = TextAnchor.LowerRight;
+
+                    new GuiStateProbeWindow().DoWindowContents(new Rect(0f, 0f, 200f, 100f));
+
+                    Assert.Equal(new Color(0.2f, 0.3f, 0.4f, 0.5f), GUI.color);
+                    Assert.Equal(GameFont.Tiny, Text.Font);
+                    Assert.Equal(TextAnchor.LowerRight, Text.Anchor);
+                }),
                 ("overview uses a scroll viewport and one coordinate space", () =>
                 {
                     string drawer = ReadSource("Infrastructure/UI/DebugCenter/Pages/OverviewDebugCenterPageDrawer.cs");
@@ -82,6 +109,16 @@ namespace RimMind.Tests.Contracts
             protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
             {
                 DrawCount++;
+            }
+        }
+
+        private sealed class GuiStateProbeWindow : RimMindWindowBase
+        {
+            protected override void DrawContents(Rect inRect, RimMindLayoutScope scope)
+            {
+                GUI.color = Color.red;
+                Text.Font = GameFont.Medium;
+                Text.Anchor = TextAnchor.MiddleCenter;
             }
         }
 

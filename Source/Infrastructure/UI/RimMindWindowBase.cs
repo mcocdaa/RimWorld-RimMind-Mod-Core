@@ -20,11 +20,24 @@ namespace RimMind.Infrastructure.UI
             if (!IsOpen)
                 return;
 
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.UpperLeft;
-            using (var scope = RimMindLayoutScope.Begin(GetType().Name, inRect))
+            Color previousColor = GUI.color;
+            GameFont previousFont = Text.Font;
+            TextAnchor previousAnchor = Text.Anchor;
+            try
             {
-                DrawContents(inRect, scope);
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+                Text.Anchor = TextAnchor.UpperLeft;
+                using (var scope = RimMindLayoutScope.Begin(GetType().Name, inRect))
+                {
+                    DrawContents(inRect, scope);
+                }
+            }
+            finally
+            {
+                GUI.color = previousColor;
+                Text.Font = previousFont;
+                Text.Anchor = previousAnchor;
             }
         }
 
