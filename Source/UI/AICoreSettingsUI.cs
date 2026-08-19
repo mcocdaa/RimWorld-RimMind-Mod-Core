@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using RimMind.Core.Client;
+using RimMind.Core.Client.OpenAI;
 using RimMind.Core.Client.Player2;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
 using Verse;
 
 namespace RimMind.Core.UI
@@ -316,58 +312,9 @@ namespace RimMind.Core.UI
             Widgets.EndScrollView();
         }
 
-        /// <summary>
-        /// 使用 UnityWebRequest 发请求（与实际 AI 请求一致，确保测试结果真实）。
-        /// </summary>
-        private static void RunConnectionTest(RimMindCoreSettings s)
+        private static async void RunConnectionTest(RimMindCoreSettings s)
         {
-            if (s.provider == AIProvider.Player2)
-            {
-                _testStatus      = "RimMind.Core.Settings.Status.Testing".Translate();
-                _testStatusColor = Color.yellow;
-
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        var client = await Player2Client.CreateAsync(s);
-                        if (!client.IsConfigured())
-                        {
-                            _testStatus      = "RimMind.Core.Settings.Player2.NotAvailable".Translate();
-                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
-                            return;
-                        }
-
-                        var request = new AIRequest
-                        {
-                            RequestId = "test",
-                            UserPrompt = "RimMind.Core.Settings.TestMessage".Translate(),
-                            MaxTokens = 60,
-                            Temperature = 0.7f,
-                            ModId = "RimMind.Test"
-                        };
-                        var response = await client.SendAsync(request);
-                        if (response.Success)
-                        {
-                            _testStatus      = $"✓ {response.Content.Trim()} ({response.TokensUsed} tok)";
-                            _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
-                        }
-                        else
-                        {
-                            _testStatus      = $"✗ {response.Error}";
-                            _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _testStatus      = $"✗ {ex.Message}";
-                        _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
-                    }
-                });
-                return;
-            }
-
-            if (!s.IsOpenAIConfigured())
+            if (s.provider != AIProvider.Player2 && !s.IsOpenAIConfigured())
             {
                 _testStatus      = "RimMind.Core.Settings.Status.NotConfigured".Translate();
                 _testStatusColor = Color.yellow;
@@ -377,96 +324,51 @@ namespace RimMind.Core.UI
             _testStatus      = "RimMind.Core.Settings.Status.Testing".Translate();
             _testStatusColor = Color.yellow;
 
-            string endpoint = FormatEndpoint(s.apiEndpoint);
-            string apiKey   = s.apiKey;
-            string model    = s.modelName;
-            Log.Message($"[RimMind] Test connection → {endpoint}  model={model}");
-
-            Task.Run(async () =>
+            try
             {
-                try
+                IAIClient client;
+                if (s.provider == AIProvider.Player2)
                 {
-                    var body = new
+                    client = await Player2Client.CreateAsync(s);
+                    if (!client.IsConfigured())
                     {
-                        model    = model,
-                        messages = new[]
-                        {
-                            new { role = "user", content = (string)"RimMind.Core.Settings.TestMessage".Translate() }
-                        },
-                        max_tokens  = 60,
-                        temperature = 0.7f,
-                        stream      = false,
-                    };
-                    string json = JsonConvert.SerializeObject(body);
+                        _testStatus      = "RimMind.Core.Settings.Player2.NotAvailable".Translate();
+                        _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
+                        return;
+                    }
+                }
+                else
+                {
+                    client = new OpenAIClient(s);
+                }
 
-                    string text = await PostAsync(endpoint, json, apiKey);
-
-                    var    jobj   = JObject.Parse(text);
-                    string reply  = jobj["choices"]?[0]?["message"]?["content"]?.ToString() ?? "RimMind.Core.UI.Empty".Translate();
-                    int    tokens = jobj["usage"]?["total_tokens"]?.Value<int>() ?? 0;
-
-                    _testStatus      = $"✓ {reply.Trim()} ({tokens} tok)";
+                var request = new AIRequest
+                {
+                    RequestId = "test",
+                    UserPrompt = "RimMind.Core.Settings.TestMessage".Translate(),
+                    MaxTokens = 60,
+                    Temperature = 0.7f,
+                    UseJsonMode = false,
+                    ModId = "RimMind.Test"
+                };
+                var response = await client.SendAsync(request);
+                if (response.Success)
+                {
+                    _testStatus      = $"✓ {response.Content.Trim()} ({response.TokensUsed} tok)";
                     _testStatusColor = new Color(0.4f, 0.9f, 0.4f);
                 }
-                catch (Exception ex)
+                else
                 {
-                    AIRequestQueue.LogFromBackground($"[RimMind] Test exception: {ex.Message}", isWarning: true);
-                    _testStatus      = $"✗ {ex.Message}";
+                    _testStatus      = $"✗ {response.Error}";
                     _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
                 }
-            });
-        }
-
-        private static async Task<string> PostAsync(string url, string jsonBody, string apiKey)
-        {
-            using var webRequest = new UnityWebRequest(url, "POST");
-            webRequest.uploadHandler = new UploadHandlerRaw(
-                System.Text.Encoding.UTF8.GetBytes(jsonBody));
-            webRequest.downloadHandler = new DownloadHandlerBuffer();
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-            webRequest.SetRequestHeader("Authorization", $"Bearer {apiKey}");
-
-            var asyncOp = webRequest.SendWebRequest();
-
-            float timeout = 30f;
-            float elapsed = 0f;
-
-            while (!asyncOp.isDone)
-            {
-                await Task.Delay(100);
-                elapsed += 0.1f;
-                if (elapsed > timeout)
-                {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Timeout after {timeout}s");
-                }
             }
-
-            if (webRequest.result == UnityEngine.Networking.UnityWebRequest.Result.ConnectionError ||
-                webRequest.result == UnityEngine.Networking.UnityWebRequest.Result.ProtocolError)
+            catch (Exception ex)
             {
-                string body = webRequest.downloadHandler?.text ?? "";
-                string err  = body.Length > 0 ? body : webRequest.error;
-                throw new Exception($"HTTP {webRequest.responseCode}: {err}");
+                AIRequestQueue.LogFromBackground($"[RimMind] Test exception: {ex.Message}", isWarning: true);
+                _testStatus      = $"✗ {ex.Message}";
+                _testStatusColor = new Color(0.9f, 0.4f, 0.4f);
             }
-
-            return webRequest.downloadHandler.text;
-        }
-
-        private static string FormatEndpoint(string baseUrl)
-        {
-            if (string.IsNullOrEmpty(baseUrl)) return string.Empty;
-            string trimmed = baseUrl.Trim().TrimEnd('/');
-            // Already a full endpoint URL
-            if (trimmed.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
-                return trimmed;
-            var uri = new Uri(trimmed);
-            string path = uri.AbsolutePath.Trim('/');
-            // Has versioned base path (e.g. /v1) → append /chat/completions only
-            if (!string.IsNullOrEmpty(path))
-                return trimmed + "/chat/completions";
-            // Bare domain → append full path
-            return trimmed + "/v1/chat/completions";
         }
 
         // ── 队列状态分页 ──────────────────────────────────────────────────────
