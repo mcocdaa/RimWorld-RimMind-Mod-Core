@@ -21,6 +21,7 @@ using RimMind.Application.Common.Interfaces.Agent.Psychology;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Pipeline.Unified;
+using RimMind.Application.Features.Requests;
 using RimMind.Infrastructure;
 using RimMind.Infrastructure.Cache;
 using RimMind.Presentation.Agent;
@@ -169,6 +170,14 @@ namespace RimMind.Presentation.Runtime
                     new AIResponseAnalyzer(),
                     infraBag.RequestTraceLog);
                 services.Bind<IPipeline<LlmRequestContext>>(unifiedPipeline);
+                var requestSubmission = new RequestSubmissionService(
+                    appBag.Queue,
+                    clientServices.ClientManager,
+                    unifiedPipeline,
+                    infraBag.RequestTraceLog,
+                    resolvedSettings,
+                    lifetime);
+                services.Bind<IRequestSubmissionService>(requestSubmission);
 
                 var actionExecutor = ToolMechanismComposition.ComposeActionExecutor(
                     services, infraBag.MechanismRegistry);

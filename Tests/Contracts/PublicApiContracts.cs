@@ -25,11 +25,14 @@ namespace RimMind.Tests.Contracts
                     Assert.Contains("RuntimeServiceRef<", api, StringComparison.Ordinal);
                     Assert.DoesNotContain("RimMindRuntime.Instance", api, StringComparison.Ordinal);
                 }),
-                ("multi-service request facade uses one coherent scope", () =>
+                ("request facade delegates to one application boundary", () =>
                 {
-                    var source = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
-                    Assert.Contains("RuntimeServiceHub.Shared.Capture", source, StringComparison.Ordinal);
-                    Assert.Contains("scope.Token", source, StringComparison.Ordinal);
+                    var facade = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
+                    Assert.Contains("RuntimeServiceRef<IRequestSubmissionService>", facade, StringComparison.Ordinal);
+                    Assert.DoesNotContain("RuntimeServiceHub", facade, StringComparison.Ordinal);
+                    Assert.DoesNotContain("IClientManager", facade, StringComparison.Ordinal);
+                    Assert.DoesNotContain("IPipeline<LlmRequestContext>", facade, StringComparison.Ordinal);
+                    Assert.DoesNotContain("RequestCancellationRegistrations", facade, StringComparison.Ordinal);
                 }),
                 ("multi-service agent facade uses one coherent scope", () =>
                 {
@@ -39,33 +42,19 @@ namespace RimMind.Tests.Contracts
                     Assert.Contains("scope.GetOptional<IAgentBus>()", source, StringComparison.Ordinal);
                     Assert.DoesNotContain("Buses.ValueOrDefault", source, StringComparison.Ordinal);
                 }),
-                ("old request callback is discarded", () =>
+                ("request submission owns pipeline execution and cancellation", () =>
                 {
-                    var source = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
-                    Assert.Contains("IsCurrent", source, StringComparison.Ordinal);
-                    Assert.Contains("RecordStaleCompletion", source, StringComparison.Ordinal);
+                    var submission = ReadSource(
+                        "Application/Features/Requests/RequestSubmissionService.cs");
+                    Assert.Contains("RequestCancellationRegistrations.TryCreate", submission, StringComparison.Ordinal);
+                    Assert.Contains("_completionFence.CancellationToken", submission, StringComparison.Ordinal);
+                    Assert.Contains("QueuedPipelineRequestExecutor", submission, StringComparison.Ordinal);
                 }),
-                ("task request completes when its runtime retires", () =>
+                ("composition root binds the request submission boundary", () =>
                 {
-                    var source = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
-                    var registrations = ReadSource(
-                        "Presentation/Runtime/Services/RequestCancellationRegistrations.cs");
-                    Assert.Contains("RequestCancellationRegistrations.TryCreate", source, StringComparison.Ordinal);
-                    Assert.Contains("runtimeToken.Register", registrations, StringComparison.Ordinal);
-                    Assert.Contains("TrySetResult", source, StringComparison.Ordinal);
-                    Assert.Contains("RimMindErrors.Cancelled()", source, StringComparison.Ordinal);
-                }),
-                ("task request completes immediately when its caller cancels", () =>
-                {
-                    var source = ReadSource("Presentation/Api/RimMindAPI.Request.cs");
-                    var registrations = ReadSource(
-                        "Presentation/Runtime/Services/RequestCancellationRegistrations.cs");
-                    Assert.Contains("RequestCancellationRegistrations.TryCreate", source, StringComparison.Ordinal);
-                    Assert.Contains("envelope.Ct", source, StringComparison.Ordinal);
-                    Assert.Contains("runtimeRegistration = default", registrations, StringComparison.Ordinal);
-                    Assert.Contains("callerRegistration = default", registrations, StringComparison.Ordinal);
-                    Assert.Contains("callerRegistration?.Dispose()", registrations, StringComparison.Ordinal);
-                    Assert.Contains("runtimeRegistration?.Dispose()", registrations, StringComparison.Ordinal);
+                    var composition = ReadSource(
+                        "Presentation/Runtime/RimMindCompositionRoot.cs");
+                    Assert.Contains("Bind<IRequestSubmissionService>", composition, StringComparison.Ordinal);
                 }),
                 ("remote sync pull preserves cancellation as an error", AssertRemotePullCancellation),
                 ("remote sync push preserves cancellation as an error", AssertRemotePushCancellation),
