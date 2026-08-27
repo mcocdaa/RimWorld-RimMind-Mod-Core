@@ -2,6 +2,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Requests;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Presentation.Runtime.Services;
@@ -15,8 +16,8 @@ namespace RimMind.Presentation.Api
     {
         public static class Request
         {
-            private static readonly RuntimeServiceRef<IAIRequestQueue> Queues =
-                RuntimeServiceRef<IAIRequestQueue>.Optional();
+            private static readonly RuntimeServiceRef<IRequestQueue> Queues =
+                RuntimeServiceRef<IRequestQueue>.Optional();
             private static readonly RuntimeServiceRef<IRequestSubmissionService> Submissions =
                 RuntimeServiceRef<IRequestSubmissionService>.Optional();
 

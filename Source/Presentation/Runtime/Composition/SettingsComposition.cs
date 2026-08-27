@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Features.Registry;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Presentation.Runtime.Services;
 
 namespace RimMind.Presentation.Runtime.Composition
@@ -61,7 +62,7 @@ namespace RimMind.Presentation.Runtime.Composition
             services.Bind(appBag.ParameterStore);
             services.Bind(appBag.RuleEngine);
             services.Bind(appBag.Queue);
-            services.Bind<IAIRequestQueueTickable>((IAIRequestQueueTickable)appBag.Queue);
+            services.Bind<ITickableRequestQueue>((ITickableRequestQueue)appBag.Queue);
             services.Bind(appBag.JsonExtractor);
             services.Bind(appBag.Telemetry);
         }

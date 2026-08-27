@@ -16,6 +16,7 @@ using RimMind.Application.Common.Models;
 using RimMind.Application.Common.Models.Mechanisms;
 using RimMind.Domain.Common;
 using RimMind.Application.Features.Llm;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Llm;
 using RimMind.Domain.Storage;
 using RimMind.Domain.ValueObjects;
@@ -38,7 +39,7 @@ namespace RimMind.Infrastructure.UI
         /// </summary>
         public static void Initialize(
             ISettingsProvider? settingsProvider,
-            IAIRequestQueue? requestQueue,
+            IRequestQueue? requestQueue,
             IClientManager? clientManager,
             IAIDebugLog? debugLog,
             IContextKeyProvider? contextKeyProvider,
@@ -123,7 +124,7 @@ namespace RimMind.Infrastructure.UI
         public static void ClearCooldowns()
         {
             RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
-            runtimeScope.GetOptional<IAIRequestQueue>()?.ClearAllCooldowns();
+            runtimeScope.GetOptional<IRequestQueue>()?.ClearAllCooldowns();
             Log.Message("[RimMind-Core] All cooldowns cleared.");
         }
 
@@ -209,7 +210,7 @@ namespace RimMind.Infrastructure.UI
         public static void ShowQueueState()
         {
             RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
-            var queue = runtimeScope.GetOptional<IAIRequestQueue>();
+            var queue = runtimeScope.GetOptional<IRequestQueue>();
             if (queue == null)
             {
                 RimMindErrors.Warn("[RimMind-Core] AIRequestQueue not initialized.");
@@ -242,7 +243,7 @@ namespace RimMind.Infrastructure.UI
         public static void PauseQueue()
         {
             RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
-            runtimeScope.GetOptional<IAIRequestQueue>()?.PauseQueue();
+            runtimeScope.GetOptional<IRequestQueue>()?.PauseQueue();
             Log.Message("[RimMind-Core] Queue paused.");
         }
 
@@ -250,7 +251,7 @@ namespace RimMind.Infrastructure.UI
         public static void ResumeQueue()
         {
             RuntimeServiceScope runtimeScope = RuntimeServiceHub.Shared.Capture();
-            runtimeScope.GetOptional<IAIRequestQueue>()?.ResumeQueue();
+            runtimeScope.GetOptional<IRequestQueue>()?.ResumeQueue();
             Log.Message("[RimMind-Core] Queue resumed.");
         }
 
@@ -647,7 +648,7 @@ namespace RimMind.Infrastructure.UI
             GameServiceScope gameScope = GameServiceHub.Shared.Capture();
             RunKUnifiedRequest(
                 gameScope.GetOptional<INpcManager>(),
-                runtimeScope.GetOptional<IAIRequestQueue>(),
+                runtimeScope.GetOptional<IRequestQueue>(),
                 runtimeScope.GetOptional<IClientManager>(),
                 runtimeScope.GetOptional<IToolRegistry>(),
                 runtimeScope.GetOptional<IAgentBus>());
@@ -655,7 +656,7 @@ namespace RimMind.Infrastructure.UI
 
         private static void RunKUnifiedRequest(
             INpcManager? npcManager,
-            IAIRequestQueue? requestQueue,
+            IRequestQueue? requestQueue,
             IClientManager? clientManager,
             IToolRegistry? toolRegistry,
             IAgentBus? agentBus)

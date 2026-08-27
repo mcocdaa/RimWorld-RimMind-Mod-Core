@@ -8,9 +8,9 @@ using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
-namespace RimMind.Application.Common.Interfaces.Internal
+namespace RimMind.Application.Features.Requests.Queue
 {
-    public interface IAIRequestQueue
+    public interface IRequestQueue
     {
         [ThreadAffinity(ThreadAffinityKind.Any)]
         void Enqueue(LlmRequestEnvelope envelope, Action<Result<LlmResponse, RimMindError>> callback, IAIClient client);

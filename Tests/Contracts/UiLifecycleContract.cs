@@ -22,7 +22,7 @@ namespace RimMind.Tests.Contracts
                 ("simple ui adapters use generation aware service refs", () =>
                 {
                     Assert.Contains("RuntimeServiceRef<IOverlayService>", ReadSource("Infrastructure/UI/RequestOverlay.cs"), StringComparison.Ordinal);
-                    Assert.Contains("RuntimeServiceRef<IAIRequestQueue>", ReadSource("Presentation/UI/QueueTabDrawer.cs"), StringComparison.Ordinal);
+                    Assert.Contains("RuntimeServiceRef<IRequestQueue>", ReadSource("Presentation/UI/QueueTabDrawer.cs"), StringComparison.Ordinal);
                     Assert.Contains("RuntimeServiceRef<IExtensionRegistry<ISettingsTab>>", ReadSource("Presentation/UI/AICoreSettingsUI.cs"), StringComparison.Ordinal);
                     Assert.Contains("RuntimeServiceRef<IAgentIdentityProvider>", ReadSource("Infrastructure/Patches/FloatMenu_InnerVoice.cs"), StringComparison.Ordinal);
                 }),

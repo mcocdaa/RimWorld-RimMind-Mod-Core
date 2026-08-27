@@ -1,8 +1,8 @@
 using System;
 
-namespace RimMind.Application.Common.Interfaces.Internal
+namespace RimMind.Application.Features.Requests.Queue
 {
-    public interface IAIRequestQueueTickable : IAIRequestQueue
+    public interface ITickableRequestQueue : IRequestQueue
     {
         int CurrentTick { get; set; }
         Action<string, bool>? LogHandler { get; set; }

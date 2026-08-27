@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Enums;
 using RimMind.Domain.Events;
 using RimMind.Presentation.UI.Layout;
@@ -24,7 +25,7 @@ namespace RimMind.Infrastructure.UI
 
         private Vector2 _scrollPos = Vector2.zero;
         private readonly RuntimeBinding _runtimeBinding = new RuntimeBinding();
-        private readonly RuntimeServiceRef<IAIRequestQueue> _requestQueue = RuntimeServiceRef<IAIRequestQueue>.Optional();
+        private readonly RuntimeServiceRef<IRequestQueue> _requestQueue = RuntimeServiceRef<IRequestQueue>.Optional();
         private readonly RuntimeServiceRef<IScopedAgentManager> _scopedAgentManager = RuntimeServiceRef<IScopedAgentManager>.Optional();
         private long _cachedGeneration = long.MinValue;
         private int _lastRefreshTick;

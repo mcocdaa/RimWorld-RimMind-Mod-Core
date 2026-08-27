@@ -18,6 +18,7 @@ using RimMind.Domain.Agent.Modes;
 using RimMind.Domain.Common;
 using RimMind.Domain.Enums;
 using RimMind.Application.Features.Llm;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using RimMind.Infrastructure.Verse;
@@ -983,7 +984,7 @@ namespace RimMind.Infrastructure.UI
 
             try
             {
-                var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IAIRequestQueue>();
+                var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IRequestQueue>();
                 if (queue != null)
                 {
                     var sb = new StringBuilder();

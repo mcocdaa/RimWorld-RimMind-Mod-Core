@@ -10,7 +10,7 @@ using RimMind.Application.Common.Interfaces.Tools;
 using RimMind.Application.Features.AgentBus;
 using RimMind.Application.Features.Flywheel;
 using RimMind.Application.Features.Json;
-using RimMind.Application.Features.Queue;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Application.Features.Tools;
 using RimMind.Application.Common.Interfaces.Async;
 
@@ -26,7 +26,7 @@ namespace RimMind.Application
         public IToolRegistry ToolRegistry { get; init; } = null!;
         public IFlywheelParameterStore ParameterStore { get; init; } = null!;
         public IFlywheelRuleEngine RuleEngine { get; init; } = null!;
-        public IAIRequestQueue Queue { get; init; } = null!;
+        public IRequestQueue Queue { get; init; } = null!;
         public IJsonExtractor JsonExtractor { get; init; } = null!;
         public ITelemetryCollector Telemetry { get; init; } = null!;
     }
@@ -45,7 +45,7 @@ namespace RimMind.Application
 
             var ruleEngine = new FlywheelRuleEngine(parameterStore);
 
-            var queue = new AIRequestQueueImpl(
+            var queue = new RequestQueue(
                 () => settingsProvider,
                 completionFence: completionFence);
 

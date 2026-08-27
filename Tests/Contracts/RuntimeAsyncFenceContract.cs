@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using RimMind.Application.Common.Interfaces.Async;
-using RimMind.Application.Features.Queue;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
@@ -18,7 +18,7 @@ namespace RimMind.Tests.Contracts
         public void Async_completions_are_cancelled_and_fenced_before_side_effects()
         {
             ContractCaseRunner.Run(
-                ("queue completion is fenced", () => AssertFence("Application/Features/Queue/AIRequestQueueImpl.cs")),
+                ("queue completion is fenced", () => AssertFence("Application/Features/Requests/Queue/RequestQueue.cs")),
                 ("proactive completions are fenced", () =>
                 {
                     var source = AssertFence("Application/Features/Agent/ProactiveBehaviorOrchestrator.cs");
@@ -54,7 +54,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("non-streaming queue and client invocation preserve the linked token", () =>
                 {
-                    var queue = ReadSource("Application/Features/Queue/AIRequestQueueImpl.cs");
+                    var queue = ReadSource("Application/Features/Requests/Queue/RequestQueue.cs");
                     Assert.DoesNotContain("_ => client.SendAsync(envelope)", queue, StringComparison.Ordinal);
                     Assert.True(
                         CountOccurrences(
@@ -82,7 +82,7 @@ namespace RimMind.Tests.Contracts
         public async Task Queued_completion_is_rechecked_before_callback_consumption()
         {
             var fence = new ControllableCompletionFence();
-            var queue = new AIRequestQueueImpl(completionFence: fence);
+            var queue = new RequestQueue(completionFence: fence);
             var executorStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var releaseExecutor = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var callbackCount = 0;

@@ -7,7 +7,7 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Context.Diff;
-using RimMind.Application.Features.Queue;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Application.Features.Utility;
 using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
@@ -279,7 +279,7 @@ namespace RimMind.Tests.Contracts
             await ContractCaseRunner.RunAsync(
                 ("paused queue waits until resume", async () =>
                 {
-                    var queue = new AIRequestQueueImpl();
+                    var queue = new RequestQueue();
                     var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                     queue.PauseQueue();
                     queue.Enqueue(
@@ -298,7 +298,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("completion is delivered by queue tick", async () =>
                 {
-                    var queue = new AIRequestQueueImpl();
+                    var queue = new RequestQueue();
                     var callback = new TaskCompletionSource<Result<LlmResponse, RimMindError>>(
                         TaskCreationOptions.RunContinuationsAsynchronously);
                     queue.Enqueue(Envelope("complete"), result => callback.TrySetResult(result), _ => Task.FromResult(Success()));
@@ -309,7 +309,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("active cancellation invokes callback exactly once", async () =>
                 {
-                    var queue = new AIRequestQueueImpl();
+                    var queue = new RequestQueue();
                     int callbacks = 0;
                     queue.Enqueue(
                         Envelope("cancel"),
@@ -327,7 +327,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("expired queued request completes with timeout", () =>
                 {
-                    var queue = new AIRequestQueueImpl { CurrentTick = 0 };
+                    var queue = new RequestQueue { CurrentTick = 0 };
                     Result<LlmResponse, RimMindError>? callback = null;
                     queue.PauseQueue();
                     queue.Enqueue(
@@ -349,7 +349,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("unknown cancellation leaves queue unchanged", () =>
                 {
-                    var queue = new AIRequestQueueImpl();
+                    var queue = new RequestQueue();
                     Assert.False(queue.CancelRequest("missing"));
                     Assert.Equal(0, queue.TotalQueuedCount);
                     Assert.Equal(0, queue.ActiveRequestCount);

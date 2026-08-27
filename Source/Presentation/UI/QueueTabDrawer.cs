@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime;
@@ -15,8 +16,8 @@ namespace RimMind.Presentation.UI
     {
         private static Vector2 _queueScroll;
 
-        private static readonly RuntimeServiceRef<IAIRequestQueue> RequestQueue =
-            RuntimeServiceRef<IAIRequestQueue>.Optional();
+        private static readonly RuntimeServiceRef<IRequestQueue> RequestQueue =
+            RuntimeServiceRef<IRequestQueue>.Optional();
 
         public static void Draw(
             Rect inRect,
@@ -67,7 +68,7 @@ namespace RimMind.Presentation.UI
             Widgets.EndScrollView();
         }
 
-        private static void DrawQueueStatus(Listing_Standard listing, IAIRequestQueue queue, ISettingsProvider settings)
+        private static void DrawQueueStatus(Listing_Standard listing, IRequestQueue queue, ISettingsProvider settings)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Queue.Status".Translate());
 
@@ -85,7 +86,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
         }
 
-        private static void DrawQueueControls(Listing_Standard listing, IAIRequestQueue queue)
+        private static void DrawQueueControls(Listing_Standard listing, IRequestQueue queue)
         {
             listing.Gap(4f);
             Rect btnRow = listing.GetRect(28f);
@@ -110,7 +111,7 @@ namespace RimMind.Presentation.UI
                 queue.ClearAllCooldowns();
         }
 
-        private static void DrawPerModCooldowns(Listing_Standard listing, IAIRequestQueue queue, HashSet<string> allModIds)
+        private static void DrawPerModCooldowns(Listing_Standard listing, IRequestQueue queue, HashSet<string> allModIds)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Queue.PerMod".Translate());
 
@@ -142,7 +143,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
         }
 
-        private static void DrawActiveRequests(Listing_Standard listing, IAIRequestQueue queue)
+        private static void DrawActiveRequests(Listing_Standard listing, IRequestQueue queue)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Queue.ActiveRequests".Translate());
 
@@ -171,7 +172,7 @@ namespace RimMind.Presentation.UI
             GUI.color = Color.white;
         }
 
-        private static void DrawQueuedRequests(Listing_Standard listing, IAIRequestQueue queue)
+        private static void DrawQueuedRequests(Listing_Standard listing, IRequestQueue queue)
         {
             SettingsUIDrawer.DrawSectionHeader(listing, "RimMind.Settings.Queue.QueuedRequests".Translate());
 

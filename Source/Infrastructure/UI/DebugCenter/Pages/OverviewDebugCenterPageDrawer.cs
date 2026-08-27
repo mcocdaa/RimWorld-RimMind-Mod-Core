@@ -2,6 +2,7 @@ using System;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Agent;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Infrastructure.UI.DebugCenter.Overview;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
@@ -14,13 +15,13 @@ namespace RimMind.Infrastructure.UI.DebugCenter.Pages
     public sealed class OverviewDebugCenterPageDrawer : IRuntimeBoundDebugCenterPageDrawer
     {
         private IAgentLoopScheduler? _agentLoopScheduler;
-        private IAIRequestQueue? _requestQueue;
+        private IRequestQueue? _requestQueue;
         private Vector2 _scrollPosition;
 
         public IDisposable? Bind(RuntimeServiceScope scope)
         {
             _agentLoopScheduler = scope.GetOptional<IAgentLoopScheduler>();
-            _requestQueue = scope.GetOptional<IAIRequestQueue>();
+            _requestQueue = scope.GetOptional<IRequestQueue>();
             return null;
         }
 

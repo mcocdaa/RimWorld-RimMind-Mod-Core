@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 
-namespace RimMind.Application.Features.Queue
+namespace RimMind.Application.Features.Requests.Queue
 {
     public sealed class CooldownTable
     {

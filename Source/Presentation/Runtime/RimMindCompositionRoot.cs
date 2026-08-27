@@ -22,6 +22,7 @@ using RimMind.Application.Features.Context;
 using RimMind.Application.Features.Pipeline.Bus;
 using RimMind.Application.Features.Pipeline.Unified;
 using RimMind.Application.Features.Requests;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Infrastructure;
 using RimMind.Infrastructure.Cache;
 using RimMind.Presentation.Agent;
@@ -43,7 +44,7 @@ namespace RimMind.Presentation.Runtime
             // Application layer services
             public IAgentBus AgentBus { get; init; } = null!;
             public IToolRegistry ToolRegistry { get; init; } = null!;
-            public IAIRequestQueue Queue { get; init; } = null!;
+            public IRequestQueue Queue { get; init; } = null!;
             public ITelemetryCollector Telemetry { get; init; } = null!;
             public IFlywheelParameterStore ParameterStore { get; init; } = null!;
 
@@ -270,7 +271,7 @@ namespace RimMind.Presentation.Runtime
                     .Require<RimMindRuntime>()
                     .Require<IRimMindRuntime>()
                     .Require<IAgentBus>()
-                    .Require<IAIRequestQueue>()
+                    .Require<IRequestQueue>()
                     .Require<IPipeline<LlmRequestContext>>()
                     .Require<ICompletionFence>()
                     .Require<IAgentActionBridgeAccessor>();

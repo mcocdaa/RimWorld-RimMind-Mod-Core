@@ -1,6 +1,7 @@
 using Verse;
 using RimMind.Domain.ValueObjects;
 using RimMind.Application.Common.Interfaces.Internal;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Presentation.Runtime.Services;
 
 
@@ -8,9 +9,9 @@ namespace RimMind.Infrastructure.Verse
 {
     public class AIRequestQueueGameComponent : GameComponent
     {
-        private readonly RuntimeServiceRef<IAIRequestQueueTickable> _implRef =
-            RuntimeServiceRef<IAIRequestQueueTickable>.Optional();
-        private IAIRequestQueueTickable? _impl;
+        private readonly RuntimeServiceRef<ITickableRequestQueue> _implRef =
+            RuntimeServiceRef<ITickableRequestQueue>.Optional();
+        private ITickableRequestQueue? _impl;
 
         private void EnsureCached()
         {
@@ -25,7 +26,7 @@ namespace RimMind.Infrastructure.Verse
 
         public AIRequestQueueGameComponent(Game game) : base() { }
 
-        internal static void Configure(IAIRequestQueueTickable impl)
+        internal static void Configure(ITickableRequestQueue impl)
         {
             if (impl == null) throw new System.ArgumentNullException(nameof(impl));
             impl.CurrentTick = Find.TickManager.TicksGame;

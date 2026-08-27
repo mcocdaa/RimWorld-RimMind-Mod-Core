@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Internal;
 
-namespace RimMind.Application.Features.Queue
+namespace RimMind.Application.Features.Requests.Queue
 {
     /// <summary>
     /// Encapsulates cooldown tracking and circuit breaker state management for the request queue.

@@ -17,6 +17,7 @@ using RimMind.Application.Common.Interfaces.Agent.Modes;
 using RimMind.Application.Common.Models.Agent;
 using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Application.Features.Registry;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Presentation.Runtime.Composition;
 using Verse;
 
@@ -44,7 +45,7 @@ namespace RimMind.Presentation.Runtime
         public IAudioPlayer AudioPlayer => _composition.AudioPlayer;
         public IProviderRegistry ProviderRegistry => _composition.ProviderRegistry;
         public IOverlayService OverlayService => _composition.OverlayService;
-        public IAIRequestQueue Queue => _composition.Queue;
+        public IRequestQueue Queue => _composition.Queue;
         public ITelemetryCollector Telemetry => _composition.Telemetry;
         public IToolRegistry ToolRegistry => _composition.ToolRegistry;
         public IGameMechanismRegistry MechanismRegistry => _composition.MechanismRegistry;

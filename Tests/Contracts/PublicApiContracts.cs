@@ -56,6 +56,24 @@ namespace RimMind.Tests.Contracts
                         "Presentation/Runtime/RimMindCompositionRoot.cs");
                     Assert.Contains("Bind<IRequestSubmissionService>", composition, StringComparison.Ordinal);
                 }),
+                ("request queue lives beside the submission boundary", () =>
+                {
+                    var root = SourceRoot();
+                    var queuePath = Path.Combine(
+                        root, "Application", "Features", "Requests", "Queue", "RequestQueue.cs");
+                    Assert.True(File.Exists(queuePath));
+                    var oldQueueDirectory = Path.Combine(
+                        root, "Application", "Features", "Queue");
+                    Assert.True(
+                        !Directory.Exists(oldQueueDirectory) ||
+                        !Directory.EnumerateFiles(oldQueueDirectory, "*.cs").Any());
+                    Assert.False(File.Exists(Path.Combine(
+                        root, "Presentation", "Runtime", "AIRequestQueue.cs")));
+                    Assert.Contains(
+                        "RequestQueue : ITickableRequestQueue",
+                        File.ReadAllText(queuePath),
+                        StringComparison.Ordinal);
+                }),
                 ("remote sync pull preserves cancellation as an error", AssertRemotePullCancellation),
                 ("remote sync push preserves cancellation as an error", AssertRemotePushCancellation),
                 ("remote sync load delegates to the current generation", () =>

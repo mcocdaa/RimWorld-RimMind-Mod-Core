@@ -8,6 +8,7 @@ using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Pipeline;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 
@@ -15,7 +16,7 @@ namespace RimMind.Application.Features.Requests
 {
     public sealed class RequestSubmissionService : IRequestSubmissionService
     {
-        private readonly IAIRequestQueue _queue;
+        private readonly IRequestQueue _queue;
         private readonly IClientManager _clientManager;
         private readonly IPipeline<LlmRequestContext> _pipeline;
         private readonly IAIRequestTraceLog? _traceLog;
@@ -23,7 +24,7 @@ namespace RimMind.Application.Features.Requests
         private readonly ICompletionFence _completionFence;
 
         public RequestSubmissionService(
-            IAIRequestQueue queue,
+            IRequestQueue queue,
             IClientManager clientManager,
             IPipeline<LlmRequestContext> pipeline,
             IAIRequestTraceLog? traceLog,

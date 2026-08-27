@@ -20,7 +20,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("tick components use generation aware references", () =>
                 {
-                    Assert.Contains("RuntimeServiceRef<IAIRequestQueueTickable>", ReadSource("Infrastructure/Verse/AIRequestQueueGameComponent.cs"), StringComparison.Ordinal);
+                    Assert.Contains("RuntimeServiceRef<ITickableRequestQueue>", ReadSource("Infrastructure/Verse/AIRequestQueueGameComponent.cs"), StringComparison.Ordinal);
                     Assert.Contains("RuntimeBinding", ReadSource("Infrastructure/Verse/FlywheelGameComponent.cs"), StringComparison.Ordinal);
                     Assert.Contains("RuntimeServiceRef<IFlywheelParameterStore>", ReadSource("Infrastructure/Verse/FlywheelParameterStoreGameComponent.cs"), StringComparison.Ordinal);
                 }),

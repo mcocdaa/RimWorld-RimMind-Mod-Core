@@ -7,6 +7,7 @@ using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Extension;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
@@ -35,8 +36,8 @@ namespace RimMind.Presentation.UI
             RuntimeServiceRef<IPlayer2Lifecycle>.Optional();
         private static readonly RuntimeServiceRef<IClientManager> ClientManager =
             RuntimeServiceRef<IClientManager>.Optional();
-        private static readonly RuntimeServiceRef<IAIRequestQueue> RequestQueue =
-            RuntimeServiceRef<IAIRequestQueue>.Optional();
+        private static readonly RuntimeServiceRef<IRequestQueue> RequestQueue =
+            RuntimeServiceRef<IRequestQueue>.Optional();
 
         public static void Draw(
             Rect inRect,

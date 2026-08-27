@@ -4,7 +4,7 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models;
 using RimMind.Domain.Enums;
 
-namespace RimMind.Application.Features.Queue
+namespace RimMind.Application.Features.Requests.Queue
 {
     internal sealed class DefaultSettingsProvider : ISettingsProvider
     {

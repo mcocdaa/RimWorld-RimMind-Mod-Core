@@ -5,6 +5,7 @@ using RimMind.Application.Common.Interfaces;
 using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.UI;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Presentation.UI.Framework;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Infrastructure.Verse;
@@ -25,7 +26,7 @@ namespace RimMind.Infrastructure.UI
 
         private sealed record RequestLogOperationContext(
             IOverlayService? Overlay,
-            IAIRequestQueue? Queue,
+            IRequestQueue? Queue,
             IApiCredentialSettings? Credentials,
             IReadOnlyList<RequestEntry> Pending);
 
@@ -81,7 +82,7 @@ namespace RimMind.Infrastructure.UI
                     IOverlayService? overlay = runtimeScope.GetOptional<IOverlayService>();
                     return new RequestLogOperationContext(
                         overlay,
-                        runtimeScope.GetOptional<IAIRequestQueue>(),
+                        runtimeScope.GetOptional<IRequestQueue>(),
                         runtimeScope.GetOptional<IApiCredentialSettings>(),
                         overlay?.GetPendingRequests() ?? EmptyPending);
                 });

@@ -4,6 +4,7 @@ using RimMind.Application.Common.Interfaces.Agent;
 using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Models.Context;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Enums;
 using RimMind.Presentation.UI.Layout;
 using RimMind.Presentation.Runtime.Services;
@@ -279,7 +280,7 @@ namespace RimMind.Infrastructure.UI
 
         private void DrawNoPawnState(Rect rect, RimMindLayoutScope scope)
         {
-            var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IAIRequestQueue>();
+            var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IRequestQueue>();
             string? queueInfo = null;
             if (queue != null)
             {
@@ -365,7 +366,7 @@ namespace RimMind.Infrastructure.UI
             y = RimMindUI.DrawDivider(viewRect, y - viewRect.y) + viewRect.y;
             y = RimMindUI.DrawSectionHeader(viewRect, y - viewRect.y, "RimMind.UI.AgentStateDebug.QueueState".Translate()) + viewRect.y;
 
-            var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IAIRequestQueue>();
+            var queue = RuntimeServiceHub.Shared.Capture().GetOptional<IRequestQueue>();
             if (queue != null)
             {
                 string qSummary = $"Paused={queue.IsPaused} Active={queue.ActiveRequestCount} Queued={queue.TotalQueuedCount}";

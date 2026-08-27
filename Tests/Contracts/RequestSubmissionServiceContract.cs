@@ -8,8 +8,8 @@ using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Models.Npc;
 using RimMind.Application.Common.Models.Pipeline;
-using RimMind.Application.Features.Queue;
 using RimMind.Application.Features.Requests;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Domain.Common;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
@@ -26,7 +26,7 @@ namespace RimMind.Tests.Contracts
             return ContractCaseRunner.RunAsync(
                 ("configured client runs the pipeline and returns its context", async () =>
                 {
-                    var queue = new AIRequestQueueImpl();
+                    var queue = new RequestQueue();
                     var client = new StubClient();
                     var pipeline = new SuccessfulPipeline();
                     var service = new RequestSubmissionService(
@@ -60,7 +60,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("missing client returns one structured error without running the pipeline", async () =>
                 {
-                    var queue = new AIRequestQueueImpl();
+                    var queue = new RequestQueue();
                     var pipeline = new SuccessfulPipeline();
                     var service = new RequestSubmissionService(
                         queue,

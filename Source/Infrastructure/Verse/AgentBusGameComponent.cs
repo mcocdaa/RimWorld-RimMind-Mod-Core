@@ -6,7 +6,7 @@ using RimMind.Application.Common.Interfaces.Context;
 using RimMind.Application.Common.Interfaces.Flywheel;
 using RimMind.Application.Common.Interfaces.Internal;
 using RimMind.Application.Common.Defaults;
-using RimMind.Application.Features.Queue;
+using RimMind.Application.Features.Requests.Queue;
 using RimMind.Presentation.Runtime.Services;
 
 using Verse;
@@ -44,7 +44,7 @@ namespace RimMind.Infrastructure.Verse
         private IDisposable? Bind(RuntimeServiceScope scope)
         {
             var agentBus = scope.GetOptional<IAgentBus>();
-            var requestQueue = scope.GetOptional<IAIRequestQueueTickable>();
+            var requestQueue = scope.GetOptional<ITickableRequestQueue>();
             var logSink = scope.GetOptional<ILogSink>();
             var cacheManager = scope.GetOptional<IContextCacheManager>();
             var parameterStore = scope.GetOptional<IFlywheelParameterStore>();

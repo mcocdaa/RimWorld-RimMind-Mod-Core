@@ -33,7 +33,7 @@ global using RimMind.Application.Features.AgentBus;
 global using RimMind.Application.Features.Context;
 global using RimMind.Application.Features.Flywheel;
 global using RimMind.Application.Features.Prompt;
-global using RimMind.Application.Features.Queue;
+global using RimMind.Application.Features.Requests.Queue;
 global using RimMind.Application.Features.Registry;
 global using RimMind.Application.Features.Tools;
 global using RimMind.Application.Features.Json;

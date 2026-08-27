@@ -15,9 +15,9 @@ using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using AIRequestState = RimMind.Domain.Llm.AIRequestState;
 
-namespace RimMind.Application.Features.Queue
+namespace RimMind.Application.Features.Requests.Queue
 {
-    public class AIRequestQueueImpl : IAIRequestQueueTickable
+    public class RequestQueue : ITickableRequestQueue
     {
         private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;
 
@@ -57,7 +57,7 @@ namespace RimMind.Application.Features.Queue
 
         private int QueueProcessInterval => Settings.QueueProcessInterval;
 
-        public AIRequestQueueImpl(
+        public RequestQueue(
             Func<ISettingsProvider?>? settingsFactory = null,
             ILogSink? logSink = null,
             ICompletionFence? completionFence = null)
