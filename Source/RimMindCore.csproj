@@ -22,8 +22,13 @@
     <PackageReference Include="Krafs.Rimworld.Ref" Version="$(GameVersion).*-*" PrivateAssets="All" />
     <PackageReference Include="Lib.Harmony.Ref" Version="2.*" PrivateAssets="All" />
     <!-- Newtonsoft.Json is bundled in RimWorld but not in Krafs.Rimworld.Ref; reference for compile-time only -->
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.*" PrivateAssets="All" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" PrivateAssets="All" GeneratePathProperty="true" />
   </ItemGroup>
+
+  <Target Name="CopyNewtonsoftJson" AfterTargets="Build">
+    <Copy SourceFiles="$(PkgNewtonsoft_Json)\lib\net45\Newtonsoft.Json.dll"
+          DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
 
   <!-- Deploy to game mods folder after build (set RIMWORLD_DIR env var) -->
   <Target Name="DeployToModsFolder" AfterTargets="Build"

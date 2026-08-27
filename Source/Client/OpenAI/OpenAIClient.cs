@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -9,8 +10,6 @@ using RimMind.Core.Client;
 using RimMind.Core.Internal;
 using RimMind.Core.Settings;
 using Newtonsoft.Json;
-using UnityEngine.Networking;
-using Verse;
 
 namespace RimMind.Core.Client.OpenAI
 {
@@ -138,54 +137,50 @@ namespace RimMind.Core.Client.OpenAI
         private async Task<(string text, long statusCode)> PostAsync(string url, string jsonBody)
         {
             bool isLocal = IsLoopbackEndpoint(url);
-            float connectTimeout = isLocal ? 300f : 60f;
-            float readTimeout = 60f;
+            int timeoutSeconds = isLocal ? 300 : 60;
+            byte[] payload = Encoding.UTF8.GetBytes(jsonBody);
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            request.Accept = "application/json";
+            request.Headers[HttpRequestHeader.Authorization] = $"Bearer {_settings.apiKey}";
+            request.ContentLength = payload.Length;
+            request.Timeout = timeoutSeconds * 1000;
+            request.ReadWriteTimeout = timeoutSeconds * 1000;
 
-            using var webRequest = new UnityWebRequest(url, "POST");
-            webRequest.uploadHandler = new UploadHandlerRaw(
-                Encoding.UTF8.GetBytes(jsonBody));
-            webRequest.downloadHandler = new DownloadHandlerBuffer();
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-            webRequest.SetRequestHeader("Authorization", $"Bearer {_settings.apiKey}");
-
-            var asyncOp = webRequest.SendWebRequest();
-
-            float inactivity = 0f;
-            ulong lastBytes = 0;
-
-            while (!asyncOp.isDone)
+            try
             {
-                if (Current.Game == null)
-                    throw new OperationCanceledException("Game unloaded during AI request.");
+                using (var requestStream = await WithTimeout(request.GetRequestStreamAsync(), request, timeoutSeconds))
+                    await requestStream.WriteAsync(payload, 0, payload.Length).ConfigureAwait(false);
 
-                await Task.Delay(100);
-                ulong currentBytes = webRequest.downloadedBytes;
-
-                if (currentBytes != lastBytes) { inactivity = 0f; lastBytes = currentBytes; }
-                else inactivity += 0.1f;
-
-                if (currentBytes == 0 && inactivity > connectTimeout)
+                using (var response = (HttpWebResponse)await WithTimeout(request.GetResponseAsync(), request, timeoutSeconds))
+                using (var reader = new StreamReader(response.GetResponseStream()))
                 {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Connection timeout after {connectTimeout}s");
-                }
-                if (currentBytes > 0 && inactivity > readTimeout)
-                {
-                    webRequest.Abort();
-                    throw new TimeoutException($"Read timeout after {readTimeout}s");
+                    string body = await WithTimeout(reader.ReadToEndAsync(), request, timeoutSeconds);
+                    return (body, (long)response.StatusCode);
                 }
             }
-
-            if (webRequest.result == UnityWebRequest.Result.ConnectionError ||
-                webRequest.result == UnityWebRequest.Result.ProtocolError)
+            catch (WebException ex) when (ex.Response is HttpWebResponse errorResponse)
             {
-                string body    = webRequest.downloadHandler.text;
-                string unityErr = webRequest.error ?? "";
-                string detail  = body.Length > 0 ? body : unityErr;
-                throw new AIHttpException(webRequest.responseCode, $"HTTP {webRequest.responseCode}: {detail}");
+                using (errorResponse)
+                using (var reader = new StreamReader(errorResponse.GetResponseStream()))
+                {
+                    string body = await reader.ReadToEndAsync().ConfigureAwait(false);
+                    long statusCode = (long)errorResponse.StatusCode;
+                    throw new AIHttpException(statusCode, $"HTTP {statusCode}: {body}");
+                }
+            }
+        }
+
+        private static async Task<T> WithTimeout<T>(Task<T> task, HttpWebRequest request, int timeoutSeconds)
+        {
+            if (await Task.WhenAny(task, Task.Delay(timeoutSeconds * 1000)).ConfigureAwait(false) != task)
+            {
+                request.Abort();
+                throw new TimeoutException($"Connection timeout after {timeoutSeconds}s");
             }
 
-            return (webRequest.downloadHandler.text, webRequest.responseCode);
+            return await task.ConfigureAwait(false);
         }
 
         private static string FormatEndpoint(string baseUrl)
