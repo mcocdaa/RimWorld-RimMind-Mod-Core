@@ -21,10 +21,7 @@ namespace RimMind.Application.Features.Requests.Queue
     {
         private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;
 
-        private readonly ConcurrentQueue<PendingCompletion> _results
-            = new ConcurrentQueue<PendingCompletion>();
-        private readonly ConcurrentQueue<(string msg, bool isWarning)> _pendingLogs
-            = new ConcurrentQueue<(string, bool)>();
+        private readonly RequestCompletionInbox _completionInbox = new RequestCompletionInbox();
 
         private readonly object _queueLock = new object();
         private readonly ConcurrentDictionary<string, List<TrackedRequest>> _modQueues
@@ -51,7 +48,7 @@ namespace RimMind.Application.Features.Requests.Queue
 
         public int CurrentTick { get; set; }
         public Action<string, bool>? LogHandler { get; set; }
-        internal int PendingCallbackCount => _results.Count;
+        internal int PendingCallbackCount => _completionInbox.PendingCallbackCount;
 
         private ISettingsProvider Settings => _settingsFactory?.Invoke() ?? new DefaultSettingsProvider();
 
@@ -70,14 +67,7 @@ namespace RimMind.Application.Features.Requests.Queue
 
         public void Tick()
         {
-            while (_pendingLogs.TryDequeue(out var log)) { LogHandler?.Invoke(log.msg, log.isWarning); }
-            while (_results.TryDequeue(out var item))
-            {
-                var accepted = item.CompletionFence.TryAcceptCompletion();
-                if (!accepted || item.GenerationToken.IsCancellationRequested) continue;
-                try { item.Callback?.Invoke(item.Result); }
-                catch (Exception ex) { LogHandler?.Invoke($"[RimMind-Core] Callback exception: {ex}", true); }
-            }
+            _completionInbox.Drain(LogHandler);
             CheckActiveRequestTimeouts();
             int now = CurrentTick;
             if (now - _lastQueueProcessTick >= QueueProcessInterval) { _lastQueueProcessTick = now; ProcessAllQueues(now); }
@@ -290,11 +280,7 @@ namespace RimMind.Application.Features.Requests.Queue
             TrackedRequest tracked,
             Result<LlmResponse, RimMindError> result)
         {
-            _results.Enqueue(new PendingCompletion(
-                result,
-                tracked.Callback,
-                _completionFence,
-                _completionFence.CancellationToken));
+            _completionInbox.Enqueue(result, tracked.Callback, _completionFence);
         }
 
         private void CheckActiveRequestTimeouts()
@@ -358,7 +344,8 @@ namespace RimMind.Application.Features.Requests.Queue
         public IReadOnlyList<TrackedRequest> GetQueuedRequests(string modId) { lock (_queueLock) { return _modQueues.TryGetValue(modId, out var q) ? q.ToList() : new List<TrackedRequest>(); } }
         public IReadOnlyList<TrackedRequest> GetAllQueuedRequests() { lock (_queueLock) { var r = new List<TrackedRequest>(); foreach (var kvp in _modQueues) r.AddRange(kvp.Value); return r; } }
         public int TotalQueuedCount { get { lock (_queueLock) { return _modQueues.Values.Sum(q => q.Count); } } }
-        public void EnqueueLog(string msg, bool isWarning = false) => _pendingLogs.Enqueue((msg, isWarning));
+        public void EnqueueLog(string msg, bool isWarning = false) =>
+            _completionInbox.EnqueueLog(msg, isWarning);
         public void LogFromBackground(string msg, bool isWarning = false) => EnqueueLog(msg, isWarning);
         internal CancellationTokenSource GetCts() => _cts;
 
@@ -389,26 +376,6 @@ namespace RimMind.Application.Features.Requests.Queue
                 NpcId = envelope.NpcId,
                 GameStateInfo = envelope.GameStateInfo
             };
-        }
-
-        private readonly struct PendingCompletion
-        {
-            public PendingCompletion(
-                Result<LlmResponse, RimMindError> result,
-                Action<Result<LlmResponse, RimMindError>> callback,
-                ICompletionFence completionFence,
-                CancellationToken generationToken)
-            {
-                Result = result;
-                Callback = callback;
-                CompletionFence = completionFence;
-                GenerationToken = generationToken;
-            }
-
-            public Result<LlmResponse, RimMindError> Result { get; }
-            public Action<Result<LlmResponse, RimMindError>> Callback { get; }
-            public ICompletionFence CompletionFence { get; }
-            public CancellationToken GenerationToken { get; }
         }
 
         private sealed class UnboundedCompletionFence : ICompletionFence

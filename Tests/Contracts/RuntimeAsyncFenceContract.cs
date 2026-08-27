@@ -19,6 +19,17 @@ namespace RimMind.Tests.Contracts
         {
             ContractCaseRunner.Run(
                 ("queue completion is fenced", () => AssertFence("Application/Features/Requests/Queue/RequestQueue.cs")),
+                ("request completion inbox owns the background-to-main-thread boundary", () =>
+                {
+                    var queue = ReadSource(
+                        "Application/Features/Requests/Queue/RequestQueue.cs");
+                    var inbox = ReadSource(
+                        "Application/Features/Requests/Queue/RequestCompletionInbox.cs");
+                    Assert.Contains("RequestCompletionInbox", queue, StringComparison.Ordinal);
+                    Assert.DoesNotContain("ConcurrentQueue<PendingCompletion>", queue, StringComparison.Ordinal);
+                    Assert.Contains("ConcurrentQueue<PendingCompletion>", inbox, StringComparison.Ordinal);
+                    Assert.Contains("TryAcceptCompletion", inbox, StringComparison.Ordinal);
+                }),
                 ("proactive completions are fenced", () =>
                 {
                     var source = AssertFence("Application/Features/Agent/ProactiveBehaviorOrchestrator.cs");
