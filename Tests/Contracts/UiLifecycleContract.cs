@@ -307,7 +307,8 @@ namespace RimMind.Tests.Contracts
                     var budgetContract = ReadSource("Application/Common/Interfaces/Internal/IContextBudgetSettings.cs");
                     var contextSettings = ReadSource("Presentation/Settings/ContextSettings.cs");
                     var settingsProvider = ReadSource("Presentation/Settings/SettingsProvider.ContextInclude.cs");
-                    var queueDefaults = ReadSource("Application/Features/Queue/QueueDefaultSettings.cs");
+                    var queueDefaults = ReadSource(
+                        "Application/Features/Requests/Queue/QueueDefaultSettings.cs");
                     var contextDrawer = ReadSource("Presentation/UI/ContextTabDrawer.cs");
                     var englishKeyed = ReadCoreFile("Languages/English/Keyed/RimMind_Core.xml");
                     var chineseKeyed = ReadCoreFile("Languages/ChineseSimplified/Keyed/RimMind_Core.xml");
