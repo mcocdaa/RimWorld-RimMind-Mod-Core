@@ -8,56 +8,15 @@ using RimMind.Application.Common.Interfaces.Abstractions;
 using RimMind.Application.Common.Interfaces.Client;
 using RimMind.Application.Common.Interfaces.Async;
 using RimMind.Application.Common.Interfaces.Internal;
-using RimMind.Application.Common.Interfaces.Pipeline;
 using RimMind.Application.Common.Helpers;
 using RimMind.Application.Common.Models.Client;
 using RimMind.Application.Common.Models;
-using RimMind.Application.Common.Models.Pipeline;
 using RimMind.Domain.Llm;
 using RimMind.Domain.ValueObjects;
 using AIRequestState = RimMind.Domain.Llm.AIRequestState;
 
 namespace RimMind.Application.Features.Queue
 {
-    /// <summary>
-    /// Adapts a real unified-pipeline invocation to the queue's cancellable executor contract.
-    /// </summary>
-    public sealed class QueuedPipelineRequestExecutor
-    {
-        private readonly IPipeline<LlmRequestContext> _pipeline;
-        private readonly IAIClient _client;
-
-        public LlmRequestContext? Context { get; private set; }
-
-        public QueuedPipelineRequestExecutor(IPipeline<LlmRequestContext> pipeline, IAIClient client)
-        {
-            _pipeline = pipeline;
-            _client = client;
-        }
-
-        /// <summary>
-        /// Creates the callback context before queue execution begins.  A queued request can
-        /// be cancelled before the executor receives the queue-linked token, but callers of
-        /// the two-argument API must still receive a non-null context in that case.
-        /// </summary>
-        public QueuedPipelineRequestExecutor(
-            IPipeline<LlmRequestContext> pipeline,
-            IAIClient client,
-            LlmRequestEnvelope envelope)
-            : this(pipeline, client)
-        {
-            Context = new LlmRequestContext(envelope, ct: envelope.Ct) { Client = client };
-        }
-
-        public async Task<Result<LlmResponse, RimMindError>> ExecuteAsync(LlmRequestEnvelope envelope, CancellationToken ct)
-        {
-            Context = new LlmRequestContext(envelope, ct: ct) { Client = _client };
-            await _pipeline.ExecuteAsync(Context);
-            return Context.Result ?? Result<LlmResponse, RimMindError>.Err(
-                RimMindErrors.Internal("Pipeline produced no result."));
-        }
-    }
-
     public class AIRequestQueueImpl : IAIRequestQueueTickable
     {
         private const long TicksPerMillisecond = RimMindDefaults.TicksPerMillisecond;

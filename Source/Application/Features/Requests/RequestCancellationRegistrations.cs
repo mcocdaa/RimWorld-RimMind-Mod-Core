@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace RimMind.Presentation.Runtime.Services
+namespace RimMind.Application.Features.Requests
 {
     internal sealed class RequestCancellationRegistrations : IDisposable
     {
