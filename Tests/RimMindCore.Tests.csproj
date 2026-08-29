@@ -46,6 +46,7 @@
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentListItem.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentState/AgentContextPreviewCoordinator.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentFlow/AgentFlowAsyncCoordinator.cs" />
+    <Compile Include="../Source/Infrastructure/UI/AgentFlow/AgentFlowStepTracker.cs" />
     <Compile Include="../Source/Infrastructure/UI/AgentsPage/AgentLifecycleGroup.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageLayout.cs" Link="Infrastructure\UI\AgentsPage\AgentPageLayout.cs" />
     <Compile Include="..\Source\Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" Link="Infrastructure\UI\AgentsPage\AgentPageViewModel.cs" />

@@ -201,10 +201,24 @@ namespace RimMind.Tests.Contracts
 
                     Assert.True(state.Refresh(replacementToken, 3));
                     Assert.False(state.HasDerivedState);
+
+                    var tracker = new AgentFlowStepTracker();
+
+                    foreach (FlowLabStep step in Enum.GetValues(typeof(FlowLabStep)))
+                        Assert.Equal(StepStatus.Pending, tracker.Get(step));
+
+                    tracker.Set(FlowLabStep.SendRequest, StepStatus.Active);
+                    tracker.Set(FlowLabStep.SendRequest, StepStatus.Failed);
+
+                    Assert.Equal(StepStatus.Failed, tracker.Get(FlowLabStep.SendRequest));
+
+                    tracker.Reset();
+
+                    Assert.Equal(StepStatus.Pending, tracker.Get(FlowLabStep.SendRequest));
                 }),
                 ("live agent flow request polls its runtime fence into a localized terminal state", () =>
                 {
-                    var flowLab = ReadSource("Infrastructure/UI/Window_AgentFlowLab.cs");
+                    var flowLab = ReadAgentFlowLabSource();
                     Assert.Contains("_liveRequestToken", flowLab, StringComparison.Ordinal);
                     Assert.Contains("CompleteStaleLiveRequest", flowLab, StringComparison.Ordinal);
                     Assert.Contains("TryAcceptLiveRequest", flowLab, StringComparison.Ordinal);
@@ -213,13 +227,13 @@ namespace RimMind.Tests.Contracts
                         flowLab,
                         StringComparison.Ordinal);
                     Assert.Contains(
-                        "SetStepStatus(FlowLabStep.SendRequest, StepStatus.Failed)",
+                        "_stepTracker.Set(FlowLabStep.SendRequest, StepStatus.Failed)",
                         flowLab,
                         StringComparison.Ordinal);
                 }),
                 ("stale mechanism target clears execute active state with the localized terminal", () =>
                 {
-                    var flowLab = ReadSource("Infrastructure/UI/Window_AgentFlowLab.cs");
+                    var flowLab = ReadAgentFlowLabSource();
                     int staleTargetBranch = flowLab.IndexOf(
                         "execution.Context.TargetGeneration != _targetGeneration",
                         StringComparison.Ordinal);
@@ -232,7 +246,7 @@ namespace RimMind.Tests.Contracts
                         branchTail,
                         StringComparison.Ordinal);
                     Assert.Contains(
-                        "SetStepStatus(FlowLabStep.Execute, StepStatus.Failed)",
+                        "_stepTracker.Set(FlowLabStep.Execute, StepStatus.Failed)",
                         branchTail,
                         StringComparison.Ordinal);
                 }),
@@ -466,6 +480,14 @@ namespace RimMind.Tests.Contracts
 
             public int Generation { get; }
         }
+
+        private static string ReadAgentFlowLabSource() => string.Concat(
+            ReadSource("Infrastructure/UI/Window_AgentFlowLab.cs"),
+            ReadSource("Infrastructure/UI/AgentFlow/Window_AgentFlowLab.Layout.cs"),
+            ReadSource("Infrastructure/UI/AgentFlow/Window_AgentFlowLab.Target.cs"),
+            ReadSource("Infrastructure/UI/AgentFlow/Window_AgentFlowLab.Request.cs"),
+            ReadSource("Infrastructure/UI/AgentFlow/Window_AgentFlowLab.Mechanism.cs"),
+            ReadSource("Infrastructure/UI/AgentFlow/Window_AgentFlowLab.Diagnostics.cs"));
 
         private static string ReadSource(string relativePath) =>
             File.ReadAllText(Path.Combine(SourceRoot(), relativePath.Replace('/', Path.DirectorySeparatorChar)));
