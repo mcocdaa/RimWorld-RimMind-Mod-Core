@@ -118,7 +118,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("layout autotest opens the complete debug hub", () =>
                 {
-                    string actions = ReadSource("Infrastructure/UI/AICoreDebugActions.cs");
+                    string actions = ReadDebugActionSources();
                     Assert.Contains("new Window_RimMindHub()", actions, StringComparison.Ordinal);
                 }));
         }
@@ -168,6 +168,16 @@ namespace RimMind.Tests.Contracts
             public string GetDebugInfo() => string.Empty;
             public object? ConsumePendingJob() => null;
         }
+
+        private static string ReadDebugActionSources() =>
+            string.Join(Environment.NewLine, new[]
+            {
+                ReadSource("Infrastructure/UI/AICoreDebugActions.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.Requests.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.ContextAndAgents.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.Windows.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.Autotests.cs"),
+            });
 
         private static string ReadSource(string relativePath) =>
             File.ReadAllText(Path.Combine(CoreRoot(), "Source", relativePath.Replace('/', Path.DirectorySeparatorChar)));

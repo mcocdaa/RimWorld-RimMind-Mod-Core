@@ -45,7 +45,7 @@ namespace RimMind.Tests.Contracts
                 }),
                 ("debug actions capture services at invocation time", () =>
                 {
-                    var actions = ReadSource("Infrastructure/UI/AICoreDebugActions.cs");
+                    var actions = ReadDebugActionSources();
                     Assert.Contains("RuntimeServiceHub.Shared.Capture", actions, StringComparison.Ordinal);
                     Assert.DoesNotContain("CurrentRuntime<", actions, StringComparison.Ordinal);
                     Assert.DoesNotContain("CurrentGame<", actions, StringComparison.Ordinal);
@@ -122,6 +122,16 @@ namespace RimMind.Tests.Contracts
 
             public int Value { get; }
         }
+
+        private static string ReadDebugActionSources() =>
+            string.Join(Environment.NewLine, new[]
+            {
+                ReadSource("Infrastructure/UI/AICoreDebugActions.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.Requests.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.ContextAndAgents.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.Windows.cs"),
+                ReadSource("Infrastructure/UI/DebugActions/AICoreDebugActions.Autotests.cs"),
+            });
 
         private static string ReadSource(string relativePath) =>
             ReadCoreFile("Source/" + relativePath);
