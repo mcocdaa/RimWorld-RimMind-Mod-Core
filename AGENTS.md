@@ -11,7 +11,7 @@ RimMind 的运行时与公共 API 前置。Core 负责 LLM 请求、上下文、
 - Agent：`Source/Presentation/Agent/PawnAgent.cs`
 - ToolCall：`Source/Application/Features/Pipeline/Unified/ToolCallDispatchMiddleware.cs`
 - 组合与生命周期：`Source/Presentation/Runtime/RimMindCompositionRoot.cs`
-- 游戏内调试：`Source/Infrastructure/UI/DebugCenter/`
+- 游戏内调试：`Source/Infrastructure/UI/DebugActions/README.md`
 - Agent 流程实验室：`Source/Infrastructure/UI/AgentFlow/README.md`
 
 ## Structure
